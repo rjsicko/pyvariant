@@ -109,7 +109,11 @@ def gene_to_cds(feature, position, end=None):
 
 def gene_to_exon(feature, position, end=None):
     """Map gene coordinates to exon position."""
-    raise NotImplementedError
+    result = []
+    for pos in gene_to_transcript(feature, position):
+        result.extend(transcript_to_exon(*pos[:3]))
+
+    return result
 
 
 def gene_to_protein(feature, position, end=None):
