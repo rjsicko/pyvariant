@@ -9,5 +9,5 @@ setup(
     description="Map between gene, transcript, exon, and protein coordinates.",
     url="",
     python_requires=">=3",
-    install_requires=[],
+    install_requires=["pyensembl"],
 )
