@@ -2,39 +2,34 @@ import logging
 
 from .cache import data
 from .convert import (
-    cpos_to_gpos,  # TODO: replace with C>T>G?
     cpos_to_ppos,
     cpos_to_tpos,
-    epos_to_cpos,  # TODO: replace with E>T>C?
     epos_to_tpos,
-    gpos_to_cpos,  # TODO: replace with G>T>C>P?
     gpos_to_tpos,
     ppos_to_cpos,
-    ppos_to_tpos,  # TODO: replace with P>C>T?
     tpos_to_epos,
     tpos_to_cpos,
     tpos_to_gpos,
-    tpos_to_ppos,  # TODO: replace with T>C>P?
 )
 from .util import is_ensembl_id
 
 
 def cds_to_exon(feature, position, end=None):
     """Map CDS coordinates to exon position."""
-    raise NotImplementedError
+    result = []
+    for pos in cds_to_transcript(feature, position):
+        result.extend(transcript_to_exon(*pos[:3]))
+
+    return result
 
 
 def cds_to_gene(feature, position, end=None):
     """Map CDS coordinates to gene coordinates."""
-    return _map(
-        feature,
-        position,
-        None,
-        "gene_id",
-        None,
-        data.transcript_ids_of_transcript_name,
-        cpos_to_gpos,
-    )
+    result = []
+    for pos in cds_to_transcript(feature, position):
+        result.extend(transcript_to_gene(*pos[:3]))
+
+    return result
 
 
 def cds_to_protein(feature, position, end=None):
@@ -52,27 +47,31 @@ def cds_to_protein(feature, position, end=None):
 
 def cds_to_transcript(feature, position, end=None):
     """Map CDS coordinates to transcript coordinates."""
-    raise NotImplementedError
-
-
-def exon_to_cds(feature, position):
-    """Map exon position to CDS coordinates."""
     return _map(
         feature,
         position,
         None,
         "transcript_id",
-        data.transcript_ids_of_exon_id,
         None,
-        epos_to_cpos,
+        data.transcript_ids_of_transcript_name,
+        cpos_to_tpos,
     )
+
+
+def exon_to_cds(feature, position):
+    """Map exon position to CDS coordinates."""
+    result = []
+    for pos in exon_to_transcript(feature, position):
+        result.extend(transcript_to_cds(*pos[:3]))
+
+    return result
 
 
 def exon_to_gene(feature, position):
     """Map exon position to gene coordinates."""
     result = []
-    for transcript in exon_to_transcript(feature, position):
-        result.extend(transcript_to_gene(*transcript[:2]))
+    for pos in exon_to_transcript(feature, position):
+        result.extend(transcript_to_gene(*pos[:3]))
 
     return result
 
@@ -80,8 +79,8 @@ def exon_to_gene(feature, position):
 def exon_to_protein(feature, position):
     """Map exon position to gene coordinates."""
     result = []
-    for cds in exon_to_cds(feature, position):
-        result.extend(cds_to_protein(*cds[:2]))
+    for pos in exon_to_cds(feature, position):
+        result.extend(cds_to_protein(*pos[:3]))
 
     return result
 
@@ -101,15 +100,11 @@ def exon_to_transcript(feature, position):
 
 def gene_to_cds(feature, position, end=None):
     """Map gene coordinates to CDS coordinates."""
-    return _map(
-        feature,
-        position,
-        end,
-        "transcript_id",
-        data.transcript_ids_of_gene_id,
-        data.transcript_ids_of_gene_name,
-        gpos_to_cpos,
-    )
+    result = []
+    for pos in gene_to_transcript(feature, position):
+        result.extend(transcript_to_cds(*pos[:3]))
+
+    return result
 
 
 def gene_to_exon(feature, position, end=None):
@@ -120,8 +115,8 @@ def gene_to_exon(feature, position, end=None):
 def gene_to_protein(feature, position, end=None):
     """Map gene coordinates to protein coordinates."""
     result = []
-    for cds in gene_to_cds(feature, position, end=None):
-        result.extend(cds_to_protein(*cds[:3]))
+    for pos in gene_to_cds(feature, position, end=None):
+        result.extend(cds_to_protein(*pos[:3]))
 
     return result
 
@@ -154,34 +149,42 @@ def protein_to_cds(feature, position, end=None):
 
 def protein_to_exon(feature, position, end=None):
     """Map protein coordinates to exon position."""
-    raise NotImplementedError
+    result = []
+    for pos in protein_to_transcript(feature, position):
+        result.extend(transcript_to_exon(*pos[:3]))
+
+    return result
 
 
 def protein_to_gene(feature, position, end=None):
     """Map protein coordinates to gene coordinates."""
     result = []
-    for cds in protein_to_cds(feature, position, end=None):
-        result.extend(cds_to_gene(*cds[:2]))
+    for pos in protein_to_transcript(feature, position, end=None):
+        result.extend(transcript_to_gene(*pos[:3]))
 
     return result
 
 
 def protein_to_transcript(feature, position, end=None):
     """Map protein coordinates to transcript coordinates."""
+    result = []
+    for pos in protein_to_cds(feature, position, end=None):
+        result.extend(cds_to_gene(*pos[:3]))
+
+    return result
+
+
+def transcript_to_cds(feature, position, end=None):
+    """Map transcript coordinates to CDS coordinates."""
     return _map(
         feature,
         position,
         end,
         "transcript_id",
-        data.transcript_id_of_protein_id,
         None,
-        ppos_to_tpos,
+        data.transcript_ids_of_transcript_name,
+        tpos_to_cpos,
     )
-
-
-def transcript_to_cds(feature, position, end=None):
-    """Map transcript coordinates to CDS coordinates."""
-    raise NotImplementedError
 
 
 def transcript_to_exon(feature, position, end=None):
@@ -212,15 +215,11 @@ def transcript_to_gene(feature, position, end=None):
 
 def transcript_to_protein(feature, position, end=None):
     """Map transcript coordinates to protein coordinates."""
-    return _map(
-        feature,
-        position,
-        end,
-        "protein_id",
-        None,
-        data.transcript_ids_of_transcript_name,
-        tpos_to_ppos,
-    )
+    result = []
+    for pos in transcript_to_cds(feature, position, end=None):
+        result.extend(cds_to_protein(*pos[:3]))
+
+    return result
 
 
 def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
