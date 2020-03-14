@@ -140,7 +140,7 @@ def gene_to_transcript(feature, position, end=None):
 
 def protein_to_cds(feature, position, end=None):
     """Map protein coordinates to CDS coordinates."""
-    return _map(
+    cds = _map(
         feature,
         position,
         end,
@@ -149,6 +149,8 @@ def protein_to_cds(feature, position, end=None):
         None,
         ppos_to_cpos,
     )
+    # the last position is end of the codon
+    return [(i[0], i[1], i[2] + 2, i[3]) for i in cds]
 
 
 def protein_to_exon(feature, position, end=None):
@@ -245,6 +247,8 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
     """
     transcript_ids = []
     result = []
+    pos1 = None
+    pos2 = None
 
     assert feature is not None, f"Feature must not be 'None'"
     assert position >= 1, f"Position is not >= 1 ({position})"
@@ -266,15 +270,22 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
     if not transcript_ids:
         raise ValueError(f"Query did not return any transcript IDs")
 
+    # coerce to a list
+    if not isinstance(transcript_ids, list):
+        transcript_ids = [transcript_ids]
+
     # map coordinates by transcript ID
     for tid in sorted(transcript_ids):
         tobj = data.transcript_by_id(tid)
         try:
             pos1 = convert(tobj, position)
+            if isinstance(pos1, tuple):
+                pos1, pos2 = pos1[0], pos1[1]
             if end:
                 pos2 = convert(tobj, end)
             else:
-                pos2 = pos1
+                if not pos2:
+                    pos2 = pos1
         except Exception as exc:
             logging.debug(exc)
             continue

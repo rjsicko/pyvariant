@@ -63,9 +63,9 @@ def ppos_to_cpos(_, position):
 
 def tpos_to_epos(tobj, position):
     """Compute the equivalent exon position for a transcript position."""
-    for n, exon in enumerate(sorted(tobj.exons), 1):
+    for exon in sorted(tobj.exons):
         if exon.start <= position <= exon.end:
-            return n
+            return exon.start, exon.end
     else:
         raise ExonRangeError(tobj, position)
 
