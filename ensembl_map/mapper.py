@@ -250,10 +250,10 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
     pos1 = None
     pos2 = None
 
-    assert feature is not None, f"Feature must not be 'None'"
-    assert position >= 1, f"Position is not >= 1 ({position})"
-    if end:
-        assert end >= 1, f"End is not >= 1 ({position})"
+    if position < 1:
+        raise ValueError(f"Position must be >= 1 ({position})")
+    if end is not None and end < 1:
+        raise ValueError(f"Position must be >= 1 ({end})")
 
     # map feature to Ensembl transcript ID
     if is_ensembl_id(feature):
@@ -268,10 +268,10 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
             logging.debug(f"From '{feature}' got transcript IDs: {transcript_ids}")
 
     if not transcript_ids:
-        raise ValueError(f"Query did not return any transcript IDs")
+        raise ValueError(f"Query '{feature}' did not return any transcript IDs")
 
     # coerce to a list
-    if not isinstance(transcript_ids, list):
+    if isinstance(transcript_ids, str):
         transcript_ids = [transcript_ids]
 
     # map coordinates by transcript ID

@@ -1,13 +1,19 @@
-class CdsRangeError(Exception):
+class OutsideCdsError(Exception):
     def __init__(self, tobj, position):
         self.tobj = tobj
         self.position = position
 
     def __str__(self):
-        return (
-            f"{self.position} is not a CDS postion in {self.tobj.transcript_id}: "
-            f"{self.tobj.coding_sequence_position_ranges}"
-        )
+        return f"{self.position} is outside CDS (1, {len(self.tobj.coding_sequence)}"
+
+
+class OutsideTranscriptError(Exception):
+    def __init__(self, tobj, position):
+        self.tobj = tobj
+        self.position = position
+
+    def __str__(self):
+        return f"{self.position} is outside transcript (1, {len(self.tobj.sequence)}"
 
 
 class ExonRangeError(Exception):

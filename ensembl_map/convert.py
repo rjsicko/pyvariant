@@ -1,7 +1,6 @@
 from math import floor
 
-from .exceptions import CdsRangeError, ExonRangeError
-from .util import in_ranges
+from .exceptions import OutsideCdsError, OutsideTranscriptError
 
 
 def cpos_to_ppos(_, position):
@@ -30,13 +29,17 @@ def cpos_to_ppos(_, position):
 def cpos_to_tpos(tobj, position):
     """Compute the equivalent CDS position for a transcript position."""
     tpos = tobj.first_start_codon_spliced_offset + position - 1
-    assert 1 <= tpos <= len(tobj.sequence), f"{position} is outside transcript"
+    if not (1 <= tpos <= len(tobj.sequence)):
+        raise OutsideTranscriptError(tobj, position)
     return tpos
 
 
 def epos_to_tpos(tobj, position):
     """Compute the equivalent exon position for a transcript position."""
-    return sorted(tobj.exon_intervals)[position - 1]
+    try:
+        return sorted(tobj.exon_intervals)[position - 1]
+    except IndexError:
+        raise ValueError(f"{position} is greater than the number of exons")
 
 
 def gpos_to_tpos(tobj, position):
@@ -65,18 +68,18 @@ def ppos_to_cpos(_, position):
 
 def tpos_to_epos(tobj, position):
     """Compute the equivalent exon position for a transcript position."""
-    for exon in sorted(tobj.exons):
-        if exon.start <= position <= exon.end:
-            return exon.start, exon.end
+    for exon in sorted(tobj.exon_intervals):
+        if exon[0] <= position <= exon[1]:
+            return exon
     else:
-        raise ExonRangeError(tobj, position)
+        raise AssertionError("Iterated through all exons")
 
 
 def tpos_to_cpos(tobj, position):
     """Compute the equivalent transcript position for a CDS position."""
-    # TODO: calculation is wrong; no error raised if outside CDS
     cpos = position - tobj.first_start_codon_spliced_offset + 1
-    assert 1 <= cpos <= len(tobj.coding_sequence), f"{position} is outside CDS"
+    if not (1 <= cpos <= len(tobj.coding_sequence)):
+        raise OutsideCdsError(tobj, position)
     return cpos
 
 
@@ -100,4 +103,4 @@ def tpos_to_gpos(tobj, position):
             else:
                 return i[1] - remain
     else:
-        raise AssertionError(f"Iterated through all ranges")
+        raise OutsideTranscriptError(tobj, position)
