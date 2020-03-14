@@ -29,7 +29,9 @@ def cpos_to_ppos(_, position):
 
 def cpos_to_tpos(tobj, position):
     """Compute the equivalent CDS position for a transcript position."""
-    return tobj.first_start_codon_spliced_offset + position - 1
+    tpos = tobj.first_start_codon_spliced_offset + position - 1
+    assert 1 <= tpos <= len(tobj.sequence), f"{position} is outside transcript"
+    return tpos
 
 
 def epos_to_tpos(tobj, position):
@@ -72,7 +74,10 @@ def tpos_to_epos(tobj, position):
 
 def tpos_to_cpos(tobj, position):
     """Compute the equivalent transcript position for a CDS position."""
-    return tobj.first_start_codon_spliced_offset - position + 1
+    # TODO: calculation is wrong; no error raised if outside CDS
+    cpos = position - tobj.first_start_codon_spliced_offset + 1
+    assert 1 <= cpos <= len(tobj.coding_sequence), f"{position} is outside CDS"
+    return cpos
 
 
 def tpos_to_gpos(tobj, position):
