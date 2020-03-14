@@ -87,6 +87,7 @@ def exon_to_protein(feature):
 
 def exon_to_transcript(feature):
     """Map exon position to transcript coordinates."""
+    # TODO: Fix: `transcript_ids_of_exon_ids` does not match anything.
     return _map(
         feature,
         data.exon_by_id(feature).start,
@@ -250,6 +251,17 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
     pos1 = None
     pos2 = None
 
+    logging.debug(
+        "From: "
+        f"{feature}, "
+        f"{position}, "
+        f"{end}, "
+        f"{return_id}, "
+        f"{tids_by_id}, "
+        f"{tids_by_name}, "
+        f"{convert}"
+    )
+
     if position < 1:
         raise ValueError(f"Position must be >= 1 ({position})")
     if end is not None and end < 1:
@@ -258,17 +270,17 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
     # map feature to Ensembl transcript ID
     if is_ensembl_id(feature):
         if tids_by_id:
+            logging.debug(f"[{tids_by_id}, '{feature}']: {transcript_ids}")
             transcript_ids = tids_by_id(feature)
-            logging.debug(f"From '{feature}' got transcript IDs: {transcript_ids}")
         else:
             transcript_ids = [feature]
     else:
         if tids_by_name:
+            logging.debug(f"[{tids_by_name}, '{feature}']: {transcript_ids}")
             transcript_ids = tids_by_name(feature)
-            logging.debug(f"From '{feature}' got transcript IDs: {transcript_ids}")
 
     if not transcript_ids:
-        raise ValueError(f"Query '{feature}' did not return any transcript IDs")
+        raise ValueError(f"'{feature}' did not match any transcript ID")
 
     # coerce to a list
     if isinstance(transcript_ids, str):
@@ -292,6 +304,8 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
         # return coordinates relative to the positive strand
         if pos2 < pos1:
             pos1, pos2 = pos2, pos1
-        result.append((getattr(tobj, return_id), pos1, pos2, tobj.strand))
+        ret_val = (getattr(tobj, return_id), pos1, pos2, tobj.strand)
+        result.append(ret_val)
+        logging.debug(f"Got: {ret_val}")
 
     return result
