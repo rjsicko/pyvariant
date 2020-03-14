@@ -98,9 +98,9 @@ def tpos_to_gpos(tobj, position):
         if remain > length:
             remain -= length
         else:
-            if tobj.on_negative_strand:
+            if tobj.on_positive_strand:
                 return i[0] + remain
-            else:
+            elif tobj.on_negative_strand:
                 return i[1] - remain
     else:
         raise OutsideTranscriptError(tobj, position)
