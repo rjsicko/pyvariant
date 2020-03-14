@@ -17,7 +17,7 @@ from .util import is_ensembl_id
 def cds_to_exon(feature, position, end=None):
     """Map CDS coordinates to exon position."""
     result = []
-    for pos in cds_to_transcript(feature, position):
+    for pos in cds_to_transcript(feature, position, end):
         result.extend(transcript_to_exon(*pos[:3]))
 
     return result
@@ -26,7 +26,7 @@ def cds_to_exon(feature, position, end=None):
 def cds_to_gene(feature, position, end=None):
     """Map CDS coordinates to gene coordinates."""
     result = []
-    for pos in cds_to_transcript(feature, position):
+    for pos in cds_to_transcript(feature, position, end):
         result.extend(transcript_to_gene(*pos[:3]))
 
     return result
@@ -37,7 +37,7 @@ def cds_to_protein(feature, position, end=None):
     return _map(
         feature,
         position,
-        None,
+        end,
         "protein_id",
         None,
         data.transcript_ids_of_transcript_name,
@@ -50,7 +50,7 @@ def cds_to_transcript(feature, position, end=None):
     return _map(
         feature,
         position,
-        None,
+        end,
         "transcript_id",
         None,
         data.transcript_ids_of_transcript_name,
@@ -101,7 +101,7 @@ def exon_to_transcript(feature, position):
 def gene_to_cds(feature, position, end=None):
     """Map gene coordinates to CDS coordinates."""
     result = []
-    for pos in gene_to_transcript(feature, position):
+    for pos in gene_to_transcript(feature, position, end):
         result.extend(transcript_to_cds(*pos[:3]))
 
     return result
@@ -110,7 +110,7 @@ def gene_to_cds(feature, position, end=None):
 def gene_to_exon(feature, position, end=None):
     """Map gene coordinates to exon position."""
     result = []
-    for pos in gene_to_transcript(feature, position):
+    for pos in gene_to_transcript(feature, position, end):
         result.extend(transcript_to_exon(*pos[:3]))
 
     return result
@@ -119,7 +119,7 @@ def gene_to_exon(feature, position, end=None):
 def gene_to_protein(feature, position, end=None):
     """Map gene coordinates to protein coordinates."""
     result = []
-    for pos in gene_to_cds(feature, position, end=None):
+    for pos in gene_to_cds(feature, position, end):
         result.extend(cds_to_protein(*pos[:3]))
 
     return result
@@ -156,7 +156,7 @@ def protein_to_cds(feature, position, end=None):
 def protein_to_exon(feature, position, end=None):
     """Map protein coordinates to exon position."""
     result = []
-    for pos in protein_to_transcript(feature, position):
+    for pos in protein_to_transcript(feature, position, end):
         result.extend(transcript_to_exon(*pos[:3]))
 
     return result
@@ -165,7 +165,7 @@ def protein_to_exon(feature, position, end=None):
 def protein_to_gene(feature, position, end=None):
     """Map protein coordinates to gene coordinates."""
     result = []
-    for pos in protein_to_transcript(feature, position, end=None):
+    for pos in protein_to_transcript(feature, position, end):
         result.extend(transcript_to_gene(*pos[:3]))
 
     return result
@@ -174,7 +174,7 @@ def protein_to_gene(feature, position, end=None):
 def protein_to_transcript(feature, position, end=None):
     """Map protein coordinates to transcript coordinates."""
     result = []
-    for pos in protein_to_cds(feature, position, end=None):
+    for pos in protein_to_cds(feature, position, end):
         result.extend(cds_to_gene(*pos[:3]))
 
     return result
@@ -222,7 +222,7 @@ def transcript_to_gene(feature, position, end=None):
 def transcript_to_protein(feature, position, end=None):
     """Map transcript coordinates to protein coordinates."""
     result = []
-    for pos in transcript_to_cds(feature, position, end=None):
+    for pos in transcript_to_cds(feature, position, end):
         result.extend(cds_to_protein(*pos[:3]))
 
     return result
