@@ -10,4 +10,5 @@ setup(
     url="https://github.com/mattdoug604/ensembl_map.git",
     python_requires=">=3",
     install_requires=["pyensembl"],
+    test_requires=["nose"],
 )

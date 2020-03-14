@@ -11,4 +11,5 @@ sdist/
 .installed.cfg
 *.egg
 .vscode/
+.coverage
 venv/
