@@ -29,7 +29,53 @@ class TestCdsToExon(unittest.TestCase):
 
 
 class TestCdsToGene(unittest.TestCase):
-    pass
+    def test_cds_to_gene_by_transcript_id(self):
+        pos = cds_to_gene("ENST00000288135", 1)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55524181)
+        self.assertEqual(pos[0][2], 55524181)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_cds_to_gene_by_transcript_id_2(self):
+        pos = cds_to_gene("ENST00000288135", 213)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55561822)
+        self.assertEqual(pos[0][2], 55561822)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_cds_to_gene_by_transcript_id_3(self):
+        pos = cds_to_gene("ENST00000288135", 213, 221)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55561822)
+        self.assertEqual(pos[0][2], 55561830)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_cds_to_gene_by_transcript_name(self):
+        pos = cds_to_gene("KIT-001", 1)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55524181)
+        self.assertEqual(pos[0][2], 55524181)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_cds_to_gene_by_transcript_name_2(self):
+        pos = cds_to_gene("KIT-001", 213)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55561822)
+        self.assertEqual(pos[0][2], 55561822)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_cds_to_gene_by_transcript_name_3(self):
+        pos = cds_to_gene("KIT-001", 213, 221)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55561822)
+        self.assertEqual(pos[0][2], 55561830)
+        self.assertEqual(pos[0][3], "+")
 
 
 class TestCdsToProtein(unittest.TestCase):
@@ -144,27 +190,58 @@ class TestExonToProtein(unittest.TestCase):
     pass
 
 
-# TODO: For some reason `transcript_ids_of_exon_ids` does not match anything.
-# class TestExonToTranscript(unittest.TestCase):
-#     def test_exon_to_transcript_by_transcript_id(self):
-#         pos = exon_to_transcript("ENSE00001798125")
-#         self.assertIsInstance(pos, list)
-#         self.assertEqual(pos[0][0], "ENST00000275493")
-#         self.assertEqual(pos[0][1], 55214299)
-#         self.assertEqual(pos[0][2], 55214433)
-#         self.assertEqual(pos[0][3], "+")
-
-#     def test_exon_to_transcript_by_transcript_id_2(self):
-#         pos = exon_to_transcript("ENSE00000936617")
-#         self.assertIsInstance(pos, list)
-#         self.assertEqual(pos[0][0], "ENST00000275493")
-#         self.assertEqual(pos[0][1], 25398329)
-#         self.assertEqual(pos[0][2], 25398208)
-#         self.assertEqual(pos[0][3], "+")
+class TestExonToTranscript(unittest.TestCase):
+    pass
 
 
 class TestGeneToCds(unittest.TestCase):
-    pass
+    def test_gene_to_cds_by_transcript_id(self):
+        pos = gene_to_cds("ENSG00000157404", 55524181)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000288135")
+        self.assertEqual(pos[0][1], 1)
+        self.assertEqual(pos[0][2], 1)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_cds_by_transcript_id_2(self):
+        pos = gene_to_cds("ENSG00000157404", 55561822)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000288135")
+        self.assertEqual(pos[0][1], 213)
+        self.assertEqual(pos[0][2], 213)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_cds_by_transcript_id_3(self):
+        pos = gene_to_cds("ENSG00000157404", 55561822, 55561830)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000288135")
+        self.assertEqual(pos[0][1], 213)
+        self.assertEqual(pos[0][2], 221)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_cds_by_transcript_name(self):
+        pos = gene_to_cds("KIT", 55524181)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000288135")
+        self.assertEqual(pos[0][1], 1)
+        self.assertEqual(pos[0][2], 1)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_cds_by_transcript_name_2(self):
+        pos = gene_to_cds("KIT", 55561822)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000288135")
+        self.assertEqual(pos[0][1], 213)
+        self.assertEqual(pos[0][2], 213)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_cds_by_transcript_name_3(self):
+        pos = gene_to_cds("KIT", 55561822, 55561830)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000288135")
+        self.assertEqual(pos[0][1], 213)
+        self.assertEqual(pos[0][2], 221)
+        self.assertEqual(pos[0][3], "+")
 
 
 class TestGeneToExon(unittest.TestCase):
@@ -172,11 +249,57 @@ class TestGeneToExon(unittest.TestCase):
 
 
 class TestGeneToProtein(unittest.TestCase):
-    pass
+    def test_gene_to_protein_by_gene_id(self):
+        pos = gene_to_protein("ENSG00000157404", 55524181)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000288135")
+        self.assertEqual(pos[0][1], 1)
+        self.assertEqual(pos[0][2], 1)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_protein_by_gene_id_2(self):
+        pos = gene_to_protein("ENSG00000157404", 55561822)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000288135")
+        self.assertEqual(pos[0][1], 71)
+        self.assertEqual(pos[0][2], 71)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_protein_by_gene_id_3(self):
+        pos = gene_to_protein("ENSG00000157404", 55561822, 55561830)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000288135")
+        self.assertEqual(pos[0][1], 71)
+        self.assertEqual(pos[0][2], 74)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_protein_by_gene_name(self):
+        pos = gene_to_protein("KIT", 55524181)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000288135")
+        self.assertEqual(pos[0][1], 1)
+        self.assertEqual(pos[0][2], 1)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_protein_by_gene_name_2(self):
+        pos = gene_to_protein("KIT", 55561822)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000288135")
+        self.assertEqual(pos[0][1], 71)
+        self.assertEqual(pos[0][2], 71)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_gene_to_protein_by_gene_name_3(self):
+        pos = gene_to_protein("KIT", 55561822, 55561830)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000288135")
+        self.assertEqual(pos[0][1], 71)
+        self.assertEqual(pos[0][2], 74)
+        self.assertEqual(pos[0][3], "+")
 
 
 class TestGeneToTranscript(unittest.TestCase):
-    def test_gene_to_transcript_by_transcript_id(self):
+    def test_gene_to_transcript_by_gene_id(self):
         pos = gene_to_transcript("ENSG00000188554", 41322498)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0][0], "ENST00000341165")
@@ -184,7 +307,7 @@ class TestGeneToTranscript(unittest.TestCase):
         self.assertEqual(pos[0][2], 1)
         self.assertEqual(pos[0][3], "+")
 
-    def test_gene_to_transcript_by_transcript_id_2(self):
+    def test_gene_to_transcript_by_gene_id_2(self):
         pos = gene_to_transcript("ENSG00000188554", 41341715)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0][0], "ENST00000341165")
@@ -192,7 +315,7 @@ class TestGeneToTranscript(unittest.TestCase):
         self.assertEqual(pos[0][2], 731)
         self.assertEqual(pos[0][3], "+")
 
-    def test_gene_to_transcript_by_transcript_id_3(self):
+    def test_gene_to_transcript_by_gene_id_3(self):
         pos = gene_to_transcript("ENSG00000188554", 41341715, 41341801)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0][0], "ENST00000341165")
@@ -200,7 +323,7 @@ class TestGeneToTranscript(unittest.TestCase):
         self.assertEqual(pos[0][2], 817)
         self.assertEqual(pos[0][3], "+")
 
-    def test_gene_to_transcript_by_transcript_name(self):
+    def test_gene_to_transcript_by_gene_name(self):
         pos = gene_to_transcript("NBR1", 41322498)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0][0], "ENST00000341165")
@@ -208,7 +331,7 @@ class TestGeneToTranscript(unittest.TestCase):
         self.assertEqual(pos[0][2], 1)
         self.assertEqual(pos[0][3], "+")
 
-    def test_gene_to_transcript_by_transcript_name_2(self):
+    def test_gene_to_transcript_by_gene_name_2(self):
         pos = gene_to_transcript("NBR1", 41341715)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0][0], "ENST00000341165")
@@ -216,7 +339,7 @@ class TestGeneToTranscript(unittest.TestCase):
         self.assertEqual(pos[0][2], 731)
         self.assertEqual(pos[0][3], "+")
 
-    def test_gene_to_transcript_by_transcript_name_3(self):
+    def test_gene_to_transcript_by_gene_name_3(self):
         pos = gene_to_transcript("NBR1", 41341715, 41341801)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0][0], "ENST00000341165")
@@ -256,11 +379,55 @@ class TestProteinToExon(unittest.TestCase):
 
 
 class TestProteinToGene(unittest.TestCase):
-    pass
+    def test_protein_to_gene_by_protein_id(self):
+        pos = protein_to_gene("ENSP00000288135", 1)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55524181)
+        self.assertEqual(pos[0][2], 55524183)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_protein_to_gene_by_protein_id_2(self):
+        pos = protein_to_gene("ENSP00000288135", 71)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55561820)
+        self.assertEqual(pos[0][2], 55561822)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_protein_to_gene_by_protein_id_3(self):
+        pos = protein_to_gene("ENSP00000288135", 71, 74)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000157404")
+        self.assertEqual(pos[0][1], 55561820)
+        self.assertEqual(pos[0][2], 55561831)
+        self.assertEqual(pos[0][3], "+")
 
 
 class TestProteinToTranscript(unittest.TestCase):
-    pass
+    def test_protein_to_transcript_by_protein_id(self):
+        pos = protein_to_transcript("ENSP00000260947", 1)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000260947")
+        self.assertEqual(pos[0][1], 135)
+        self.assertEqual(pos[0][2], 137)
+        self.assertEqual(pos[0][3], "-")
+
+    def test_protein_to_transcript_by_protein_id_2(self):
+        pos = protein_to_transcript("ENSP00000260947", 71)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000260947")
+        self.assertEqual(pos[0][1], 345)
+        self.assertEqual(pos[0][2], 347)
+        self.assertEqual(pos[0][3], "-")
+
+    def test_protein_to_transcript_by_protein_id_3(self):
+        pos = protein_to_transcript("ENSP00000260947", 71, 74)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENST00000260947")
+        self.assertEqual(pos[0][1], 345)
+        self.assertEqual(pos[0][2], 356)
+        self.assertEqual(pos[0][3], "-")
 
 
 class TestTranscriptToCds(unittest.TestCase):
@@ -318,9 +485,100 @@ class TestTranscriptToExon(unittest.TestCase):
 
 
 class TestTranscriptToGene(unittest.TestCase):
-    pass
+    def test_transcript_to_gene_by_gene_id(self):
+        pos = transcript_to_gene("ENST00000341165", 1)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000188554")
+        self.assertEqual(pos[0][1], 41322498)
+        self.assertEqual(pos[0][2], 41322498)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_transcript_to_gene_by_gene_id_2(self):
+        pos = transcript_to_gene("ENST00000341165", 731)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000188554")
+        self.assertEqual(pos[0][1], 41341715)
+        self.assertEqual(pos[0][2], 41341715)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_transcript_to_gene_by_gene_id_3(self):
+        pos = transcript_to_gene("ENST00000341165", 731, 817)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000188554")
+        self.assertEqual(pos[0][1], 41341715)
+        self.assertEqual(pos[0][2], 41341801)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_transcript_to_gene_by_gene_name(self):
+        pos = transcript_to_gene("NBR1-001", 1)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000188554")
+        self.assertEqual(pos[0][1], 41322498)
+        self.assertEqual(pos[0][2], 41322498)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_transcript_to_gene_by_gene_name_2(self):
+        pos = transcript_to_gene("NBR1-001", 731)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000188554")
+        self.assertEqual(pos[0][1], 41341715)
+        self.assertEqual(pos[0][2], 41341715)
+        self.assertEqual(pos[0][3], "+")
+
+    def test_transcript_to_gene_by_gene_name_3(self):
+        pos = transcript_to_gene("NBR1-001", 731, 817)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSG00000188554")
+        self.assertEqual(pos[0][1], 41341715)
+        self.assertEqual(pos[0][2], 41341801)
+        self.assertEqual(pos[0][3], "+")
 
 
 class TestTranscriptToProtein(unittest.TestCase):
-    pass
+    def test_transcript_to_protein_by_protein_id(self):
+        pos = transcript_to_protein("ENST00000260947", 136)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000260947")
+        self.assertEqual(pos[0][1], 1)
+        self.assertEqual(pos[0][2], 1)
+        self.assertEqual(pos[0][3], "-")
 
+    def test_transcript_to_protein_by_protein_id_2(self):
+        pos = transcript_to_protein("ENST00000260947", 346)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000260947")
+        self.assertEqual(pos[0][1], 71)
+        self.assertEqual(pos[0][2], 71)
+        self.assertEqual(pos[0][3], "-")
+
+    def test_transcript_to_protein_by_protein_id_3(self):
+        pos = transcript_to_protein("ENST00000260947", 345, 356)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000260947")
+        self.assertEqual(pos[0][1], 71)
+        self.assertEqual(pos[0][2], 74)
+        self.assertEqual(pos[0][3], "-")
+
+    def test_transcript_to_protein_by_transcript_name(self):
+        pos = transcript_to_protein("BARD1-001", 136)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000260947")
+        self.assertEqual(pos[0][1], 1)
+        self.assertEqual(pos[0][2], 1)
+        self.assertEqual(pos[0][3], "-")
+
+    def test_transcript_to_protein_by_transcript_name_2(self):
+        pos = transcript_to_protein("BARD1-001", 346)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000260947")
+        self.assertEqual(pos[0][1], 71)
+        self.assertEqual(pos[0][2], 71)
+        self.assertEqual(pos[0][3], "-")
+
+    def test_transcript_to_protein_by_transcript_name_3(self):
+        pos = transcript_to_protein("BARD1-001", 345, 356)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0][0], "ENSP00000260947")
+        self.assertEqual(pos[0][1], 71)
+        self.assertEqual(pos[0][2], 74)
+        self.assertEqual(pos[0][3], "-")
