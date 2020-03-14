@@ -58,39 +58,39 @@ def cds_to_transcript(feature, position, end=None):
     )
 
 
-def exon_to_cds(feature, position):
+def exon_to_cds(feature):
     """Map exon position to CDS coordinates."""
     result = []
-    for pos in exon_to_transcript(feature, position):
+    for pos in exon_to_transcript(feature):
         result.extend(transcript_to_cds(*pos[:3]))
 
     return result
 
 
-def exon_to_gene(feature, position):
+def exon_to_gene(feature):
     """Map exon position to gene coordinates."""
     result = []
-    for pos in exon_to_transcript(feature, position):
+    for pos in exon_to_transcript(feature):
         result.extend(transcript_to_gene(*pos[:3]))
 
     return result
 
 
-def exon_to_protein(feature, position):
+def exon_to_protein(feature):
     """Map exon position to gene coordinates."""
     result = []
-    for pos in exon_to_cds(feature, position):
+    for pos in exon_to_cds(feature):
         result.extend(cds_to_protein(*pos[:3]))
 
     return result
 
 
-def exon_to_transcript(feature, position):
+def exon_to_transcript(feature):
     """Map exon position to transcript coordinates."""
     return _map(
         feature,
-        position,
-        None,
+        data.exon_by_id(feature).start,
+        data.exon_by_id(feature).end,
         "transcript_id",
         data.transcript_ids_of_exon_id,
         None,
