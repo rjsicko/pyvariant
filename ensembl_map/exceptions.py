@@ -14,15 +14,3 @@ class OutsideTranscriptError(Exception):
 
     def __str__(self):
         return f"{self.position} is outside transcript (1, {len(self.tobj.sequence)}"
-
-
-class ExonRangeError(Exception):
-    def __init__(self, tobj, position):
-        self.tobj = tobj
-        self.position = position
-
-    def __str__(self):
-        return (
-            f"{self.position} is not an exon position in {self.tobj.transcript_id}: "
-            f"{self.tobj.exons}"
-        )
