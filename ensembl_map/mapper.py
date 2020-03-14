@@ -176,7 +176,7 @@ def protein_to_transcript(feature, position, end=None):
     """Map protein coordinates to transcript coordinates."""
     result = []
     for pos in protein_to_cds(feature, position, end):
-        result.extend(cds_to_gene(*pos[:3]))
+        result.extend(cds_to_transcript(*pos[:3]))
 
     return result
 
