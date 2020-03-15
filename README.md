@@ -8,6 +8,7 @@ This package is intended to be imported and used as part of a larger workflow e.
 
 ```python
 >>> import ensembl_map
+>>> ensembl_map.set_ensembl_release(69, "human")
 >>> ensembl_map.gene_to_protein('KIT', 55594077)
 [('ENSP00000288135', 621, 621, '+'), ('ENSP00000390987', 617, 617, '+')]
 ```

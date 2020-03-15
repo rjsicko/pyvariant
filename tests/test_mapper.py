@@ -1,5 +1,6 @@
 import unittest
 
+from ensembl_map import set_ensembl_release
 from ensembl_map.mapper import (
     cds_to_exon,
     cds_to_gene,
@@ -22,6 +23,10 @@ from ensembl_map.mapper import (
     transcript_to_gene,
     transcript_to_protein,
 )
+
+
+# TODO: Mock Cache object instead of needing to download annotations to run tests.
+set_ensembl_release(69, "human")
 
 
 class TestCdsToExon(unittest.TestCase):

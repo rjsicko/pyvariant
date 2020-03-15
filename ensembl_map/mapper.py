@@ -1,6 +1,6 @@
 import logging
 
-from .cache import data
+from .cache import Cache
 from .convert import (
     cpos_to_ppos,
     cpos_to_tpos,
@@ -40,7 +40,7 @@ def cds_to_protein(feature, position, end=None):
         end,
         "protein_id",
         None,
-        data.transcript_ids_of_transcript_name,
+        Cache.get_cache().transcript_ids_of_transcript_name,
         cpos_to_ppos,
     )
 
@@ -53,7 +53,7 @@ def cds_to_transcript(feature, position, end=None):
         end,
         "transcript_id",
         None,
-        data.transcript_ids_of_transcript_name,
+        Cache.get_cache().transcript_ids_of_transcript_name,
         cpos_to_tpos,
     )
 
@@ -90,10 +90,10 @@ def exon_to_transcript(feature):
     # TODO: Fix: `transcript_ids_of_exon_ids` does not match anything.
     return _map(
         feature,
-        data.exon_by_id(feature).start,
-        data.exon_by_id(feature).end,
+        Cache.get_cache().exon_by_id(feature).start,
+        Cache.get_cache().exon_by_id(feature).end,
         "transcript_id",
-        data.transcript_ids_of_exon_id,
+        Cache.get_cache().transcript_ids_of_exon_id,
         None,
         epos_to_tpos,
     )
@@ -133,8 +133,8 @@ def gene_to_transcript(feature, position, end=None):
         position,
         end,
         "transcript_id",
-        data.transcript_ids_of_gene_id,
-        data.transcript_ids_of_gene_name,
+        Cache.get_cache().transcript_ids_of_gene_id,
+        Cache.get_cache().transcript_ids_of_gene_name,
         gpos_to_tpos,
     )
 
@@ -146,7 +146,7 @@ def protein_to_cds(feature, position, end=None):
         position,
         end,
         "transcript_id",
-        data.transcript_id_of_protein_id,
+        Cache.get_cache().transcript_id_of_protein_id,
         None,
         ppos_to_cpos,
     )
@@ -189,7 +189,7 @@ def transcript_to_cds(feature, position, end=None):
         end,
         "transcript_id",
         None,
-        data.transcript_ids_of_transcript_name,
+        Cache.get_cache().transcript_ids_of_transcript_name,
         tpos_to_cpos,
     )
 
@@ -202,7 +202,7 @@ def transcript_to_exon(feature, position, end=None):
         end,
         "gene_id",
         None,
-        data.transcript_ids_of_transcript_name,
+        Cache.get_cache().transcript_ids_of_transcript_name,
         tpos_to_epos,
     )
 
@@ -215,7 +215,7 @@ def transcript_to_gene(feature, position, end=None):
         end,
         "gene_id",
         None,
-        data.transcript_ids_of_transcript_name,
+        Cache.get_cache().transcript_ids_of_transcript_name,
         tpos_to_gpos,
     )
 
@@ -288,7 +288,7 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
 
     # map coordinates by transcript ID
     for tid in sorted(transcript_ids):
-        tobj = data.transcript_by_id(tid)
+        tobj = Cache.get_cache().transcript_by_id(tid)
         try:
             pos1 = convert(tobj, position)
             if isinstance(pos1, tuple):
