@@ -79,7 +79,7 @@ def tpos_to_cpos(tobj, position):
     """Compute the equivalent transcript position for a CDS position."""
     cpos = position - tobj.first_start_codon_spliced_offset + 1
     if not (1 <= cpos <= len(tobj.coding_sequence)):
-        raise OutsideCdsError(tobj, position)
+        raise OutsideCdsError(tobj, cpos)
     return cpos
 
 
