@@ -4,38 +4,43 @@ from .exceptions import OutsideCdsError, OutsideTranscriptError
 
 
 def cpos_to_ppos(_, position):
-    """
-    Compute the equivalent protein position for a CDS position.
+    """Compute the equivalent protein position for a CDS position.
 
     Args:
-        position (int): position relative to the start of the CDS
+        position (int): position relative to the CDS
 
     Returns:
-        (int): amino acid position
-
-    Examples:
-        >>> cpos_to_ppos(_, 1)
-        1
-        >>> cpos_to_ppos(_, 4)
-        2
-        >>> cpos_to_ppos(_, 5)
-        2
-        >>> cpos_to_ppos(_, 7)
-        3
+        int: amino acid position
     """
     return floor((position - 1) / 3 + 1)
 
 
 def cpos_to_tpos(tobj, position):
-    """Compute the equivalent CDS position for a transcript position."""
+    """Compute the equivalent CDS position for a transcript position.
+    
+    Args:
+        tobj: `Transcript` instance
+        position (int): position relative to the CDS
+
+    Returns:
+        int: position relative to the transcript
+    """
     tpos = tobj.first_start_codon_spliced_offset + position - 1
     if not (1 <= tpos <= len(tobj.sequence)):
         raise OutsideTranscriptError(tobj, position)
     return tpos
 
 
-def epos_to_tpos(tobj, position):
-    """Compute the equivalent exon position for a transcript position."""
+def epos_to_gpos(tobj, position):
+    """Return the genomic coordinates of the nth exon of the given transcript.
+    
+    Args:
+        tobj: `Transcript` instance
+        position (int): index of the exon relative to the gene (i.e. the nth exon)
+
+    Returns:
+        tuple of int: genomic coordinates of the exon
+    """
     try:
         return sorted(tobj.exon_intervals)[position - 1]
     except IndexError:
@@ -43,31 +48,40 @@ def epos_to_tpos(tobj, position):
 
 
 def gpos_to_tpos(tobj, position):
-    """Compute the equivalent transcript position for a gene position."""
+    """Compute the equivalent transcript position for a gene position.
+    
+    Args:
+        tobj: `Transcript` instance
+        position (int): genomic coordinate
+
+    Returns:
+        int: position relative to the transcript
+    """
     return tobj.spliced_offset(position) + 1
 
 
 def ppos_to_cpos(_, position):
-    """
-    Compute the equivalent protein position for a CDS position.
+    """Compute the equivalent protein position for a CDS position.
 
     Args:
-        position (int): amino acid position relative to the peptide
+        position (int): amino acid position relative
 
     Returns:
-        (int): CDS position of the first base of the codon
-
-    Examples:
-        >>> ppos_to_cpos(1)
-        1
-        >>> ppos_to_cpos(2)
-        4
+        int: CDS position of the first base of the codon
     """
     return (position - 1) * 3 + 1
 
 
-def tpos_to_epos(tobj, position):
-    """Compute the equivalent exon position for a transcript position."""
+def gpos_to_epos(tobj, position):
+    """Return the genomic coordinates of the exon that contains a genomic coordinate.
+    
+    Args:
+        tobj: `Transcript` instance
+        position (int): genomic coordinate
+
+    Returns:
+        tuple of int: genomic coordinates of the exon
+    """
     for exon in sorted(tobj.exon_intervals):
         if exon[0] <= position <= exon[1]:
             return exon
@@ -76,7 +90,15 @@ def tpos_to_epos(tobj, position):
 
 
 def tpos_to_cpos(tobj, position):
-    """Compute the equivalent transcript position for a CDS position."""
+    """Compute the equivalent transcript position for a CDS position.
+    
+    Args:
+        tobj: `Transcript` instance
+        position (int): position relative to the transcript
+
+    Returns:
+        cpos (int): position relative to the CDS
+    """
     cpos = position - tobj.first_start_codon_spliced_offset + 1
     if not (1 <= cpos <= len(tobj.coding_sequence)):
         raise OutsideCdsError(tobj, cpos)
@@ -84,7 +106,15 @@ def tpos_to_cpos(tobj, position):
 
 
 def tpos_to_gpos(tobj, position):
-    """Compute the equivalent gene position for a transcript position."""
+    """Compute the equivalent gene position for a transcript position.
+    
+    Args:
+        tobj: `Transcript` instance
+        position (int): position relative to the transcript
+
+    Returns:
+        int: genomic coordinate
+    """
     # make sure all the ranges are sorted from smallest to biggest
     ranges = sorted([sorted(i) for i in tobj.exon_intervals])
 

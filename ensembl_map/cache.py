@@ -9,10 +9,9 @@ DEFAULT_SPECIES = "homo_sapiens"
 
 class Cache:
     """
-    Class handles downloading and indexing the required cache files, if they do not 
-    exist locally. The intention is that cache files are not loaded until needed (as 
-    opposed to loading them on import), to give the user the chance to specify which 
-    release to use before loading.
+    Class handles the required cache files. Cache files are not loaded until needed (as
+    opposed to loading them when the package is imported). If the cache files do not 
+    exist locally, they will be downloaded and indexed automatically.
     """
 
     _cache = None

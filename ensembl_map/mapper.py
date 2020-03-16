@@ -4,10 +4,10 @@ from .cache import Cache
 from .convert import (
     cpos_to_ppos,
     cpos_to_tpos,
-    epos_to_tpos,
+    epos_to_gpos,
     gpos_to_tpos,
     ppos_to_cpos,
-    tpos_to_epos,
+    gpos_to_epos,
     tpos_to_cpos,
     tpos_to_gpos,
 )
@@ -15,11 +15,10 @@ from .util import is_ensembl_id
 
 
 def cds_to_exon(feature, position, end=None):
-    """Map CDS coordinates to exon position."""
+    """Map CDS coordinates to exon coordinates."""
     result = []
     for pos in cds_to_transcript(feature, position, end):
         result.extend(transcript_to_exon(*pos[:3]))
-
     return result
 
 
@@ -28,7 +27,6 @@ def cds_to_gene(feature, position, end=None):
     result = []
     for pos in cds_to_transcript(feature, position, end):
         result.extend(transcript_to_gene(*pos[:3]))
-
     return result
 
 
@@ -59,34 +57,31 @@ def cds_to_transcript(feature, position, end=None):
 
 
 def exon_to_cds(feature):
-    """Map exon position to CDS coordinates."""
+    """Map an exon to CDS coordinates."""
     result = []
     for pos in exon_to_transcript(feature):
         result.extend(transcript_to_cds(*pos[:3]))
-
     return result
 
 
 def exon_to_gene(feature):
-    """Map exon position to gene coordinates."""
+    """Map an exon to gene coordinates."""
     result = []
     for pos in exon_to_transcript(feature):
         result.extend(transcript_to_gene(*pos[:3]))
-
     return result
 
 
 def exon_to_protein(feature):
-    """Map exon position to gene coordinates."""
+    """Map an exon to gene coordinates."""
     result = []
     for pos in exon_to_cds(feature):
         result.extend(cds_to_protein(*pos[:3]))
-
     return result
 
 
 def exon_to_transcript(feature):
-    """Map exon position to transcript coordinates."""
+    """Map an exon to transcript coordinates."""
     # NOTE: with `pyensembl==1.8.5` calling `transcript_ids_of_exon_ids` does not
     # match anything:
     # return _map(
@@ -99,8 +94,8 @@ def exon_to_transcript(feature):
     #     gpos_to_tpos,
     # )
 
-    # As a workaround, we can map the exon to a gene then return the associated 
-    # transcripts that contain that exon:
+    # As a workaround, we can map the exon to its gene then return all transcripts of
+    # that gene that contain the exon:
     transcripts_with_exon = []
     exon = Cache.get_cache().exon_by_id(feature)
     transcript_ids = Cache.get_cache().transcript_ids_of_gene_id(exon.gene_id)
@@ -112,7 +107,7 @@ def exon_to_transcript(feature):
     result = []
     for tid in transcripts_with_exon:
         result.extend(
-            _map(tid, exon.start, exon.end, "transcript_id", None, None, gpos_to_tpos,)
+            _map(tid, exon.start, exon.end, "transcript_id", None, None, gpos_to_tpos)
         )
     return result
 
@@ -122,17 +117,20 @@ def gene_to_cds(feature, position, end=None):
     result = []
     for pos in gene_to_transcript(feature, position, end):
         result.extend(transcript_to_cds(*pos[:3]))
-
     return result
 
 
 def gene_to_exon(feature, position, end=None):
-    """Map gene coordinates to exon position."""
-    result = []
-    for pos in gene_to_transcript(feature, position, end):
-        result.extend(transcript_to_exon(*pos[:3]))
-
-    return result
+    """Map gene coordinates to exon coordinates."""
+    return _map(
+        feature,
+        position,
+        end,
+        "gene_id",
+        Cache.get_cache().transcript_ids_of_gene_id,
+        Cache.get_cache().transcript_ids_of_gene_name,
+        gpos_to_epos,
+    )
 
 
 def gene_to_protein(feature, position, end=None):
@@ -140,7 +138,6 @@ def gene_to_protein(feature, position, end=None):
     result = []
     for pos in gene_to_cds(feature, position, end):
         result.extend(cds_to_protein(*pos[:3]))
-
     return result
 
 
@@ -168,16 +165,15 @@ def protein_to_cds(feature, position, end=None):
         None,
         ppos_to_cpos,
     )
-    # the last position is end of the codon
+    # add 2 to the end position to get the end of the codon
     return [(i[0], i[1], i[2] + 2, i[3]) for i in cds]
 
 
 def protein_to_exon(feature, position, end=None):
-    """Map protein coordinates to exon position."""
+    """Map protein coordinates to exon coordinates."""
     result = []
     for pos in protein_to_transcript(feature, position, end):
         result.extend(transcript_to_exon(*pos[:3]))
-
     return result
 
 
@@ -186,7 +182,6 @@ def protein_to_gene(feature, position, end=None):
     result = []
     for pos in protein_to_transcript(feature, position, end):
         result.extend(transcript_to_gene(*pos[:3]))
-
     return result
 
 
@@ -195,7 +190,6 @@ def protein_to_transcript(feature, position, end=None):
     result = []
     for pos in protein_to_cds(feature, position, end):
         result.extend(cds_to_transcript(*pos[:3]))
-
     return result
 
 
@@ -213,16 +207,11 @@ def transcript_to_cds(feature, position, end=None):
 
 
 def transcript_to_exon(feature, position, end=None):
-    """Map transcript coordinates to exon position."""
-    return _map(
-        feature,
-        position,
-        end,
-        "gene_id",
-        None,
-        Cache.get_cache().transcript_ids_of_transcript_name,
-        tpos_to_epos,
-    )
+    """Map transcript coordinates to exon coordinates."""
+    result = []
+    for pos in transcript_to_gene(feature, position, end):
+        result.extend(gene_to_exon(*pos[:3]))
+    return result
 
 
 def transcript_to_gene(feature, position, end=None):
@@ -243,7 +232,6 @@ def transcript_to_protein(feature, position, end=None):
     result = []
     for pos in transcript_to_cds(feature, position, end):
         result.extend(cds_to_protein(*pos[:3]))
-
     return result
 
 

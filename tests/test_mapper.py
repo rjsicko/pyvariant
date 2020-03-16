@@ -25,11 +25,12 @@ from ensembl_map.mapper import (
 )
 
 
-# TODO: Mock Cache object instead of needing to download annotations to run tests.
-set_ensembl_release(69, "human")
+set_ensembl_release(release=69, species="human")
 
 
 class TestCdsToExon(unittest.TestCase):
+    # TODO: Mock Cache object instead of needing to download annotations to run tests.
+
     # TODO: def test_cds_to_exon_pos_strand_by_transcript_id(self):
 
     # TODO: def test_cds_to_exon_pos_strand_by_transcript_id_2(self):
@@ -243,6 +244,7 @@ class TestCdsToTranscript(unittest.TestCase):
 
 
 class TestExonToCds(unittest.TestCase):
+
     # TODO: def test_exon_to_cds_pos_strand_by_exon_id(self):
 
     # TODO: def test_exon_to_cds_pos_strand_by_exon_id_2(self):
@@ -258,6 +260,7 @@ class TestExonToCds(unittest.TestCase):
 
 
 class TestExonToGene(unittest.TestCase):
+
     # TODO: def test_exon_to_gene_pos_strand_by_exon_id(self):
 
     # TODO: def test_exon_to_gene_pos_strand_by_exon_id_2(self):
@@ -273,6 +276,7 @@ class TestExonToGene(unittest.TestCase):
 
 
 class TestExonToProtein(unittest.TestCase):
+
     # TODO: def test_exon_to_protein_pos_strand_by_exon_id(self):
 
     # TODO: def test_exon_to_protein_pos_strand_by_exon_id_2(self):
@@ -288,6 +292,7 @@ class TestExonToProtein(unittest.TestCase):
 
 
 class TestExonToTranscript(unittest.TestCase):
+
     # TODO: def test_exon_to_transcript_pos_strand_by_exon_id(self):
 
     # TODO: def test_exon_to_transcript_pos_strand_by_exon_id_2(self):
@@ -516,6 +521,7 @@ class TestGeneToTranscript(unittest.TestCase):
 
 
 class TestProteinToCds(unittest.TestCase):
+
     # TODO: def test_protein_to_cds_pos_strand_by_protein_id(self):
 
     # TODO: def test_protein_to_cds_pos_strand_by_protein_id_2(self):
@@ -548,6 +554,7 @@ class TestProteinToCds(unittest.TestCase):
 
 
 class TestProteinToExon(unittest.TestCase):
+
     # TODO: def test_protein_to_exon_pos_strand_by_protein_id(self):
 
     # TODO: def test_protein_to_exon_pos_strand_by_protein_id_2(self):
@@ -595,6 +602,7 @@ class TestProteinToGene(unittest.TestCase):
 
 
 class TestProteinToTranscript(unittest.TestCase):
+
     # TODO: def test_protein_to_transcript_pos_strand_by_protein_id(self):
 
     # TODO: def test_protein_to_transcript_pos_strand_by_protein_id_2(self):
@@ -689,6 +697,7 @@ class TestTranscriptToCds(unittest.TestCase):
 
 
 class TestTranscriptToExon(unittest.TestCase):
+
     # TODO: def test_transcript_to_exon_pos_strand_by_transcript_id(self):
 
     # TODO: def test_transcript_to_exon_pos_strand_by_transcript_id_2(self):
@@ -778,6 +787,7 @@ class TestTranscriptToGene(unittest.TestCase):
 
 
 class TestTranscriptToProtein(unittest.TestCase):
+
     # TODO: def test_transcript_to_protein_pos_strand_by_transcript_id(self):
 
     # TODO: def test_transcript_to_protein_pos_strand_by_transcript_id_2(self):
