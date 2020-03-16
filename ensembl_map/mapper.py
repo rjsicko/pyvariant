@@ -87,16 +87,34 @@ def exon_to_protein(feature):
 
 def exon_to_transcript(feature):
     """Map exon position to transcript coordinates."""
-    # TODO: Fix: `transcript_ids_of_exon_ids` does not match anything.
-    return _map(
-        feature,
-        Cache.get_cache().exon_by_id(feature).start,
-        Cache.get_cache().exon_by_id(feature).end,
-        "transcript_id",
-        Cache.get_cache().transcript_ids_of_exon_id,
-        None,
-        epos_to_tpos,
-    )
+    # NOTE: with `pyensembl==1.8.5` calling `transcript_ids_of_exon_ids` does not
+    # match anything:
+    # return _map(
+    #     feature,
+    #     Cache.get_cache().exon_by_id(feature).start,
+    #     Cache.get_cache().exon_by_id(feature).end,
+    #     "transcript_id",
+    #     Cache.get_cache().transcript_ids_of_exon_id,
+    #     None,
+    #     gpos_to_tpos,
+    # )
+
+    # As a workaround, we can map the exon to a gene then return the associated 
+    # transcripts that contain that exon:
+    transcripts_with_exon = []
+    exon = Cache.get_cache().exon_by_id(feature)
+    transcript_ids = Cache.get_cache().transcript_ids_of_gene_id(exon.gene_id)
+    for tid in transcript_ids:
+        transcript = Cache.get_cache().transcript_by_id(tid)
+        if feature in [i.exon_id for i in transcript.exons]:
+            transcripts_with_exon.append(tid)
+
+    result = []
+    for tid in transcripts_with_exon:
+        result.extend(
+            _map(tid, exon.start, exon.end, "transcript_id", None, None, gpos_to_tpos,)
+        )
+    return result
 
 
 def gene_to_cds(feature, position, end=None):
@@ -273,7 +291,7 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
             logging.debug(f"[{tids_by_id}, '{feature}']: {transcript_ids}")
             transcript_ids = tids_by_id(feature)
         else:
-            transcript_ids = [feature]
+            transcript_ids = feature
     else:
         if tids_by_name:
             logging.debug(f"[{tids_by_name}, '{feature}']: {transcript_ids}")
