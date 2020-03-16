@@ -14,27 +14,27 @@ from .convert import (
 from .util import is_ensembl_id
 
 
-def cds_to_exon(feature, position, end=None):
+def cds_to_exon(feature, start, end=None):
     """Map CDS coordinates to exon coordinates."""
     result = []
-    for pos in cds_to_transcript(feature, position, end):
+    for pos in cds_to_transcript(feature, start, end):
         result.extend(transcript_to_exon(*pos[:3]))
     return result
 
 
-def cds_to_gene(feature, position, end=None):
+def cds_to_gene(feature, start, end=None):
     """Map CDS coordinates to gene coordinates."""
     result = []
-    for pos in cds_to_transcript(feature, position, end):
+    for pos in cds_to_transcript(feature, start, end):
         result.extend(transcript_to_gene(*pos[:3]))
     return result
 
 
-def cds_to_protein(feature, position, end=None):
+def cds_to_protein(feature, start, end=None):
     """Map CDS coordinates to protein coordinates."""
     return _map(
         feature,
-        position,
+        start,
         end,
         "protein_id",
         None,
@@ -43,11 +43,11 @@ def cds_to_protein(feature, position, end=None):
     )
 
 
-def cds_to_transcript(feature, position, end=None):
+def cds_to_transcript(feature, start, end=None):
     """Map CDS coordinates to transcript coordinates."""
     return _map(
         feature,
-        position,
+        start,
         end,
         "transcript_id",
         None,
@@ -112,19 +112,19 @@ def exon_to_transcript(feature):
     return result
 
 
-def gene_to_cds(feature, position, end=None):
+def gene_to_cds(feature, start, end=None):
     """Map gene coordinates to CDS coordinates."""
     result = []
-    for pos in gene_to_transcript(feature, position, end):
+    for pos in gene_to_transcript(feature, start, end):
         result.extend(transcript_to_cds(*pos[:3]))
     return result
 
 
-def gene_to_exon(feature, position, end=None):
+def gene_to_exon(feature, start, end=None):
     """Map gene coordinates to exon coordinates."""
     return _map(
         feature,
-        position,
+        start,
         end,
         "gene_id",
         Cache.get_cache().transcript_ids_of_gene_id,
@@ -133,19 +133,19 @@ def gene_to_exon(feature, position, end=None):
     )
 
 
-def gene_to_protein(feature, position, end=None):
+def gene_to_protein(feature, start, end=None):
     """Map gene coordinates to protein coordinates."""
     result = []
-    for pos in gene_to_cds(feature, position, end):
+    for pos in gene_to_cds(feature, start, end):
         result.extend(cds_to_protein(*pos[:3]))
     return result
 
 
-def gene_to_transcript(feature, position, end=None):
+def gene_to_transcript(feature, start, end=None):
     """Map gene coordinates to transcript coordinates."""
     return _map(
         feature,
-        position,
+        start,
         end,
         "transcript_id",
         Cache.get_cache().transcript_ids_of_gene_id,
@@ -154,11 +154,11 @@ def gene_to_transcript(feature, position, end=None):
     )
 
 
-def protein_to_cds(feature, position, end=None):
+def protein_to_cds(feature, start, end=None):
     """Map protein coordinates to CDS coordinates."""
     cds = _map(
         feature,
-        position,
+        start,
         end,
         "transcript_id",
         Cache.get_cache().transcript_id_of_protein_id,
@@ -169,35 +169,35 @@ def protein_to_cds(feature, position, end=None):
     return [(i[0], i[1], i[2] + 2, i[3]) for i in cds]
 
 
-def protein_to_exon(feature, position, end=None):
+def protein_to_exon(feature, start, end=None):
     """Map protein coordinates to exon coordinates."""
     result = []
-    for pos in protein_to_transcript(feature, position, end):
+    for pos in protein_to_transcript(feature, start, end):
         result.extend(transcript_to_exon(*pos[:3]))
     return result
 
 
-def protein_to_gene(feature, position, end=None):
+def protein_to_gene(feature, start, end=None):
     """Map protein coordinates to gene coordinates."""
     result = []
-    for pos in protein_to_transcript(feature, position, end):
+    for pos in protein_to_transcript(feature, start, end):
         result.extend(transcript_to_gene(*pos[:3]))
     return result
 
 
-def protein_to_transcript(feature, position, end=None):
+def protein_to_transcript(feature, start, end=None):
     """Map protein coordinates to transcript coordinates."""
     result = []
-    for pos in protein_to_cds(feature, position, end):
+    for pos in protein_to_cds(feature, start, end):
         result.extend(cds_to_transcript(*pos[:3]))
     return result
 
 
-def transcript_to_cds(feature, position, end=None):
+def transcript_to_cds(feature, start, end=None):
     """Map transcript coordinates to CDS coordinates."""
     return _map(
         feature,
-        position,
+        start,
         end,
         "transcript_id",
         None,
@@ -206,19 +206,19 @@ def transcript_to_cds(feature, position, end=None):
     )
 
 
-def transcript_to_exon(feature, position, end=None):
+def transcript_to_exon(feature, start, end=None):
     """Map transcript coordinates to exon coordinates."""
     result = []
-    for pos in transcript_to_gene(feature, position, end):
+    for pos in transcript_to_gene(feature, start, end):
         result.extend(gene_to_exon(*pos[:3]))
     return result
 
 
-def transcript_to_gene(feature, position, end=None):
+def transcript_to_gene(feature, start, end=None):
     """Map transcript coordinates to gene coordinates."""
     return _map(
         feature,
-        position,
+        start,
         end,
         "gene_id",
         None,
@@ -227,22 +227,22 @@ def transcript_to_gene(feature, position, end=None):
     )
 
 
-def transcript_to_protein(feature, position, end=None):
+def transcript_to_protein(feature, start, end=None):
     """Map transcript coordinates to protein coordinates."""
     result = []
-    for pos in transcript_to_cds(feature, position, end):
+    for pos in transcript_to_cds(feature, start, end):
         result.extend(cds_to_protein(*pos[:3]))
     return result
 
 
-def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
+def _map(feature, start, end, return_id, tids_by_id, tids_by_name, convert):
     """
     Template function for mapping a feature to the associated transcript(s), then 
     converting the given coordinates.
 
     Args:
         feature (str): feature name or Ensembl ID
-        position (int): first position relative to `feature`
+        start (int): first position relative to `feature`
         end (int or None): second position relative to `feature`
         return_id (str): `Transcript` attribute to return
         tids_by_id: function converts an Ensembl ID to a list of Ensembl transcript IDs
@@ -250,7 +250,7 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
         convert: function maps the given coordinate type to the desired type
         
     Returns:
-        list: of converted coordinate (key, position, end, strand)
+        list: of converted coordinate (key, start, end, strand)
     """
     transcript_ids = []
     result = []
@@ -260,7 +260,7 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
     logging.debug(
         "From: "
         f"{feature}, "
-        f"{position}, "
+        f"{start}, "
         f"{end}, "
         f"{return_id}, "
         f"{tids_by_id}, "
@@ -268,10 +268,10 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
         f"{convert}"
     )
 
-    if position < 1:
-        raise ValueError(f"Position must be >= 1 ({position})")
+    if start < 1:
+        raise ValueError(f"Start must be >= 1 ({start})")
     if end is not None and end < 1:
-        raise ValueError(f"Position must be >= 1 ({end})")
+        raise ValueError(f"End must be >= 1 ({end})")
 
     # map feature to Ensembl transcript ID
     if is_ensembl_id(feature):
@@ -296,7 +296,7 @@ def _map(feature, position, end, return_id, tids_by_id, tids_by_name, convert):
     for tid in sorted(transcript_ids):
         tobj = Cache.get_cache().transcript_by_id(tid)
         try:
-            pos1 = convert(tobj, position)
+            pos1 = convert(tobj, start)
             if isinstance(pos1, tuple):
                 pos1, pos2 = pos1[0], pos1[1]
             if end:
