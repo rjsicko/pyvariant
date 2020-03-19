@@ -82,9 +82,9 @@ def gpos_to_epos(tobj, position):
     Returns:
         tuple of int: genomic coordinates of the exon
     """
-    for exon in sorted(tobj.exon_intervals):
-        if exon[0] <= position <= exon[1]:
-            return exon
+    for index, exon in enumerate(sorted(tobj.exons, key=lambda x: x.start), 1):
+        if exon.start <= position <= exon.end:
+            return exon.start, exon.end, exon.exon_id, index
     else:
         raise AssertionError("Iterated through all exons")
 

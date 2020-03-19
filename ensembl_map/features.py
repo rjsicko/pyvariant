@@ -1,9 +1,3 @@
-import logging
-
-from .cache import Cache
-from .util import is_ensembl_id
-
-
 class CDS:
     """CDS coordinate object.
 
@@ -26,8 +20,24 @@ class CDS:
         self.transcript_name = transcript_name
         self.seq = seq
 
+    def __repr__(self):
+        if len(self.seq) > 3:
+            seq_str = self.seq[:3] + "..."
+        else:
+            seq_str = self.seq
+        return (
+            f"CDS("
+            f"contig={self.contig}, "
+            f"start={self.start}, "
+            f"end={self.end}, "
+            f"strand={self.strand}, "
+            f"transcript_id={self.transcript_id}, "
+            f"transcript_name={self.transcript_name}, "
+            f"seq={seq_str})"
+        )
+
     @classmethod
-    def format(cls, tobj, start, end):
+    def load(cls, tobj, start, end):
         return cls(
             tobj.contig,
             start,
@@ -72,11 +82,12 @@ class Exon:
         self.strand = strand
         self.exon_id = exon_id
         self.transcript_id = transcript_id
+        self.transcript_name = transcript_name
         self.index = index
         self.seq = seq
 
     @classmethod
-    def format(cls, tobj, start, end, exon_id, index):
+    def load(cls, tobj, start, end, exon_id, index):
         return cls(
             tobj.contig,
             start,
@@ -111,8 +122,40 @@ class Gene:
         self.gene_name = gene_name
 
     @classmethod
-    def format(cls, tobj, start, end):
-        return cls(tobj.gene_id, tobj.gene_name, start, end, tobj.contig, tobj.strand)
+    def load(cls, tobj, start, end):
+        return cls(tobj.contig, start, end, tobj.strand, tobj.gene_id, tobj.gene_name)
+
+
+class Protein:
+    """Protein coordinate object.
+
+    Attributes:
+        contig (str): name of the contig the feature is mapped to
+        start (int): start position, relative to the transcript
+        end (int): end position, relative to the transcript
+        strand (str): orientation on the contig ("+" or "-")
+        protein_id_id (str): Ensembl protein ID
+        seq (str): transcript sequence from `start` to `end`, inclusive
+    """
+
+    def __init__(self, contig, start, end, strand, protein_id, seq):
+        self.contig = contig
+        self.start = start
+        self.end = end
+        self.strand = strand
+        self.protein_id = protein_id
+        self.seq = seq
+
+    @classmethod
+    def load(cls, tobj, start, end):
+        return cls(
+            tobj.contig,
+            start,
+            end,
+            tobj.strand,
+            tobj.protein_id,
+            tobj.protein_sequence[start - 1 : end],
+        )
 
 
 class Transcript:
@@ -138,14 +181,14 @@ class Transcript:
         self.seq = seq
 
     @classmethod
-    def format(cls, tobj, start, end):
+    def load(cls, tobj, start, end):
         return cls(
             tobj.contig,
             start,
             end,
+            tobj.strand,
             tobj.transcript_id,
             tobj.transcript_name,
-            tobj.strand,
             tobj.sequence[start - 1 : end],
         )
 
