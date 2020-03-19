@@ -1,4 +1,4 @@
-from .cache import set_ensembl_release
+from .config import set_ensembl_release
 from .mapper import (
     cds_to_exon,
     cds_to_gene,

@@ -39,13 +39,3 @@ class Cache:
         return cls._cache
 
 
-def set_ensembl_release(release, species=DEFAULT_SPECIES):
-    """Set the Ensembl release to use."""
-    args = []
-    if release is not None:
-        args.append(release)
-    if species is not None:
-        args.append(species)
-
-    return Cache.set_cache(release, species)
-
