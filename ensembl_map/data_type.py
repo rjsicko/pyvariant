@@ -1,5 +1,11 @@
+import logging
+
+from .cache import Cache
+from .util import is_ensembl_id
+
+
 class CDS:
-    """CDS coordiante object.
+    """CDS coordinate object.
 
     Attributes:
         contig (str): name of the contig the feature is mapped to
@@ -34,7 +40,7 @@ class CDS:
 
 
 class Exon:
-    """Exon coordiante object.
+    """Exon coordinate object.
 
     Attributes:
         contig (str): name of the contig the feature is mapped to
@@ -85,7 +91,7 @@ class Exon:
 
 
 class Gene:
-    """Gene coordiante object.
+    """Gene coordinate object.
 
     Attributes:
         contig (str): name of the contig the feature is mapped to
@@ -110,7 +116,7 @@ class Gene:
 
 
 class Transcript:
-    """Transcript coordiante object.
+    """Transcript coordinate object.
 
     Attributes:
         contig (str): name of the contig the feature is mapped to
