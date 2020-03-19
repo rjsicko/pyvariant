@@ -1,7 +1,12 @@
 from .cache import Cache
 
 
-def set_ensembl_release(release=None, species=None):
+def set_cache_dir(path):
+    """Set the root directory where cache files are stored."""
+    Cache.set_cache_dir(path)
+
+
+def set_ensembl_release(release=None, species=None, download_if_missing=False):
     """Set the Ensembl release to use."""
     args = []
     if release is not None:
@@ -11,4 +16,5 @@ def set_ensembl_release(release=None, species=None):
     if not release or species:
         raise ValueError("A release number of species must be given")
 
-    return Cache.set_cache(release, species)
+    return Cache.set_cache(release, species, download_if_missing)
+
