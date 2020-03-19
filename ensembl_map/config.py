@@ -13,7 +13,7 @@ def set_ensembl_release(release=None, species=None, download_if_missing=False):
         args.append(release)
     if species is not None:
         args.append(species)
-    if not release or species:
+    if not release and not species:
         raise ValueError("A release number of species must be given")
 
     return Cache.set_cache(release, species, download_if_missing)
