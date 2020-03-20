@@ -71,15 +71,21 @@ def exon_to_transcript(feature):
 
     # As a workaround, we can map the exon to its gene then return all transcripts of
     # that gene that contain the exon:
+    result = []
+
     transcripts_with_exon = []
-    exon = Cache.get_cache().exon_by_id(feature)
+    try:
+        exon = Cache.get_cache().exon_by_id(feature)
+    except TypeError:
+        logging.error(f"No exon '{feature}' found")
+        return result
+
     transcript_ids = Cache.get_cache().transcript_ids_of_gene_id(exon.gene_id)
     for tid in transcript_ids:
         transcript = Cache.get_cache().transcript_by_id(tid)
         if feature in [i.exon_id for i in transcript.exons]:
             transcripts_with_exon.append(tid)
 
-    result = []
     for tid in transcripts_with_exon:
         result.extend(_map(tid, exon.start, exon.end, "exon", "transcript"))
     return result
