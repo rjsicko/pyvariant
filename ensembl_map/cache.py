@@ -27,7 +27,15 @@ class Cache:
     def set_cache(
         cls, release=DEFAULT_RELEASE, species=DEFAULT_SPECIES, download_if_missing=False
     ):
-        cls._cache = EnsemblRelease(release, species)
+        args = []
+        if release is not None:
+            args.append(release)
+        if species is not None:
+            args.append(species)
+        if not release and not species:
+            raise ValueError("A release number of species must be given")
+
+        cls._cache = EnsemblRelease(*args)
         if cls._cache.required_local_files_exist():
             logging.info(
                 f"Using cache files in {cls._cache.download_cache.cache_directory_path}"
