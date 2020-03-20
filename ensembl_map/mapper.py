@@ -33,30 +33,12 @@ def cds_to_gene(feature, start, end=None):
 
 def cds_to_protein(feature, start, end=None):
     """Map CDS coordinates to protein coordinates."""
-    return _map(
-        feature,
-        start,
-        end,
-        "protein_id",
-        None,
-        Cache.get_cache().transcript_ids_of_transcript_name,
-        cpos_to_ppos,
-        Protein.load,
-    )
+    return _map(feature, start, end, "cds", "protein")
 
 
 def cds_to_transcript(feature, start, end=None):
     """Map CDS coordinates to transcript coordinates."""
-    return _map(
-        feature,
-        start,
-        end,
-        "transcript_id",
-        None,
-        Cache.get_cache().transcript_ids_of_transcript_name,
-        cpos_to_tpos,
-        Transcript.load,
-    )
+    return _map(feature, start, end, "cds", "transcript")
 
 
 def exon_to_cds(feature):
@@ -90,11 +72,9 @@ def exon_to_transcript(feature):
     # return _map(
     #     feature,
     #     Cache.get_cache().exon_by_id(feature).start,
-    #     Cache.get_cache().exon_by_id(feature).end,
-    #     "transcript_id",
-    #     Cache.get_cache().transcript_ids_of_exon_id,
-    #     None,
-    #     gpos_to_tpos,
+    #     Cache.get_cache().exon_by_id(feature).end.end,
+    #     "exon",
+    #     "transcript",
     # )
 
     # As a workaround, we can map the exon to its gene then return all transcripts of
@@ -109,18 +89,7 @@ def exon_to_transcript(feature):
 
     result = []
     for tid in transcripts_with_exon:
-        result.extend(
-            _map(
-                tid,
-                exon.start,
-                exon.end,
-                "transcript_id",
-                None,
-                None,
-                gpos_to_tpos,
-                Transcript.load,
-            )
-        )
+        result.extend(_map(tid, exon.start, exon.end, "exon", "transcript"))
     return result
 
 
@@ -134,16 +103,7 @@ def gene_to_cds(feature, start, end=None):
 
 def gene_to_exon(feature, start, end=None):
     """Map gene coordinates to exon coordinates."""
-    return _map(
-        feature,
-        start,
-        end,
-        "gene_id",
-        Cache.get_cache().transcript_ids_of_gene_id,
-        Cache.get_cache().transcript_ids_of_gene_name,
-        gpos_to_epos,
-        Exon.load,
-    )
+    return _map(feature, start, end, "gene", "exon")
 
 
 def gene_to_protein(feature, start, end=None):
@@ -156,30 +116,12 @@ def gene_to_protein(feature, start, end=None):
 
 def gene_to_transcript(feature, start, end=None):
     """Map gene coordinates to transcript coordinates."""
-    return _map(
-        feature,
-        start,
-        end,
-        "transcript_id",
-        Cache.get_cache().transcript_ids_of_gene_id,
-        Cache.get_cache().transcript_ids_of_gene_name,
-        gpos_to_tpos,
-        Transcript.load,
-    )
+    return _map(feature, start, end, "gene", "transcript")
 
 
 def protein_to_cds(feature, start, end=None):
     """Map protein coordinates to CDS coordinates."""
-    cds = _map(
-        feature,
-        start,
-        end,
-        "transcript_id",
-        Cache.get_cache().transcript_id_of_protein_id,
-        None,
-        ppos_to_cpos,
-        CDS.load,
-    )
+    cds = _map(feature, start, end, "protein", "cds")
     # add 2 to the end position to get the end of the codon
     for i in cds:
         i.end += 2
@@ -212,16 +154,7 @@ def protein_to_transcript(feature, start, end=None):
 
 def transcript_to_cds(feature, start, end=None):
     """Map transcript coordinates to CDS coordinates."""
-    return _map(
-        feature,
-        start,
-        end,
-        "transcript_id",
-        None,
-        Cache.get_cache().transcript_ids_of_transcript_name,
-        tpos_to_cpos,
-        CDS.load,
-    )
+    return _map(feature, start, end, "transcript", "cds")
 
 
 def transcript_to_exon(feature, start, end=None):
@@ -234,16 +167,7 @@ def transcript_to_exon(feature, start, end=None):
 
 def transcript_to_gene(feature, start, end=None):
     """Map transcript coordinates to gene coordinates."""
-    return _map(
-        feature,
-        start,
-        end,
-        "gene_id",
-        None,
-        Cache.get_cache().transcript_ids_of_transcript_name,
-        tpos_to_gpos,
-        Gene.load,
-    )
+    return _map(feature, start, end, "transcript", "gene")
 
 
 def transcript_to_protein(feature, start, end=None):
@@ -254,7 +178,7 @@ def transcript_to_protein(feature, start, end=None):
     return result
 
 
-def _map(feature, start, end, return_id, tids_by_id, tids_by_name, convert, load):
+def _map(feature, start, end, from_type, to_type):
     """
     Template function for mapping a feature to the associated transcript(s), then 
     converting the given coordinates.
@@ -263,64 +187,33 @@ def _map(feature, start, end, return_id, tids_by_id, tids_by_name, convert, load
         feature (str): feature name or Ensembl ID
         start (int): first position relative to `feature`
         end (int or None): second position relative to `feature`
-        return_id (str): `Transcript` attribute to return
-        tids_by_id: function converts an Ensembl ID to a list of Ensembl transcript IDs
-        tids_by_name: function converts a name to a list of Ensembl transcript IDs
-        convert: function maps the given coordinate type to the desired type
-        load: parse the returned values into a python object
+        from_type (str): coordinates relative to this type of feature (e.g. 'gene')
+        to_type (str): map coordinates to this type of feature (e.g 'transcript')
         
     Returns:
-        list: of converted coordinate (key, start, end, strand)
+        list: of converted coordinate
     """
     transcript_ids = []
     result = []
 
-    logging.debug(
-        "From: "
-        f"{feature}, "
-        f"{start}, "
-        f"{end}, "
-        f"{return_id}, "
-        f"{tids_by_id}, "
-        f"{tids_by_name}, "
-        f"{convert}"
-    )
+    logging.debug(f"Map ({feature}, {start}, {end}) from {from_type} to {to_type}")
 
-    if start < 1:
-        raise ValueError(f"Start must be >= 1 ({start})")
-    if end is not None and end < 1:
-        raise ValueError(f"End must be >= 1 ({end})")
-
-    # map feature to Ensembl transcript ID
-    if is_ensembl_id(feature):
-        if tids_by_id:
-            logging.debug(f"[{tids_by_id}, '{feature}']: {transcript_ids}")
-            transcript_ids = tids_by_id(feature)
-        else:
-            transcript_ids = feature
-    else:
-        if tids_by_name:
-            logging.debug(f"[{tids_by_name}, '{feature}']: {transcript_ids}")
-            transcript_ids = tids_by_name(feature)
-
-    if not transcript_ids:
-        raise ValueError(f"'{feature}' did not match any transcript ID")
-
-    # coerce to a list
-    if isinstance(transcript_ids, str):
-        transcript_ids = [transcript_ids]
+    _assert_valid_position(start, end)
+    map_func = _get_map_function(from_type, to_type)
+    parse_func = _get_parse_function(to_type)
+    transcript_ids = _get_transcript_ids(feature, from_type)
 
     # map coordinates by transcript ID
-    for tid in sorted(transcript_ids):
+    for tid in transcript_ids:
         args = []
         ret_val1 = None
         ret_val2 = None
         tobj = Cache.get_cache().transcript_by_id(tid)
         try:
             if start is not None:
-                ret_val1 = convert(tobj, start)
+                ret_val1 = map_func(tobj, start)
             if end is not None:
-                ret_val2 = convert(tobj, end)
+                ret_val2 = map_func(tobj, end)
             logging.debug(f"Got: {ret_val1} {ret_val2}")
         except Exception as exc:
             logging.debug(exc)
@@ -335,8 +228,129 @@ def _map(feature, start, end, return_id, tids_by_id, tids_by_name, convert, load
         else:
             args = ret_val1
 
-        ret_obj = load(tobj, *args)
-        logging.debug(f"Load: {ret_obj}")
+        ret_obj = parse_func(tobj, *args)
+        logging.debug(f"Parsed: {ret_obj}")
         result.append(ret_obj)
 
     return result
+
+
+def _assert_valid_position(start=None, end=None):
+    if start is not None and start < 1:
+        raise ValueError(f"Start must be >= 1 ({start})")
+    if end is not None and end < 1:
+        raise ValueError(f"End must be >= 1 ({end})")
+
+
+def _get_transcript_ids(feature, feature_type):
+    if is_ensembl_id(feature):
+        transcript_ids = _get_transcript_ids_by_id(feature, feature_type)
+    else:
+        transcript_ids = _get_transcript_ids_by_name(feature, feature_type)
+
+    if not transcript_ids:
+        raise ValueError(f"'{feature}' did not match any transcript ID")
+
+    if not isinstance(transcript_ids, list):
+        transcript_ids = [transcript_ids]
+
+    return sorted(transcript_ids)
+
+
+def _get_transcript_ids_by_id(feature, feature_type):
+    if feature_type == "cds":
+        return feature
+    elif feature_type == "exon":
+        x = Cache.get_cache().exon_by_id(feature).gene_id
+        return Cache.get_cache().transcript_ids_of_gene_id(x)
+    elif feature_type == "gene":
+        return Cache.get_cache().transcript_ids_of_gene_id(feature)
+    elif feature_type == "protein":
+        return Cache.get_cache().transcript_id_of_protein_id(feature)
+    elif feature_type == "transcript":
+        return feature
+    else:
+        raise TypeError(f"Could not get transcript IDs for {feature_type}")
+
+
+def _get_transcript_ids_by_name(feature, feature_type):
+    if feature_type == "cds":
+        return Cache.get_cache().transcript_ids_of_transcript_name(feature)
+    elif feature_type == "exon":
+        raise NotImplementedError(f"Cannot get transcript IDs for {feature_type} name")
+    elif feature_type == "gene":
+        return Cache.get_cache().transcript_ids_of_gene_name(feature)
+    elif feature_type == "protein":
+        raise NotImplementedError(f"Cannot get transcript IDs for {feature_type} name")
+    elif feature_type == "transcript":
+        return Cache.get_cache().transcript_ids_of_transcript_name(feature)
+    else:
+        raise TypeError(f"Could not get transcript IDs for {feature_type}")
+
+
+def _get_map_function(from_type, to_type):
+    if from_type == to_type:
+        raise ValueError("`from_type` and `to_type` must be different!")
+
+    elif from_type == "cds" and to_type == "exon":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "cds" and to_type == "gene":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "cds" and to_type == "protein":
+        return cpos_to_ppos
+    elif from_type == "cds" and to_type == "transcript":
+        return cpos_to_tpos
+
+    elif from_type == "exon" and to_type == "cds":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "exon" and to_type == "gene":
+        return epos_to_gpos
+    elif from_type == "exon" and to_type == "protein":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "exon" and to_type == "transcript":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+
+    elif from_type == "gene" and to_type == "cds":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "gene" and to_type == "exon":
+        return gpos_to_epos
+    elif from_type == "gene" and to_type == "protein":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "gene" and to_type == "transcript":
+        return gpos_to_tpos
+
+    elif from_type == "protein" and to_type == "cds":
+        return ppos_to_cpos
+    elif from_type == "protein" and to_type == "exon":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "protein" and to_type == "gene":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "protein" and to_type == "transcript":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+
+    elif from_type == "transcript" and to_type == "cds":
+        return tpos_to_cpos
+    elif from_type == "transcript" and to_type == "exon":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+    elif from_type == "transcript" and to_type == "gene":
+        return tpos_to_gpos
+    elif from_type == "transcript" and to_type == "protein":
+        raise NotImplementedError(f"Cannot convert {from_type} directly to {to_type}")
+
+    else:
+        raise ValueError(f"Unrecognized combination, from '{from_type}' to '{to_type}'")
+
+
+def _get_parse_function(to_type):
+    if to_type == "cds":
+        return CDS.load
+    elif to_type == "exon":
+        return Exon.load
+    elif to_type == "gene":
+        return Gene.load
+    elif to_type == "protein":
+        return Protein.load
+    elif to_type == "transcript":
+        return Transcript.load
+    else:
+        raise TypeError(f"Could not get parse function for {to_type}")
