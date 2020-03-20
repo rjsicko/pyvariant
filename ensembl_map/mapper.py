@@ -187,7 +187,7 @@ def _map(feature, start, end, from_type, to_type):
     """
     result = []
 
-    logging.debug(f"Map ({feature}, {start}, {end}) from {from_type} to {to_type}")
+    logging.debug(f"Map {from_type} ({feature}, {start}, {end}) to {to_type}")
     assert_valid_position(start, end)
     map_func = get_map_function(from_type, to_type)
     parse_func = get_parse_function(to_type)
@@ -195,7 +195,7 @@ def _map(feature, start, end, from_type, to_type):
 
     # map coordinates by transcript ID
     for tobj in transcripts:
-        args = []
+        args = [tobj]
         ret_val1 = None
         ret_val2 = None
         try:
@@ -210,15 +210,14 @@ def _map(feature, start, end, from_type, to_type):
             continue
 
         if isinstance(ret_val1, int):
-            args = [ret_val1, ret_val2]
             if ret_val2 is not None:
-                args = [ret_val1, ret_val2]
+                args.extend([ret_val1, ret_val2])
             else:
-                args = [ret_val1, ret_val1]
+                args.extend([ret_val1, ret_val1])
         else:
-            args = ret_val1
+            args.extend(ret_val1)
 
-        ret_obj = parse_func(tobj, *args)
+        ret_obj = parse_func(*args)
         logging.debug(f"Parsed {args} to {ret_obj}")
         result.append(ret_obj)
 
