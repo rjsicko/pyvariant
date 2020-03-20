@@ -107,12 +107,12 @@ class Exon(FeatureBase):
 
     @classmethod
     def load(cls, tobj, start, end, exon_id):
-        eobj = cls.get_exon_from_transcript(tobj, exon_id)
+        _, eobj = cls.get_exon_from_transcript(tobj, exon_id)
         return cls(tobj, eobj, start, end)
 
     @classmethod
     def get_exon_from_transcript(cls, tobj, exon_id):
-        exons = [i for i in tobj.exon if i.exon_id == exon_id]
+        exons = [(n, i) for n, i in enumerate(tobj.exons, 1) if i.exon_id == exon_id]
         if len(exons) < 1:
             raise ValueError(
                 f"Exon {exon_id} not found in transcript {tobj.transcript_id}"
@@ -134,6 +134,10 @@ class Exon(FeatureBase):
             return self._exon.exon_id
         except AttributeError:
             return None
+
+    @property
+    def exon_position(self):
+        return self.get_exon_from_transcript(self.transcript, self.exon_id)[0]
 
     @property
     def transcript(self):

@@ -25,15 +25,28 @@ from ensembl_map.mapper import (
 )
 
 
+# TODO: Mock Cache object instead of needing to download annotations to run tests.
 set_ensembl_release(release=69, species="human")
 
 
 class TestCdsToExon(unittest.TestCase):
-    # TODO: Mock Cache object instead of needing to download annotations to run tests.
+    def test_cds_to_exon_pos_strand_by_transcript_id(self):
+        pos = cds_to_exon("ENST00000380152", 1)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].transcript_id, "ENST00000380152")
+        self.assertEqual(pos[0].exon_id, "ENSE00001484009")
+        self.assertEqual(pos[0].start, 32890559)
+        self.assertEqual(pos[0].end, 32890664)
+        self.assertEqual(pos[0].strand, "+")
 
-    # TODO: def test_cds_to_exon_pos_strand_by_transcript_id(self):
-
-    # TODO: def test_cds_to_exon_pos_strand_by_transcript_id_2(self):
+    def test_cds_to_exon_pos_strand_by_transcript_id_2(self):
+        pos = cds_to_exon("ENST00000380152", 360)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].transcript_id, "ENST00000380152")
+        self.assertEqual(pos[0].exon_id, "ENSE00000939161")
+        self.assertEqual(pos[0].start, 32899213)
+        self.assertEqual(pos[0].end, 32899321)
+        self.assertEqual(pos[0].strand, "+")
 
     # TODO: def test_cds_to_exon_pos_strand_by_transcript_id_3(self):
 
