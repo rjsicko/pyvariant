@@ -1,4 +1,21 @@
-class CDS:
+class FeatureBase:
+    _seqlim = 3  # only print the first N bases of a sequence
+
+    def __repr__(self):
+        rargs = []
+        for i in self.__dict__.keys():
+            if i == "seq":
+                if len(self.__dict__[i]) > self._seqlim:
+                    rargs.append(f"{i}={self.__dict__[i][:self._seqlim]}...")
+                else:
+                    rargs.append(f"{i}={self.__dict__[i]}")
+            else:
+                rargs.append(f"{i}={self.__dict__[i]}")
+
+        return f"{self.__class__.__name__}({', '.join(rargs)})"
+
+
+class CDS(FeatureBase):
     """CDS coordinate object.
 
     Attributes:
@@ -20,22 +37,6 @@ class CDS:
         self.transcript_name = transcript_name
         self.seq = seq
 
-    def __repr__(self):
-        if len(self.seq) > 3:
-            seq_str = self.seq[:3] + "..."
-        else:
-            seq_str = self.seq
-        return (
-            f"CDS("
-            f"contig={self.contig}, "
-            f"start={self.start}, "
-            f"end={self.end}, "
-            f"strand={self.strand}, "
-            f"transcript_id={self.transcript_id}, "
-            f"transcript_name={self.transcript_name}, "
-            f"seq={seq_str})"
-        )
-
     @classmethod
     def load(cls, tobj, start, end):
         return cls(
@@ -49,7 +50,7 @@ class CDS:
         )
 
 
-class Exon:
+class Exon(FeatureBase):
     """Exon coordinate object.
 
     Attributes:
@@ -86,24 +87,6 @@ class Exon:
         self.index = index
         self.seq = seq
 
-    def __repr__(self):
-        if len(self.seq) > 3:
-            seq_str = self.seq[:3] + "..."
-        else:
-            seq_str = self.seq
-        return (
-            f"Exon("
-            f"contig={self.contig}, "
-            f"start={self.start}, "
-            f"end={self.end}, "
-            f"strand={self.strand}, "
-            f"exon_id={self.exon_id}, "
-            f"transcript_id={self.transcript_id}, "
-            f"transcript_name={self.transcript_name}, "
-            f"index={self.index}, "
-            f"seq={seq_str})"
-        )
-
     @classmethod
     def load(cls, tobj, start, end, exon_id, index):
         return cls(
@@ -119,7 +102,7 @@ class Exon:
         )
 
 
-class Gene:
+class Gene(FeatureBase):
     """Gene coordinate object.
 
     Attributes:
@@ -138,17 +121,6 @@ class Gene:
         self.strand = strand
         self.gene_id = gene_id
         self.gene_name = gene_name
-
-    def __repr__(self):
-        return (
-            f"Gene("
-            f"contig={self.contig}, "
-            f"start={self.start}, "
-            f"end={self.end}, "
-            f"strand={self.strand}, "
-            f"gene_id={self.gene_id}, "
-            f"gene_name={self.gene_name}, "
-        )
 
     @classmethod
     def load(cls, tobj, start, end):
@@ -175,21 +147,6 @@ class Protein:
         self.protein_id = protein_id
         self.seq = seq
 
-    def __repr__(self):
-        if len(self.seq) > 3:
-            seq_str = self.seq[:3] + "..."
-        else:
-            seq_str = self.seq
-        return (
-            f"Gene("
-            f"contig={self.contig}, "
-            f"start={self.start}, "
-            f"end={self.end}, "
-            f"strand={self.strand}, "
-            f"protein_id={self.protein_id}, "
-            f"seq={seq_str}, "
-        )
-
     @classmethod
     def load(cls, tobj, start, end):
         return cls(
@@ -202,7 +159,7 @@ class Protein:
         )
 
 
-class Transcript:
+class Transcript(FeatureBase):
     """Transcript coordinate object.
 
     Attributes:
@@ -223,22 +180,6 @@ class Transcript:
         self.transcript_id = transcript_id
         self.transcript_name = transcript_name
         self.seq = seq
-
-    def __repr__(self):
-        if len(self.seq) > 3:
-            seq_str = self.seq[:3] + "..."
-        else:
-            seq_str = self.seq
-        return (
-            f"Transcript("
-            f"contig={self.contig}, "
-            f"start={self.start}, "
-            f"end={self.end}, "
-            f"strand={self.strand}, "
-            f"transcript_id={self.transcript_id}, "
-            f"transcript_name={self.transcript_name}, "
-            f"seq={seq_str}, "
-        )
 
     @classmethod
     def load(cls, tobj, start, end):
