@@ -49,6 +49,9 @@ class CDS(FeatureBase):
             tobj.coding_sequence[start - 1 : end],
         )
 
+    def to_tuple(self):
+        return self.transcript_id, self.start, self.end
+
 
 class Exon(FeatureBase):
     """Exon coordinate object.
@@ -101,6 +104,9 @@ class Exon(FeatureBase):
             tobj.sequence[start - 1 : end],
         )
 
+    def to_tuple(self):
+        return self.exon_id, self.start, self.end
+
 
 class Gene(FeatureBase):
     """Gene coordinate object.
@@ -125,6 +131,9 @@ class Gene(FeatureBase):
     @classmethod
     def load(cls, tobj, start, end):
         return cls(tobj.contig, start, end, tobj.strand, tobj.gene_id, tobj.gene_name)
+
+    def to_tuple(self):
+        return self.gene_id, self.start, self.end
 
 
 class Protein:
@@ -157,6 +166,9 @@ class Protein:
             tobj.protein_id,
             tobj.protein_sequence[start - 1 : end],
         )
+
+    def to_tuple(self):
+        return self.protein_id, self.start, self.end
 
 
 class Transcript(FeatureBase):
@@ -193,3 +205,20 @@ class Transcript(FeatureBase):
             tobj.sequence[start - 1 : end],
         )
 
+    def to_tuple(self):
+        return self.transcript_id, self.start, self.end
+
+
+def get_parse_function(to_type):
+    if to_type == "cds":
+        return CDS.load
+    elif to_type == "exon":
+        return Exon.load
+    elif to_type == "gene":
+        return Gene.load
+    elif to_type == "protein":
+        return Protein.load
+    elif to_type == "transcript":
+        return Transcript.load
+    else:
+        raise TypeError(f"Could not get parse function for {to_type}")

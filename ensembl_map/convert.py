@@ -1,9 +1,32 @@
 from math import floor
 
-from .exceptions import OutsideCdsError, OutsideTranscriptError
+from .exceptions import ConvertError, OutsideCdsError, OutsideTranscriptError
 
 
-def cpos_to_ppos(_, position):
+def get_map_function(from_type, to_type):
+    if from_type == to_type:
+        raise ValueError("`from_type` and `to_type` must be different!")
+    elif from_type == "cds" and to_type == "protein":
+        return _cpos_to_ppos
+    elif from_type == "cds" and to_type == "transcript":
+        return _cpos_to_tpos
+    elif from_type == "exon" and to_type == "gene":
+        return _epos_to_gpos
+    elif from_type == "gene" and to_type == "exon":
+        return _gpos_to_epos
+    elif from_type == "gene" and to_type == "transcript":
+        return _gpos_to_tpos
+    elif from_type == "protein" and to_type == "cds":
+        return _ppos_to_cpos
+    elif from_type == "transcript" and to_type == "cds":
+        return _tpos_to_cpos
+    elif from_type == "transcript" and to_type == "gene":
+        return _tpos_to_gpos
+    else:
+        raise ConvertError(from_type, to_type)
+
+
+def _cpos_to_ppos(_, position):
     """Compute the equivalent protein position for a CDS position.
 
     Args:
@@ -15,7 +38,7 @@ def cpos_to_ppos(_, position):
     return floor((position - 1) / 3 + 1)
 
 
-def cpos_to_tpos(tobj, position):
+def _cpos_to_tpos(tobj, position):
     """Compute the equivalent CDS position for a transcript position.
     
     Args:
@@ -31,7 +54,7 @@ def cpos_to_tpos(tobj, position):
     return tpos
 
 
-def epos_to_gpos(tobj, position):
+def _epos_to_gpos(tobj, position):
     """Return the genomic coordinates of the nth exon of the given transcript.
     
     Args:
@@ -47,7 +70,7 @@ def epos_to_gpos(tobj, position):
         raise ValueError(f"{position} is greater than the number of exons")
 
 
-def gpos_to_tpos(tobj, position):
+def _gpos_to_tpos(tobj, position):
     """Compute the equivalent transcript position for a gene position.
     
     Args:
@@ -60,7 +83,7 @@ def gpos_to_tpos(tobj, position):
     return tobj.spliced_offset(position) + 1
 
 
-def ppos_to_cpos(_, position):
+def _ppos_to_cpos(_, position):
     """Compute the equivalent protein position for a CDS position.
 
     Args:
@@ -72,7 +95,7 @@ def ppos_to_cpos(_, position):
     return (position - 1) * 3 + 1
 
 
-def gpos_to_epos(tobj, position):
+def _gpos_to_epos(tobj, position):
     """Return the genomic coordinates of the exon that contains a genomic coordinate.
     
     Args:
@@ -89,7 +112,7 @@ def gpos_to_epos(tobj, position):
         raise AssertionError("Iterated through all exons")
 
 
-def tpos_to_cpos(tobj, position):
+def _tpos_to_cpos(tobj, position):
     """Compute the equivalent transcript position for a CDS position.
     
     Args:
@@ -105,7 +128,7 @@ def tpos_to_cpos(tobj, position):
     return cpos
 
 
-def tpos_to_gpos(tobj, position):
+def _tpos_to_gpos(tobj, position):
     """Compute the equivalent gene position for a transcript position.
     
     Args:
