@@ -28,11 +28,14 @@ class CDS(FeatureBase):
         seq (str): CDS sequence from `start` to `end`, inclusive
     """
 
-    def __init__(self, contig, start, end, strand, transcript_id, transcript_name, seq):
+    def __init__(
+        self, contig, start, end, strand, biotype, transcript_id, transcript_name, seq
+    ):
         self.contig = contig
         self.start = start
         self.end = end
         self.strand = strand
+        self.biotype = biotype
         self.transcript_id = transcript_id
         self.transcript_name = transcript_name
         self.seq = seq
@@ -44,6 +47,7 @@ class CDS(FeatureBase):
             start,
             end,
             tobj.strand,
+            tobj.biotype,
             tobj.transcript_id,
             tobj.transcript_name,
             tobj.coding_sequence[start - 1 : end],
@@ -74,6 +78,7 @@ class Exon(FeatureBase):
         start,
         end,
         strand,
+        biotype,
         exon_id,
         transcript_id,
         transcript_name,
@@ -84,6 +89,7 @@ class Exon(FeatureBase):
         self.start = start
         self.end = end
         self.strand = strand
+        self.biotype = biotype
         self.exon_id = exon_id
         self.transcript_id = transcript_id
         self.transcript_name = transcript_name
@@ -91,12 +97,13 @@ class Exon(FeatureBase):
         self.seq = seq
 
     @classmethod
-    def load(cls, tobj, start, end, exon_id, index):
+    def load(cls, tobj, start, end, biotype, exon_id, index):
         return cls(
             tobj.contig,
             start,
             end,
             tobj.strand,
+            tobj.biotype,
             exon_id,
             tobj.transcript_id,
             tobj.transcript_name,
@@ -120,17 +127,26 @@ class Gene(FeatureBase):
         gene_name (str): Ensembl gene name
     """
 
-    def __init__(self, contig, start, end, strand, gene_id, gene_name):
+    def __init__(self, contig, start, end, strand, biotype, gene_id, gene_name):
         self.contig = contig
         self.start = start
         self.end = end
         self.strand = strand
+        self.biotype = biotype
         self.gene_id = gene_id
         self.gene_name = gene_name
 
     @classmethod
     def load(cls, tobj, start, end):
-        return cls(tobj.contig, start, end, tobj.strand, tobj.gene_id, tobj.gene_name)
+        return cls(
+            tobj.contig,
+            start,
+            end,
+            tobj.strand,
+            tobj.biotype,
+            tobj.gene_id,
+            tobj.gene_name,
+        )
 
     def to_tuple(self):
         return self.gene_id, self.start, self.end
@@ -148,11 +164,12 @@ class Protein:
         seq (str): transcript sequence from `start` to `end`, inclusive
     """
 
-    def __init__(self, contig, start, end, strand, protein_id, seq):
+    def __init__(self, contig, start, end, strand, biotype, protein_id, seq):
         self.contig = contig
         self.start = start
         self.end = end
         self.strand = strand
+        self.biotype = biotype
         self.protein_id = protein_id
         self.seq = seq
 
@@ -163,6 +180,7 @@ class Protein:
             start,
             end,
             tobj.strand,
+            tobj.biotype,
             tobj.protein_id,
             tobj.protein_sequence[start - 1 : end],
         )
@@ -184,11 +202,14 @@ class Transcript(FeatureBase):
         seq (str): transcript sequence from `start` to `end`, inclusive
     """
 
-    def __init__(self, contig, start, end, strand, transcript_id, transcript_name, seq):
+    def __init__(
+        self, contig, start, end, strand, biotype, transcript_id, transcript_name, seq
+    ):
         self.contig = contig
         self.start = start
         self.end = end
         self.strand = strand
+        self.biotype = biotype
         self.transcript_id = transcript_id
         self.transcript_name = transcript_name
         self.seq = seq
@@ -200,6 +221,7 @@ class Transcript(FeatureBase):
             start,
             end,
             tobj.strand,
+            tobj.biotype,
             tobj.transcript_id,
             tobj.transcript_name,
             tobj.sequence[start - 1 : end],
