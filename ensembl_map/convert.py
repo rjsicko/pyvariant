@@ -1,6 +1,6 @@
 from math import floor
 
-from .exceptions import ConvertError, OutOfRangeError
+from .exceptions import OutOfRangeError
 
 
 def get_map_function(from_type, to_type):
@@ -23,7 +23,7 @@ def get_map_function(from_type, to_type):
     elif from_type == "transcript" and to_type == "gene":
         return _tpos_to_gpos
     else:
-        raise ConvertError(from_type, to_type)
+        raise ValueError(f"Cannot convert {from_type} directly to {to_type}")
 
 
 def _cpos_to_ppos(_, position):
