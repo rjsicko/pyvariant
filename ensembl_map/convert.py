@@ -1,6 +1,6 @@
 from math import floor
 
-from .exceptions import ConvertError, OutsideCdsError, OutsideTranscriptError
+from .exceptions import ConvertError, OutOfRangeError
 
 
 def get_map_function(from_type, to_type):
@@ -50,7 +50,7 @@ def _cpos_to_tpos(tobj, position):
     """
     tpos = tobj.first_start_codon_spliced_offset + position - 1
     if not (1 <= tpos <= len(tobj.sequence)):
-        raise OutsideTranscriptError(tobj, position)
+        raise OutOfRangeError(tobj, position, "transcript")
     return tpos
 
 
@@ -124,7 +124,7 @@ def _tpos_to_cpos(tobj, position):
     """
     cpos = position - tobj.first_start_codon_spliced_offset + 1
     if not (1 <= cpos <= len(tobj.coding_sequence)):
-        raise OutsideCdsError(tobj, cpos)
+        raise OutOfRangeError(tobj, cpos, "CDS")
     return cpos
 
 
@@ -156,4 +156,4 @@ def _tpos_to_gpos(tobj, position):
             elif tobj.on_negative_strand:
                 return i[1] - remain
     else:
-        raise OutsideTranscriptError(tobj, position)
+        raise OutOfRangeError(tobj, position, "transcript")
