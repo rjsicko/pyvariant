@@ -201,9 +201,10 @@ def _map(feature, start, end, from_type, to_type):
         try:
             if start is not None:
                 ret_val1 = map_func(tobj, start)
+                logging.debug(f"Got: {ret_val1}")
             if end is not None:
                 ret_val2 = map_func(tobj, end)
-            logging.debug(f"Got: {ret_val1} {ret_val2}")
+                logging.debug(f"Got: {ret_val2}")
         except Exception as exc:
             logging.debug(exc)
             continue
@@ -218,7 +219,7 @@ def _map(feature, start, end, from_type, to_type):
             args = ret_val1
 
         ret_obj = parse_func(tobj, *args)
-        logging.debug(f"Parsed: {ret_obj}")
+        logging.debug(f"Parsed {args} to {ret_obj}")
         result.append(ret_obj)
 
     return result
