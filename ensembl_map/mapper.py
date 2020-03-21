@@ -220,8 +220,13 @@ def _map(feature, start, end, from_type, to_type):
                 args.extend([ret_val1, ret_val2])
             else:
                 args.extend([ret_val1, ret_val1])
+        elif isinstance(ret_val1, tuple):
+            if (ret_val1 and ret_val2) and (ret_val1 != ret_val2):
+                raise AssertionError(f"start {ret_val1} != end {ret_val2}")
+            else:
+                args.extend(ret_val1)
         else:
-            args.extend(ret_val1)
+            raise AssertionError(f"Coordinate in unrecognized format: {ret_val1}")
 
         ret_obj = parse_func(*args)
         logging.debug(f"Parsed {args} to {ret_obj}")
