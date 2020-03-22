@@ -205,9 +205,8 @@ def _map(feature, start, end, from_type, to_type):
         ret_val1 = None
         ret_val2 = None
         try:
-            if start is not None:
-                ret_val1 = map_func(tobj, start)
-                logging.debug(f"Got: {ret_val1}")
+            ret_val1 = map_func(tobj, start)
+            logging.debug(f"Got: {ret_val1}")
             if end is not None:
                 ret_val2 = map_func(tobj, end)
                 logging.debug(f"Got: {ret_val2}")
@@ -215,18 +214,19 @@ def _map(feature, start, end, from_type, to_type):
             logging.debug(exc)
             continue
 
-        if isinstance(ret_val1, int):
+        if to_type == "exon":
+            assert isinstance(ret_val1, tuple)
+            assert isinstance(ret_val2, tuple) or ret_val2 is None
+            if ret_val2 is not None:
+                assert ret_val1 == ret_val2, f"start {ret_val1} != end {ret_val2}"
+            args.extend(ret_val1)
+        else:
+            assert isinstance(ret_val1, int)
+            assert isinstance(ret_val2, int) or ret_val2 is None
             if ret_val2 is not None:
                 args.extend([ret_val1, ret_val2])
             else:
                 args.extend([ret_val1, ret_val1])
-        elif isinstance(ret_val1, tuple):
-            if (ret_val1 and ret_val2) and (ret_val1 != ret_val2):
-                raise AssertionError(f"start {ret_val1} != end {ret_val2}")
-            else:
-                args.extend(ret_val1)
-        else:
-            raise AssertionError(f"Coordinate in unrecognized format: {ret_val1}")
 
         ret_obj = parse_func(*args)
         logging.debug(f"Parsed {args} to {ret_obj}")
