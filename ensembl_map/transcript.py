@@ -37,7 +37,7 @@ def _get_transcript_ids_by_id(feature, feature_type):
     elif feature_type == "transcript":
         return feature
     else:
-        raise TypeError(f"Could not get transcript IDs for {feature_type}")
+        raise TypeError(f"Cannot get transcript IDs from {feature_type}")
 
 
 def _get_transcript_ids_by_name(feature, feature_type):
@@ -52,4 +52,4 @@ def _get_transcript_ids_by_name(feature, feature_type):
     elif feature_type == "transcript":
         return Cache.get_cache().transcript_ids_of_transcript_name(feature)
     else:
-        raise TypeError(f"Could not get transcript IDs for {feature_type}")
+        raise TypeError(f"Cannot get transcript IDs from {feature_type}")
