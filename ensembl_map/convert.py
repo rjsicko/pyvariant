@@ -38,49 +38,49 @@ def _cpos_to_ppos(_, position):
     return floor((position - 1) / 3 + 1)
 
 
-def _cpos_to_tpos(tobj, position):
+def _cpos_to_tpos(transcript, position):
     """Compute the equivalent CDS position for a transcript position.
     
     Args:
-        tobj: `Transcript` instance
+        transcript: `Transcript` instance
         position (int): position relative to the CDS
 
     Returns:
         int: position relative to the transcript
     """
-    tpos = tobj.first_start_codon_spliced_offset + position - 1
-    if not (1 <= tpos <= len(tobj.sequence)):
-        raise OutOfRangeError(tobj, position, "transcript")
+    tpos = transcript.first_start_codon_spliced_offset + position - 1
+    if not (1 <= tpos <= len(transcript.sequence)):
+        raise OutOfRangeError(transcript, position, "transcript")
     return tpos
 
 
-def _epos_to_gpos(tobj, position):
+def _epos_to_gpos(transcript, position):
     """Return the genomic coordinates of the nth exon of the given transcript.
     
     Args:
-        tobj: `Transcript` instance
+        transcript: `Transcript` instance
         position (int): index of the exon relative to the gene (i.e. the nth exon)
 
     Returns:
         tuple of int: genomic coordinates of the exon
     """
     try:
-        return sorted(tobj.exon_intervals)[position - 1]
+        return sorted(transcript.exon_intervals)[position - 1]
     except IndexError:
         raise ValueError(f"{position} is greater than the number of exons")
 
 
-def _gpos_to_tpos(tobj, position):
+def _gpos_to_tpos(transcript, position):
     """Compute the equivalent transcript position for a gene position.
     
     Args:
-        tobj: `Transcript` instance
+        transcript: `Transcript` instance
         position (int): genomic coordinate
 
     Returns:
         int: position relative to the transcript
     """
-    return tobj.spliced_offset(position) + 1
+    return transcript.spliced_offset(position) + 1
 
 
 def _ppos_to_cpos(_, position):
@@ -95,54 +95,54 @@ def _ppos_to_cpos(_, position):
     return (position - 1) * 3 + 1
 
 
-def _gpos_to_epos(tobj, position):
+def _gpos_to_epos(transcript, position):
     """Return the genomic coordinates of the exon that contains a genomic coordinate.
     
     Args:
-        tobj: `Transcript` instance
+        transcript: `Transcript` instance
         position (int): genomic coordinate
 
     Returns:
         tuple of int: genomic coordinates of the exon
     """
-    for exon in sorted(tobj.exons, key=lambda x: x.start):
+    for exon in sorted(transcript.exons, key=lambda x: x.start):
         if exon.start <= position <= exon.end:
             return exon.start, exon.end, exon.exon_id
     else:
         raise AssertionError("Iterated through all exons")
 
 
-def _tpos_to_cpos(tobj, position):
+def _tpos_to_cpos(transcript, position):
     """Compute the equivalent transcript position for a CDS position.
     
     Args:
-        tobj: `Transcript` instance
+        transcript: `Transcript` instance
         position (int): position relative to the transcript
 
     Returns:
         cpos (int): position relative to the CDS
     """
-    cpos = position - tobj.first_start_codon_spliced_offset + 1
-    if not (1 <= cpos <= len(tobj.coding_sequence)):
-        raise OutOfRangeError(tobj, cpos, "CDS")
+    cpos = position - transcript.first_start_codon_spliced_offset + 1
+    if not (1 <= cpos <= len(transcript.coding_sequence)):
+        raise OutOfRangeError(transcript, cpos, "CDS")
     return cpos
 
 
-def _tpos_to_gpos(tobj, position):
+def _tpos_to_gpos(transcript, position):
     """Compute the equivalent gene position for a transcript position.
     
     Args:
-        tobj: `Transcript` instance
+        transcript: `Transcript` instance
         position (int): position relative to the transcript
 
     Returns:
         int: genomic coordinate
     """
     # make sure all the ranges are sorted from smallest to biggest
-    ranges = sorted([sorted(i) for i in tobj.exon_intervals])
+    ranges = sorted([sorted(i) for i in transcript.exon_intervals])
 
     # for transcripts on the negative strand, start counting from the last position
-    if tobj.on_negative_strand:
+    if transcript.on_negative_strand:
         ranges = ranges[::-1]
 
     remain = position - 1
@@ -151,9 +151,9 @@ def _tpos_to_gpos(tobj, position):
         if remain > length:
             remain -= length
         else:
-            if tobj.on_positive_strand:
+            if transcript.on_positive_strand:
                 return i[0] + remain
-            elif tobj.on_negative_strand:
+            elif transcript.on_negative_strand:
                 return i[1] - remain
     else:
-        raise OutOfRangeError(tobj, position, "transcript")
+        raise OutOfRangeError(transcript, position, "transcript")

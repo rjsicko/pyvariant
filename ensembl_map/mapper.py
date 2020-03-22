@@ -200,15 +200,15 @@ def _map(feature, start, end, from_type, to_type):
     transcripts = get_transcripts(feature, from_type)
 
     # map coordinates by transcript ID
-    for tobj in transcripts:
-        args = [tobj]
+    for transcript in transcripts:
+        args = [transcript]
         ret_val1 = None
         ret_val2 = None
         try:
-            ret_val1 = map_func(tobj, start)
+            ret_val1 = map_func(transcript, start)
             logging.debug(f"Got: {ret_val1}")
             if end is not None:
-                ret_val2 = map_func(tobj, end)
+                ret_val2 = map_func(transcript, end)
                 logging.debug(f"Got: {ret_val2}")
         except Exception as exc:
             logging.debug(exc)

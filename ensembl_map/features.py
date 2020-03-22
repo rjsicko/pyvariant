@@ -53,8 +53,8 @@ class CDS(FeatureBase):
     """
 
     @classmethod
-    def load(cls, tobj, start, end):
-        return cls(tobj, start, end)
+    def load(cls, transcript, start, end):
+        return cls(transcript, start, end)
 
     @property
     def transcript(self):
@@ -106,20 +106,20 @@ class Exon(FeatureBase):
         self.end = end
 
     @classmethod
-    def load(cls, tobj, start, end, exon_id):
-        _, eobj = cls.get_exon_from_transcript(tobj, exon_id)
-        return cls(tobj, eobj, start, end)
+    def load(cls, transcript, start, end, exon_id):
+        _, eobj = cls.get_exon_from_transcript(transcript, exon_id)
+        return cls(transcript, eobj, start, end)
 
     @classmethod
-    def get_exon_from_transcript(cls, tobj, exon_id):
-        exons = [(n, i) for n, i in enumerate(tobj.exons, 1) if i.exon_id == exon_id]
+    def get_exon_from_transcript(cls, transcript, exon_id):
+        exons = [(n, i) for n, i in enumerate(transcript.exons, 1) if i.exon_id == exon_id]
         if len(exons) < 1:
             raise ValueError(
-                f"Exon {exon_id} not found in transcript {tobj.transcript_id}"
+                f"Exon {exon_id} not found in transcript {transcript.transcript_id}"
             )
         elif len(exons) > 1:
             raise ValueError(
-                f"Multiple exons {exon_id} found in transcript {tobj.transcript_id}"
+                f"Multiple exons {exon_id} found in transcript {transcript.transcript_id}"
             )
         else:
             return exons[0]
@@ -172,8 +172,8 @@ class Gene(FeatureBase):
     """
 
     @classmethod
-    def load(cls, tobj, start, end):
-        return cls(tobj.gene, start, end)
+    def load(cls, transcript, start, end):
+        return cls(transcript.gene, start, end)
 
     @property
     def gene(self):
@@ -211,8 +211,8 @@ class Protein(FeatureBase):
     """
 
     @classmethod
-    def load(cls, tobj, start, end):
-        return cls(tobj, start, end)
+    def load(cls, transcript, start, end):
+        return cls(transcript, start, end)
 
     @property
     def protein_id(self):
