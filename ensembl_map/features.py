@@ -11,6 +11,8 @@ class FeatureBase:
 
     @classmethod
     def load(cls, pyensembl_obj, start, end):
+        if start > end:
+            start, end = end, start
         return cls(pyensembl_obj, start, end)
 
     @property
@@ -54,6 +56,8 @@ class CDS(FeatureBase):
 
     @classmethod
     def load(cls, transcript, start, end):
+        if start > end:
+            start, end = end, start
         return cls(transcript, start, end)
 
     @property
@@ -107,6 +111,8 @@ class Exon(FeatureBase):
 
     @classmethod
     def load(cls, transcript, start, end, exon_id):
+        if start > end:
+            start, end = end, start
         _, eobj = cls.get_exon_from_transcript(transcript, exon_id)
         return cls(transcript, eobj, start, end)
 
@@ -173,6 +179,8 @@ class Gene(FeatureBase):
 
     @classmethod
     def load(cls, transcript, start, end):
+        if start > end:
+            start, end = end, start
         return cls(transcript.gene, start, end)
 
     @property
@@ -212,6 +220,8 @@ class Protein(FeatureBase):
 
     @classmethod
     def load(cls, transcript, start, end):
+        if start > end:
+            start, end = end, start
         return cls(transcript, start, end)
 
     @property
