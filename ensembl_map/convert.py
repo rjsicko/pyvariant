@@ -122,7 +122,7 @@ def _tpos_to_cpos(transcript, position):
     Returns:
         cpos (int): position relative to the CDS
     """
-    cpos = position - transcript.first_start_codon_spliced_offset + 1
+    cpos = position - transcript.first_start_codon_spliced_offset
     if not (1 <= cpos <= len(transcript.coding_sequence)):
         raise OutOfRangeError(transcript, cpos, "CDS")
     return cpos
