@@ -42,7 +42,7 @@ def _cpos_to_tpos(transcript, position):
     """Compute the equivalent CDS position for a transcript position.
     
     Args:
-        transcript: `Transcript` instance
+        transcript: `pyensembl.Transcript` instance
         position (int): position relative to the CDS
 
     Returns:
@@ -58,7 +58,7 @@ def _epos_to_gpos(transcript, position):
     """Return the genomic coordinates of the nth exon of the given transcript.
     
     Args:
-        transcript: `Transcript` instance
+        transcript: `pyensembl.Transcript` instance
         position (int): index of the exon relative to the gene (i.e. the nth exon)
 
     Returns:
@@ -74,7 +74,7 @@ def _gpos_to_tpos(transcript, position):
     """Compute the equivalent transcript position for a gene position.
     
     Args:
-        transcript: `Transcript` instance
+        transcript: `pyensembl.Transcript` instance
         position (int): genomic coordinate
 
     Returns:
@@ -87,7 +87,7 @@ def _ppos_to_cpos(_, position):
     """Compute the equivalent protein position for a CDS position.
 
     Args:
-        position (int): amino acid position relative
+        position (int): amino acid position
 
     Returns:
         int: CDS position of the first base of the codon
@@ -99,7 +99,7 @@ def _gpos_to_epos(transcript, position):
     """Return the genomic coordinates of the exon that contains a genomic coordinate.
     
     Args:
-        transcript: `Transcript` instance
+        transcript: `pyensembl.Transcript` instance
         position (int): genomic coordinate
 
     Returns:
@@ -116,7 +116,7 @@ def _tpos_to_cpos(transcript, position):
     """Compute the equivalent transcript position for a CDS position.
     
     Args:
-        transcript: `Transcript` instance
+        transcript: `pyensembl.Transcript` instance
         position (int): position relative to the transcript
 
     Returns:
@@ -132,7 +132,7 @@ def _tpos_to_gpos(transcript, position):
     """Compute the equivalent gene position for a transcript position.
     
     Args:
-        transcript: `Transcript` instance
+        transcript: `pyensembl.Transcript` instance
         position (int): position relative to the transcript
 
     Returns:
