@@ -55,4 +55,3 @@ class Cache:
     def set_cache_dir(cls, path):
         """Set the root directory where cache files are stored."""
         os.environ["PYENSEMBL_CACHE_DIR"] = path
-

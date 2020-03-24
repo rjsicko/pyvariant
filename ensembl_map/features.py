@@ -112,7 +112,9 @@ class Exon(FeatureBase):
 
     @classmethod
     def get_exon_from_transcript(cls, transcript, exon_id):
-        exons = [(n, i) for n, i in enumerate(transcript.exons, 1) if i.exon_id == exon_id]
+        exons = [
+            (n, i) for n, i in enumerate(transcript.exons, 1) if i.exon_id == exon_id
+        ]
         if len(exons) < 1:
             raise ValueError(
                 f"Exon {exon_id} not found in transcript {transcript.transcript_id}"
