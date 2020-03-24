@@ -1,11 +1,11 @@
-from .cache import Cache
+from .cache import Ensembl
 
 
 def set_cache_dir(path):
     """Set the root directory where cache files are stored."""
-    Cache.set_cache_dir(path)
+    Ensembl().set_cache_dir(path)
 
 
-def set_ensembl_release(release=None, species=None, download_if_missing=False):
+def set_ensembl_release(release, species, cache_dir=None, download_if_missing=False):
     """Set the Ensembl release to use."""
-    return Cache.set_cache(release, species, download_if_missing)
+    return Ensembl().load(release, species, cache_dir, download_if_missing)

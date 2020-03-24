@@ -1,10 +1,13 @@
 import logging
 
-from .cache import Cache
+from .cache import Ensembl
 from .convert import get_map_function
 from .features import get_parse_function
 from .transcript import get_transcripts
 from .util import assert_valid_position
+
+
+ENSEMBL = Ensembl()
 
 
 def cds_to_exon(feature, start, end=None):
@@ -63,8 +66,8 @@ def exon_to_transcript(feature):
     # match anything:
     # return _map(
     #     feature,
-    #     Cache.get_cache().exon_by_id(feature).start,
-    #     Cache.get_cache().exon_by_id(feature).end.end,
+    #     ENSEMBL.data.exon_by_id(feature).start,
+    #     ENSEMBL.data.exon_by_id(feature).end.end,
     #     "exon",
     #     "transcript",
     # )
@@ -74,7 +77,7 @@ def exon_to_transcript(feature):
 
     def contains_exon(transcript_id):
         """Check if the given transcript contains the exon."""
-        transcript = Cache.get_cache().transcript_by_id(transcript_id)
+        transcript = ENSEMBL.data.transcript_by_id(transcript_id)
         if feature in [i.exon_id for i in transcript.exons]:
             return True
         else:
@@ -83,7 +86,7 @@ def exon_to_transcript(feature):
     result = []
 
     try:
-        exon = Cache.get_cache().exon_by_id(feature)
+        exon = ENSEMBL.data.exon_by_id(feature)
     except TypeError:
         logging.error(f"No exon '{feature}' found")
         return result
