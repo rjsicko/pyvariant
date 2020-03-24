@@ -9,12 +9,6 @@ class FeatureBase:
     def __repr__(self):
         return f"{self.__class__.__name__}{self.to_tuple()}"
 
-    @classmethod
-    def load(cls, pyensembl_obj, start, end):
-        if start > end:
-            start, end = end, start
-        return cls(pyensembl_obj, start, end)
-
     @property
     def biotype(self):
         try:
