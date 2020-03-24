@@ -148,7 +148,7 @@ def _tpos_to_gpos(transcript, position):
     remain = position - 1
     for i in ranges:
         length = i[1] - i[0] + 1
-        if remain > length:
+        if remain >= length:
             remain -= length
         else:
             if transcript.on_positive_strand:
