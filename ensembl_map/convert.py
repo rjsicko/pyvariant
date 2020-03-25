@@ -10,8 +10,6 @@ def get_map_function(from_type, to_type):
         return _cpos_to_ppos
     elif from_type == "cds" and to_type == "transcript":
         return _cpos_to_tpos
-    elif from_type == "exon" and to_type == "gene":
-        return _epos_to_gpos
     elif from_type == "gene" and to_type == "exon":
         return _gpos_to_epos
     elif from_type == "gene" and to_type == "transcript":
@@ -52,22 +50,6 @@ def _cpos_to_tpos(transcript, position):
     if not (1 <= tpos <= len(transcript.sequence)):
         raise OutOfRangeError(transcript, position, "transcript")
     return tpos
-
-
-def _epos_to_gpos(transcript, position):
-    """Return the genomic coordinates of the nth exon of the given transcript.
-    
-    Args:
-        transcript: `pyensembl.Transcript` instance
-        position (int): index of the exon relative to the gene (i.e. the nth exon)
-
-    Returns:
-        tuple of int: genomic coordinates of the exon
-    """
-    try:
-        return sorted(transcript.exon_intervals)[position - 1]
-    except IndexError:
-        raise ValueError(f"{position} is greater than the number of exons")
 
 
 def _gpos_to_tpos(transcript, position):
