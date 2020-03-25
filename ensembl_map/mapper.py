@@ -45,7 +45,7 @@ def exon_to_cds(feature):
         logging.error(f"No exon '{feature}' found")
         return []
 
-    return _map(feature, exon.start, exon.end, "exon", "cds", map_func=_epos_to_cpos)
+    return _map(feature, exon.start, exon.end, "exon", "cds")
 
 
 def exon_to_gene(feature):
@@ -167,7 +167,7 @@ def transcript_to_protein(feature, start, end=None):
     return result
 
 
-def _map(feature, start, end, from_type, to_type, **kwargs):
+def _map(feature, start, end, from_type, to_type):
     """
     Template function for mapping a feature to the associated transcript(s), then 
     converting the given coordinates.
@@ -186,14 +186,8 @@ def _map(feature, start, end, from_type, to_type, **kwargs):
 
     logging.debug(f"Map {from_type} ({feature}, {start}, {end}) to {to_type}")
     assert_valid_position(start, end)
-
-    map_func = kwargs.get("map_func", None)
-    if not map_func:
-        map_func = get_map_function(from_type, to_type)
-
-    load_func = kwargs.get("load_func", None)
-    if not load_func:
-        load_func = get_load_function(to_type)
+    map_func = get_map_function(from_type, to_type)
+    load_func = get_load_function(to_type)
 
     for transcript in get_transcripts(feature, from_type):
         retval = None
