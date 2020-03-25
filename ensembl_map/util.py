@@ -13,14 +13,14 @@ def assert_valid_position(start=None, end=None):
 
 def is_ensembl_id(feature):
     """String looks like an Ensembl Stable ID."""
-    return bool(re.match(r"ENS[A-Z]+\d{11}(?:\.\d)?", feature))
+    return bool(re.match(r"ENS[A-Z]+\d{11}(?:\.\d)?", feature.upper()))
 
 
 def singleton(cls):
     """Wrapper that implements a class as a singleton."""
     instances = {}
 
-    def get_instance():
+    def get_instance(*args, **kwargs):
         if cls not in instances:
             instances[cls] = cls()
         return instances[cls]
