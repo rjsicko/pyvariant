@@ -1,3 +1,4 @@
+import logging
 from math import floor
 
 from .exceptions import OutOfRangeError
@@ -24,101 +25,150 @@ def get_map_function(from_type, to_type):
         raise ValueError(f"Cannot convert {from_type} directly to {to_type}")
 
 
-def _cpos_to_ppos(_, position):
+def _cpos_to_ppos(_, start, end=None):
     """Compute the equivalent protein position for a CDS position.
 
     Args:
-        position (int): position relative to the CDS
+        start (int): position relative to the CDS
+        end (int): optional, second position relative to the CDS
 
     Returns:
-        int: amino acid position
+        tuple of int: amino acid position
     """
-    return floor((position - 1) / 3 + 1)
+    pstart = floor((start - 1) / 3 + 1)
+    if end:
+        pend = _cpos_to_ppos(_, end)[1]
+    else:
+        pend = pstart
+
+    return pstart, pend
 
 
-def _cpos_to_tpos(transcript, position):
+def _cpos_to_tpos(transcript, start, end=None):
     """Compute the equivalent CDS position for a transcript position.
     
     Args:
         transcript: `pyensembl.Transcript` instance
-        position (int): position relative to the CDS
+        start (int): position relative to the CDS
+        end (int): optional, second position relative to the CDS
 
     Returns:
-        int: position relative to the transcript
+        tuple of int: position relative to the transcript
     """
-    tpos = transcript.first_start_codon_spliced_offset + position - 1
-    if not (1 <= tpos <= len(transcript.sequence)):
-        raise OutOfRangeError(transcript, position, "transcript")
-    return tpos
+    tstart = transcript.first_start_codon_spliced_offset + start - 1
+    if not (1 <= tstart <= len(transcript.sequence)):
+        raise OutOfRangeError(transcript, start, "transcript")
+    if end:
+        tend = _cpos_to_tpos(transcript, end)[1]
+    else:
+        tend = tstart
+
+    return tstart, tend
 
 
-def _gpos_to_tpos(transcript, position):
+def _gpos_to_tpos(transcript, start, end=None):
     """Compute the equivalent transcript position for a gene position.
     
     Args:
         transcript: `pyensembl.Transcript` instance
-        position (int): genomic coordinate
+        start (int): genomic coordinate
+        end (int): optional, second genomic coordinate
 
     Returns:
-        int: position relative to the transcript
+        tuple of int: position relative to the transcript
     """
-    return transcript.spliced_offset(position) + 1
+    tstart = transcript.spliced_offset(start) + 1
+    if end:
+        tend = _gpos_to_tpos(transcript, end)[1]
+    else:
+        tend = tstart
+
+    return tstart, tend
 
 
-def _ppos_to_cpos(_, position):
+def _ppos_to_cpos(_, start, end=None):
     """Compute the equivalent protein position for a CDS position.
 
     Args:
-        position (int): amino acid position
+        start (int): amino acid position
+        end (int): optional, second amino acid position
 
     Returns:
-        int: CDS position of the first base of the codon
+        tuple of int: CDS position of the first base of the codon
     """
-    return (position - 1) * 3 + 1
+    cstart = (start - 1) * 3 + 1
+    if end:
+        cend = _ppos_to_cpos(_, end)[1]
+    else:
+        cend = cstart
+
+    return cstart, cend
 
 
-def _gpos_to_epos(transcript, position):
+def _gpos_to_epos(transcript, start, end=None):
     """Return the genomic coordinates of the exon that contains a genomic coordinate.
     
     Args:
         transcript: `pyensembl.Transcript` instance
-        position (int): genomic coordinate
+        start (int): genomic coordinate
+        end (int): optional, second genomic coordinate
 
     Returns:
         tuple of int: genomic coordinates of the exon
     """
     for exon in sorted(transcript.exons, key=lambda x: x.start):
-        if exon.start <= position <= exon.end:
-            return exon.start, exon.end, exon.exon_id
+        if exon.start <= start <= exon.end:
+            exon1 = (exon.start, exon.end, exon.exon_id)
+            break
     else:
         raise AssertionError("Iterated through all exons")
 
+    if end:
+        exon2 = _gpos_to_epos(transcript, end)
+    else:
+        exon2 = exon1
 
-def _tpos_to_cpos(transcript, position):
+    if exon1 != exon2:
+        raise ValueError(
+            f"{start} and {end} are on different exons ({exon1[2]}, {exon2[2]}"
+        )
+    else:
+        return exon1
+
+
+def _tpos_to_cpos(transcript, start, end=None):
     """Compute the equivalent transcript position for a CDS position.
     
     Args:
         transcript: `pyensembl.Transcript` instance
-        position (int): position relative to the transcript
+        start (int): position relative to the transcript
+        end (int): optional, second position relative to the transcript
 
     Returns:
-        cpos (int): position relative to the CDS
+        tuple of int: position relative to the CDS
     """
-    cpos = position - transcript.first_start_codon_spliced_offset
-    if not (1 <= cpos <= len(transcript.coding_sequence)):
-        raise OutOfRangeError(transcript, cpos, "CDS")
-    return cpos
+    cstart = start - transcript.first_start_codon_spliced_offset
+    if not (1 <= cstart <= len(transcript.coding_sequence)):
+        raise OutOfRangeError(transcript, cstart, "CDS")
+
+    if end:
+        cend = _tpos_to_cpos(transcript, end)[1]
+    else:
+        cend = cstart
+
+    return cstart, cend
 
 
-def _tpos_to_gpos(transcript, position):
+def _tpos_to_gpos(transcript, start, end=None):
     """Compute the equivalent gene position for a transcript position.
     
     Args:
         transcript: `pyensembl.Transcript` instance
-        position (int): position relative to the transcript
+        start (int): position relative to the transcript
+        end (int): optional, second position relative to the transcript
 
     Returns:
-        int: genomic coordinate
+        tuple of int: genomic coordinate
     """
     # make sure all the ranges are sorted from smallest to biggest
     ranges = sorted([sorted(i) for i in transcript.exon_intervals])
@@ -127,15 +177,24 @@ def _tpos_to_gpos(transcript, position):
     if transcript.on_negative_strand:
         ranges = ranges[::-1]
 
-    remain = position - 1
+    remain = start - 1
     for i in ranges:
         length = i[1] - i[0] + 1
         if remain >= length:
             remain -= length
         else:
             if transcript.on_positive_strand:
-                return i[0] + remain
+                gstart = i[0] + remain
+                break
             elif transcript.on_negative_strand:
-                return i[1] - remain
+                gstart = i[1] - remain
+                break
     else:
-        raise OutOfRangeError(transcript, position, "transcript")
+        raise OutOfRangeError(transcript, start, "transcript")
+
+    if end:
+        gend = _tpos_to_gpos(transcript, end)[1]
+    else:
+        gend = gstart
+
+    return gstart, gend

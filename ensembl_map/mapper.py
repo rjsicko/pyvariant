@@ -208,35 +208,15 @@ def _map(feature, start, end, from_type, to_type):
 
     # map coordinates by transcript ID
     for transcript in transcripts:
-        args = [transcript]
-        ret_val1 = None
-        ret_val2 = None
+        retval = None
         try:
-            ret_val1 = map_func(transcript, start)
-            logging.debug(f"Got: {ret_val1}")
-            if end is not None:
-                ret_val2 = map_func(transcript, end)
-                logging.debug(f"Got: {ret_val2}")
+            retval = map_func(transcript, start, end)
+            logging.debug(f"Got: {retval}")
         except Exception as exc:
             logging.debug(exc)
             continue
-
-        if to_type == "exon":
-            assert isinstance(ret_val1, tuple)
-            assert isinstance(ret_val2, tuple) or ret_val2 is None
-            if ret_val2 is not None:
-                assert ret_val1 == ret_val2, f"start {ret_val1} != end {ret_val2}"
-            args.extend(ret_val1)
-        else:
-            assert isinstance(ret_val1, int)
-            assert isinstance(ret_val2, int) or ret_val2 is None
-            if ret_val2 is not None:
-                args.extend([ret_val1, ret_val2])
-            else:
-                args.extend([ret_val1, ret_val1])
-
-        ret_obj = parse_func(*args)
-        logging.debug(f"Parsed {args} to {ret_obj}")
+        ret_obj = parse_func(transcript, *retval)
+        logging.debug(f"Parsed {transcript, retval} to {ret_obj}")
         result.append(ret_obj)
 
     return result

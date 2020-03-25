@@ -447,13 +447,25 @@ class TestExonToCds(unittest.TestCase):
         self.assertEqual(pos[0].strand, "+")
 
     # TODO: https://github.com/mattdoug604/ensembl_map/issues/1
-    # def test_exon_to_cds_neg_strand_by_exon_id(self):
-    #     pos = exon_to_cds("ENSE00001189807")
-    #     self.assertIsInstance(pos, list)
-    #     self.assertEqual(pos[0].transcript_id, "ENST00000256078")
-    #     self.assertEqual(pos[0].start, 318)
-    #     self.assertEqual(pos[0].end, 426)
-    #     self.assertEqual(pos[0].strand, "+")
+    def test_exon_to_cds_neg_strand_by_exon_id(self):
+        pos = exon_to_cds("ENSE00001189807")
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].transcript_id, "ENST00000256078")
+        self.assertEqual(pos[0].start, 451)
+        self.assertEqual(pos[0].end, 574)
+        self.assertEqual(pos[0].strand, "-")
+
+    def test_exon_to_cds_neg_strand_by_exon_id_2(self):
+        pos = exon_to_cds("ENSE00000936617")
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].transcript_id, "ENST00000256078")
+        self.assertEqual(pos[0].start, 1)
+        self.assertEqual(pos[0].end, 111)
+        self.assertEqual(pos[0].strand, "-")
+
+    def test_exon_to_cds_neg_strand_by_exon_id_3(self):
+        # 'ENSE00001189804' is not part of the CDS
+        self.assertRaises(ValueError, exon_to_cds, "ENSE00001189804")
 
 
 class TestExonToGene(unittest.TestCase):
