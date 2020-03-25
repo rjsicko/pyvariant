@@ -4,7 +4,7 @@ from .cache import Ensembl
 from .convert import get_map_function
 from .exceptions import ConvertError
 from .features import get_parse_function
-from .transcript import get_transcripts
+from .transcript import transcripts_with_exon, get_transcripts
 from .util import assert_valid_position
 
 
@@ -63,27 +63,8 @@ def exon_to_protein(feature):
 
 def exon_to_transcript(feature):
     """Map an exon to transcript coordinates."""
-    # NOTE: with `pyensembl==1.8.5` calling `transcript_ids_of_exon_ids` does not
-    # match anything:
-    # return _map(
-    #     feature,
-    #     ENSEMBL.data.exon_by_id(feature).start,
-    #     ENSEMBL.data.exon_by_id(feature).end.end,
-    #     "exon",
-    #     "transcript",
-    # )
-
-    # As a workaround, we can map the exon to its gene then return all transcripts of
-    # that gene that contain the exon:
-
-    def contains_exon(transcript_id):
-        """Check if the given transcript contains the exon."""
-        transcript = ENSEMBL.data.transcript_by_id(transcript_id)
-        if feature in [i.exon_id for i in transcript.exons]:
-            return True
-        else:
-            return False
-
+    # There's an extra check needed here to filter out transcripts that don't contain 
+    # the query exon.
     result = []
 
     try:
@@ -92,9 +73,12 @@ def exon_to_transcript(feature):
         logging.error(f"No exon '{feature}' found")
         return result
 
+    valid_transcripts = transcripts_with_exon(exon.gene_id, "gene", feature)
     for pos in gene_to_transcript(exon.gene_id, exon.start, exon.end):
-        if contains_exon(pos.transcript_id):
+        if pos.transcript_id in valid_transcripts:
             result.append(pos)
+        else:
+            logging.debug(f"{pos.transcript_id} does not contain exon {exon.exon_id}")
 
     return result
 

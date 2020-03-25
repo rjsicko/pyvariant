@@ -11,6 +11,10 @@ def get_map_function(from_type, to_type):
         return _cpos_to_ppos
     elif from_type == "cds" and to_type == "transcript":
         return _cpos_to_tpos
+    elif from_type == "exon" and to_type == "cds":
+        return _epos_to_cpos
+    elif from_type == "exon" and to_type == "transcript":
+        return _gpos_to_tpos
     elif from_type == "gene" and to_type == "exon":
         return _gpos_to_epos
     elif from_type == "gene" and to_type == "transcript":
@@ -64,6 +68,46 @@ def _cpos_to_tpos(transcript, start, end=None):
         tend = tstart
 
     return tstart, tend
+
+
+def _epos_to_cpos(transcript, start, end):
+    """Compute the equivalent CDS position for an exon.
+    
+    Args:
+        transcript: `pyensembl.Transcript` instance
+        start (int): genomic coordinate of one end of the exon
+        end (int): genomic coordinate of the other end of the exon
+
+    Returns:
+        tuple of int: position relative to the CDS
+    """
+    tstart, tend = _gpos_to_tpos(transcript, start, end)
+
+    try:
+        cstart = _tpos_to_cpos(transcript, tstart)
+    except CdsOutOfRange:
+        cstart = None
+    try:
+        cend = _tpos_to_cpos(transcript, tend)
+    except CdsOutOfRange:
+        cend = None
+
+    if cstart and cend:
+        return cstart, cend
+    elif cstart and not cend:
+        for i in transcript.coding_sequence_position_ranges:
+            if i[0] == cstart:
+                return i
+        else:
+            raise CdsOutOfRange(transcript, start)
+    elif cend and not cstart:
+        for i in transcript.coding_sequence_position_ranges:
+            if i[1] == cend:
+                return i
+        else:
+            raise CdsOutOfRange(transcript, end)
+
+    raise AssertionError(f"Unexpected condition mapping exon to CDS")
 
 
 def _gpos_to_tpos(transcript, start, end=None):

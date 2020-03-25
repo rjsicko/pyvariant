@@ -31,8 +31,11 @@ def _get_transcript_ids_by_id(feature, feature_type):
     if feature_type == "cds":
         return feature
     elif feature_type == "exon":
-        x = ENSEMBL.data.exon_by_id(feature).gene_id
-        return ENSEMBL.data.transcript_ids_of_gene_id(x)
+        # NOTE: with `pyensembl==1.8.5` calling `transcript_ids_of_exon_ids` does not
+        # match anything. As a workaround, we can map the exon to its gene then return 
+        # all transcripts of that gene that contain the exon.
+        gene_id = ENSEMBL.data.exon_by_id(feature).gene_id
+        return transcripts_with_exon(gene_id, "gene", feature)
     elif feature_type == "gene":
         return ENSEMBL.data.transcript_ids_of_gene_id(feature)
     elif feature_type == "protein":
@@ -56,3 +59,12 @@ def _get_transcript_ids_by_name(feature, feature_type):
         return ENSEMBL.data.transcript_ids_of_transcript_name(feature)
     else:
         raise TypeError(f"Cannot get transcript IDs from {feature_type}")
+
+
+def transcripts_with_exon(feature, feature_type, exon_id):
+    """Check if the given transcript contains the exon."""
+    transcripts_with_exon = []
+    for transcript in get_transcripts(feature, feature_type):
+        if exon_id in [i.exon_id for i in transcript.exons]:
+            transcripts_with_exon.append(transcript.transcript_id)
+    return transcripts_with_exon
