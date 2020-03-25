@@ -1,9 +1,9 @@
 import logging
 
 from .cache import Ensembl
-from .convert import get_map_function
+from .convert import get_map_function, _epos_to_cpos
 from .exceptions import ConvertError
-from .features import get_parse_function
+from .features import get_load_function
 from .transcript import transcripts_with_exon, get_transcripts
 from .util import assert_valid_position
 
@@ -39,10 +39,13 @@ def cds_to_transcript(feature, start, end=None):
 
 def exon_to_cds(feature):
     """Map an exon to CDS coordinates."""
-    result = []
-    for pos in exon_to_transcript(feature):
-        result.extend(transcript_to_cds(*pos.to_tuple()))
-    return result
+    try:
+        exon = ENSEMBL.data.exon_by_id(feature)
+    except TypeError:
+        logging.error(f"No exon '{feature}' found")
+        return []
+
+    return _map(feature, exon.start, exon.end, "exon", "cds", map_func=_epos_to_cpos)
 
 
 def exon_to_gene(feature):
@@ -164,7 +167,7 @@ def transcript_to_protein(feature, start, end=None):
     return result
 
 
-def _map(feature, start, end, from_type, to_type):
+def _map(feature, start, end, from_type, to_type, **kwargs):
     """
     Template function for mapping a feature to the associated transcript(s), then 
     converting the given coordinates.
@@ -183,12 +186,16 @@ def _map(feature, start, end, from_type, to_type):
 
     logging.debug(f"Map {from_type} ({feature}, {start}, {end}) to {to_type}")
     assert_valid_position(start, end)
-    map_func = get_map_function(from_type, to_type)
-    parse_func = get_parse_function(to_type)
-    transcripts = get_transcripts(feature, from_type)
 
-    # map coordinates by transcript ID
-    for transcript in transcripts:
+    map_func = kwargs.get("map_func", None)
+    if not map_func:
+        map_func = get_map_function(from_type, to_type)
+
+    load_func = kwargs.get("load_func", None)
+    if not load_func:
+        load_func = get_load_function(to_type)
+
+    for transcript in get_transcripts(feature, from_type):
         retval = None
         try:
             retval = map_func(transcript, start, end)
@@ -196,7 +203,7 @@ def _map(feature, start, end, from_type, to_type):
         except ValueError as exc:
             logging.debug(exc)
             continue
-        ret_obj = parse_func(transcript, *retval)
+        ret_obj = load_func(transcript, *retval)
         logging.debug(f"Parsed {transcript, retval} to {ret_obj}")
         result.append(ret_obj)
 

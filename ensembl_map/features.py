@@ -261,7 +261,7 @@ class Transcript(CDS):
             return None
 
 
-def get_parse_function(to_type):
+def get_load_function(to_type):
     if to_type == "cds":
         return CDS.load
     elif to_type == "exon":

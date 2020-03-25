@@ -81,33 +81,16 @@ def _epos_to_cpos(transcript, start, end):
     Returns:
         tuple of int: position relative to the CDS
     """
-    tstart, tend = _gpos_to_tpos(transcript, start, end)
+    for cds in transcript.coding_sequence_position_ranges:
+        if start == cds[0] or end == cds[1]:
+            gstart, gend = cds
+            break
+    else:
+        raise CdsOutOfRange(transcript, start)
 
-    try:
-        cstart = _tpos_to_cpos(transcript, tstart)
-    except CdsOutOfRange:
-        cstart = None
-    try:
-        cend = _tpos_to_cpos(transcript, tend)
-    except CdsOutOfRange:
-        cend = None
-
-    if cstart and cend:
-        return cstart, cend
-    elif cstart and not cend:
-        for i in transcript.coding_sequence_position_ranges:
-            if i[0] == cstart:
-                return i
-        else:
-            raise CdsOutOfRange(transcript, start)
-    elif cend and not cstart:
-        for i in transcript.coding_sequence_position_ranges:
-            if i[1] == cend:
-                return i
-        else:
-            raise CdsOutOfRange(transcript, end)
-
-    raise AssertionError(f"Unexpected condition mapping exon to CDS")
+    tstart, tend = _gpos_to_tpos(transcript, gstart, gend)
+    cstart, cend = _tpos_to_cpos(transcript, tstart, tend)
+    return cstart, cend
 
 
 def _gpos_to_tpos(transcript, start, end=None):
