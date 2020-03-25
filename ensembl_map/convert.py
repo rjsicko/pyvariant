@@ -141,10 +141,11 @@ def _ppos_to_cpos(_, start, end=None):
         tuple of int: CDS position of the first base of the codon
     """
     cstart = (start - 1) * 3 + 1
+    # add 2 to the end position to get the end of the codon
     if end:
         cend = _ppos_to_cpos(_, end)[1]
     else:
-        cend = cstart
+        cend = cstart + 2
 
     return cstart, cend
 

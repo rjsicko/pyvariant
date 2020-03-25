@@ -63,7 +63,7 @@ def exon_to_protein(feature):
 
 def exon_to_transcript(feature):
     """Map an exon to transcript coordinates."""
-    # There's an extra check needed here to filter out transcripts that don't contain 
+    # There's an extra check needed here to filter out transcripts that don't contain
     # the query exon.
     result = []
 
@@ -111,11 +111,7 @@ def gene_to_transcript(feature, start, end=None):
 
 def protein_to_cds(feature, start, end=None):
     """Map protein coordinates to CDS coordinates."""
-    cds = _map(feature, start, end, "protein", "cds")
-    # add 2 to the end position to get the end of the codon
-    for i in cds:
-        i.end += 2
-    return cds
+    return _map(feature, start, end, "protein", "cds")
 
 
 def protein_to_exon(feature, start, end=None):
