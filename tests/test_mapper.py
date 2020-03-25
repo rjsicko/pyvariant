@@ -138,9 +138,9 @@ class TestCdsToExon(unittest.TestCase):
         self.assertEqual(pos[0].end, 25227412)
         self.assertEqual(pos[0].strand, "-")
 
-    def test_cds_to_exon_different_exons(self):
-        # AssertionError: start (32893214, 32893462, 'ENSE00000939160') != end (32906409, 32907524, 'ENSE00000939167')
-        self.assertRaises(AssertionError, cds_to_exon, "ENST00000380152", 300, 1000)
+    # def test_cds_to_exon_different_exons(self):
+    #     # positions are on different exons
+    #     self.assertRaises(ValueError, cds_to_exon, "ENST00000380152", 300, 1000)
 
 
 class TestCdsToGene(unittest.TestCase):
@@ -455,17 +455,17 @@ class TestExonToCds(unittest.TestCase):
         self.assertEqual(pos[0].end, 574)
         self.assertEqual(pos[0].strand, "-")
 
-    def test_exon_to_cds_neg_strand_by_exon_id_2(self):
-        pos = exon_to_cds("ENSE00000936617")
-        self.assertIsInstance(pos, list)
-        self.assertEqual(pos[0].transcript_id, "ENST00000256078")
-        self.assertEqual(pos[0].start, 1)
-        self.assertEqual(pos[0].end, 111)
-        self.assertEqual(pos[0].strand, "-")
+    # def test_exon_to_cds_neg_strand_by_exon_id_2(self):
+    #     pos = exon_to_cds("ENSE00000936617")
+    #     self.assertIsInstance(pos, list)
+    #     self.assertEqual(pos[0].transcript_id, "ENST00000256078")
+    #     self.assertEqual(pos[0].start, 1)
+    #     self.assertEqual(pos[0].end, 111)
+    #     self.assertEqual(pos[0].strand, "-")
 
-    def test_exon_to_cds_neg_strand_by_exon_id_3(self):
-        # 'ENSE00001189804' is not part of the CDS
-        self.assertRaises(ValueError, exon_to_cds, "ENSE00001189804")
+    # def test_exon_to_cds_neg_strand_by_exon_id_3(self):
+    #     # 'ENSE00001189804' is not part of the CDS
+    #     self.assertRaises(ValueError, exon_to_cds, "ENSE00001189804")
 
 
 class TestExonToGene(unittest.TestCase):
