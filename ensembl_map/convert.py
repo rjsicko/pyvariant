@@ -1,7 +1,7 @@
 import logging
 from math import floor
 
-from .exceptions import OutOfRangeError
+from .exceptions import CdsOutOfRange, ExonOutOfRange, TranscriptOutOfRange
 
 
 def get_map_function(from_type, to_type):
@@ -57,7 +57,7 @@ def _cpos_to_tpos(transcript, start, end=None):
     """
     tstart = transcript.first_start_codon_spliced_offset + start - 1
     if not (1 <= tstart <= len(transcript.sequence)):
-        raise OutOfRangeError(transcript, start, "transcript")
+        raise TranscriptOutOfRange(transcript, start)
     if end:
         tend = _cpos_to_tpos(transcript, end)[1]
     else:
@@ -121,7 +121,7 @@ def _gpos_to_epos(transcript, start, end=None):
             exon1 = (exon.start, exon.end, exon.exon_id)
             break
     else:
-        raise AssertionError("Iterated through all exons")
+        raise ExonOutOfRange(transcript, start)
 
     if end:
         exon2 = _gpos_to_epos(transcript, end)
@@ -149,7 +149,7 @@ def _tpos_to_cpos(transcript, start, end=None):
     """
     cstart = start - transcript.first_start_codon_spliced_offset
     if not (1 <= cstart <= len(transcript.coding_sequence)):
-        raise OutOfRangeError(transcript, cstart, "CDS")
+        raise CdsOutOfRange(transcript, cstart)
 
     if end:
         cend = _tpos_to_cpos(transcript, end)[1]
@@ -190,7 +190,7 @@ def _tpos_to_gpos(transcript, start, end=None):
                 gstart = i[1] - remain
                 break
     else:
-        raise OutOfRangeError(transcript, start, "transcript")
+        raise TranscriptOutOfRange(transcript, start)
 
     if end:
         gend = _tpos_to_gpos(transcript, end)[1]

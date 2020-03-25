@@ -2,6 +2,7 @@ import logging
 
 from .cache import Ensembl
 from .convert import get_map_function
+from .exceptions import ConvertError
 from .features import get_parse_function
 from .transcript import get_transcripts
 from .util import assert_valid_position
@@ -212,7 +213,7 @@ def _map(feature, start, end, from_type, to_type):
         try:
             retval = map_func(transcript, start, end)
             logging.debug(f"Got: {retval}")
-        except Exception as exc:
+        except ValueError as exc:
             logging.debug(exc)
             continue
         ret_obj = parse_func(transcript, *retval)
