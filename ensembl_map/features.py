@@ -157,7 +157,7 @@ class Exon(FeatureBase):
             return None
 
     def to_tuple(self):
-        return self.transcript_id, self.start, self.end
+        return self.exon_id, self.start, self.end
 
 
 class Gene(FeatureBase):
