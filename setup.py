@@ -9,6 +9,6 @@ setup(
     description="Map between gene, transcript, exon, CDS, and protein coordinates.",
     url="https://github.com/mattdoug604/ensembl_map.git",
     python_requires=">=3",
-    install_requires=["pyensembl"],
+    install_requires=["pyensembl>=1.8.5"],
     test_requires=["nose"],
 )
