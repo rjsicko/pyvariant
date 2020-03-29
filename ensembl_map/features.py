@@ -30,9 +30,6 @@ class FeatureBase:
         except AttributeError:
             return None
 
-    def to_tuple(self):
-        return None, self.start, self.end
-
 
 class CDS(FeatureBase):
     """CDS coordinate object.
@@ -147,7 +144,10 @@ class Exon(FeatureBase):
 
     @property
     def transcript_id(self):
-        return self._pyensembl_obj.transcript_id
+        try:
+            return self._pyensembl_obj.transcript_id
+        except AttributeError:
+            return None
 
     @property
     def transcript_name(self):
