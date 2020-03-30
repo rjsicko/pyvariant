@@ -97,22 +97,23 @@ class Exon(FeatureBase):
         seq (str): CDS sequence from `start` to `end`, inclusive
     """
 
-    def __init__(self, pyensembl_obj, exon, start, end):
+    def __init__(self, pyensembl_obj, exon, start, end, index=None):
         self._pyensembl_obj = pyensembl_obj
         self._exon = exon
         self.start = start
         self.end = end
+        self.index = index
 
     @classmethod
     def load(cls, transcript, start, end, exon_id):
         if start > end:
             start, end = end, start
-        _, eobj = cls.get_exon_from_transcript(transcript, exon_id)
-        return cls(transcript, eobj, start, end)
+        exon, index = cls.index_exon(transcript, exon_id)
+        return cls(transcript, exon, start, end, index)
 
-    @classmethod
-    def get_exon_from_transcript(cls, transcript, exon_id):
-        exons = [(n, i) for n, i in enumerate(transcript.exons, 1) if i.exon_id == exon_id]
+    @staticmethod
+    def index_exon(transcript, exon_id):
+        exons = [(i, n) for n, i in enumerate(transcript.exons, 1) if i.exon_id == exon_id]
         if len(exons) < 1:
             raise ValueError(f"Exon {exon_id} not found in transcript {transcript.transcript_id}")
         elif len(exons) > 1:
@@ -132,10 +133,6 @@ class Exon(FeatureBase):
             return self._exon.exon_id
         except AttributeError:
             return None
-
-    @property
-    def exon_position(self):
-        return self.get_exon_from_transcript(self.transcript, self.exon_id)[0]
 
     @property
     def transcript(self):

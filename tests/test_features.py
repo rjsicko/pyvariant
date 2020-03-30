@@ -49,7 +49,7 @@ class TestExon(unittest.TestCase):
     def setUp(self):
         self.obj_t = MagicMock()
         self.obj_e = MagicMock()
-        self.feature = Exon(self.obj_t, self.obj_e, 1, 2)
+        self.feature = Exon(self.obj_t, self.obj_e, 1, 2, 3)
 
     def test_biotype(self):
         self.assertEqual(self.feature.biotype, self.obj_t.biotype)
@@ -71,7 +71,7 @@ class TestExon(unittest.TestCase):
         mock_exon = MagicMock()
         mock_exon.exon_id = self.feature.exon_id
         self.obj_t.exons = [mock_exon]
-        self.assertEqual(self.feature.exon_position, 1)
+        self.assertEqual(self.feature.index, 3)
 
     def test_repr(self):
         str(self.feature)
