@@ -4,7 +4,7 @@ from .cache import Ensembl
 from .convert import get_map_function, _epos_to_cpos
 from .exceptions import ConvertError
 from .features import get_load_function
-from .transcript import transcripts_with_exon, get_transcripts
+from .transcript import get_transcripts
 from .util import assert_valid_position
 
 
@@ -76,7 +76,7 @@ def exon_to_transcript(feature):
         logging.error(f"No exon '{feature}' found")
         return result
 
-    valid_transcripts = transcripts_with_exon(exon.gene_id, "gene", feature)
+    valid_transcripts = [i.transcript_id for i in get_transcripts(feature, "exon")]
     for pos in gene_to_transcript(exon.gene_id, exon.start, exon.end):
         if pos.transcript_id in valid_transcripts:
             result.append(pos)
