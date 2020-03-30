@@ -59,13 +59,9 @@ class Ensembl:
 
         self._data = EnsemblRelease(release=release, species=species)
         if self._data.required_local_files_exist():
-            logging.info(
-                f"Using cache files in {self._data.download_cache.cache_directory_path}"
-            )
+            logging.info(f"Using cache files in {self._data.download_cache.cache_directory_path}")
         elif download_if_missing:
-            logging.warning(
-                "Downloading required cache files (this may take a while)..."
-            )
+            logging.warning("Downloading required cache files (this may take a while)...")
             self._data.download()
             self._data.index()
         else:

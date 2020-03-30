@@ -157,9 +157,7 @@ def _gpos_to_epos(transcript, start, end=None):
         exon2 = exon1
 
     if exon1 != exon2:
-        raise ValueError(
-            f"{start} and {end} are on different exons ({exon1[2]}, {exon2[2]}"
-        )
+        raise ValueError(f"{start} and {end} are on different exons ({exon1[2]}, {exon2[2]}")
     else:
         return exon1
 
