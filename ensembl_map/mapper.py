@@ -1,8 +1,7 @@
 import logging
 
 from .cache import Ensembl
-from .convert import get_map_function, _epos_to_cpos
-from .exceptions import ConvertError
+from .convert import get_map_function
 from .features import get_load_function
 from .transcript import get_transcripts
 from .util import assert_valid_position
