@@ -7,16 +7,13 @@ from ensembl_map.features import CDS, Exon, Gene, Protein, Transcript
 class TestCds(unittest.TestCase):
     def setUp(self):
         self.obj = MagicMock()
-        self.feature = CDS(self.obj, 1, 2)
+        self.feature = CDS.load(self.obj, 1, 2)
 
     def test_biotype(self):
         self.assertEqual(self.feature.biotype, self.obj.biotype)
 
     def test_contig(self):
         self.assertEqual(self.feature.contig, self.obj.contig)
-
-    def test_repr(self):
-        str(self.feature)
 
     def test_sequence(self):
         self.assertEqual(self.feature.sequence, self.obj.coding_sequence.__getitem__())
@@ -33,23 +30,17 @@ class TestCds(unittest.TestCase):
     def test_transcript_id(self):
         self.assertEqual(self.feature.transcript_id, self.obj.transcript_id)
 
-    def test_transcript_id_none(self):
-        self.feature._pyensembl_obj = None  # causes AttributeError
-        self.assertEqual(self.feature.transcript_id, None)
-
     def test_transcript_name(self):
         self.assertEqual(self.feature.transcript_name, self.obj.transcript_name)
-
-    def test_transcript_name_none(self):
-        self.feature._pyensembl_obj = None  # causes AttributeError
-        self.assertEqual(self.feature.transcript_name, None)
 
 
 class TestExon(unittest.TestCase):
     def setUp(self):
-        self.obj_t = MagicMock()
         self.obj_e = MagicMock()
-        self.feature = Exon(self.obj_t, self.obj_e, 1, 2, 3)
+        self.obj_e.exon_id = "test"
+        self.obj_t = MagicMock()
+        self.obj_t.exons = [self.obj_e]
+        self.feature = Exon.load(self.obj_t, 1, 2, "test")
 
     def test_biotype(self):
         self.assertEqual(self.feature.biotype, self.obj_t.biotype)
@@ -63,18 +54,8 @@ class TestExon(unittest.TestCase):
     def test_exon_id(self):
         self.assertEqual(self.feature.exon_id, self.obj_e.exon_id)
 
-    def test_exon_id_none(self):
-        self.feature._exon = None  # causes AttributeError
-        self.assertEqual(self.feature.exon_id, None)
-
     def test_exon_id_position(self):
-        mock_exon = MagicMock()
-        mock_exon.exon_id = self.feature.exon_id
-        self.obj_t.exons = [mock_exon]
-        self.assertEqual(self.feature.index, 3)
-
-    def test_repr(self):
-        str(self.feature)
+        self.assertEqual(self.feature.index, 1)
 
     def test_strand(self):
         self.assertEqual(self.feature.strand, self.obj_t.strand)
@@ -88,60 +69,41 @@ class TestExon(unittest.TestCase):
     def test_transcript_id(self):
         self.assertEqual(self.feature.transcript_id, self.obj_t.transcript_id)
 
-    def test_transcript_id_none(self):
-        self.feature._pyensembl_obj = None  # causes AttributeError
-        self.assertEqual(self.feature.transcript_id, None)
-
     def test_transcript_name(self):
         self.assertEqual(self.feature.transcript_name, self.obj_t.transcript_name)
-
-    def test_transcript_name_none(self):
-        self.feature._pyensembl_obj = None  # causes AttributeError
-        self.assertEqual(self.feature.transcript_name, None)
 
 
 class TestGene(unittest.TestCase):
     def setUp(self):
         self.obj = MagicMock()
-        self.feature = Gene(self.obj, 1, 2)
+        self.feature = Gene.load(self.obj, 1, 2)
 
     def test_biotype(self):
-        self.assertEqual(self.feature.biotype, self.obj.biotype)
+        self.assertEqual(self.feature.biotype, self.obj.gene.biotype)
 
     def test_contig(self):
-        self.assertEqual(self.feature.contig, self.obj.contig)
+        self.assertEqual(self.feature.contig, self.obj.gene.contig)
 
     def test_gene(self):
-        self.assertEqual(self.feature.gene, self.obj)
+        self.assertEqual(self.feature.gene, self.obj.gene)
 
     def test_gene_id(self):
-        self.assertEqual(self.feature.gene_id, self.obj.gene_id)
-
-    def test_gene_id_none(self):
-        self.feature._pyensembl_obj = None  # causes AttributeError
-        self.assertEqual(self.feature.gene_id, None)
+        self.assertEqual(self.feature.gene_id, self.obj.gene.gene_id)
 
     def test_gene_name(self):
-        self.assertEqual(self.feature.gene_name, self.obj.gene_name)
-
-    def test_gene_name_none(self):
-        self.feature._pyensembl_obj = None  # causes AttributeError
-        self.assertEqual(self.feature.gene_name, None)
-
-    def test_repr(self):
-        str(self.feature)
+        self.assertEqual(self.feature.gene_name, self.obj.gene.gene_name)
 
     def test_strand(self):
-        self.assertEqual(self.feature.strand, self.obj.strand)
+        self.assertEqual(self.feature.strand, self.obj.gene.strand)
 
     def test_to_tuple(self):
-        self.assertEqual(self.feature.to_tuple(), (self.obj.gene_id, 1, 2))
+        self.assertEqual(self.feature.to_tuple(), (self.obj.gene.gene_id, 1, 2))
 
 
 class TestProtein(unittest.TestCase):
     def setUp(self):
         self.obj = MagicMock()
-        self.feature = Protein(self.obj, 1, 2)
+        self.feature = Protein.load(self.obj, 1, 2)
 
     def test_biotype(self):
         self.assertEqual(self.feature.biotype, self.obj.biotype)
@@ -154,9 +116,6 @@ class TestProtein(unittest.TestCase):
 
     def test_sequence(self):
         self.assertEqual(self.feature.sequence, self.obj.protein_sequence.__getitem__())
-
-    def test_repr(self):
-        str(self.feature)
 
     def test_strand(self):
         self.assertEqual(self.feature.strand, self.obj.strand)
@@ -171,16 +130,13 @@ class TestProtein(unittest.TestCase):
 class TestTranscript(unittest.TestCase):
     def setUp(self):
         self.obj = MagicMock()
-        self.feature = Transcript(self.obj, 1, 2)
+        self.feature = Transcript.load(self.obj, 1, 2)
 
     def test_biotype(self):
         self.assertEqual(self.feature.biotype, self.obj.biotype)
 
     def test_contig(self):
         self.assertEqual(self.feature.contig, self.obj.contig)
-
-    def test_repr(self):
-        str(self.feature)
 
     def test_sequence(self):
         self.assertEqual(self.feature.sequence, self.obj.sequence.__getitem__())
@@ -197,13 +153,5 @@ class TestTranscript(unittest.TestCase):
     def test_transcript_id(self):
         self.assertEqual(self.feature.transcript_id, self.obj.transcript_id)
 
-    def test_transcript_id_none(self):
-        self.feature._pyensembl_obj = None  # causes AttributeError
-        self.assertEqual(self.feature.transcript_id, None)
-
     def test_transcript_name(self):
         self.assertEqual(self.feature.transcript_name, self.obj.transcript_name)
-
-    def test_transcript_name_none(self):
-        self.feature._pyensembl_obj = None  # causes AttributeError
-        self.assertEqual(self.feature.transcript_name, None)
