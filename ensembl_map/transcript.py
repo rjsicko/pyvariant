@@ -46,7 +46,7 @@ def _get_transcript_ids_by_id(feature, feature_type):
     elif feature_type == "protein":
         return _query(feature, feature_type, ENSEMBL.data.transcript_id_of_protein_id)
     else:
-        raise TypeError(f"Cannot get transcript IDs from {feature_type}")
+        raise TypeError(f"Cannot get transcript IDs from (ID={feature}, type={feature_type})")
 
 
 def _get_transcript_ids_by_name(feature, feature_type):
@@ -55,7 +55,7 @@ def _get_transcript_ids_by_name(feature, feature_type):
     elif feature_type == "gene":
         return _query(feature, feature_type, ENSEMBL.data.transcript_ids_of_gene_name)
     else:
-        raise TypeError(f"Cannot get transcript IDs from {feature_type}")
+        raise TypeError(f"Cannot get transcript IDs from (name={feature}, type={feature_type})")
 
 
 def _query(feature, feature_type, func):
