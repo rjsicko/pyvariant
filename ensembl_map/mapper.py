@@ -65,8 +65,6 @@ def exon_to_protein(feature):
 
 def exon_to_transcript(feature):
     """Map an exon to transcript coordinates."""
-    # There's an extra check needed here to filter out transcripts that don't contain
-    # the query exon.
     result = []
 
     try:
@@ -75,6 +73,7 @@ def exon_to_transcript(feature):
         logging.error(f"No exon '{feature}' found")
         return result
 
+    # Filter out transcripts that don't contain the query exon.
     valid_transcripts = [i.transcript_id for i in get_transcripts(feature, "exon")]
     for pos in gene_to_transcript(exon.gene_id, exon.start, exon.end):
         if pos.transcript_id in valid_transcripts:
