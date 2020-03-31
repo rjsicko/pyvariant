@@ -1,7 +1,7 @@
 import logging
 
 from .cache import Ensembl
-from .convert import get_map_function
+from .convert import get_convert_func
 from .features import get_load_function
 from .transcript import get_transcripts
 from .util import assert_valid_position
@@ -185,7 +185,7 @@ def _map(feature, start, end, from_type, to_type):
 
     logging.debug(f"Map {from_type} ({feature}, {start}, {end}) to {to_type}")
     assert_valid_position(start, end)
-    map_func = get_map_function(from_type, to_type)
+    map_func = get_convert_func(from_type, to_type)
     load_func = get_load_function(to_type)
 
     for transcript in get_transcripts(feature, from_type):

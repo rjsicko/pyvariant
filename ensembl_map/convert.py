@@ -4,7 +4,7 @@ from math import floor
 from .exceptions import CdsOutOfRange, ExonOutOfRange, TranscriptOutOfRange
 
 
-def get_map_function(from_type, to_type):
+def get_convert_func(from_type, to_type):
     if from_type == to_type:
         raise ValueError("`from_type` and `to_type` must be different!")
     elif from_type == "cds" and to_type == "protein":
