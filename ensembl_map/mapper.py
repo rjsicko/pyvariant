@@ -42,7 +42,10 @@ def cds_to_protein(feature, start, end=None, raise_error=True):
 
 def cds_to_transcript(feature, start, end=None, raise_error=True):
     """Map CDS coordinates to transcript coordinates."""
-    return _map(feature, start, end, "cds", "transcript")
+    result = _map(feature, start, end, "cds", "transcript")
+    if not result and raise_error:
+        raise ValueError(f"Could not map CDS {feature} to a transcript")
+    return result
 
 
 def exon_to_cds(feature, raise_error=True):
