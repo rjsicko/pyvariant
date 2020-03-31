@@ -10,12 +10,24 @@ DEFAULT_RELEASE = 99
 DEFAULT_SPECIES = "homo_sapiens"
 
 
+def release():
+    """Return the Ensembl release being used."""
+    return Ensembl().data.release
+
+
+def species():
+    """Return the species being used."""
+    return Ensembl().data.species.latin_name
+
+
 def set_cache_dir(path):
     """Set the root directory where cache files are stored."""
     Ensembl().set_cache_dir(path)
 
 
-def set_ensembl_release(release, species=DEFAULT_SPECIES, cache_dir=None, download_if_missing=False):
+def set_ensembl_release(
+    release, species=DEFAULT_SPECIES, cache_dir=None, download_if_missing=False
+):
     """Set the Ensembl release to use."""
     return Ensembl().load(release, species, cache_dir, download_if_missing)
 
