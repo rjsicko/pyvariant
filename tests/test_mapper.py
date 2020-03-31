@@ -148,96 +148,96 @@ class TestCdsToGene(unittest.TestCase):
         pos = cds_to_gene("ENST00000288135", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54658014)
-        self.assertEqual(pos[0].end, 54658014)
+        self.assertEqual(pos[0].start, 54658015)
+        self.assertEqual(pos[0].end, 54658015)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_gene_pos_strand_by_transcript_id_2(self):
         pos = cds_to_gene("ENST00000288135", 213)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54695656)
-        self.assertEqual(pos[0].end, 54695656)
+        self.assertEqual(pos[0].start, 54695657)
+        self.assertEqual(pos[0].end, 54695657)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_gene_pos_strand_by_transcript_id_3(self):
         pos = cds_to_gene("ENST00000288135", 213, 221)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54695656)
-        self.assertEqual(pos[0].end, 54695664)
+        self.assertEqual(pos[0].start, 54695657)
+        self.assertEqual(pos[0].end, 54695665)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_gene_pos_strand_by_transcript_name(self):
         pos = cds_to_gene("KIT-201", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54658014)
-        self.assertEqual(pos[0].end, 54658014)
+        self.assertEqual(pos[0].start, 54658015)
+        self.assertEqual(pos[0].end, 54658015)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_gene_pos_strand_by_transcript_name_2(self):
         pos = cds_to_gene("KIT-201", 213)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54695656)
-        self.assertEqual(pos[0].end, 54695656)
+        self.assertEqual(pos[0].start, 54695657)
+        self.assertEqual(pos[0].end, 54695657)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_gene_pos_strand_by_transcript_name_3(self):
         pos = cds_to_gene("KIT-201", 213, 221)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54695656)
-        self.assertEqual(pos[0].end, 54695664)
+        self.assertEqual(pos[0].start, 54695657)
+        self.assertEqual(pos[0].end, 54695665)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_gene_neg_strand_by_transcript_id(self):
         pos = cds_to_gene("ENST00000256078", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25245385)
-        self.assertEqual(pos[0].end, 25245385)
+        self.assertEqual(pos[0].start, 25245384)
+        self.assertEqual(pos[0].end, 25245384)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_gene_neg_strand_by_transcript_id_2(self):
         pos = cds_to_gene("ENST00000256078", 201)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25227324)
-        self.assertEqual(pos[0].end, 25227324)
+        self.assertEqual(pos[0].start, 25227323)
+        self.assertEqual(pos[0].end, 25227323)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_gene_neg_strand_by_transcript_id_3(self):
         pos = cds_to_gene("ENST00000256078", 201, 301)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25225764)
-        self.assertEqual(pos[0].end, 25227324)
+        self.assertEqual(pos[0].start, 25225763)
+        self.assertEqual(pos[0].end, 25227323)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_gene_neg_strand_by_transcript_name(self):
         pos = cds_to_gene("KRAS-201", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25245385)
-        self.assertEqual(pos[0].end, 25245385)
+        self.assertEqual(pos[0].start, 25245384)
+        self.assertEqual(pos[0].end, 25245384)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_gene_neg_strand_by_transcript_name_2(self):
         pos = cds_to_gene("KRAS-201", 201)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25227324)
-        self.assertEqual(pos[0].end, 25227324)
+        self.assertEqual(pos[0].start, 25227323)
+        self.assertEqual(pos[0].end, 25227323)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_gene_neg_strand_by_transcript_name_3(self):
         pos = cds_to_gene("KRAS-201", 201, 301)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25225764)
-        self.assertEqual(pos[0].end, 25227324)
+        self.assertEqual(pos[0].start, 25225763)
+        self.assertEqual(pos[0].end, 25227323)
         self.assertEqual(pos[0].strand, "-")
 
 
@@ -344,96 +344,96 @@ class TestCdsToTranscript(unittest.TestCase):
         pos = cds_to_transcript("ENST00000288135", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 97)
-        self.assertEqual(pos[0].end, 97)
+        self.assertEqual(pos[0].start, 98)
+        self.assertEqual(pos[0].end, 98)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_transcript_pos_strand_by_transcript_id_2(self):
         pos = cds_to_transcript("ENST00000288135", 213)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 309)
-        self.assertEqual(pos[0].end, 309)
+        self.assertEqual(pos[0].start, 310)
+        self.assertEqual(pos[0].end, 310)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_transcript_pos_strand_by_transcript_id_3(self):
         pos = cds_to_transcript("ENST00000288135", 213, 221)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 309)
-        self.assertEqual(pos[0].end, 317)
+        self.assertEqual(pos[0].start, 310)
+        self.assertEqual(pos[0].end, 318)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_transcript_pos_strand_by_transcript_name(self):
         pos = cds_to_transcript("KIT-201", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 97)
-        self.assertEqual(pos[0].end, 97)
+        self.assertEqual(pos[0].start, 98)
+        self.assertEqual(pos[0].end, 98)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_transcript_pos_strand_by_transcript_name_2(self):
         pos = cds_to_transcript("KIT-201", 213)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 309)
-        self.assertEqual(pos[0].end, 309)
+        self.assertEqual(pos[0].start, 310)
+        self.assertEqual(pos[0].end, 310)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_transcript_pos_strand_by_transcript_name_3(self):
         pos = cds_to_transcript("KIT-201", 213, 221)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 309)
-        self.assertEqual(pos[0].end, 317)
+        self.assertEqual(pos[0].start, 310)
+        self.assertEqual(pos[0].end, 318)
         self.assertEqual(pos[0].strand, "+")
 
     def test_cds_to_transcript_neg_strand_by_transcript_id(self):
         pos = cds_to_transcript("ENST00000256078", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000256078")
-        self.assertEqual(pos[0].start, 190)
-        self.assertEqual(pos[0].end, 190)
+        self.assertEqual(pos[0].start, 191)
+        self.assertEqual(pos[0].end, 191)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_transcript_neg_strand_by_transcript_id_2(self):
         pos = cds_to_transcript("ENST00000256078", 87)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000256078")
-        self.assertEqual(pos[0].start, 276)
-        self.assertEqual(pos[0].end, 276)
+        self.assertEqual(pos[0].start, 277)
+        self.assertEqual(pos[0].end, 277)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_transcript_neg_strand_by_transcript_id_3(self):
         pos = cds_to_transcript("ENST00000256078", 87, 92)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000256078")
-        self.assertEqual(pos[0].start, 276)
-        self.assertEqual(pos[0].end, 281)
+        self.assertEqual(pos[0].start, 277)
+        self.assertEqual(pos[0].end, 282)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_transcript_neg_strand_by_transcript_name(self):
         pos = cds_to_transcript("KRAS-201", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000256078")
-        self.assertEqual(pos[0].start, 190)
-        self.assertEqual(pos[0].end, 190)
+        self.assertEqual(pos[0].start, 191)
+        self.assertEqual(pos[0].end, 191)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_transcript_neg_strand_by_transcript_name_2(self):
         pos = cds_to_transcript("KRAS-201", 87)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000256078")
-        self.assertEqual(pos[0].start, 276)
-        self.assertEqual(pos[0].end, 276)
+        self.assertEqual(pos[0].start, 277)
+        self.assertEqual(pos[0].end, 277)
         self.assertEqual(pos[0].strand, "-")
 
     def test_cds_to_transcript_neg_strand_by_transcript_name_3(self):
         pos = cds_to_transcript("KRAS-201", 87, 92)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000256078")
-        self.assertEqual(pos[0].start, 276)
-        self.assertEqual(pos[0].end, 281)
+        self.assertEqual(pos[0].start, 277)
+        self.assertEqual(pos[0].end, 282)
         self.assertEqual(pos[0].strand, "-")
 
 
@@ -1037,48 +1037,48 @@ class TestProteinToGene(unittest.TestCase):
         pos = protein_to_gene("ENSP00000288135", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54658014)
-        self.assertEqual(pos[0].end, 54658016)
+        self.assertEqual(pos[0].start, 54658015)
+        self.assertEqual(pos[0].end, 54658017)
         self.assertEqual(pos[0].strand, "+")
 
     def test_protein_to_gene_pos_strand_by_protein_id_2(self):
         pos = protein_to_gene("ENSP00000288135", 71)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54695654)
-        self.assertEqual(pos[0].end, 54695656)
+        self.assertEqual(pos[0].start, 54695655)
+        self.assertEqual(pos[0].end, 54695657)
         self.assertEqual(pos[0].strand, "+")
 
     def test_protein_to_gene_pos_strand_by_protein_id_3(self):
         pos = protein_to_gene("ENSP00000288135", 71, 74)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000157404")
-        self.assertEqual(pos[0].start, 54695654)
-        self.assertEqual(pos[0].end, 54695665)
+        self.assertEqual(pos[0].start, 54695655)
+        self.assertEqual(pos[0].end, 54695666)
         self.assertEqual(pos[0].strand, "+")
 
     def test_protein_to_gene_neg_strand_by_protein_id(self):
         pos = protein_to_gene("ENSP00000256078", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25245383)
-        self.assertEqual(pos[0].end, 25245385)
+        self.assertEqual(pos[0].start, 25245382)
+        self.assertEqual(pos[0].end, 25245384)
         self.assertEqual(pos[0].strand, "-")
 
     def test_protein_to_gene_neg_strand_by_protein_id_2(self):
         pos = protein_to_gene("ENSP00000256078", 6)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25245368)
-        self.assertEqual(pos[0].end, 25245370)
+        self.assertEqual(pos[0].start, 25245367)
+        self.assertEqual(pos[0].end, 25245369)
         self.assertEqual(pos[0].strand, "-")
 
     def test_protein_to_gene_neg_strand_by_protein_id_3(self):
         pos = protein_to_gene("ENSP00000256078", 6, 9)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].gene_id, "ENSG00000133703")
-        self.assertEqual(pos[0].start, 25245359)
-        self.assertEqual(pos[0].end, 25245370)
+        self.assertEqual(pos[0].start, 25245358)
+        self.assertEqual(pos[0].end, 25245369)
         self.assertEqual(pos[0].strand, "-")
 
 
@@ -1087,48 +1087,48 @@ class TestProteinToTranscript(unittest.TestCase):
         pos = protein_to_transcript("ENSP00000288135", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 97)
-        self.assertEqual(pos[0].end, 99)
+        self.assertEqual(pos[0].start, 98)
+        self.assertEqual(pos[0].end, 100)
         self.assertEqual(pos[0].strand, "+")
 
     def test_protein_to_transcript_pos_strand_by_protein_id_2(self):
         pos = protein_to_transcript("ENSP00000288135", 12)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 130)
-        self.assertEqual(pos[0].end, 132)
+        self.assertEqual(pos[0].start, 131)
+        self.assertEqual(pos[0].end, 133)
         self.assertEqual(pos[0].strand, "+")
 
     def test_protein_to_transcript_pos_strand_by_protein_id_3(self):
         pos = protein_to_transcript("ENSP00000288135", 12, 21)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000288135")
-        self.assertEqual(pos[0].start, 130)
-        self.assertEqual(pos[0].end, 159)
+        self.assertEqual(pos[0].start, 131)
+        self.assertEqual(pos[0].end, 160)
         self.assertEqual(pos[0].strand, "+")
 
     def test_protein_to_transcript_neg_strand_by_protein_id(self):
         pos = protein_to_transcript("ENSP00000260947", 1)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000260947")
-        self.assertEqual(pos[0].start, 114)
-        self.assertEqual(pos[0].end, 116)
+        self.assertEqual(pos[0].start, 115)
+        self.assertEqual(pos[0].end, 117)
         self.assertEqual(pos[0].strand, "-")
 
     def test_protein_to_transcript_neg_strand_by_protein_id_2(self):
         pos = protein_to_transcript("ENSP00000260947", 71)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000260947")
-        self.assertEqual(pos[0].start, 324)
-        self.assertEqual(pos[0].end, 326)
+        self.assertEqual(pos[0].start, 325)
+        self.assertEqual(pos[0].end, 327)
         self.assertEqual(pos[0].strand, "-")
 
     def test_protein_to_transcript_neg_strand_by_protein_id_3(self):
         pos = protein_to_transcript("ENSP00000260947", 71, 74)
         self.assertIsInstance(pos, list)
         self.assertEqual(pos[0].transcript_id, "ENST00000260947")
-        self.assertEqual(pos[0].start, 324)
-        self.assertEqual(pos[0].end, 335)
+        self.assertEqual(pos[0].start, 325)
+        self.assertEqual(pos[0].end, 336)
         self.assertEqual(pos[0].strand, "-")
 
 

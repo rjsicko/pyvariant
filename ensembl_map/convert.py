@@ -63,7 +63,7 @@ def _cpos_to_tpos(transcript, start, end=None):
     """
 
     def convert(x):
-        y = transcript.first_start_codon_spliced_offset + x - 1
+        y = transcript.first_start_codon_spliced_offset + x
         if not (1 <= y <= len(transcript.sequence)):
             raise TranscriptOutOfRange(transcript, x)
         return y
