@@ -39,9 +39,11 @@ def _cpos_to_ppos(_, start, end=None):
     Returns:
         tuple of int: amino acid position
     """
-    pstart = floor((start - 1) / 3 + 1)
+    convert = lambda x: floor((x - 1) / 3 + 1)
+
+    pstart = convert(start)
     if end:
-        pend = _cpos_to_ppos(_, end)[1]
+        pend = convert(end)
     else:
         pend = pstart
 
@@ -59,11 +61,16 @@ def _cpos_to_tpos(transcript, start, end=None):
     Returns:
         tuple of int: position relative to the transcript
     """
-    tstart = transcript.first_start_codon_spliced_offset + start - 1
-    if not (1 <= tstart <= len(transcript.sequence)):
-        raise TranscriptOutOfRange(transcript, start)
+
+    def convert(x):
+        y = transcript.first_start_codon_spliced_offset + x - 1
+        if not (1 <= y <= len(transcript.sequence)):
+            raise TranscriptOutOfRange(transcript, x)
+        return y
+
+    tstart = convert(start)
     if end:
-        tend = _cpos_to_tpos(transcript, end)[1]
+        tend = convert(end)
     else:
         tend = tstart
 
@@ -104,9 +111,11 @@ def _gpos_to_tpos(transcript, start, end=None):
     Returns:
         tuple of int: position relative to the transcript
     """
-    tstart = transcript.spliced_offset(start) + 1
+    convert = lambda x: transcript.spliced_offset(x) + 1
+
+    tstart = convert(start)
     if end:
-        tend = _gpos_to_tpos(transcript, end)[1]
+        tend = convert(end)
     else:
         tend = tstart
 
@@ -123,10 +132,12 @@ def _ppos_to_cpos(_, start, end=None):
     Returns:
         tuple of int: CDS position of the first base of the codon
     """
-    cstart = (start - 1) * 3 + 1
+    convert = lambda x: (x - 1) * 3 + 1
+
+    cstart = convert(start)
     # add 2 to the end position to get the end of the codon
     if end:
-        cend = _ppos_to_cpos(_, end)[1]
+        cend = convert(end) + 2
     else:
         cend = cstart + 2
 
@@ -144,22 +155,23 @@ def _gpos_to_epos(transcript, start, end=None):
     Returns:
         tuple of int: genomic coordinates of the exon
     """
-    for exon in sorted(transcript.exons, key=lambda x: x.start):
-        if exon.start <= start <= exon.end:
-            exon1 = (exon.start, exon.end, exon.exon_id)
-            break
-    else:
-        raise ExonOutOfRange(transcript, start)
 
+    def convert(x):
+        for exon in sorted(transcript.exons, key=lambda x: x.start):
+            if exon.start <= x <= exon.end:
+                return (exon.start, exon.end, exon.exon_id)
+        else:
+            raise ExonOutOfRange(transcript, x)
+
+    exon1 = convert(start)
     if end:
-        exon2 = _gpos_to_epos(transcript, end)
+        exon2 = convert(end)
+        if exon1 != exon2:
+            raise ValueError(f"{start} and {end} are on different exons ({exon1[2]}, {exon2[2]}")
     else:
         exon2 = exon1
 
-    if exon1 != exon2:
-        raise ValueError(f"{start} and {end} are on different exons ({exon1[2]}, {exon2[2]}")
-    else:
-        return exon1
+    return exon1
 
 
 def _tpos_to_cpos(transcript, start, end=None):
@@ -173,12 +185,16 @@ def _tpos_to_cpos(transcript, start, end=None):
     Returns:
         tuple of int: position relative to the CDS
     """
-    cstart = start - transcript.first_start_codon_spliced_offset
-    if not (1 <= cstart <= len(transcript.coding_sequence)):
-        raise CdsOutOfRange(transcript, cstart)
 
+    def convert(x):
+        y = x - transcript.first_start_codon_spliced_offset
+        if not (1 <= y <= len(transcript.coding_sequence)):
+            raise CdsOutOfRange(transcript, x)
+        return y
+
+    cstart = convert(start)
     if end:
-        cend = _tpos_to_cpos(transcript, end)[1]
+        cend = convert(end)
     else:
         cend = cstart
 
@@ -203,23 +219,23 @@ def _tpos_to_gpos(transcript, start, end=None):
     if transcript.on_negative_strand:
         ranges = ranges[::-1]
 
-    remain = start - 1
-    for i in ranges:
-        length = i[1] - i[0] + 1
-        if remain >= length:
-            remain -= length
+    def convert(x):
+        remain = x - 1
+        for i in ranges:
+            length = i[1] - i[0] + 1
+            if remain >= length:
+                remain -= length
+            else:
+                if transcript.on_positive_strand:
+                    return i[0] + remain
+                elif transcript.on_negative_strand:
+                    return i[1] - remain
         else:
-            if transcript.on_positive_strand:
-                gstart = i[0] + remain
-                break
-            elif transcript.on_negative_strand:
-                gstart = i[1] - remain
-                break
-    else:
-        raise TranscriptOutOfRange(transcript, start)
+            raise TranscriptOutOfRange(transcript, x)
 
+    gstart = convert(start)
     if end:
-        gend = _tpos_to_gpos(transcript, end)[1]
+        gend = convert(end)
     else:
         gend = gstart
 
