@@ -140,7 +140,7 @@ class TestCdsToExon(unittest.TestCase):
 
     def test_cds_to_exon_different_exons(self):
         # positions are on different exons
-        self.assertEqual(cds_to_exon("ENST00000380152", 300, 1000), [])
+        self.assertRaises(ValueError, cds_to_exon, "ENST00000380152", 300, 1000)
 
 
 class TestCdsToGene(unittest.TestCase):
@@ -465,7 +465,7 @@ class TestExonToCds(unittest.TestCase):
 
     def test_exon_to_cds_neg_strand_by_exon_id_3(self):
         # 'ENSE00001189804' is not part of the CDS
-        self.assertEqual(exon_to_cds("ENSE00001189804"), [])
+        self.assertRaises(ValueError, exon_to_cds, "ENSE00001189804")
 
 
 class TestExonToGene(unittest.TestCase):
