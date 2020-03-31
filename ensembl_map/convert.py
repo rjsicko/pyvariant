@@ -244,4 +244,7 @@ def _tpos_to_gpos(transcript, start, end=None):
 
 def _no_convert(_, start, end=None):
     """Dummy function for when no conversion is needed."""
-    return start, end
+    if end:
+        return start, end
+    else:
+        return start, start

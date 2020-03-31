@@ -21,3 +21,4 @@ from .mapper import (
     transcript_to_gene,
     transcript_to_protein,
 )
+from .sequence import cds_sequence, protein_sequence, transcript_sequence
