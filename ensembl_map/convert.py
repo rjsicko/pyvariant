@@ -6,7 +6,7 @@ from .exceptions import CdsOutOfRange, ExonOutOfRange, TranscriptOutOfRange
 
 def get_convert_func(from_type, to_type):
     if from_type == to_type:
-        raise ValueError("`from_type` and `to_type` must be different!")
+        return _no_convert
     elif from_type == "cds" and to_type == "protein":
         return _cpos_to_ppos
     elif from_type == "cds" and to_type == "transcript":
@@ -159,7 +159,7 @@ def _gpos_to_epos(transcript, start, end=None):
     def convert(x):
         for exon in sorted(transcript.exons, key=lambda x: x.start):
             if exon.start <= x <= exon.end:
-                return (exon.start, exon.end, exon.exon_id)
+                return exon.start, exon.end
         else:
             raise ExonOutOfRange(transcript, x)
 
@@ -167,7 +167,7 @@ def _gpos_to_epos(transcript, start, end=None):
     if end:
         exon2 = convert(end)
         if exon1 != exon2:
-            raise ValueError(f"{start} and {end} are on different exons ({exon1[2]}, {exon2[2]}")
+            raise ValueError(f"{start} and {end} are on different exons ({exon1}, {exon2}")
     else:
         exon2 = exon1
 
@@ -240,3 +240,8 @@ def _tpos_to_gpos(transcript, start, end=None):
         gend = gstart
 
     return gstart, gend
+
+
+def _no_convert(_, start, end=None):
+    """Dummy function for when no conversion is needed."""
+    return start, end

@@ -58,11 +58,11 @@ class Exon(SimpleNamespace):
     """
 
     @classmethod
-    def load(cls, transcript, start, end, exon_id):
+    def load(cls, transcript, start, end):
         if start > end:
             start, end = end, start
 
-        exon, index = cls.index_exon(transcript, exon_id)
+        exon, index = cls.index_exon(transcript, start, end)
 
         return cls(
             biotype=getattr(transcript, "biotype", None),
@@ -77,13 +77,17 @@ class Exon(SimpleNamespace):
         )
 
     @staticmethod
-    def index_exon(transcript, exon_id):
-        exons = [(i, n) for n, i in enumerate(transcript.exons, 1) if i.exon_id == exon_id]
+    def index_exon(transcript, start, end):
+        exons = [
+            (i, n) for n, i in enumerate(transcript.exons, 1) if start == i.start and end == i.end
+        ]
         if len(exons) < 1:
-            raise ValueError(f"Exon {exon_id} not found in transcript {transcript.transcript_id}")
+            raise ValueError(
+                f"Exon ({start}, {end}) not found in transcript {transcript.transcript_id}"
+            )
         elif len(exons) > 1:
             raise ValueError(
-                f"Multiple exons {exon_id} found in transcript {transcript.transcript_id}"
+                f"Multiple exons ({start}, {end}) found in transcript {transcript.transcript_id}"
             )
         else:
             return exons[0]
