@@ -24,9 +24,6 @@ class TestCds(unittest.TestCase):
     def test_to_tuple(self):
         self.assertEqual(self.feature.to_tuple(), (self.obj.transcript_id, 1, 2))
 
-    def test_transcript(self):
-        self.assertEqual(self.feature.transcript, self.obj)
-
     def test_transcript_id(self):
         self.assertEqual(self.feature.transcript_id, self.obj.transcript_id)
 
@@ -48,9 +45,6 @@ class TestExon(unittest.TestCase):
     def test_contig(self):
         self.assertEqual(self.feature.contig, self.obj_t.contig)
 
-    def test_exon(self):
-        self.assertEqual(self.feature.exon, self.obj_e)
-
     def test_exon_id(self):
         self.assertEqual(self.feature.exon_id, self.obj_e.exon_id)
 
@@ -62,9 +56,6 @@ class TestExon(unittest.TestCase):
 
     def test_to_tuple(self):
         self.assertEqual(self.feature.to_tuple(), (self.obj_e.exon_id, 1, 2))
-
-    def test_transcript(self):
-        self.assertEqual(self.feature.transcript, self.obj_t)
 
     def test_transcript_id(self):
         self.assertEqual(self.feature.transcript_id, self.obj_t.transcript_id)
@@ -83,9 +74,6 @@ class TestGene(unittest.TestCase):
 
     def test_contig(self):
         self.assertEqual(self.feature.contig, self.obj.gene.contig)
-
-    def test_gene(self):
-        self.assertEqual(self.feature.gene, self.obj.gene)
 
     def test_gene_id(self):
         self.assertEqual(self.feature.gene_id, self.obj.gene.gene_id)
@@ -123,9 +111,6 @@ class TestProtein(unittest.TestCase):
     def test_to_tuple(self):
         self.assertEqual(self.feature.to_tuple(), (self.obj.protein_id, 1, 2))
 
-    def test_transcript(self):
-        self.assertEqual(self.feature.transcript, self.obj)
-
 
 class TestTranscript(unittest.TestCase):
     def setUp(self):
@@ -146,9 +131,6 @@ class TestTranscript(unittest.TestCase):
 
     def test_to_tuple(self):
         self.assertEqual(self.feature.to_tuple(), (self.obj.transcript_id, 1, 2))
-
-    def test_transcript(self):
-        self.assertEqual(self.feature.transcript, self.obj)
 
     def test_transcript_id(self):
         self.assertEqual(self.feature.transcript_id, self.obj.transcript_id)
