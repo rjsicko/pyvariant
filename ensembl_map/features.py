@@ -32,7 +32,6 @@ class CDS(SimpleNamespace):
             sequence=sequence,
             start=start,
             strand=getattr(transcript, "strand", None),
-            transcript=transcript,
             transcript_id=getattr(transcript, "transcript_id", None),
             transcript_name=getattr(transcript, "transcript_name", None),
         )
@@ -69,12 +68,10 @@ class Exon(SimpleNamespace):
             biotype=getattr(transcript, "biotype", None),
             contig=getattr(transcript, "contig", None),
             end=end,
-            exon=exon,
             exon_id=getattr(exon, "exon_id", None),
             index=index,
             start=start,
             strand=getattr(transcript, "strand", None),
-            transcript=transcript,
             transcript_id=getattr(transcript, "transcript_id", None),
             transcript_name=getattr(transcript, "transcript_name", None),
         )
@@ -120,7 +117,6 @@ class Gene(SimpleNamespace):
             biotype=getattr(gene, "biotype", None),
             contig=getattr(gene, "contig", None),
             end=end,
-            gene=gene,
             gene_id=getattr(gene, "gene_id", None),
             gene_name=getattr(gene, "gene_name", None),
             start=start,
@@ -162,7 +158,6 @@ class Protein(SimpleNamespace):
             sequence=sequence,
             start=start,
             strand=getattr(transcript, "strand", None),
-            transcript=transcript,
         )
 
     def to_tuple(self):
@@ -200,7 +195,6 @@ class Transcript(CDS):
             sequence=sequence,
             start=start,
             strand=getattr(transcript, "strand", None),
-            transcript=transcript,
             transcript_id=getattr(transcript, "transcript_id", None),
             transcript_name=getattr(transcript, "transcript_name", None),
         )
