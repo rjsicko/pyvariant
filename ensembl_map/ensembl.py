@@ -10,6 +10,16 @@ DEFAULT_RELEASE = 99
 DEFAULT_SPECIES = "homo_sapiens"
 
 
+def set_cache_dir(path):
+    """Set the root directory where cache files are stored."""
+    Ensembl()._set_cache_dir(path)
+
+
+def set_ensembl_release(release, species=None, cache_dir=None, download_if_missing=False):
+    """Set the Ensembl release to use."""
+    return Ensembl().load(release, species, cache_dir, download_if_missing)
+
+
 def release():
     """Return the Ensembl release being used."""
     return Ensembl().data.release
@@ -18,18 +28,6 @@ def release():
 def species():
     """Return the species being used."""
     return Ensembl().data.species.latin_name
-
-
-def set_cache_dir(path):
-    """Set the root directory where cache files are stored."""
-    Ensembl().set_cache_dir(path)
-
-
-def set_ensembl_release(
-    release, species=DEFAULT_SPECIES, cache_dir=None, download_if_missing=False
-):
-    """Set the Ensembl release to use."""
-    return Ensembl().load(release, species, cache_dir, download_if_missing)
 
 
 @singleton
@@ -52,7 +50,7 @@ class Ensembl:
     @property
     def data(self):
         if self._data is None:
-            logging.debug("Loading Ensembl instance with default values")
+            logging.debug("Loading default Ensembl release")
             self.load()
         return self._data
 
@@ -64,12 +62,26 @@ class Ensembl:
         download_if_missing=False,
     ):
         if not release or not species:
-            raise ValueError("A release number and species must be given")
+            raise ValueError("A release number or species must be given")
 
         if cache_dir:
-            self.set_cache_dir(cache_dir)
+            self._set_cache_dir(cache_dir)
+        self._set_ensembl_release(release, species)
+        self._download_cache(download_if_missing)
 
+    def _set_cache_dir(self, path):
+        """Set the root directory where cache files are stored."""
+        self.cache_dir = path
+        os.environ["PYENSEMBL_CACHE_DIR"] = self.cache_dir
+        logging.debug(f"Set PYENSEMBL_CACHE_DIR to {self.cache_dir}")
+
+    def _set_ensembl_release(self, release, species):
+        """Set the Ensembl release."""
         self._data = EnsemblRelease(release=release, species=species)
+        logging.debug(f"Using Ensembl {release} (species={species})")
+
+    def _download_cache(self, download_if_missing=True):
+        """Download any missing cache files."""
         if self._data.required_local_files_exist():
             logging.info(f"Using cache files in {self._data.download_cache.cache_directory_path}")
         elif download_if_missing:
@@ -78,10 +90,3 @@ class Ensembl:
             self._data.index()
         else:
             raise FileNotFoundError("Missing required cache files")
-
-        return self._data
-
-    def set_cache_dir(self, path):
-        """Set the root directory where cache files are stored."""
-        self.cache_dir = path
-        os.environ["PYENSEMBL_CACHE_DIR"] = path

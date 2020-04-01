@@ -1,6 +1,6 @@
 import unittest
 
-from ensembl_map.cache import set_ensembl_release
+from ensembl_map.ensembl import set_ensembl_release
 from ensembl_map.transcript import get_transcripts
 
 

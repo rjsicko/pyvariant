@@ -1,14 +1,11 @@
-from .cache import Ensembl
+from .ensembl import Ensembl
 from .util import is_ensembl_id
-
-
-ENSEMBL = Ensembl()
 
 
 def get_transcripts(feature, feature_type):
     transcripts = []
     for transcript_id in _get_transcript_ids(feature, feature_type):
-        transcripts.append(_query(transcript_id, "transcript", ENSEMBL.data.transcript_by_id))
+        transcripts.append(_query(transcript_id, "transcript", Ensembl().data.transcript_by_id))
     return transcripts
 
 
@@ -29,7 +26,7 @@ def _get_transcript_ids_with_exon(feature):
     # match anything. As a workaround, we can map the exon to its gene then return
     # all transcripts of that gene that contain the exon.
     transcript_ids = []
-    exon = _query(feature, "exon", ENSEMBL.data.exon_by_id)
+    exon = _query(feature, "exon", Ensembl().data.exon_by_id)
     for transcript in get_transcripts(exon.gene_id, "gene"):
         if feature in [i.exon_id for i in transcript.exons]:
             transcript_ids.append(transcript.transcript_id)
@@ -42,18 +39,18 @@ def _get_transcript_ids_by_id(feature, feature_type):
     elif feature_type == "exon":
         return _get_transcript_ids_with_exon(feature)
     elif feature_type == "gene":
-        return _query(feature, feature_type, ENSEMBL.data.transcript_ids_of_gene_id)
+        return _query(feature, feature_type, Ensembl().data.transcript_ids_of_gene_id)
     elif feature_type == "protein":
-        return _query(feature, feature_type, ENSEMBL.data.transcript_id_of_protein_id)
+        return _query(feature, feature_type, Ensembl().data.transcript_id_of_protein_id)
     else:
         raise TypeError(f"Cannot get transcript IDs from (ID={feature}, type={feature_type})")
 
 
 def _get_transcript_ids_by_name(feature, feature_type):
     if feature_type == "cds" or feature_type == "transcript":
-        return _query(feature, "transcript", ENSEMBL.data.transcript_ids_of_transcript_name)
+        return _query(feature, "transcript", Ensembl().data.transcript_ids_of_transcript_name)
     elif feature_type == "gene":
-        return _query(feature, feature_type, ENSEMBL.data.transcript_ids_of_gene_name)
+        return _query(feature, feature_type, Ensembl().data.transcript_ids_of_gene_name)
     else:
         raise TypeError(f"Cannot get transcript IDs from (name={feature}, type={feature_type})")
 
