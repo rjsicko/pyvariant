@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from ensembl_map.cache import Ensembl, set_cache_dir, set_ensembl_release
+from ensembl_map.ensembl import Ensembl, set_cache_dir, set_ensembl_release
 
 
 # Enable after implementing test data:

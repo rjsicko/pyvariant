@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 name = "ensembl_map"
-version = "1.0.0"
+version = "1.0.2"
 
 setup(
     name=name,
@@ -13,7 +13,6 @@ setup(
     url="https://github.com/mattdoug604/ensembl_map.git",
     python_requires=">=3",
     license="https://spdx.org/licenses/MIT.html",
-    entry_points={"console_scripts": [f"ensembl_map = {name}.shell:run"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",

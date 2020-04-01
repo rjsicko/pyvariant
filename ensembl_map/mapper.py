@@ -1,13 +1,10 @@
 import logging
 
-from .cache import Ensembl
+from .ensembl import Ensembl
 from .convert import get_convert_func
 from .features import get_load_function
 from .transcript import get_transcripts
 from .util import assert_valid_position
-
-
-ENSEMBL = Ensembl()
 
 
 def cds_to_exon(feature, start, end=None, raise_error=True):
@@ -51,7 +48,7 @@ def cds_to_transcript(feature, start, end=None, raise_error=True):
 def exon_to_cds(feature, raise_error=True):
     """Map an exon to CDS coordinates."""
     try:
-        exon = ENSEMBL.data.exon_by_id(feature)
+        exon = Ensembl().data.exon_by_id(feature)
     except TypeError:
         logging.error(f"No exon '{feature}' found")
         return []
@@ -89,7 +86,7 @@ def exon_to_transcript(feature, raise_error=True):
     result = []
 
     try:
-        exon = ENSEMBL.data.exon_by_id(feature)
+        exon = Ensembl().data.exon_by_id(feature)
     except TypeError:
         logging.error(f"No exon '{feature}' found")
         return result
