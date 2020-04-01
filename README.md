@@ -12,7 +12,7 @@ EnsemblMap requires `python>=3`.
 The latest release of EnsemblMap can be installed using [pip](https://pip.pypa.io/en/latest/quickstart/).
 
 ```shell
-pip install ensembl_map
+pip install ensembl-map
 ```
 
 The development version of EnsemblMap can be cloned from git:
