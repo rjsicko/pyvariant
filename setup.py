@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 name = "ensembl_map"
-version = "1.0.2"
+version = "1.1.0"
 
 setup(
     name=name,
