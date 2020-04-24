@@ -22,3 +22,13 @@ from .mapper import (
     transcript_to_protein,
 )
 from .sequence import cds_sequence, protein_sequence, transcript_sequence
+from .transcript import (
+    get_exons,
+    get_exon_ids,
+    get_genes,
+    get_gene_ids,
+    get_protein_ids,
+    get_transcripts,
+    get_transcript_ids,
+)
+
