@@ -3,7 +3,7 @@ import logging
 from .ensembl import Ensembl
 from .convert import get_convert_func
 from .features import get_load_function
-from .transcript import get_transcripts
+from .symbol import get_transcripts
 from .util import assert_valid_position
 
 
