@@ -1,7 +1,7 @@
 import unittest
 
 from ensembl_map.ensembl import set_ensembl_release
-from ensembl_map.transcript import (
+from ensembl_map.symbol import (
     get_exons,
     get_exon_ids,
     get_genes,
