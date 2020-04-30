@@ -299,7 +299,8 @@ def _map(feature, start, end, from_type, to_type):
             logging.debug(f"Position: {position}")
             feature_obj = load_func(transcript, *position)
             logging.debug(f"Parsed {transcript} at {position} to {feature_obj}")
-            result.append(feature_obj)
+            if feature_obj not in result:
+                result.append(feature_obj)
         except ValueError as exc:
             logging.debug(exc)
             continue
