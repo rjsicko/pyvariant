@@ -284,23 +284,22 @@ def _map(feature, start, end, from_type, to_type):
         to_type (str): map coordinates to this type of feature (e.g 'transcript')
         
     Returns:
-        list: of converted coordinates, mapped to a `features` instance
+        list: of converted coordinates, mapped to a `Feature` instance
     """
     result = []
 
-    logging.debug(f"Map {from_type} ({feature}, {start}, {end}) to {to_type}")
+    logging.debug(f"Mapping '{from_type}' ({feature}, {start}, {end}) to '{to_type}'")
     assert_valid_position(start, end)
     map_func = get_convert_func(from_type, to_type)
     load_func = get_load_function(to_type)
 
     for transcript in get_transcripts(feature, from_type):
-        retval = None
         try:
-            retval = map_func(transcript, start, end)
-            logging.debug(f"Got: {retval}")
-            ret_obj = load_func(transcript, *retval)
-            logging.debug(f"Parsed {transcript, retval} to {ret_obj}")
-            result.append(ret_obj)
+            position = map_func(transcript, start, end)
+            logging.debug(f"Position: {position}")
+            feature_obj = load_func(transcript, *position)
+            logging.debug(f"Parsed {transcript} at {position} to {feature_obj}")
+            result.append(feature_obj)
         except ValueError as exc:
             logging.debug(exc)
             continue
