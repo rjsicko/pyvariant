@@ -6,6 +6,10 @@ from ensembl_map.mapper import (
     cds_to_gene,
     cds_to_protein,
     cds_to_transcript,
+    contig_to_cds,
+    contig_to_gene,
+    contig_to_protein,
+    contig_to_transcript,
     exon_to_cds,
     exon_to_gene,
     exon_to_protein,
@@ -434,6 +438,78 @@ class TestCdsToTranscript(unittest.TestCase):
         self.assertEqual(pos[0].transcript_id, "ENST00000256078")
         self.assertEqual(pos[0].start, 277)
         self.assertEqual(pos[0].end, 282)
+        self.assertEqual(pos[0].strand, "-")
+
+
+class TestContigToCds(unittest.TestCase):
+    def test_contig_to_cds(self):
+        pos = contig_to_cds("5", 1294501)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].transcript_id, "ENST00000310581")
+        self.assertEqual(pos[0].start, 385)
+        self.assertEqual(pos[0].end, 385)
+        self.assertEqual(pos[0].strand, "-")
+
+    def test_contig_to_cds_2(self):
+        pos = contig_to_cds("5", 1294497, 1294501)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].transcript_id, "ENST00000310581")
+        self.assertEqual(pos[0].start, 385)
+        self.assertEqual(pos[0].end, 389)
+        self.assertEqual(pos[0].strand, "-")
+
+
+class TestContigToGene(unittest.TestCase):
+    def test_contig_to_gene(self):
+        pos = contig_to_gene("5", 1253147, 1295068)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].gene_id, "ENSG00000164362")
+        self.assertEqual(pos[0].start, 1253147)
+        self.assertEqual(pos[0].end, 1295068)
+        self.assertEqual(pos[0].strand, "-")
+
+    def test_contig_to_gene_2(self):
+        pos = contig_to_gene("5", 1254000)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].gene_id, "ENSG00000164362")
+        self.assertEqual(pos[0].start, 1254000)
+        self.assertEqual(pos[0].end, 1254000)
+        self.assertEqual(pos[0].strand, "-")
+
+
+class TestContigToProtein(unittest.TestCase):
+    def test_contig_to_protein(self):
+        pos = contig_to_protein("5", 1294501)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].protein_id, "ENSP00000309572")
+        self.assertEqual(pos[0].start, 129)
+        self.assertEqual(pos[0].end, 129)
+        self.assertEqual(pos[0].strand, "-")
+
+    def test_contig_to_protein_2(self):
+        pos = contig_to_protein("5", 1294497, 1294501)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].protein_id, "ENSP00000309572")
+        self.assertEqual(pos[0].start, 129)
+        self.assertEqual(pos[0].end, 130)
+        self.assertEqual(pos[0].strand, "-")
+
+
+class TestContigToTranscript(unittest.TestCase):
+    def test_contig_to_transcript(self):
+        pos = contig_to_transcript("5", 1294501)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].transcript_id, "ENST00000310581")
+        self.assertEqual(pos[0].start, 464)
+        self.assertEqual(pos[0].end, 464)
+        self.assertEqual(pos[0].strand, "-")
+
+    def test_contig_to_transcript_2(self):
+        pos = contig_to_transcript("5", 1294497, 1294501)
+        self.assertIsInstance(pos, list)
+        self.assertEqual(pos[0].transcript_id, "ENST00000310581")
+        self.assertEqual(pos[0].start, 464)
+        self.assertEqual(pos[0].end, 468)
         self.assertEqual(pos[0].strand, "-")
 
 

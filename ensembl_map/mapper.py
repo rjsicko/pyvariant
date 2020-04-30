@@ -3,7 +3,7 @@ import logging
 from .ensembl import Ensembl
 from .convert import get_convert_func
 from .features import get_load_function
-from .transcript import get_transcripts
+from .symbol import get_transcripts
 from .util import assert_valid_position
 
 
@@ -42,6 +42,56 @@ def cds_to_transcript(feature, start, end=None, raise_error=True):
     result = _map(feature, start, end, "cds", "transcript")
     if not result and raise_error:
         raise ValueError(f"Could not map CDS {feature} to a transcript")
+    return result
+
+
+def contig_to_cds(contig, start, end=None, raise_error=True):
+    """Map contig coordinates to transcript coordinates."""
+    result = []
+    for pos in contig_to_gene(contig, start, end, raise_error=False):
+        result.extend(gene_to_cds(*pos.to_tuple(), raise_error=False))
+
+    if not result and raise_error:
+        raise ValueError(f"Could not map {contig, start, end} to a CDS")
+    return result
+
+
+def contig_to_gene(contig, start, end=None, raise_error=True):
+    """Map contig coordinates to gene coordinates."""
+    result = []
+
+    if end is None:
+        end = start
+
+    for gene in Ensembl().data.genes_at_locus(contig, start, end):
+        gstart = start if start >= gene.start else gene.start
+        gend = end if end <= gene.end else gene.end
+        result.extend(_map(gene.gene_id, gstart, gend, "gene", "gene"))
+
+    if not result and raise_error:
+        raise ValueError(f"Could not map {contig, start, end} to a gene")
+    return result
+
+
+def contig_to_protein(contig, start, end=None, raise_error=True):
+    """Map contig coordinates to protein coordinates."""
+    result = []
+    for pos in contig_to_gene(contig, start, end, raise_error=False):
+        result.extend(gene_to_protein(*pos.to_tuple(), raise_error=False))
+
+    if not result and raise_error:
+        raise ValueError(f"Could not map {contig, start, end} to a protein")
+    return result
+
+
+def contig_to_transcript(contig, start, end=None, raise_error=True):
+    """Map contig coordinates to transcript coordinates."""
+    result = []
+    for pos in contig_to_gene(contig, start, end, raise_error=False):
+        result.extend(gene_to_transcript(*pos.to_tuple(), raise_error=False))
+
+    if not result and raise_error:
+        raise ValueError(f"Could not map {contig, start, end} to a transcript")
     return result
 
 
@@ -234,25 +284,24 @@ def _map(feature, start, end, from_type, to_type):
         to_type (str): map coordinates to this type of feature (e.g 'transcript')
         
     Returns:
-        list: of converted coordinates, mapped to a `features` instance
+        list: of converted coordinates, mapped to a `Feature` instance
     """
     result = []
 
-    logging.debug(f"Map {from_type} ({feature}, {start}, {end}) to {to_type}")
+    logging.debug(f"Mapping '{from_type}' ({feature}, {start}, {end}) to '{to_type}'")
     assert_valid_position(start, end)
     map_func = get_convert_func(from_type, to_type)
     load_func = get_load_function(to_type)
 
     for transcript in get_transcripts(feature, from_type):
-        retval = None
         try:
-            retval = map_func(transcript, start, end)
-            logging.debug(f"Got: {retval}")
+            position = map_func(transcript, start, end)
+            logging.debug(f"Position: {position}")
+            feature_obj = load_func(transcript, *position)
+            logging.debug(f"Parsed {transcript} at {position} to {feature_obj}")
+            result.append(feature_obj)
         except ValueError as exc:
             logging.debug(exc)
             continue
-        ret_obj = load_func(transcript, *retval)
-        logging.debug(f"Parsed {transcript, retval} to {ret_obj}")
-        result.append(ret_obj)
 
     return result

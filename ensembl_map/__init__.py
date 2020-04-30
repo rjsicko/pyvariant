@@ -4,6 +4,10 @@ from .mapper import (
     cds_to_gene,
     cds_to_protein,
     cds_to_transcript,
+    contig_to_cds,
+    contig_to_gene,
+    contig_to_protein,
+    contig_to_transcript,
     exon_to_cds,
     exon_to_gene,
     exon_to_protein,
@@ -22,7 +26,7 @@ from .mapper import (
     transcript_to_protein,
 )
 from .sequence import cds_sequence, protein_sequence, transcript_sequence
-from .transcript import (
+from .symbol import (
     get_exons,
     get_exon_ids,
     get_genes,
