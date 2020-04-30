@@ -1,7 +1,7 @@
 EnsemblMap
 ==========
 
-EnsemblMap is a python package for mapping between gene, transcript, exon, CDS, and protein coordinates.
+EnsemblMap is a python package for mapping between chromosome, gene, transcript, exon, CDS, and protein coordinates.
 
 Coordinates are based on [Ensembl](http://www.ensembl.org/) annotations which are downloaded and cached on the user's system using [pyensembl](https://github.com/openvax/pyensembl).
 
@@ -64,6 +64,10 @@ Typical usage involves converting from one feature type to another. This is done
 * ```cds_to_gene(feature, start, end=None, raise_error=True)```
 * ```cds_to_protein(feature, start, end=None, raise_error=True)```
 * ```cds_to_transcript(feature, start, end=None, raise_error=True)```
+* ```contig_to_exon(feature, start, end=None, raise_error=True)```
+* ```contig_to_gene(feature, start, end=None, raise_error=True)```
+* ```contig_to_protein(feature, start, end=None, raise_error=True)```
+* ```contig_to_transcript(feature, start, end=None, raise_error=True)```
 * ```exon_to_cds(feature, raise_error=True)```
 * ```exon_to_gene(feature, raise_error=True)```
 * ```exon_to_protein(feature, raise_error=True)```

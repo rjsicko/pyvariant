@@ -9,7 +9,7 @@ setup(
     author="mattdoug604",
     author_email="mattdoug604@gmail.com",
     packages=find_packages(),
-    description="Convert between gene, transcript, exon, CDS, and protein coordinates using Ensembl.",
+    description="Convert between chromosome, gene, transcript, exon, CDS, and protein coordinates.",
     url="https://github.com/mattdoug604/ensembl_map.git",
     python_requires=">=3",
     license="https://spdx.org/licenses/MIT.html",
