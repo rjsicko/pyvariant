@@ -298,11 +298,11 @@ def _map(feature, start, end, from_type, to_type):
         try:
             retval = map_func(transcript, start, end)
             logging.debug(f"Got: {retval}")
+            ret_obj = load_func(transcript, *retval)
+            logging.debug(f"Parsed {transcript, retval} to {ret_obj}")
+            result.append(ret_obj)
         except ValueError as exc:
             logging.debug(exc)
             continue
-        ret_obj = load_func(transcript, *retval)
-        logging.debug(f"Parsed {transcript, retval} to {ret_obj}")
-        result.append(ret_obj)
 
     return result
