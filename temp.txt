@@ -1,0 +1,147 @@
+def contig_ids_of_contig_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "contig_id", "seqname")
+
+def contig_ids_of_exon_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "exon_id", "seqname")
+
+def contig_ids_of_gene_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_id", "seqname")
+
+def contig_ids_of_gene_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_name", "seqname")
+
+def contig_ids_of_protein_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "protein_id", "seqname")
+
+def contig_ids_of_transcript_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_id", "seqname")
+
+def contig_ids_of_transcript_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_name", "seqname")
+
+def exon_ids_of_contig_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "contig_id", "exon_id")
+
+def exon_ids_of_exon_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "exon_id", "exon_id")
+
+def exon_ids_of_gene_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_id", "exon_id")
+
+def exon_ids_of_gene_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_name", "exon_id")
+
+def exon_ids_of_protein_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "protein_id", "exon_id")
+
+def exon_ids_of_transcript_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_id", "exon_id")
+
+def exon_ids_of_transcript_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_name", "exon_id")
+
+def gene_ids_of_contig_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "contig_id", "gene_id")
+
+def gene_ids_of_exon_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "exon_id", "gene_id")
+
+def gene_ids_of_gene_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_id", "gene_id")
+
+def gene_ids_of_gene_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_name", "gene_id")
+
+def gene_ids_of_protein_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "protein_id", "gene_id")
+
+def gene_ids_of_transcript_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_id", "gene_id")
+
+def gene_ids_of_transcript_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_name", "gene_id")
+
+def gene_names_of_contig_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "contig_id", "gene_name")
+
+def gene_names_of_exon_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "exon_id", "gene_name")
+
+def gene_names_of_gene_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_id", "gene_name")
+
+def gene_names_of_gene_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_name", "gene_name")
+
+def gene_names_of_protein_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "protein_id", "gene_name")
+
+def gene_names_of_transcript_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_id", "gene_name")
+
+def gene_names_of_transcript_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_name", "gene_name")
+
+def protein_ids_of_contig_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "contig_id", "protein_id")
+
+def protein_ids_of_exon_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "exon_id", "protein_id")
+
+def protein_ids_of_gene_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_id", "protein_id")
+
+def protein_ids_of_gene_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_name", "protein_id")
+
+def protein_ids_of_protein_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "protein_id", "protein_id")
+
+def protein_ids_of_transcript_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_id", "protein_id")
+
+def protein_ids_of_transcript_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_name", "protein_id")
+
+def transcript_ids_of_contig_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "contig_id", "transcript_id")
+
+def transcript_ids_of_exon_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "exon_id", "transcript_id")
+
+def transcript_ids_of_gene_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_id", "transcript_id")
+
+def transcript_ids_of_gene_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_name", "transcript_id")
+
+def transcript_ids_of_protein_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "protein_id", "transcript_id")
+
+def transcript_ids_of_transcript_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_id", "transcript_id")
+
+def transcript_ids_of_transcript_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_name", "transcript_id")
+
+def transcript_names_of_contig_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "contig_id", "transcript_name")
+
+def transcript_names_of_exon_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "exon_id", "transcript_name")
+
+def transcript_names_of_gene_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_id", "transcript_name")
+
+def transcript_names_of_gene_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "gene_name", "transcript_name")
+
+def transcript_names_of_protein_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "protein_id", "transcript_name")
+
+def transcript_names_of_transcript_id(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_id", "transcript_name")
+
+def transcript_names_of_transcript_name(self, value: Union[List[str], str]) -> List[str]:
+    return self._query(value, "transcript_name", "transcript_name")
+

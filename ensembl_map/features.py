@@ -1,7 +1,27 @@
-from types import SimpleNamespace
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Callable
+
+import pyensembl
+
+from .best_transcripts import BestTranscript
+from .constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
+from .core import instance as CM
 
 
-class CDS(SimpleNamespace):
+class Feature(ABC):
+    """Every feature class requires these attributes."""
+
+    @classmethod
+    @abstractmethod
+    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Feature:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True, order=True)
+class Cds(Feature):
     """CDS coordinate object.
 
     Attributes:
@@ -16,31 +36,81 @@ class CDS(SimpleNamespace):
         transcript_name (str): Ensembl transcript name
     """
 
+    transcript_id: str
+    transcript_name: str
+    start: int
+    end: int
+    strand: str
+    biotype: str
+    contig: str
+    is_best_transcript: bool
+    sequence: str
+
     @classmethod
-    def load(cls, transcript, start, end):
+    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Cds:
         if start > end:
             start, end = end, start
 
-        sequence = getattr(transcript, "coding_sequence", None)
+        transcript_id = getattr(transcript, "transcript_id")
+
+        sequence = getattr(transcript, "coding_sequence")
         if sequence:
             sequence = sequence[start - 1 : end]
 
         return cls(
-            biotype=getattr(transcript, "biotype", None),
-            contig=getattr(transcript, "contig", None),
+            biotype=getattr(transcript, "biotype"),
+            contig=getattr(transcript, CONTIG),
             end=end,
+            is_best_transcript=BestTranscript.is_best(transcript_id),
             sequence=sequence,
             start=start,
-            strand=getattr(transcript, "strand", None),
-            transcript_id=getattr(transcript, "transcript_id", None),
-            transcript_name=getattr(transcript, "transcript_name", None),
+            strand=getattr(transcript, "strand"),
+            transcript_id=transcript_id,
+            transcript_name=getattr(transcript, "transcript_name"),
         )
 
-    def to_tuple(self):
-        return self.transcript_id, self.start, self.end
+
+@dataclass(frozen=False, order=True)
+class Contig(Feature):
+    """Contig coordinate object.
+
+    Attributes:
+        contig (str): name of the contig the feature is mapped to
+        end (int): end position, relative to the contig
+        start (int): start position, relative to the contig
+        strand (str): orientation on the contig ("+" or "-")
+    """
+
+    contig: str
+    start: int
+    end: int
+    strand: str
+    _sequence: str = field(default="", repr=False)
+
+    def __hash__(self):
+        return hash((self.contig, self.start, self.end, self.strand))
+
+    @property
+    def sequence(self) -> str:
+        if not self._sequence:
+            self._sequence = CM().contig_sequence(self.contig, self.start, self.end, self.strand)
+        return self._sequence
+
+    @classmethod
+    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Contig:
+        if start > end:
+            start, end = end, start
+
+        return cls(
+            contig=transcript.contig,
+            end=end,
+            start=start,
+            strand="+",  # describe relative to the positive strand to avoid confusion
+        )
 
 
-class Exon(SimpleNamespace):
+@dataclass(frozen=True, order=True)
+class Exon(Feature):
     """Exon coordinate object.
 
     Attributes:
@@ -57,27 +127,37 @@ class Exon(SimpleNamespace):
         transcript_name (str): Ensembl transcript name
     """
 
+    exon_id: str
+    start: int
+    end: int
+    strand: str
+    biotype: str
+    contig: str
+    transcript_id: str
+    transcript_name: str
+    index: int
+
     @classmethod
-    def load(cls, transcript, start, end):
+    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Exon:
         if start > end:
             start, end = end, start
 
         exon, index = cls.index_exon(transcript, start, end)
 
         return cls(
-            biotype=getattr(transcript, "biotype", None),
-            contig=getattr(transcript, "contig", None),
+            biotype=getattr(transcript, "biotype"),
+            contig=getattr(transcript, CONTIG),
             end=end,
-            exon_id=getattr(exon, "exon_id", None),
+            exon_id=getattr(exon, "exon_id"),
             index=index,
             start=start,
-            strand=getattr(transcript, "strand", None),
-            transcript_id=getattr(transcript, "transcript_id", None),
-            transcript_name=getattr(transcript, "transcript_name", None),
+            strand=getattr(transcript, "strand"),
+            transcript_id=getattr(transcript, "transcript_id"),
+            transcript_name=getattr(transcript, "transcript_name"),
         )
 
     @staticmethod
-    def index_exon(transcript, start, end):
+    def index_exon(transcript: pyensembl.Transcript, start: int, end: int) -> pyensembl.exon.Exon:
         exons = [
             (i, n) for n, i in enumerate(transcript.exons, 1) if start == i.start and end == i.end
         ]
@@ -92,11 +172,9 @@ class Exon(SimpleNamespace):
         else:
             return exons[0]
 
-    def to_tuple(self):
-        return self.exon_id, self.start, self.end
 
-
-class Gene(SimpleNamespace):
+@dataclass(frozen=False, order=True)
+class Gene(Feature):
     """Gene coordinate object.
 
     Attributes:
@@ -110,28 +188,54 @@ class Gene(SimpleNamespace):
         strand (str): orientation on the contig ("+" or "-")
     """
 
+    gene_id: str
+    gene_name: str
+    start: int
+    end: int
+    strand: str
+    biotype: str
+    contig: str
+    _sequence: str = field(default="", repr=False)
+
+    def __hash__(self):
+        return hash(
+            (
+                self.gene_id,
+                self.gene_name,
+                self.start,
+                self.end,
+                self.strand,
+                self.biotype,
+                self.contig,
+            )
+        )
+
+    @property
+    def sequence(self) -> str:
+        if not self._sequence:
+            self._sequence = CM().contig_sequence(self.contig, self.start, self.end, self.strand)
+        return self._sequence
+
     @classmethod
-    def load(cls, transcript, start, end):
+    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Gene:
         if start > end:
             start, end = end, start
 
         gene = transcript.gene
 
         return cls(
-            biotype=getattr(gene, "biotype", None),
-            contig=getattr(gene, "contig", None),
+            biotype=getattr(gene, "biotype"),
+            contig=gene.contig,
             end=end,
-            gene_id=getattr(gene, "gene_id", None),
-            gene_name=getattr(gene, "gene_name", None),
+            gene_id=getattr(gene, "gene_id"),
+            gene_name=getattr(gene, "gene_name"),
             start=start,
-            strand=getattr(gene, "strand", None),
+            strand=getattr(gene, "strand"),
         )
 
-    def to_tuple(self):
-        return self.gene_id, self.start, self.end
 
-
-class Protein(SimpleNamespace):
+@dataclass(frozen=True, order=True)
+class Protein(Feature):
     """Protein coordinate object.
 
     Attributes:
@@ -145,30 +249,40 @@ class Protein(SimpleNamespace):
         transcript (`pyensembl.Transcript`)
     """
 
+    protein_id: str
+    start: int
+    end: int
+    strand: None
+    biotype: str
+    contig: str
+    sequence: str
+
     @classmethod
-    def load(cls, transcript, start, end):
+    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Protein:
+        if transcript.biotype != "protein_coding":
+            raise ValueError(
+                f"{transcript.transcript_id} (biotype={transcript.biotype}) is not protein coding."
+            )
+
         if start > end:
             start, end = end, start
 
-        sequence = getattr(transcript, "protein_sequence", None)
+        sequence = getattr(transcript, "protein_sequence")
         if sequence:
             sequence = sequence[start - 1 : end]
 
         return cls(
-            biotype=getattr(transcript, "biotype", None),
-            contig=getattr(transcript, "contig", None),
+            biotype=getattr(transcript, "biotype"),
+            contig=getattr(transcript, CONTIG),
             end=end,
-            protein_id=getattr(transcript, "protein_id", None),
+            protein_id=getattr(transcript, "protein_id"),
             sequence=sequence,
             start=start,
-            strand=getattr(transcript, "strand", None),
+            strand=None,
         )
 
-    def to_tuple(self):
-        return self.protein_id, self.start, self.end
 
-
-class Transcript(CDS):
+class Transcript(Cds):
     """Transcript coordinate object.
 
     Attributes:
@@ -184,36 +298,41 @@ class Transcript(CDS):
     """
 
     @classmethod
-    def load(cls, transcript, start, end):
+    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Transcript:
         if start > end:
             start, end = end, start
 
-        sequence = getattr(transcript, "sequence", None)
+        transcript_id = getattr(transcript, "transcript_id")
+
+        sequence = getattr(transcript, "sequence")
         if sequence:
             sequence = sequence[start - 1 : end]
 
         return cls(
-            biotype=getattr(transcript, "biotype", None),
-            contig=getattr(transcript, "contig", None),
+            biotype=getattr(transcript, "biotype"),
+            contig=getattr(transcript, CONTIG),
             end=end,
+            is_best_transcript=BestTranscript.is_best(transcript_id),
             sequence=sequence,
             start=start,
-            strand=getattr(transcript, "strand", None),
-            transcript_id=getattr(transcript, "transcript_id", None),
-            transcript_name=getattr(transcript, "transcript_name", None),
+            strand=getattr(transcript, "strand"),
+            transcript_id=transcript_id,
+            transcript_name=getattr(transcript, "transcript_name"),
         )
 
 
-def get_load_function(to_type):
-    if to_type == "cds":
-        return CDS.load
-    elif to_type == "exon":
+def get_load_function(to_type: str) -> Callable:
+    if to_type == CDS:
+        return Cds.load
+    elif to_type == CONTIG:
+        return Contig.load
+    elif to_type == EXON:
         return Exon.load
-    elif to_type == "gene":
+    elif to_type == GENE:
         return Gene.load
-    elif to_type == "protein":
+    elif to_type == PROTEIN:
         return Protein.load
-    elif to_type == "transcript":
+    elif to_type == TRANSCRIPT:
         return Transcript.load
     else:
-        raise TypeError(f"Could not get parse function for {to_type}")
+        raise TypeError(f"'{to_type}' is not a valid feature type")

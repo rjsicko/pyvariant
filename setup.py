@@ -1,28 +1,31 @@
-from setuptools import setup, find_packages
-
-name = "ensembl_map"
-version = "1.2.0"
+from setuptools import find_packages, setup
 
 setup(
-    name=name,
-    version=version,
-    author="mattdoug604",
+    name="ensembl_map",
+    version="2.0.0",
+    author="Matthew Douglas",
     author_email="mattdoug604@gmail.com",
-    packages=find_packages(),
-    description="Convert between chromosome, gene, transcript, exon, CDS, and protein coordinates.",
+    description="Map sequence variants between chromosome, gene, exon, protein, and transcript representations.",
     url="https://github.com/mattdoug604/ensembl_map.git",
-    python_requires=">=3",
-    license="https://spdx.org/licenses/MIT.html",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Environment :: Console",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python",
-        "Topic :: Scientific/Engineering :: Bio-Informatics",
+    packages=find_packages(),
+    python_requires=">=3.8",
+    install_requires=[
+        "BioPython>=1.73",
+        "logzero",
+        "pyensembl",
+        "pyfaidx",
     ],
-    install_requires=["pyensembl>=1.8.5"],
-    tests_require=["mock", "nose"],
-    test_suite="nose.collector",
+    extras_require={
+        "dev": [
+            "black",
+            "flake8",
+            "isort",
+            "mypy",
+            "pytest",
+            "pytest-cov",
+            "pytest-mock",
+            "twine",
+            "wheel",
+        ]
+    },
 )
