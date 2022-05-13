@@ -3,7 +3,6 @@ import os.path
 
 import pytest
 from Bio.bgzf import BgzfWriter
-
 from coordinate_mapper.utils import assert_valid_position, bgzip, is_bgzipped, is_ensembl_id
 
 

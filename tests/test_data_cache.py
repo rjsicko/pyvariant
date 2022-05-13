@@ -1,5 +1,6 @@
-from ensembl_map.data_cache.data_cache import DataCache
 import pytest
+
+from ensembl_map.data_cache.data_cache import DataCache
 
 CACHE_DIR = "/home/matt/Downloads/ensembl_map_data"  # DEBUG
 

@@ -1,5 +1,4 @@
 import pytest
-
 from coordinate_mapper.exceptions import (
     CdsOutOfRange,
     ExonOutOfRange,

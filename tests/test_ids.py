@@ -1,14 +1,11 @@
 from coordinate_mapper.constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
 from coordinate_mapper.ids import (
-    get_contig_ids,
-    get_exon_ids,
+    contig_ids,
+    exon_ids,
+    gene_ids,
+    gene_names,
     get_exons,
-    get_gene_ids,
-    get_gene_names,
     get_genes,
-    get_protein_ids,
-    get_transcript_ids,
-    get_transcript_names,
     get_transcripts,
     is_contig,
     is_exon,
@@ -16,82 +13,85 @@ from coordinate_mapper.ids import (
     is_protein,
     is_transcript,
     normalize_feature,
+    protein_ids,
+    transcript_ids,
+    transcript_names,
 )
 
 
 def test_contig_ids_from_cds():
-    ret_by_id = get_contig_ids("ENST00000288135", CDS)
-    ret_by_name = get_contig_ids("KIT-201", TRANSCRIPT)
+    ret_by_id = contig_ids("ENST00000288135", CDS)
+    ret_by_name = contig_ids("KIT-201", TRANSCRIPT)
     assert "4" in ret_by_id
     assert "4" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_contig_ids_from_contig():
-    ret_by_id = get_contig_ids("12", CONTIG)
+    ret_by_id = contig_ids("12", CONTIG)
     assert "12" in ret_by_id
 
 
 def test_contig_ids_from_exon():
-    ret_by_id = get_contig_ids("ENSE00001074448", EXON)
+    ret_by_id = contig_ids("ENSE00001074448", EXON)
     assert "4" in ret_by_id
 
 
 def test_contig_ids_from_gene():
-    ret_by_id = get_contig_ids("ENSG00000157404", GENE)
-    ret_by_name = get_contig_ids("KIT", GENE)
+    ret_by_id = contig_ids("ENSG00000157404", GENE)
+    ret_by_name = contig_ids("KIT", GENE)
     assert "4" in ret_by_id
     assert "4" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_contig_ids_from_protein():
-    ret_by_id = get_contig_ids("ENSP00000288135", PROTEIN)
+    ret_by_id = contig_ids("ENSP00000288135", PROTEIN)
     assert "4" in ret_by_id
 
 
 def test_contig_ids_from_transcript():
-    ret_by_id = get_contig_ids("ENST00000288135", TRANSCRIPT)
-    ret_by_name = get_contig_ids("KIT-201", TRANSCRIPT)
+    ret_by_id = contig_ids("ENST00000288135", TRANSCRIPT)
+    ret_by_name = contig_ids("KIT-201", TRANSCRIPT)
     assert "4" in ret_by_id
     assert "4" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_contig_ids_from_contig_with_chr():
-    ret_by_id = get_contig_ids("chr12", CONTIG)
+    ret_by_id = contig_ids("chr12", CONTIG)
     assert "12" in ret_by_id
 
 
 def test_exon_ids_from_cds():
-    ret_by_id = get_exon_ids("ENST00000288135", CDS)
-    ret_by_name = get_exon_ids("KIT-201", CDS)
+    ret_by_id = exon_ids("ENST00000288135", CDS)
+    ret_by_name = exon_ids("KIT-201", CDS)
     assert "ENSE00001074448" in ret_by_id
     assert "ENSE00001074448" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_exon_ids_from_exon():
-    ret_by_id = get_exon_ids("ENSE00001074448", EXON)
+    ret_by_id = exon_ids("ENSE00001074448", EXON)
     assert "ENSE00001074448" in ret_by_id
 
 
 def test_exon_ids_from_gene():
-    ret_by_id = get_exon_ids("ENSG00000157404", GENE)
-    ret_by_name = get_exon_ids("KIT", GENE)
+    ret_by_id = exon_ids("ENSG00000157404", GENE)
+    ret_by_name = exon_ids("KIT", GENE)
     assert "ENSE00001074448" in ret_by_id
     assert "ENSE00001074448" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_exon_ids_from_protein():
-    ret_by_id = get_exon_ids("ENSP00000288135", PROTEIN)
+    ret_by_id = exon_ids("ENSP00000288135", PROTEIN)
     assert "ENSE00001074448" in ret_by_id
 
 
 def test_exon_ids_from_transcript():
-    ret_by_id = get_exon_ids("ENST00000288135", TRANSCRIPT)
-    ret_by_name = get_exon_ids("KIT-201", TRANSCRIPT)
+    ret_by_id = exon_ids("ENST00000288135", TRANSCRIPT)
+    ret_by_name = exon_ids("KIT-201", TRANSCRIPT)
     assert "ENSE00001074448" in ret_by_id
     assert "ENSE00001074448" in ret_by_name
     assert ret_by_id, ret_by_name
@@ -132,68 +132,68 @@ def test_exon_from_transcript():
 
 
 def test_gene_ids_from_cds():
-    ret_by_id = get_gene_ids("ENST00000288135", CDS)
-    ret_by_name = get_gene_ids("KIT-201", CDS)
+    ret_by_id = gene_ids("ENST00000288135", CDS)
+    ret_by_name = gene_ids("KIT-201", CDS)
     assert "ENSG00000157404" in ret_by_id
     assert "ENSG00000157404" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_gene_ids_from_exon():
-    ret_by_id = get_gene_ids("ENSE00001074448", EXON)
+    ret_by_id = gene_ids("ENSE00001074448", EXON)
     assert "ENSG00000157404" in ret_by_id
 
 
 def test_gene_ids_from_gene():
-    ret_by_id = get_gene_ids("ENSG00000157404", GENE)
-    ret_by_name = get_gene_ids("KIT", GENE)
+    ret_by_id = gene_ids("ENSG00000157404", GENE)
+    ret_by_name = gene_ids("KIT", GENE)
     assert "ENSG00000157404" in ret_by_id
     assert "ENSG00000157404" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_gene_ids_from_protein():
-    ret_by_id = get_gene_ids("ENSP00000288135", PROTEIN)
+    ret_by_id = gene_ids("ENSP00000288135", PROTEIN)
     assert "ENSG00000157404" in ret_by_id
 
 
 def test_gene_ids_from_transcript():
-    ret_by_id = get_gene_ids("ENST00000288135", TRANSCRIPT)
-    ret_by_name = get_gene_ids("KIT-201", TRANSCRIPT)
+    ret_by_id = gene_ids("ENST00000288135", TRANSCRIPT)
+    ret_by_name = gene_ids("KIT-201", TRANSCRIPT)
     assert "ENSG00000157404" in ret_by_id
     assert "ENSG00000157404" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_gene_names_from_cds():
-    ret_by_id = get_gene_names("ENST00000288135", CDS)
-    ret_by_name = get_gene_names("KIT-201", CDS)
+    ret_by_id = gene_names("ENST00000288135", CDS)
+    ret_by_name = gene_names("KIT-201", CDS)
     assert "KIT" in ret_by_id
     assert "KIT" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_gene_names_from_exon():
-    ret_by_id = get_gene_names("ENSE00001074448", EXON)
+    ret_by_id = gene_names("ENSE00001074448", EXON)
     assert "KIT" in ret_by_id
 
 
 def test_gene_names_from_gene():
-    ret_by_id = get_gene_names("ENSG00000157404", GENE)
-    ret_by_name = get_gene_names("KIT", GENE)
+    ret_by_id = gene_names("ENSG00000157404", GENE)
+    ret_by_name = gene_names("KIT", GENE)
     assert "KIT" in ret_by_id
     assert "KIT" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_gene_names_from_protein():
-    ret_by_id = get_gene_names("ENSP00000288135", PROTEIN)
+    ret_by_id = gene_names("ENSP00000288135", PROTEIN)
     assert "KIT" in ret_by_id
 
 
 def test_gene_names_from_transcript():
-    ret_by_id = get_gene_names("ENST00000288135", TRANSCRIPT)
-    ret_by_name = get_gene_names("KIT-201", TRANSCRIPT)
+    ret_by_id = gene_names("ENST00000288135", TRANSCRIPT)
+    ret_by_name = gene_names("KIT-201", TRANSCRIPT)
     assert "KIT" in ret_by_id
     assert "KIT" in ret_by_name
     assert ret_by_id, ret_by_name
@@ -201,13 +201,13 @@ def test_gene_names_from_transcript():
 
 def test_gene_names_from_refseq_transcript():
     # from SDEV-2909:
-    ret_by_id = get_gene_names("NM_000244.3", TRANSCRIPT)
+    ret_by_id = gene_names("NM_000244.3", TRANSCRIPT)
     assert "MEN1" in ret_by_id
-    ret_by_id = get_gene_names("NM_007194.3", TRANSCRIPT)
+    ret_by_id = gene_names("NM_007194.3", TRANSCRIPT)
     assert "CHEK2" in ret_by_id
-    ret_by_id = get_gene_names("NM_001128849.1", TRANSCRIPT)
+    ret_by_id = gene_names("NM_001128849.1", TRANSCRIPT)
     assert "SMARCA4" in ret_by_id
-    ret_by_id = get_gene_names("NM_000314.4", TRANSCRIPT)
+    ret_by_id = gene_names("NM_000314.4", TRANSCRIPT)
     assert "PTEN" in ret_by_id
 
 
@@ -342,68 +342,68 @@ def test_normalize_feature_8():
 
 
 def test_protein_ids_from_cds():
-    ret_by_id = get_protein_ids("ENST00000288135", CDS)
-    ret_by_name = get_protein_ids("KIT-201", TRANSCRIPT)
+    ret_by_id = protein_ids("ENST00000288135", CDS)
+    ret_by_name = protein_ids("KIT-201", TRANSCRIPT)
     assert "ENSP00000288135" in ret_by_id
     assert "ENSP00000288135" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_protein_ids_from_exon():
-    ret_by_id = get_protein_ids("ENSE00001074448", EXON)
+    ret_by_id = protein_ids("ENSE00001074448", EXON)
     assert "ENSP00000288135" in ret_by_id
 
 
 def test_protein_ids_from_gene():
-    ret_by_id = get_protein_ids("ENSG00000157404", GENE)
-    ret_by_name = get_protein_ids("KIT", GENE)
+    ret_by_id = protein_ids("ENSG00000157404", GENE)
+    ret_by_name = protein_ids("KIT", GENE)
     assert "ENSP00000288135" in ret_by_id
     assert "ENSP00000288135" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_protein_ids_from_protein():
-    ret_by_id = get_protein_ids("ENSP00000288135", PROTEIN)
+    ret_by_id = protein_ids("ENSP00000288135", PROTEIN)
     assert "ENSP00000288135" in ret_by_id
 
 
 def test_protein_ids_from_transcript():
-    ret_by_id = get_protein_ids("ENST00000288135", TRANSCRIPT)
-    ret_by_name = get_protein_ids("KIT-201", TRANSCRIPT)
+    ret_by_id = protein_ids("ENST00000288135", TRANSCRIPT)
+    ret_by_name = protein_ids("KIT-201", TRANSCRIPT)
     assert "ENSP00000288135" in ret_by_id
     assert "ENSP00000288135" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_transcript_ids_from_cds():
-    ret_by_id = get_transcript_ids("ENST00000288135", CDS)
-    ret_by_name = get_transcript_ids("KIT-201", CDS)
+    ret_by_id = transcript_ids("ENST00000288135", CDS)
+    ret_by_name = transcript_ids("KIT-201", CDS)
     assert "ENST00000288135" in ret_by_id
     assert "ENST00000288135" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_transcript_ids_from_exon():
-    ret_by_id = get_transcript_ids("ENSE00001074448", EXON)
+    ret_by_id = transcript_ids("ENSE00001074448", EXON)
     assert "ENST00000288135" in ret_by_id
 
 
 def test_transcript_ids_from_gene():
-    ret_by_id = get_transcript_ids("ENSG00000157404", GENE)
-    ret_by_name = get_transcript_ids("KIT", GENE)
+    ret_by_id = transcript_ids("ENSG00000157404", GENE)
+    ret_by_name = transcript_ids("KIT", GENE)
     assert "ENST00000288135" in ret_by_id
     assert "ENST00000288135" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_transcript_ids_from_protein():
-    ret_by_id = get_transcript_ids("ENSP00000288135", PROTEIN)
+    ret_by_id = transcript_ids("ENSP00000288135", PROTEIN)
     assert "ENST00000288135" in ret_by_id
 
 
 def test_transcript_ids_from_transcript():
-    ret_by_id = get_transcript_ids("ENST00000288135", TRANSCRIPT)
-    ret_by_name = get_transcript_ids("KIT-201", TRANSCRIPT)
+    ret_by_id = transcript_ids("ENST00000288135", TRANSCRIPT)
+    ret_by_name = transcript_ids("KIT-201", TRANSCRIPT)
     assert "ENST00000288135" in ret_by_id
     assert "ENST00000288135" in ret_by_name
     assert ret_by_id, ret_by_name
@@ -411,41 +411,41 @@ def test_transcript_ids_from_transcript():
 
 def test_transcript_ids_from_gene_best_only():
     # assumes ENST00000288135 is the best transcript for ENSG00000157404 (KIT)
-    ret_all = get_transcript_ids("ENSG00000157404", GENE, best_only=False)
-    ret_best = get_transcript_ids("ENSG00000157404", GENE, best_only=True)
+    ret_all = transcript_ids("ENSG00000157404", GENE, best_only=False)
+    ret_best = transcript_ids("ENSG00000157404", GENE, best_only=True)
     assert "ENST00000412167" in ret_all
     assert "ENST00000412167" not in ret_best
 
 
 def test_transcript_names_from_cds():
-    ret_by_id = get_transcript_names("ENST00000288135", CDS)
-    ret_by_name = get_transcript_names("KIT-201", CDS)
+    ret_by_id = transcript_names("ENST00000288135", CDS)
+    ret_by_name = transcript_names("KIT-201", CDS)
     assert "KIT-201" in ret_by_id
     assert "KIT-201" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_transcript_names_from_exon():
-    ret_by_id = get_transcript_names("ENSE00001074448", EXON)
+    ret_by_id = transcript_names("ENSE00001074448", EXON)
     assert "KIT-201" in ret_by_id
 
 
 def test_transcript_names_from_gene():
-    ret_by_id = get_transcript_names("ENSG00000157404", GENE)
-    ret_by_name = get_transcript_names("KIT", GENE)
+    ret_by_id = transcript_names("ENSG00000157404", GENE)
+    ret_by_name = transcript_names("KIT", GENE)
     assert "KIT-201" in ret_by_id
     assert "KIT-201" in ret_by_name
     assert ret_by_id, ret_by_name
 
 
 def test_transcript_names_from_protein():
-    ret_by_id = get_transcript_names("ENSP00000288135", PROTEIN)
+    ret_by_id = transcript_names("ENSP00000288135", PROTEIN)
     assert "KIT-201" in ret_by_id
 
 
 def test_transcript_names_from_transcript():
-    ret_by_id = get_transcript_names("ENST00000288135", TRANSCRIPT)
-    ret_by_name = get_transcript_names("KIT-201", TRANSCRIPT)
+    ret_by_id = transcript_names("ENST00000288135", TRANSCRIPT)
+    ret_by_name = transcript_names("KIT-201", TRANSCRIPT)
     assert "KIT-201" in ret_by_id
     assert "KIT-201" in ret_by_name
     assert ret_by_id, ret_by_name

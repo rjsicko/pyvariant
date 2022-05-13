@@ -1,4 +1,4 @@
-from ensembl_map.ensembl_download import make_gtf_filename, make_gtf_url, download
+from ensembl_map.ensembl_download import download, make_gtf_filename, make_gtf_url
 
 
 def test_make_gtf_filename():

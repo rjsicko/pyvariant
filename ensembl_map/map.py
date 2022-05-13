@@ -9,16 +9,6 @@ from .constants import CDS, CONTIG, EXON, GENE, PROTEIN, STRAND_SYMBOLS, TRANSCR
 from .core import instance as CM
 from .exceptions import CdsOutOfRange, ExonOutOfRange, GeneOutOfRange, TranscriptOutOfRange
 from .features import Contig, get_load_function
-from .ids import (
-    get_contig_ids,
-    get_exon_ids,
-    get_gene_ids,
-    get_genes,
-    get_protein_ids,
-    get_transcript_ids,
-    get_transcripts,
-    is_contig,
-)
 from .utils import assert_valid_position
 
 
@@ -37,7 +27,7 @@ def cds_to_cds(
     """Map CDS coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         result |= _map(feature_id, start, end, CDS, CDS, best_only=best_only)
 
     return _validate_result(result, "CDS", "CDS", (feature, start, end), raise_error)
@@ -55,7 +45,7 @@ def cds_to_contig(
     """Map CDS coordinates to contig coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         for pos in cds_to_gene(
             feature_id,
             start,
@@ -81,7 +71,7 @@ def cds_to_exon(
     """Map CDS coordinates to exon coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         for pos in cds_to_transcript(
             feature_id,
             start,
@@ -115,7 +105,7 @@ def cds_to_gene(
     """Map CDS coordinates to gene coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         for pos in cds_to_transcript(
             feature_id,
             start,
@@ -149,7 +139,7 @@ def cds_to_protein(
     """Map CDS coordinates to protein coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         result |= _map(feature_id, start, end, CDS, PROTEIN, best_only=best_only)
 
     return _validate_result(result, "CDS", "protein", (feature, start, end), raise_error)
@@ -167,7 +157,7 @@ def cds_to_transcript(
     """Map CDS coordinates to transcript coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         result |= _map(feature_id, start, end, CDS, TRANSCRIPT, best_only=best_only)
 
     return _validate_result(result, "CDS", "transcript", (feature, start, end), raise_error)
@@ -189,7 +179,7 @@ def contig_to_cds(
     if strand not in STRAND_SYMBOLS:
         raise ValueError(f"strand must be one of {STRAND_SYMBOLS}")
 
-    for feature_id in get_contig_ids(feature, feature_type, best_only):
+    for feature_id in CM().contig_ids(feature, feature_type, best_only):
         for pos in contig_to_gene(
             feature_id,
             start,
@@ -232,7 +222,7 @@ def contig_to_contig(
     # A contig/chromosomal position may not always map to a gene, therefore don't try to map the given
     # coordinates. Instead just format the values as a Contig object and return. TODO: validate the
     # given coordinates against a reference fasta?
-    for feature_id in get_contig_ids(feature, feature_type, best_only):
+    for feature_id in CM().contig_ids(feature, feature_type, best_only):
         result.add(Contig(contig=feature_id, start=start, end=end or start, strand=strand))
 
     return _validate_result(result, "contig", "contig", (feature, start, end), raise_error)
@@ -254,7 +244,7 @@ def contig_to_exon(
     if strand not in STRAND_SYMBOLS:
         raise ValueError(f"strand must be one of {STRAND_SYMBOLS}")
 
-    for feature_id in get_contig_ids(feature, feature_type, best_only):
+    for feature_id in CM().contig_ids(feature, feature_type, best_only):
         for pos in contig_to_transcript(
             feature_id,
             start,
@@ -294,7 +284,7 @@ def contig_to_gene(
     if strand not in STRAND_SYMBOLS:
         raise ValueError(f"strand must be one of {STRAND_SYMBOLS}")
 
-    for feature_id in get_contig_ids(feature, feature_type, best_only):
+    for feature_id in CM().contig_ids(feature, feature_type, best_only):
         for gene in CM().ensembl.genes_at_locus(feature_id, start, end, strand):
             gstart = start if start >= gene.start else gene.start
             gend = end if end <= gene.end else gene.end
@@ -319,7 +309,7 @@ def contig_to_protein(
     if strand not in STRAND_SYMBOLS:
         raise ValueError(f"strand must be one of {STRAND_SYMBOLS}")
 
-    for feature_id in get_contig_ids(feature, feature_type, best_only):
+    for feature_id in CM().contig_ids(feature, feature_type, best_only):
         for pos in contig_to_gene(
             feature_id,
             start,
@@ -358,7 +348,7 @@ def contig_to_transcript(
     if strand not in STRAND_SYMBOLS:
         raise ValueError(f"strand must be one of {STRAND_SYMBOLS}")
 
-    for feature_id in get_contig_ids(feature, feature_type, best_only):
+    for feature_id in CM().contig_ids(feature, feature_type, best_only):
         for pos in contig_to_gene(
             feature_id,
             start,
@@ -393,7 +383,7 @@ def exon_to_cds(
     """Map an exon to CDS coordinates."""
     result = set()
 
-    for feature_id in get_exon_ids(feature, feature_type, best_only):
+    for feature_id in CM().exon_ids(feature, feature_type, best_only):
         for pos in exon_to_gene(
             feature_id, position, raise_error=False, best_only=best_only, feature_type=EXON
         ):
@@ -414,7 +404,7 @@ def exon_to_contig(
     """Map exon coordinates to contig coordinates."""
     result = set()
 
-    for feature_id in get_exon_ids(feature, feature_type, best_only):
+    for feature_id in CM().exon_ids(feature, feature_type, best_only):
         for pos in exon_to_gene(
             feature_id, position, raise_error=False, best_only=best_only, feature_type=EXON
         ):
@@ -435,7 +425,7 @@ def exon_to_exon(
     """Map an exon."""
     result = set()
 
-    for feature_id in get_exon_ids(feature, feature_type, best_only):
+    for feature_id in CM().exon_ids(feature, feature_type, best_only):
         try:
             exon = CM().ensembl.exon_by_id(feature_id)
         except TypeError:
@@ -460,7 +450,7 @@ def exon_to_gene(
     """Map an exon to gene coordinates."""
     result = set()
 
-    for feature_id in get_exon_ids(feature, feature_type, best_only):
+    for feature_id in CM().exon_ids(feature, feature_type, best_only):
         for pos in exon_to_transcript(
             feature_id, position, raise_error=False, best_only=best_only, feature_type=EXON
         ):
@@ -489,7 +479,7 @@ def exon_to_protein(
     """Map an exon to protein coordinates."""
     result = set()
 
-    for feature_id in get_exon_ids(feature, feature_type, best_only):
+    for feature_id in CM().exon_ids(feature, feature_type, best_only):
         for pos in exon_to_cds(
             feature_id, position, raise_error=False, best_only=best_only, feature_type=EXON
         ):
@@ -518,7 +508,7 @@ def exon_to_transcript(
     """Map an exon to transcript coordinates."""
     result = set()
 
-    for feature_id in get_exon_ids(feature, feature_type, best_only):
+    for feature_id in CM().exon_ids(feature, feature_type, best_only):
         try:
             exon = CM().ensembl.exon_by_id(feature_id)
         except TypeError:
@@ -554,10 +544,10 @@ def gene_to_cds(
     """Map gene coordinates to CDS coordinates."""
     result = set()
 
-    if feature_type == CONTIG or is_contig(feature):
+    if feature_type == CONTIG or CM().is_contig(feature):
         return contig_to_cds((feature, start, end), raise_error, best_only, feature_type)
 
-    for feature_id in get_gene_ids(feature, feature_type):
+    for feature_id in CM().gene_ids(feature, feature_type):
         for pos in gene_to_transcript(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=GENE
         ):
@@ -586,10 +576,10 @@ def gene_to_contig(
     """Map gene coordinates to contig coordinates."""
     result = set()
 
-    if feature_type == CONTIG or is_contig(feature):
+    if feature_type == CONTIG or CM().is_contig(feature):
         return contig_to_contig((feature, start, end), raise_error, best_only, feature_type)
 
-    for feature_id in get_gene_ids(feature, feature_type):
+    for feature_id in CM().gene_ids(feature, feature_type):
         result |= _map(feature_id, start, end, GENE, CONTIG, best_only=best_only)
 
     return _validate_result(result, "gene", "contig", (feature, start, end), raise_error)
@@ -607,10 +597,10 @@ def gene_to_exon(
     """Map gene coordinates to exon coordinates."""
     result = set()
 
-    if feature_type == CONTIG or is_contig(feature):
+    if feature_type == CONTIG or CM().is_contig(feature):
         return contig_to_exon((feature, start, end), raise_error, best_only, feature_type)
 
-    for feature_id in get_gene_ids(feature, feature_type):
+    for feature_id in CM().gene_ids(feature, feature_type):
         result |= _map(feature_id, start, end, GENE, EXON, best_only=best_only)
 
     return _validate_result(result, "gene", "exon", (feature, start, end), raise_error)
@@ -628,10 +618,10 @@ def gene_to_gene(
     """Map gene coordinates."""
     result = set()
 
-    if feature_type == CONTIG or is_contig(feature):
+    if feature_type == CONTIG or CM().is_contig(feature):
         return contig_to_gene((feature, start, end), raise_error, best_only, feature_type)
 
-    for feature_id in get_gene_ids(feature, feature_type):
+    for feature_id in CM().gene_ids(feature, feature_type):
         result |= _map(feature_id, start, end, GENE, GENE, best_only=best_only)
 
     return _validate_result(result, "gene", "gene", (feature, start, end), raise_error)
@@ -649,10 +639,10 @@ def gene_to_protein(
     """Map gene coordinates to protein coordinates."""
     result = set()
 
-    if feature_type == CONTIG or is_contig(feature):
+    if feature_type == CONTIG or CM().is_contig(feature):
         return contig_to_protein((feature, start, end), raise_error, best_only, feature_type)
 
-    for feature_id in get_gene_ids(feature, feature_type):
+    for feature_id in CM().gene_ids(feature, feature_type):
         for pos in gene_to_cds(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=GENE
         ):
@@ -681,10 +671,10 @@ def gene_to_transcript(
     """Map gene coordinates to transcript coordinates."""
     result = set()
 
-    if feature_type == CONTIG or is_contig(feature):
+    if feature_type == CONTIG or CM().is_contig(feature):
         return contig_to_transcript((feature, start, end), raise_error, best_only, feature_type)
 
-    for feature_id in get_gene_ids(feature, feature_type):
+    for feature_id in CM().gene_ids(feature, feature_type):
         result |= _map(feature_id, start, end, GENE, TRANSCRIPT, best_only=best_only)
 
     return _validate_result(result, "gene", "transcript", (feature, start, end), raise_error)
@@ -702,7 +692,7 @@ def protein_to_cds(
     """Map protein coordinates to CDS coordinates."""
     result = set()
 
-    for feature_id in get_protein_ids(feature, feature_type, best_only):
+    for feature_id in CM().protein_ids(feature, feature_type, best_only):
         result |= _map(feature_id, start, end, PROTEIN, CDS, best_only=best_only)
 
     return _validate_result(result, "protein", "CDS", (feature, start, end), raise_error)
@@ -720,7 +710,7 @@ def protein_to_contig(
     """Map protein coordinates to contig coordinates."""
     result = set()
 
-    for feature_id in get_protein_ids(feature, feature_type, best_only):
+    for feature_id in CM().protein_ids(feature, feature_type, best_only):
         for pos in protein_to_gene(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=PROTEIN
         ):
@@ -741,7 +731,7 @@ def protein_to_exon(
     """Map protein coordinates to exon coordinates."""
     result = set()
 
-    for feature_id in get_protein_ids(feature, feature_type, best_only):
+    for feature_id in CM().protein_ids(feature, feature_type, best_only):
         for pos in protein_to_transcript(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=PROTEIN
         ):
@@ -770,7 +760,7 @@ def protein_to_gene(
     """Map protein coordinates to gene coordinates."""
     result = set()
 
-    for feature_id in get_protein_ids(feature, feature_type, best_only):
+    for feature_id in CM().protein_ids(feature, feature_type, best_only):
         for pos in protein_to_transcript(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=PROTEIN
         ):
@@ -799,7 +789,7 @@ def protein_to_protein(
     """Map protein coordinates."""
     result = set()
 
-    for feature_id in get_protein_ids(feature, feature_type, best_only):
+    for feature_id in CM().protein_ids(feature, feature_type, best_only):
         result |= _map(feature_id, start, end, PROTEIN, PROTEIN, best_only=best_only)
 
     return _validate_result(result, "protein", "protein", (feature, start, end), raise_error)
@@ -817,7 +807,7 @@ def protein_to_transcript(
     """Map protein coordinates to transcript coordinates."""
     result = set()
 
-    for feature_id in get_protein_ids(feature, feature_type, best_only):
+    for feature_id in CM().protein_ids(feature, feature_type, best_only):
         for pos in protein_to_cds(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=PROTEIN
         ):
@@ -846,7 +836,7 @@ def transcript_to_cds(
     """Map transcript coordinates to CDS coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         result |= _map(feature_id, start, end, TRANSCRIPT, CDS, best_only=best_only)
 
     return _validate_result(result, "transcript", "CDS", (feature, start, end), raise_error)
@@ -864,7 +854,7 @@ def transcript_to_contig(
     """Map transcript coordinates to contig coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         for pos in transcript_to_gene(
             feature_id,
             start,
@@ -890,7 +880,7 @@ def transcript_to_exon(
     """Map transcript coordinates to exon coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         for pos in transcript_to_gene(
             feature_id,
             start,
@@ -925,7 +915,7 @@ def transcript_to_gene(
     """Map transcript coordinates to gene coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         result |= _map(feature_id, start, end, TRANSCRIPT, GENE, best_only=best_only)
 
     return _validate_result(result, "transcript", "gene", (feature, start, end), raise_error)
@@ -943,7 +933,7 @@ def transcript_to_protein(
     """Map transcript coordinates to protein coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         for pos in transcript_to_cds(
             feature_id,
             start,
@@ -977,7 +967,7 @@ def transcript_to_transcript(
     """Map transcript coordinates."""
     result = set()
 
-    for feature_id in get_transcript_ids(feature, feature_type, best_only):
+    for feature_id in CM().transcript_ids(feature, feature_type, best_only):
         result |= _map(feature_id, start, end, TRANSCRIPT, TRANSCRIPT, best_only=best_only)
 
     return _validate_result(result, "transcript", "transcript", (feature, start, end), raise_error)
@@ -1096,7 +1086,7 @@ def _map(
     map_func = _get_pos_func(from_type, to_type)
     load_func = get_load_function(to_type)
 
-    for transcript in get_transcripts(feature, from_type):
+    for transcript in CM().get_transcripts(feature, from_type):
         if best_only and not CM().is_canonical_transcript(transcript.transcript_id):
             skipped.add(transcript.transcript_id)
             continue
@@ -1237,7 +1227,7 @@ def _gpos_to_gpos(
     Returns:
         tuple of int: genomic coordinate
     """
-    gene = get_genes(transcript.gene_id, GENE)[0]
+    gene = CM().get_genes(transcript.gene_id, GENE)[0]
 
     def check(y):
         if not (gene.start <= y <= gene.end):
@@ -1499,22 +1489,22 @@ def _get_pos_func(from_type: str, to_type: str) -> Callable:
 #  Extra functions
 # --------------------------------------
 def _transcript_ids_with_exon(exon_id: str, position: Optional[int] = None) -> List[str]:
-    transcript_ids = []
-    transcripts = get_transcripts(exon_id, EXON)
+    all_transcript_ids = []
+    transcripts = CM().get_transcripts(exon_id, EXON)
 
     for tobj in transcripts:
         # assert the exon is the nth exon of the transcript
         if position:
             try:
                 if exon_id == tobj.exons[position - 1].exon_id:
-                    transcript_ids.append(tobj.transcript_id)
+                    all_transcript_ids.append(tobj.transcript_id)
             except IndexError:
                 continue
         # otherwise, add all the transcripts
         else:
-            transcript_ids.append(tobj.transcript_id)
+            all_transcript_ids.append(tobj.transcript_id)
 
-    return transcript_ids
+    return all_transcript_ids
 
 
 def _validate_result(

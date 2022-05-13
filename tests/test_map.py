@@ -1,5 +1,4 @@
 import pytest
-
 from coordinate_mapper.constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
 from coordinate_mapper.map import (
     _transcript_ids_with_exon,

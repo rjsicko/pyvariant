@@ -18,15 +18,18 @@ def normalize_feature(feature: str, feature_type: Optional[str] = None) -> List[
 
     # first, check if the feature is found in the database
     if not feature_type:
-        if feature in CM().ensembl.transcript_ids() or feature in CM().ensembl.transcript_names():
+        if (
+            feature in CM().ensembl.all_transcript_ids()
+            or feature in CM().ensembl.all_transcript_names()
+        ):
             feature_type = TRANSCRIPT
-        elif feature in CM().ensembl.gene_ids() or feature in CM().ensembl.gene_names():
+        elif feature in CM().ensembl.all_gene_ids() or feature in CM().ensembl.all_gene_names():
             feature_type = GENE
         elif feature in CM().ensembl.contigs():
             feature_type = CONTIG
-        elif feature in CM().ensembl.protein_ids():
+        elif feature in CM().ensembl.all_protein_ids():
             feature_type = PROTEIN
-        elif feature in CM().ensembl.exon_ids():
+        elif feature in CM().ensembl.all_exon_ids():
             feature_type = EXON
 
     # second, check if the feature is known by an alias
@@ -96,18 +99,18 @@ def is_transcript(feature: str) -> bool:
 #  Contig functions
 # --------------------------------------
 @lru_cache()
-def get_contig_ids(
+def contig_ids(
     feature: str, feature_type: Optional[str] = None, best_only: bool = False
 ) -> List[str]:
-    contig_ids = []
+    all_contig_ids = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
         if is_ensembl_id(feature):
-            contig_ids.extend(_get_contig_ids_by_id(feature, feature_type))
+            all_contig_ids.extend(_get_contig_ids_by_id(feature, feature_type))
         else:
-            contig_ids.extend(_get_contig_ids_by_name(feature, feature_type, best_only))
+            all_contig_ids.extend(_get_contig_ids_by_name(feature, feature_type, best_only))
 
-    return sorted(filter(None, contig_ids))
+    return sorted(filter(None, all_contig_ids))
 
 
 def _get_contig_ids_by_id(feature: str, feature_type: str) -> List[str]:
@@ -126,14 +129,14 @@ def _get_contig_ids_by_id(feature: str, feature_type: str) -> List[str]:
 def _get_contig_ids_by_name(feature: str, feature_type: str, best_only: bool = False) -> List[str]:
     if feature_type == CDS or feature_type == TRANSCRIPT:
         results = []
-        for transcript_id in get_transcript_ids(feature, TRANSCRIPT, best_only):
+        for transcript_id in transcript_ids(feature, TRANSCRIPT, best_only):
             results.extend(_get_contig_ids_by_id(transcript_id, TRANSCRIPT))
         return results
     elif feature_type == CONTIG:
         return [feature]
     elif feature_type == GENE:
         results = []
-        for gene_id in get_gene_ids(feature, GENE):
+        for gene_id in gene_ids(feature, GENE):
             results.extend(_get_contig_ids_by_id(gene_id, GENE))
         return results
     else:
@@ -150,25 +153,25 @@ def get_exons(
     exons = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
-        for exon_id in get_exon_ids(feature, feature_type, best_only):
+        for exon_id in exon_ids(feature, feature_type, best_only):
             exons.append(_query(exon_id, CM().ensembl.exon_by_id))
 
     return exons
 
 
 @lru_cache()
-def get_exon_ids(
+def exon_ids(
     feature: str, feature_type: Optional[str] = None, best_only: bool = False
 ) -> List[str]:
-    exon_ids = []
+    all_exon_ids = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
         if is_ensembl_id(feature):
-            exon_ids.extend(_get_exon_ids_by_id(feature, feature_type, best_only))
+            all_exon_ids.extend(_get_exon_ids_by_id(feature, feature_type, best_only))
         else:
-            exon_ids.extend(_get_exon_ids_by_name(feature, feature_type))
+            all_exon_ids.extend(_get_exon_ids_by_name(feature, feature_type))
 
-    return sorted(filter(None, exon_ids))
+    return sorted(filter(None, all_exon_ids))
 
 
 def _get_exon_ids_by_id(feature: str, feature_type: str, best_only: bool = False) -> List[str]:
@@ -179,10 +182,10 @@ def _get_exon_ids_by_id(feature: str, feature_type: str, best_only: bool = False
     elif feature_type == GENE:
         return CM().exon_ids_of_gene_id(feature)
     elif feature_type == PROTEIN:
-        exon_ids = []
-        for transcript_id in get_transcript_ids(feature, PROTEIN, best_only):
-            exon_ids.extend(_get_exon_ids_by_id(transcript_id, TRANSCRIPT, best_only))
-        return exon_ids
+        all_exon_ids = []
+        for transcript_id in transcript_ids(feature, PROTEIN, best_only):
+            all_exon_ids.extend(_get_exon_ids_by_id(transcript_id, TRANSCRIPT, best_only))
+        return all_exon_ids
     else:
         raise ValueError(f"Cannot get exon IDs from (ID={feature}, type={feature_type})")
 
@@ -208,36 +211,36 @@ def get_genes(
     genes = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
-        for gene_id in get_gene_ids(feature, feature_type):
+        for gene_id in gene_ids(feature, feature_type):
             genes.append(_query(gene_id, CM().ensembl.gene_by_id))
 
     return genes
 
 
 @lru_cache()
-def get_gene_names(
+def gene_names(
     feature: str, feature_type: Optional[str] = None, best_only: bool = False
 ) -> List[str]:
-    gene_names = []
+    all_gene_names = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
-        for gene_id in get_gene_ids(feature, feature_type):
-            gene_names.append(CM().ensembl.gene_name_of_gene_id(gene_id))
+        for gene_id in gene_ids(feature, feature_type):
+            all_gene_names.append(CM().ensembl.gene_name_of_gene_id(gene_id))
 
-    return gene_names
+    return all_gene_names
 
 
 @lru_cache()
-def get_gene_ids(feature: str, feature_type: Optional[str] = None) -> List[str]:
-    gene_ids = []
+def gene_ids(feature: str, feature_type: Optional[str] = None) -> List[str]:
+    all_gene_ids = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
         if is_ensembl_id(feature):
-            gene_ids.extend(_get_gene_ids_by_id(feature, feature_type))
+            all_gene_ids.extend(_get_gene_ids_by_id(feature, feature_type))
         else:
-            gene_ids.extend(_get_gene_ids_by_name(feature, feature_type))
+            all_gene_ids.extend(_get_gene_ids_by_name(feature, feature_type))
 
-    return sorted(filter(None, gene_ids))
+    return sorted(filter(None, all_gene_ids))
 
 
 def _get_gene_ids_by_id(feature: str, feature_type: str) -> List[str]:
@@ -260,7 +263,7 @@ def _get_gene_ids_by_name(feature: str, feature_type: str) -> List[str]:
         gene_name = _query(feature, CM().ensembl.gene_name_of_transcript_name)
         return _gene_name_to_id(gene_name) if gene_name else []
     elif feature_type == CONTIG:
-        return _query(feature, CM().ensembl.gene_ids)
+        return _query(feature, CM().ensembl.all_gene_ids)
     elif feature_type == GENE:
         return _query(feature, CM().ensembl.gene_ids_of_gene_name)
     else:
@@ -275,17 +278,17 @@ def _gene_name_to_id(gene_name: str) -> List[str]:
 #  Protein functions
 # --------------------------------------
 @lru_cache()
-def get_protein_ids(
+def protein_ids(
     feature: str, feature_type: Optional[str] = None, best_only: bool = False
 ) -> List[str]:
-    protein_ids = []
+    all_protein_ids = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
         for transcript in get_transcripts(feature, feature_type, best_only):
             if transcript.protein_id:
-                protein_ids.append(transcript.protein_id)
+                all_protein_ids.append(transcript.protein_id)
 
-    return sorted(filter(None, protein_ids))
+    return sorted(filter(None, all_protein_ids))
 
 
 # --------------------------------------
@@ -298,54 +301,56 @@ def get_transcripts(
     transcripts = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
-        for transcript_id in get_transcript_ids(feature, feature_type, best_only):
+        for transcript_id in transcript_ids(feature, feature_type, best_only):
             transcripts.append(_query(transcript_id, CM().ensembl.transcript_by_id))
 
     return transcripts
 
 
 @lru_cache()
-def get_transcript_names(
+def transcript_names(
     feature: str, feature_type: Optional[str] = None, best_only: bool = False
 ) -> List[str]:
-    transcript_names = []
+    all_transcript_names = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
-        for transcript_id in get_transcript_ids(feature, feature_type, best_only):
-            transcript_names.append(CM().ensembl.transcript_name_of_transcript_id(transcript_id))
+        for transcript_id in transcript_ids(feature, feature_type, best_only):
+            all_transcript_names.append(
+                CM().ensembl.transcript_name_of_transcript_id(transcript_id)
+            )
 
-    return transcript_names
+    return all_transcript_names
 
 
 @lru_cache()
-def get_transcript_ids(
+def transcript_ids(
     feature: str, feature_type: Optional[str] = None, best_only: bool = False
 ) -> List[str]:
-    transcript_ids = []
+    all_transcript_ids = []
 
     for feature, feature_type in normalize_feature(feature, feature_type):
         if is_ensembl_id(feature):
-            transcript_ids.extend(_get_transcript_ids_by_id(feature, feature_type, best_only))
+            all_transcript_ids.extend(_get_transcript_ids_by_id(feature, feature_type, best_only))
         else:
-            transcript_ids.extend(_get_transcript_ids_by_name(feature, feature_type))
+            all_transcript_ids.extend(_get_transcript_ids_by_name(feature, feature_type))
 
     if best_only:
-        transcript_ids = [i for i in transcript_ids if BestTranscript.is_best(i)]
+        all_transcript_ids = [i for i in all_transcript_ids if BestTranscript.is_best(i)]
 
-    return sorted(filter(None, transcript_ids))
+    return sorted(filter(None, all_transcript_ids))
 
 
 def _get_transcript_ids_with_exon(feature: str, best_only: bool = False) -> List[str]:
     # NOTE: with `pyensembl==1.8.5` calling `transcript_ids_of_exon_ids` does not
     # match anything. As a workaround, we can map the exon to its gene then return
     # all transcripts of that gene that contain the exon.
-    transcript_ids = []
+    all_transcript_ids = []
     exon = _query(feature, CM().ensembl.exon_by_id)
     for transcript in get_transcripts(exon.gene_id, GENE, best_only):
         if feature in [i.exon_id for i in transcript.exons]:
-            transcript_ids.append(transcript.transcript_id)
+            all_transcript_ids.append(transcript.transcript_id)
 
-    return transcript_ids
+    return all_transcript_ids
 
 
 def _get_transcript_ids_by_id(
@@ -367,7 +372,7 @@ def _get_transcript_ids_by_name(feature: str, feature_type: str) -> List[str]:
     if feature_type == CDS or feature_type == TRANSCRIPT:
         return _query(feature, CM().ensembl.transcript_ids_of_transcript_name)
     elif feature_type == CONTIG:
-        return _query(feature, CM().ensembl.transcript_ids)
+        return _query(feature, CM().ensembl.all_transcript_ids)
     elif feature_type == GENE:
         return _query(feature, CM().ensembl.transcript_ids_of_gene_name)
     else:

@@ -1,5 +1,4 @@
 import pytest
-
 from coordinate_mapper.best_transcripts import BestTranscript
 
 from . import BEST_FILE

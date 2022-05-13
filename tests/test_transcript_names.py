@@ -1,6 +1,5 @@
 import pytest
-
-from coordinate_mapper.transcript_names import TranscriptNames
+from coordinate_mapper.all_transcript_names import TranscriptNames
 
 from . import REFSEQ_FILE
 

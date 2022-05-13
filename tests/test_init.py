@@ -1,6 +1,5 @@
-from pyensembl import EnsemblRelease
-
 import coordinate_mapper
+from pyensembl import EnsemblRelease
 
 
 def test_pyensembl():

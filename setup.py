@@ -10,7 +10,7 @@ setup(
     packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[
-        "BioPython>=1.73",
+        # "BioPython>=1.73",
         "logzero",
         "pyensembl",
         "pyfaidx",

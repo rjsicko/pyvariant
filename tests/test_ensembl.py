@@ -1,9 +1,8 @@
 import pytest
-from pyfaidx import Fasta
-
 from coordinate_mapper import set_ensembl_release
 from coordinate_mapper.ensembl import Ensembl, Genome
 from coordinate_mapper.map import transcript_to_contig
+from pyfaidx import Fasta
 
 from . import GENOME_FILE
 

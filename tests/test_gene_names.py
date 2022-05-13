@@ -1,5 +1,5 @@
 from coordinate_mapper import set_ensembl_release
-from coordinate_mapper.gene_names import GeneNames
+from coordinate_mapper.all_gene_names import GeneNames
 
 
 def test_normalize_gene_id():
