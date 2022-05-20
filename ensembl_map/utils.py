@@ -6,8 +6,8 @@ from functools import lru_cache
 from tempfile import TemporaryDirectory
 from typing import IO, Callable, Iterator, Optional
 
-# from Bio.bgzf import BgzfWriter, _bgzf_magic
-# from Bio.Seq import Seq
+from Bio.bgzf import BgzfWriter, _bgzf_magic
+from Bio.Seq import Seq
 from logzero import logger
 
 

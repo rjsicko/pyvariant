@@ -1,24 +1,24 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from locale import normalize
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy
 import pandas
 from logzero import logger
+from pyfaidx import Fasta
 
-from ensembl_map.data_cache.data_cache import DataCache
-from ensembl_map.utils import is_ensembl_id
-
-from .constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
-
-# from .ensembl import Genome, load_ensembl
-# from .utils import strip_version
-
-DEFAULT_SPECIES = "homo_sapiens"
-DEFAULT_REFERENCE = "GRCh38"
-DEFAULT_RELEASE = 100
+from .cache import Cache
+from .constants import (
+    CDS,
+    CONTIG,
+    DEFAULT_REFERENCE,
+    DEFAULT_RELEASE,
+    DEFAULT_SPECIES,
+    EXON,
+    GENE,
+    PROTEIN,
+    TRANSCRIPT,
+)
+from .utils import is_ensembl_id, reverse_complement, strip_version
 
 # column names
 # ['gene_id', 'gene_version', 'gene_name', 'gene_source', 'gene_biotype',
@@ -67,8 +67,15 @@ TRANSCRIPT_INFO_COLS = DEFAULT_COLS + [
 
 
 class Record:
+
+    _rename = {"seqname": "contig_id"}
+
+    @classmethod
+    def rename(cls, items: Dict) -> Dict:
+        return {cls._rename.get(key, key): value for key, value in items.items()}
+
     def __init__(self, items: Dict):
-        self.__dict__.update(items)
+        self.__dict__.update(self.rename(items))
 
 
 class CachedEnsemblRelease(type):
@@ -101,7 +108,9 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         cache_dir: str = "",
         canonical_transcript: str = "",
         contig_alias: str = "",
+        exon_alias: str = "",
         gene_alias: str = "",
+        protein_alias: str = "",
         transcript_alias: str = "",
     ):
         """Load annotations for the given release."""
@@ -110,38 +119,43 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         self.release = release
         self.cache_dir = cache_dir
 
-        self.data_cache = DataCache(species, reference, release, cache_dir=cache_dir).load_gtf()
+        self.cache = Cache(species, reference, release, cache_dir=cache_dir)
+        self.ensembl = self.cache.load_gtf()
+        self.cdna = self.cache.load_cdna_fasta()
+        self.dna = self.cache.load_dna_fasta()
+        self.pep = self.cache.load_pep_fasta()
+        self.ncrna = self.cache.load_ncrna_fasta()
 
         self.canonical_transcript = _parse_txt_to_list(canonical_transcript, "canonical transcript")
         self.contig_alias = _parse_tsv_to_dict(contig_alias, "contig aliases")
-        self.exon_alias: Dict[str, List[str]] = {}
+        self.exon_alias = _parse_tsv_to_dict(exon_alias, "exon aliases")
         self.gene_alias = _parse_tsv_to_dict(gene_alias, "gene aliases")
-        self.protein_alias: Dict[str, List[str]] = {}
+        self.protein_alias = _parse_tsv_to_dict(protein_alias, "protein aliases")
         self.transcript_alias = _parse_tsv_to_dict(transcript_alias, "transcript aliases")
 
     # ---------------------------------------------------------------------------------------------
     # <feature_symbol>()
     # ---------------------------------------------------------------------------------------------
     def all_contig_ids(self) -> List[str]:
-        return self._uniquify_series(self.data_cache["seqname"])
+        return self._uniquify_series(self.ensembl["seqname"])
 
     def all_exon_ids(self) -> List[str]:
-        return self._uniquify_series(self.data_cache["exon_id"])
+        return self._uniquify_series(self.ensembl["exon_id"])
 
     def all_gene_ids(self) -> List[str]:
-        return self._uniquify_series(self.data_cache["gene_id"])
+        return self._uniquify_series(self.ensembl["gene_id"])
 
     def all_gene_names(self) -> List[str]:
-        return self._uniquify_series(self.data_cache["gene_name"])
+        return self._uniquify_series(self.ensembl["gene_name"])
 
     def all_protein_ids(self) -> List[str]:
-        return self._uniquify_series(self.data_cache["protein_id"])
+        return self._uniquify_series(self.ensembl["protein_id"])
 
     def all_transcript_ids(self) -> List[str]:
-        return self._uniquify_series(self.data_cache["transcript_id"])
+        return self._uniquify_series(self.ensembl["transcript_id"])
 
     def all_transcript_names(self) -> List[str]:
-        return self._uniquify_series(self.data_cache["transcript_name"])
+        return self._uniquify_series(self.ensembl["transcript_name"])
 
     # ---------------------------------------------------------------------------------------------
     # get_<feature_symbol>(feature)
@@ -348,7 +362,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
                     )
             else:
                 if feature_type == CONTIG:
-                    result.extend(self._transcript_ids_of_contig_id(feature))
+                    result.extend(self._transcript_names_of_contig_id(feature))
                 elif feature_type == GENE:
                     result.extend(self._transcript_names_of_gene_name(feature))
                 elif feature_type in (CDS, TRANSCRIPT):
@@ -510,7 +524,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def _query(self, feature: Union[List[str], str], col: str, key: str) -> List[str]:
         """Generic function for querying the data cache."""
         feature = [feature] if isinstance(feature, str) else feature
-        return self._uniquify_series(self.data_cache.loc[self.data_cache[col].isin(feature)][key])
+        return self._uniquify_series(self.ensembl.loc[self.ensembl[col].isin(feature)][key])
 
     @staticmethod
     def _uniquify_series(values: pandas.Series) -> List:
@@ -553,7 +567,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
     def _normalize_contig_id(self, feature: str) -> List[str]:
         """Normalize a contig ID or it's alias to one or more matching Ensembl contig ID."""
-        featurel = [feature] + self.contig_alias.get(feature, [])
+        featurel = [feature] + self.get_contig_alias(feature)
         if normalized := self._contig_ids_of_contig_id(featurel):
             return normalized
         else:
@@ -561,7 +575,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
     def _normalize_exon_id(self, feature: str) -> List[str]:
         """Normalize a exon ID or it's alias to one or more matching Ensembl exon ID."""
-        featurel = [feature] + self.exon_alias.get(feature, [])
+        featurel = [feature] + self.get_exon_alias(feature)
         if normalized := self._exon_ids_of_exon_id(featurel):
             return normalized
         else:
@@ -569,7 +583,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
     def _normalize_gene_id(self, feature: str) -> List[str]:
         """Normalize a gene ID or it's alias to one or more matching Ensembl gene ID."""
-        featurel = [feature] + self.gene_alias.get(feature, [])
+        featurel = [feature] + self.get_gene_alias(feature)
         if normalized := self._gene_ids_of_gene_id(featurel):
             return normalized
         else:
@@ -577,7 +591,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
     def _normalize_gene_name(self, feature: str) -> List[str]:
         """Normalize a gene ID or it's alias to one or more matching Ensembl gene ID."""
-        featurel = [feature] + self.gene_alias.get(feature, [])
+        featurel = [feature] + self.get_gene_alias(feature)
         if normalized := self._gene_names_of_gene_name(featurel):
             return normalized
         else:
@@ -585,7 +599,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
     def _normalize_protein_id(self, feature: str) -> List[str]:
         """Normalize a protein ID or it's alias to one or more matching Ensembl protein ID."""
-        featurel = [feature] + self.protein_alias.get(feature, [])
+        featurel = [feature] + self.get_protein_alias(feature)
         if normalized := self._protein_ids_of_protein_id(featurel):
             return normalized
         else:
@@ -593,7 +607,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
     def _normalize_transcript_id(self, feature: str) -> List[str]:
         """Normalize a transcript ID or it's alias to one or more matching Ensembl transcript ID."""
-        featurel = [feature] + self.transcript_alias.get(feature, [])
+        featurel = [feature] + self.get_transcript_alias(feature)
         if normalized := self._transcript_ids_of_transcript_id(featurel):
             return normalized
         else:
@@ -601,7 +615,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
     def _normalize_transcript_name(self, feature: str) -> List[str]:
         """Normalize a transcript name or it's alias to one or more matching Ensembl transcript ID."""
-        featurel = [feature] + self.transcript_alias.get(feature, [])
+        featurel = [feature] + self.get_transcript_alias(feature)
         if normalized := self._transcript_names_of_transcript_name(featurel):
             return normalized
         else:
@@ -788,25 +802,25 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return result
 
     def _contig_info_of_contig_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_contig_info(feature, "seqname")
+        return self._query_contig_info(feature)
 
     def _contig_info_of_exon_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_contig_info(self._transcript_ids_of_exon_id(feature), "transcript_id")
+        return self._contig_info_of_contig_id(self._contig_ids_of_exon_id(feature))
 
     def _contig_info_of_gene_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_contig_info(feature, "gene_id")
+        return self._contig_info_of_contig_id(self._contig_ids_of_gene_id(feature))
 
     def _contig_info_of_gene_name(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_contig_info(feature, "gene_name")
+        return self._contig_info_of_contig_id(self._contig_ids_of_gene_name(feature))
 
     def _contig_info_of_protein_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_contig_info(self._transcript_ids_of_protein_id(feature), "transcript_id")
+        return self._contig_info_of_contig_id(self._contig_ids_of_protein_id(feature))
 
     def _contig_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_contig_info(feature, "transcript_id")
+        return self._contig_info_of_contig_id(self._contig_ids_of_transcript_id(feature))
 
     def _contig_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_contig_info(feature, "transcript_name")
+        return self._contig_info_of_contig_id(self._contig_ids_of_transcript_name(feature))
 
     def _exon_info_of_contig_id(self, feature: Union[List[str], str]) -> List[Record]:
         return self._query_exon_info(feature, "seqname")
@@ -898,9 +912,18 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def _transcript_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[Record]:
         return self._query_transcript_info(feature, "transcript_name")
 
-    def _query_contig_info(self, feature: Union[List[str], str], col: str) -> List[Record]:
+    def _query_contig_info(self, feature: Union[List[str], str]) -> List[Record]:
         """Generic function for querying contig info from the data cache."""
-        raise NotImplementedError()  # TODO
+        info = []
+
+        feature = [feature] if isinstance(feature, str) else feature
+        for f in feature:
+            contig = self.dna[f]
+            values = Record({"contig_id": f, "start": 1, "end": len(contig)})
+            if values not in info:
+                info.append(values)
+
+        return info
 
     def _query_exon_info(self, feature: Union[List[str], str], col: str) -> List[Record]:
         """Generic function for querying exon info from the data cache."""
@@ -929,16 +952,98 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         info = []
 
         feature = [feature] if isinstance(feature, str) else feature
-        select = (self.data_cache["feature"] == feature_col) & (
-            self.data_cache[id_col].isin(feature)
-        )
-        df = self.data_cache.loc[select][subset_cols]
+        select = (self.ensembl["feature"] == feature_col) & (self.ensembl[id_col].isin(feature))
+        df = self.ensembl.loc[select][subset_cols]
         for _, row in df.iterrows():
             values = Record(row.to_dict())
             if values not in info:
                 info.append(values)
 
         return info
+
+    # ---------------------------------------------------------------------------------------------
+    # sequence
+    # ---------------------------------------------------------------------------------------------
+    def cdna_sequence(
+        self, transcript: str, start: int, end: Optional[int] = None, strand: str = "+"
+    ) -> str:
+        """Return the nucleotide sequence at the given cDNA coordinates."""
+        return self._get_sequence(self.cdna, transcript, start, end, strand)
+
+    def dna_sequence(
+        self, contig: str, start: int, end: Optional[int] = None, strand: str = "+"
+    ) -> str:
+        """Return the nucleotide sequence at the given contig coordinates."""
+        return self._get_sequence(self.dna, contig, start, end, strand)
+
+    def peptide_sequence(
+        self, protein: str, start: int, end: Optional[int] = None, strand: str = "+"
+    ) -> str:
+        """Return the amino acid sequence at the given peptide coordinates."""
+        return self._get_sequence(self.pep, protein, start, end, strand)
+
+    def ncrna_sequence(
+        self, transcript: str, start: int, end: Optional[int] = None, strand: str = "+"
+    ) -> str:
+        """Return the nucleotide sequence at the given ncRNA coordinates."""
+        return self._get_sequence(self.dna, transcript, start, end, strand)
+
+    def _get_sequence(
+        self, fasta: Fasta, ref: str, start: int, end: Optional[int] = None, strand: str = "+"
+    ):
+        """Return the sequence between the given positions (inclusive)."""
+        reflen = len(fasta[ref])
+        end = end if end else start
+        start = start - 1  # 0-based coordiantes
+        if not (0 <= start < reflen):
+            raise ValueError(f"Start must be from 1 to {reflen} ({start})")
+        if not (1 < end <= reflen):
+            raise ValueError(f"End must be from 2 to {reflen + 1} ({end})")
+        if end <= start:
+            raise ValueError(f"End must be > start ({end} <= {start})")
+
+        seq = fasta[ref][start:end]
+        if strand == "-":
+            seq = reverse_complement(seq)
+
+        return seq
+
+    # ---------------------------------------------------------------------------------------------
+    # aliases
+    # ---------------------------------------------------------------------------------------------
+    def get_contig_alias(self, feature: str) -> List[str]:
+        """Return the aliases of the given contig (if any)."""
+        return self._get_alias(feature, self.contig_alias)
+
+    def get_exon_alias(self, feature: str) -> List[str]:
+        """Return the aliases of the given exon (if any)."""
+        return self._get_alias(feature, self.exon_alias)
+
+    def get_gene_alias(self, feature: str) -> List[str]:
+        """Return the aliases of the given gene (if any)."""
+        return self._get_alias(feature, self.gene_alias)
+
+    def get_protein_alias(self, feature: str) -> List[str]:
+        """Return the aliases of the given protein (if any)."""
+        return self._get_alias(feature, self.protein_alias)
+
+    def get_transcript_alias(self, feature: str) -> List[str]:
+        """Return the aliases of the given transcript (if any)."""
+        return self._get_alias(feature, self.transcript_alias)
+
+    def _get_alias(self, feature: str, source: Dict[str, List[str]]) -> List[str]:
+        for key in [feature, strip_version(feature)]:
+            if alias := source.get(key, []):
+                return alias
+        else:
+            return []
+
+    # ---------------------------------------------------------------------------------------------
+    # canonical transcript
+    # ---------------------------------------------------------------------------------------------
+    def is_canonical_transcript(self, feature: str) -> bool:
+        """Return True if the transcript is in the list of canonical transcripts."""
+        return feature in self.canonical_transcript
 
 
 def instance():

@@ -6,7 +6,6 @@ from typing import Callable
 
 import pyensembl
 
-from .best_transcripts import BestTranscript
 from .constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
 from .core import instance as CM
 
@@ -43,7 +42,7 @@ class Cds(Feature):
     strand: str
     biotype: str
     contig: str
-    is_best_transcript: bool
+    is_canonical: bool
     sequence: str
 
     @classmethod
@@ -51,22 +50,20 @@ class Cds(Feature):
         if start > end:
             start, end = end, start
 
-        transcript_id = getattr(transcript, "transcript_id")
-
-        sequence = getattr(transcript, "coding_sequence")
+        sequence = CM().cdna[transcript.transcript_id]
         if sequence:
             sequence = sequence[start - 1 : end]
 
         return cls(
-            biotype=getattr(transcript, "biotype"),
-            contig=getattr(transcript, CONTIG),
+            biotype=transcript.transcript_biotype,
+            contig=transcript.contig_id,
             end=end,
-            is_best_transcript=BestTranscript.is_best(transcript_id),
+            is_canonical=CM().is_canonical_transcript(transcript.transcript_id),
             sequence=sequence,
             start=start,
-            strand=getattr(transcript, "strand"),
-            transcript_id=transcript_id,
-            transcript_name=getattr(transcript, "transcript_name"),
+            strand=transcript.strand,
+            transcript_id=transcript.transcript_id,
+            transcript_name=transcript.transcript_name,
         )
 
 
@@ -102,7 +99,7 @@ class Contig(Feature):
             start, end = end, start
 
         return cls(
-            contig=transcript.contig,
+            contig=transcript.contig_id,
             end=end,
             start=start,
             strand="+",  # describe relative to the positive strand to avoid confusion
@@ -145,15 +142,15 @@ class Exon(Feature):
         exon, index = cls.index_exon(transcript, start, end)
 
         return cls(
-            biotype=getattr(transcript, "biotype"),
-            contig=getattr(transcript, CONTIG),
+            biotype=transcript.transcript_biotype,
+            contig=transcript.contig_id,
             end=end,
-            exon_id=getattr(exon, "exon_id"),
+            exon_id=exon.exon_id,
             index=index,
             start=start,
-            strand=getattr(transcript, "strand"),
-            transcript_id=getattr(transcript, "transcript_id"),
-            transcript_name=getattr(transcript, "transcript_name"),
+            strand=transcript.strand,
+            transcript_id=transcript.transcript_id,
+            transcript_name=transcript.transcript_name,
         )
 
     @staticmethod
@@ -224,13 +221,13 @@ class Gene(Feature):
         gene = transcript.gene
 
         return cls(
-            biotype=getattr(gene, "biotype"),
+            biotype=gene.biotype,
             contig=gene.contig,
             end=end,
-            gene_id=getattr(gene, "gene_id"),
-            gene_name=getattr(gene, "gene_name"),
+            gene_id=gene.gene_id,
+            gene_name=gene.gene_name,
             start=start,
-            strand=getattr(gene, "strand"),
+            strand=gene.strand,
         )
 
 
@@ -259,23 +256,23 @@ class Protein(Feature):
 
     @classmethod
     def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Protein:
-        if transcript.biotype != "protein_coding":
+        if transcript.transcript_biotype != "protein_coding":
             raise ValueError(
-                f"{transcript.transcript_id} (biotype={transcript.biotype}) is not protein coding."
+                f"{transcript.transcript_id} (biotype={transcript.transcript_biotype}) is not protein coding."
             )
 
         if start > end:
             start, end = end, start
 
-        sequence = getattr(transcript, "protein_sequence")
+        sequence = transcript.protein_sequence
         if sequence:
             sequence = sequence[start - 1 : end]
 
         return cls(
-            biotype=getattr(transcript, "biotype"),
-            contig=getattr(transcript, CONTIG),
+            biotype=transcript.transcript_biotype,
+            contig=transcript.contig_id,
             end=end,
-            protein_id=getattr(transcript, "protein_id"),
+            protein_id=transcript.protein_id,
             sequence=sequence,
             start=start,
             strand=None,
@@ -302,22 +299,22 @@ class Transcript(Cds):
         if start > end:
             start, end = end, start
 
-        transcript_id = getattr(transcript, "transcript_id")
+        transcript_id = transcript.transcript_id
 
-        sequence = getattr(transcript, "sequence")
+        sequence = transcript.sequence
         if sequence:
             sequence = sequence[start - 1 : end]
 
         return cls(
-            biotype=getattr(transcript, "biotype"),
-            contig=getattr(transcript, CONTIG),
+            biotype=transcript.transcript_biotype,
+            contig=transcript.contig_id,
             end=end,
-            is_best_transcript=BestTranscript.is_best(transcript_id),
+            is_canonical=CM().is_best(transcript_id),
             sequence=sequence,
             start=start,
-            strand=getattr(transcript, "strand"),
+            strand=transcript.strand,
             transcript_id=transcript_id,
-            transcript_name=getattr(transcript, "transcript_name"),
+            transcript_name=transcript.transcript_name,
         )
 
 

@@ -1,6 +1,7 @@
 import pytest
-from coordinate_mapper.constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
-from coordinate_mapper.map import (
+
+from ensembl_map.constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
+from ensembl_map.map import (
     _transcript_ids_with_exon,
     cds_to_cds,
     cds_to_contig,
@@ -40,6 +41,25 @@ from coordinate_mapper.map import (
     transcript_to_protein,
     transcript_to_transcript,
 )
+from ensembl_map.core import EnsemblRelease
+from . import CACHE_DIR, CANONICAL_TRANSCRIPT, CONTIG_ALIAS, EXON_ALIAS, GENE_ALIAS, TRANSCRIPT_ALIAS, PROTEIN_ALIAS
+
+
+@pytest.fixture(autouse=True)
+def ensembl100():
+    return EnsemblRelease(
+        species="homo_sapiens",
+        reference="GRCh38",
+        release=100,
+        cache_dir=CACHE_DIR,
+        canonical_transcript=CANONICAL_TRANSCRIPT,
+        contig_alias=CONTIG_ALIAS,
+        exon_alias=EXON_ALIAS,
+        gene_alias=GENE_ALIAS,
+        protein_alias=PROTEIN_ALIAS,
+        transcript_alias=TRANSCRIPT_ALIAS,
+    )
+
 
 
 def test_cds_to_cds_pos_strand_by_transcript_id():

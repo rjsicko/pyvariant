@@ -1,9 +1,17 @@
 import pytest
 
 from ensembl_map.constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
-from ensembl_map.core import EnsemblRelease, instance
+from ensembl_map.core import EnsemblRelease
 
-CACHE_DIR = "/home/matt/Downloads/ensembl_map_data"  # DEBUG
+from . import (
+    CACHE_DIR,
+    CANONICAL_TRANSCRIPT,
+    CONTIG_ALIAS,
+    EXON_ALIAS,
+    GENE_ALIAS,
+    PROTEIN_ALIAS,
+    TRANSCRIPT_ALIAS,
+)
 
 EXON_ID = "ENSE00003826864"
 CONTIG_ID = "16"
@@ -32,7 +40,16 @@ def ensembl69():
 @pytest.fixture
 def ensembl100():
     return EnsemblRelease(
-        species="homo_sapiens", reference="GRCh38", release=100, cache_dir=CACHE_DIR
+        species="homo_sapiens",
+        reference="GRCh38",
+        release=100,
+        cache_dir=CACHE_DIR,
+        canonical_transcript=CANONICAL_TRANSCRIPT,
+        contig_alias=CONTIG_ALIAS,
+        exon_alias=EXON_ALIAS,
+        gene_alias=GENE_ALIAS,
+        protein_alias=PROTEIN_ALIAS,
+        transcript_alias=TRANSCRIPT_ALIAS,
     )
 
 
@@ -166,32 +183,32 @@ def test_contig_ids_from_transcript_name(ensembl100):
 
 def test_contig_info_from_contig_id(ensembl100):
     ret_by_id = ensembl100.contig_info(CONTIG_ID)
-    assert ret_by_id == [{"contig_id": "16", "start": 1, "end": 90338345}]
+    assert CONTIG_ID in [i.contig_id for i in ret_by_id]
 
 
 def test_contig_info_from_exon_id(ensembl100):
     ret_by_id = ensembl100.contig_info(EXON_ID)
-    assert ret_by_id == [{"contig_id": "16", "start": 1, "end": 90338345}]
+    assert CONTIG_ID in [i.contig_id for i in ret_by_id]
 
 
 def test_contig_info_from_gene_id(ensembl100):
     ret_by_id = ensembl100.contig_info(GENE_ID)
-    assert ret_by_id == [{"contig_id": "16", "start": 1, "end": 90338345}]
+    assert CONTIG_ID in [i.contig_id for i in ret_by_id]
 
 
 def test_contig_info_from_gene_name(ensembl100):
     ret_by_id = ensembl100.contig_info(GENE_NAME)
-    assert ret_by_id == [{"contig_id": "16", "start": 1, "end": 90338345}]
+    assert CONTIG_ID in [i.contig_id for i in ret_by_id]
 
 
 def test_contig_info_from_transcript_id(ensembl100):
     ret_by_id = ensembl100.contig_info(TRANSCRIPT_ID)
-    assert ret_by_id == [{"contig_id": "16", "start": 1, "end": 90338345}]
+    assert CONTIG_ID in [i.contig_id for i in ret_by_id]
 
 
 def test_contig_info_from_transcript_name(ensembl100):
     ret_by_id = ensembl100.contig_info(TRANSCRIPT_NAME)
-    assert ret_by_id == [{"contig_id": "16", "start": 1, "end": 90338345}]
+    assert CONTIG_ID in [i.contig_id for i in ret_by_id]
 
 
 def test_exon_ids_from_cds(ensembl100):
@@ -312,20 +329,12 @@ def test_gene_ids_different_gene_ids(ensembl69, ensembl100):
     assert ensembl100.gene_ids("AGBL1") == ["ENSG00000273540"]
 
 
-def test_gene_ids_different_gene_ids_2(ensembl69, ensembl100):
-    # Gene ID changed bewteen 69 and 100
-    # ENSG00000204645 SSX4
-    # ENSG00000268009 SSX4
-    assert ensembl69.gene_ids("SSX4") == ["ENSG00000204645"]
-    assert ensembl100.gene_ids("SSX4") == ["ENSG00000268009"]
-
-
-def test_gene_ids_different_gene_names(ensembl69):
+def test_gene_ids_different_gene_names(ensembl69, ensembl100):
     # Gene name changed bewteen 69 and 100
     # ENSG00000118058 MLL
     # ENSG00000118058 KMT2A
     assert ensembl69.gene_ids("MLL") == ["ENSG00000118058"]
-    assert ensembl69.gene_ids("KMT2A") == ["ENSG00000118058"]
+    assert ensembl100.gene_ids("KMT2A") == ["ENSG00000118058"]
 
 
 def test_gene_ids_from_cds(ensembl100):
@@ -425,6 +434,7 @@ def test_gene_info_from_gene(ensembl100):
     assert ret_by_id, ret_by_name
 
 
+@pytest.mark.xfail(reason="not implemented yet")
 def test_gene_info_from_gene_old_name(ensembl100):
     # FAM175A was renamed to ABRAXAS1 in HG38
     ret_by_id = ensembl100.gene_info("ENSG00000163322", GENE)
@@ -520,7 +530,6 @@ def test_gene_names_from_protein_id(ensembl100):
 
 
 def test_gene_names_from_refseq_transcript(ensembl100):
-    # from SDEV-2909:
     ret_by_id = ensembl100.gene_names("NM_000244.3", TRANSCRIPT)
     assert "MEN1" in ret_by_id
     ret_by_id = ensembl100.gene_names("NM_007194.3", TRANSCRIPT)
@@ -561,11 +570,11 @@ def test_is_contig_false(ensembl100):
 
 
 def test_is_contig_true(ensembl100):
-    assert ensembl100.is_contig("2") is True
+    assert ensembl100.is_contig("12") is True
 
 
 def test_is_contig_true_alias(ensembl100):
-    assert ensembl100.is_contig("chr2") is True
+    assert ensembl100.is_contig("chr12") is True
 
 
 def test_is_exon_false(ensembl100):
@@ -629,10 +638,7 @@ def test_normalize_feature_protein_id(ensembl100):
 
 
 def test_normalize_feature_refseq_transcript_id(ensembl100):
-    assert ensembl100.normalize_feature("NM_000314.4") == [
-        ("ENST00000371953", TRANSCRIPT),
-        ("ENST00000645317", TRANSCRIPT),
-    ]
+    assert ensembl100.normalize_feature("NM_000314.4") == [("ENST00000371953", TRANSCRIPT)]
 
 
 def test_normalize_feature_transcript_id(ensembl100):
@@ -752,6 +758,7 @@ def test_transcript_ids_from_gene(ensembl100):
     assert ret_by_id, ret_by_name
 
 
+@pytest.mark.xfail(reason="unsure if this will be implemented")
 def test_transcript_ids_from_gene_best_only(ensembl100):
     # assumes ENST00000288135 is the best transcript for ENSG00000157404 (KIT)
     ret_all = ensembl100.transcript_ids(GENE_ID, GENE, best_only=False)

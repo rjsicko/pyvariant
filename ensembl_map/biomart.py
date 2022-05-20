@@ -49,7 +49,7 @@ import re
 import requests
 
 # paths to the BioMart query data, grouped by Ensembl release
-XML_DATA = os.path.join(os.path.dirname(__file__), "biomart_query.xml")
+XML_DATA = os.path.join(os.path.dirname(__file__), "data", "biomart_query.xml")
 
 # defaults for command line arguments
 DEFAULT_OUTPUT = "ens{release}_biomart_export.tsv"

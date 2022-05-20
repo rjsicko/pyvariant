@@ -1,4 +1,4 @@
-from coordinate_mapper.sequences import (
+from ensembl_map.sequences import (
     cds_sequence,
     contig_sequence,
     gene_sequence,

@@ -1,5 +1,6 @@
 import pytest
-from coordinate_mapper.exceptions import (
+
+from ensembl_map.exceptions import (
     CdsOutOfRange,
     ExonOutOfRange,
     GeneOutOfRange,

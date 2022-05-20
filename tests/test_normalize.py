@@ -1,4 +1,4 @@
-from coordinate_mapper.normalize import normalize_cds, normalize_protein, normalize_transcript
+from ensembl_map.normalize import normalize_cds, normalize_protein, normalize_transcript
 
 
 def test_normalize_cds():

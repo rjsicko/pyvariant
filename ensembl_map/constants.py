@@ -8,3 +8,8 @@ EXON = "exon"
 GENE = "gene"
 PROTEIN = "protein"
 TRANSCRIPT = "transcript"
+
+# default species/release
+DEFAULT_SPECIES = "homo_sapiens"
+DEFAULT_REFERENCE = "GRCh38"
+DEFAULT_RELEASE = 100
