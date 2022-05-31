@@ -11,5 +11,6 @@ htmlcov/
 venv/
 __pycache__/
 
-# temporary until the test data has been pared down to a minimal size
-tests/cache/homo_sapiens
+tests/**/*.gz
+tests/**/*.gz.fai
+tests/**/*.pickle
