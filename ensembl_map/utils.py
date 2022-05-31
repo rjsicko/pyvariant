@@ -44,6 +44,7 @@ def bgzip(path: str) -> str:
     # compress to a temporary file first to avoid overwritting the file as it's being read
     with TemporaryDirectory() as tempdir:
         tempfile = os.path.join(tempdir, os.path.basename(output))
+        logger.info(f"Compressing {path} with bgzip (this may take some time)...")
         logger.debug(f"Writing compressed output to temporary file '{tempfile}'")
         with openfunc(path, openmode) as inf:
             with BgzfWriter(tempfile, compresslevel=9) as outf:

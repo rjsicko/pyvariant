@@ -2,13 +2,21 @@ from functools import lru_cache
 from math import floor
 from typing import Any, Callable, List, Optional, Set, Tuple
 
-import pyensembl
 from logzero import logger
 
 from .constants import CDS, CONTIG, EXON, GENE, PROTEIN, STRAND_SYMBOLS, TRANSCRIPT
+from .core import (
+    CdsRecord,
+    ContigRecord,
+    ExonRecord,
+    GeneRecord,
+    ProteinRecord,
+    Record,
+    RecordType,
+    TranscriptRecord,
+)
 from .core import instance as CM
 from .exceptions import CdsOutOfRange, ExonOutOfRange, GeneOutOfRange, TranscriptOutOfRange
-from .features import Contig, get_load_function
 from .utils import assert_valid_position
 
 
@@ -90,6 +98,7 @@ def cds_to_exon(
             ):
                 if pos2.transcript_id == feature_id:
                     result.add(pos2)
+
     return _validate_result(result, "CDS", "exon", (feature, start, end), raise_error)
 
 
@@ -219,11 +228,8 @@ def contig_to_contig(
     if strand not in STRAND_SYMBOLS:
         raise ValueError(f"strand must be one of {STRAND_SYMBOLS}")
 
-    # A contig/chromosomal position may not always map to a gene, therefore don't try to map the given
-    # coordinates. Instead just format the values as a Contig object and return. TODO: validate the
-    # given coordinates against a reference fasta?
     for feature_id in CM().contig_ids(feature, feature_type):
-        result.add(Contig(contig=feature_id, start=start, end=end or start, strand=strand))
+        result |= _map(feature_id, start, end, CONTIG, CONTIG, best_only=best_only)
 
     return _validate_result(result, "contig", "contig", (feature, start, end), raise_error)
 
@@ -1074,7 +1080,7 @@ def _map(
     )
     assert_valid_position(start, end)
     map_func = _get_pos_func(from_type, to_type)
-    load_func = get_load_function(to_type)
+    info_func, load_class = _get_load_func(to_type)
 
     for transcript in CM().transcript_info(feature, from_type):
         if best_only and not CM().is_canonical_transcript(transcript.transcript_id):
@@ -1082,9 +1088,11 @@ def _map(
             continue
 
         try:
-            position = map_func(transcript, start, end)
-            feature = load_func(transcript, *position)
-            result.add(feature)
+            start_new, end_new = map_func(transcript, start, end)
+            recordl = info_func(transcript.transcript_id, TRANSCRIPT)
+            assert len(recordl) == 1, recordl
+            new_record = _convert_record(load_class, recordl[0], start_new, end_new)
+            result.add(new_record)
         except ValueError as exc:
             logger.debug(exc)
             continue
@@ -1096,10 +1104,50 @@ def _map(
 
 
 # --------------------------------------
+#  Loader functions
+# --------------------------------------
+def _get_load_func(to_type: str) -> Tuple[Callable, RecordType]:
+    info_func: Callable
+    load_class: RecordType
+
+    if to_type == CDS:
+        info_func = CM().transcript_info
+        load_class = CdsRecord
+    elif to_type == CONTIG:
+        info_func = CM().contig_info
+        load_class = ContigRecord
+    elif to_type == EXON:
+        info_func = CM().exon_info
+        load_class = ExonRecord
+    elif to_type == GENE:
+        info_func = CM().gene_info
+        load_class = GeneRecord
+    elif to_type == PROTEIN:
+        info_func = CM().gene_info
+        load_class = ProteinRecord
+    elif to_type == TRANSCRIPT:
+        info_func = CM().transcript_info
+        load_class = TranscriptRecord
+    else:
+        raise ValueError(f"Cannot get info for '{to_type}'")
+
+    return info_func, load_class
+
+
+def _convert_record(load_class: RecordType, record: Record, start: int, end: int) -> Record:
+    values = record.__dict__.copy()
+    _ = values.pop("start")
+    _ = values.pop("end")
+    new_record = load_class(start=start, end=end, **values)
+
+    return new_record
+
+
+# --------------------------------------
 #  Position-mapping functions
 # --------------------------------------
 def _cpos_to_cpos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
     """Assert the given position falls actually falls on the given transcript.
 
@@ -1112,7 +1160,7 @@ def _cpos_to_cpos(
     """
 
     def check(y):
-        if not (1 <= y <= len(CM().cdna[transcript.transcript_id])):
+        if not (1 <= y <= len(CM().cdna_sequence(transcript.transcript_id))):
             raise CdsOutOfRange(transcript, y)
 
     check(start)
@@ -1123,7 +1171,7 @@ def _cpos_to_cpos(
         return start, start
 
 
-def _cpos_to_ppos(_: Any, start: int, end: Optional[int] = None) -> Tuple[int, int]:
+def _cpos_to_ppos(_: TranscriptRecord, start: int, end: Optional[int] = None) -> Tuple[int, int]:
     """Compute the equivalent protein position for a CDS position.
 
     Args:
@@ -1144,12 +1192,12 @@ def _cpos_to_ppos(_: Any, start: int, end: Optional[int] = None) -> Tuple[int, i
 
 
 def _cpos_to_tpos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
-    """Compute the equivalent CDS position for a transcript position.
+    """Compute the equivalent transcript position for a CDS position.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): position relative to the CDS
         end (int): optional, second position relative to the CDS
 
@@ -1158,7 +1206,7 @@ def _cpos_to_tpos(
     """
 
     def convert(x):
-        y = transcript.first_start_codon_spliced_offset + x
+        y = x + transcript.first_start_codon_spliced_offset
         if not (1 <= y <= len(transcript.sequence)):
             raise TranscriptOutOfRange(transcript, x)
         return y
@@ -1169,18 +1217,18 @@ def _cpos_to_tpos(
     return tstart, tend
 
 
-def _gpos_to_cpos(transcript: pyensembl.Transcript, start: int, end: int) -> Tuple[int, int]:
+def _gpos_to_cpos(transcript: TranscriptRecord, start: int, end: int) -> Tuple[int, int]:
     """Compute the equivalent CDS position for an exon.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): genomic coordinate
         end (int): optional, second genomic coordinate
 
     Returns:
         tuple of int: position relative to the CDS
     """
-    for cds in sorted(transcript.coding_sequence_position_ranges):
+    for cds in transcript.cds_intervals():
         if end:
             if (cds[0] <= start <= cds[1]) or (cds[0] <= end <= cds[1]):
                 gstart = max(start, cds[0])
@@ -1205,12 +1253,12 @@ def _gpos_to_cpos(transcript: pyensembl.Transcript, start: int, end: int) -> Tup
 
 
 def _gpos_to_gpos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
     """Assert the given position falls actually falls on the given gene.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): genomic coordinate
         end (int): optional, second genomic coordinate
 
@@ -1232,12 +1280,12 @@ def _gpos_to_gpos(
 
 
 def _gpos_to_tpos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
     """Compute the equivalent transcript position for a gene position.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): genomic coordinate
         end (int): optional, second genomic coordinate
 
@@ -1255,12 +1303,12 @@ def _gpos_to_tpos(
 
 
 def _ppos_to_cpos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
     """Compute the equivalent protein position for a CDS position.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): amino acid position
         end (int): optional, second amino acid position
 
@@ -1270,7 +1318,7 @@ def _ppos_to_cpos(
 
     def convert(x):
         y = (x - 1) * 3 + 1
-        if not (1 <= y <= len(CM().cdna[transcript.transcript_id])):
+        if not (1 <= y <= len(CM().cdna_sequence(transcript.transcript_id))):
             raise CdsOutOfRange(transcript, y)
         else:
             return y
@@ -1283,12 +1331,12 @@ def _ppos_to_cpos(
 
 
 def _ppos_to_ppos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
     """Assert the given position falls actually falls on the given protein.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): amino acid position
         end (int): optional, second amino acid position
 
@@ -1297,7 +1345,7 @@ def _ppos_to_ppos(
     """
 
     def check(y):
-        if not (1 <= y <= len(CM().cdna[transcript.transcript_id]) // 3):
+        if not (1 <= y <= len(CM().cdna_sequence(transcript.transcript_id)) // 3):
             raise TranscriptOutOfRange(transcript, y)
 
     check(start)
@@ -1309,12 +1357,12 @@ def _ppos_to_ppos(
 
 
 def _gpos_to_epos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
     """Return the genomic coordinates of the exon that contains a genomic coordinate.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): genomic coordinate
         end (int): optional, second genomic coordinate
 
@@ -1341,12 +1389,12 @@ def _gpos_to_epos(
 
 
 def _tpos_to_cpos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
-    """Compute the equivalent transcript position for a CDS position.
+    """Compute the equivalent CDS position for a transcript position.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): position relative to the transcript
         end (int): optional, second position relative to the transcript
 
@@ -1356,7 +1404,7 @@ def _tpos_to_cpos(
 
     def convert(x):
         y = x - transcript.first_start_codon_spliced_offset
-        if not (1 <= y <= len(CM().cdna[transcript.transcript_id])):
+        if not (1 <= y <= len(CM().cdna_sequence(transcript.transcript_id))):
             raise CdsOutOfRange(transcript, x)
         return y
 
@@ -1367,23 +1415,22 @@ def _tpos_to_cpos(
 
 
 def _tpos_to_gpos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
     """Compute the equivalent gene position for a transcript position.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): position relative to the transcript
         end (int): optional, second position relative to the transcript
 
     Returns:
         tuple of int: genomic coordinate
     """
-    # make sure all the ranges are sorted from smallest to biggest
-    ranges = sorted([sorted(i) for i in transcript.exon_intervals])
+    ranges = transcript.exon_intervals()
 
     # for transcripts on the negative strand, start counting from the last position
-    if transcript.on_negative_strand:
+    if transcript.on_negative_strand():
         ranges = ranges[::-1]
 
     def convert(x):
@@ -1407,12 +1454,12 @@ def _tpos_to_gpos(
 
 
 def _tpos_to_tpos(
-    transcript: pyensembl.Transcript, start: int, end: Optional[int] = None
+    transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
     """Assert the given position falls actually falls on the given transcript.
 
     Args:
-        transcript: `pyensembl.Transcript` instance
+        transcript: `TranscriptRecord` instance
         start (int): position relative to the transcript
         end (int): optional, second position relative to the transcript
 

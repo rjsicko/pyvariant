@@ -68,24 +68,44 @@ class Cache:
         """
         self.make_release_cache_dir()
 
-        for filepath, download, index in [
-            (self.local_cdna_fasta_filepath, self.download_cdna_fasta, self.index_cdna_fasta),
-            (self.local_dna_fasta_filepath, self.download_dna_fasta, self.index_dna_fasta),
-            (self.local_pep_fasta_filepath, self.download_pep_fasta, self.index_pep_fasta),
-            (self.local_ncrna_fasta_filepath, self.download_ncrna_fasta, self.index_ncrna_fasta),
+        for fasta, index, downloadf, indexf in [
+            (
+                self.local_cdna_fasta_filepath,
+                self.local_cdna_index_filepath,
+                self.download_cdna_fasta,
+                self.index_cdna_fasta,
+            ),
+            (
+                self.local_dna_fasta_filepath,
+                self.local_dna_index_filepath,
+                self.download_dna_fasta,
+                self.index_dna_fasta,
+            ),
+            (
+                self.local_pep_fasta_filepath,
+                self.local_pep_index_filepath,
+                self.download_pep_fasta,
+                self.index_pep_fasta,
+            ),
+            (
+                self.local_ncrna_fasta_filepath,
+                self.local_ncrna_index_filepath,
+                self.download_ncrna_fasta,
+                self.index_ncrna_fasta,
+            ),
         ]:
-            if not os.path.exists(filepath):
-                download()
-                index()
-
-            if not is_bgzipped(filepath):
-                logger.info(f"Compressing {filepath} with bgzip (this may take some time)...")
-                _ = bgzip(filepath)
+            if not os.path.exists(fasta):
+                downloadf()
+            if not is_bgzipped(fasta):
+                bgzip(fasta)
+            if not os.path.exists(index):
+                indexf()
 
         if not os.path.exists(self.local_gtf_cache_filepath):
-            if not os.path.exists(self.local_gtf_filepath):
-                self.download_gtf()
-            self.cache_gtf()
+            if not os.path.exists(self.local_gtf_cache_filepath):
+                if not os.path.exists(self.local_gtf_filepath):
+                    self.download_gtf()
+                self.cache_gtf()
 
     # ---------------------------------------------------------------------------------------------
     # FASTA file
@@ -209,6 +229,30 @@ class Cache:
             self.local_pep_fasta_filepath,
         )
 
+    @property
+    def local_cdna_index_filepath(self) -> str:
+        """Local name of the cDNA FASTA file."""
+        return self._fasta_index_path(self.local_cdna_fasta_filepath)
+
+    @property
+    def local_dna_index_filepath(self) -> str:
+        """Local name of the DNA FASTA file."""
+        return self._fasta_index_path(self.local_dna_fasta_filepath)
+
+    @property
+    def local_ncrna_index_filepath(self) -> str:
+        """Local name of the ncRNA FASTA file."""
+        return self._fasta_index_path(self.local_ncrna_fasta_filepath)
+
+    @property
+    def local_pep_index_filepath(self) -> str:
+        """Local name of the peptide FASTA file."""
+        return self._fasta_index_path(self.local_pep_fasta_filepath)
+
+    def _fasta_index_path(self, local_fasta_filename: str) -> str:
+        """Return the path to the FASTA index file."""
+        return local_fasta_filename + ".fai"
+
     def index_cdna_fasta(self):
         """(Re)build the index file for the cDNA Fasta."""
         return self._index_fasta(self.local_cdna_fasta_filepath)
@@ -230,7 +274,7 @@ class Cache:
         logger.info(f"Indexing {local_fasta_filename} (this may take some time)...")
         _ = Fasta(
             local_fasta_filename,
-            key_function = strip_version,
+            key_function=strip_version,
             as_raw=True,
             sequence_always_upper=True,
             build_index=True,
@@ -257,19 +301,12 @@ class Cache:
         """Return a `pyfaidx.Fasta` object for the Ensembl genome."""
         return Fasta(
             local_fasta_filename,
-            key_function = strip_version,
+            key_function=strip_version,
             as_raw=True,
             sequence_always_upper=True,
             build_index=False,
             rebuild=False,
         )
-
-    def _fasta_index_path(self, local_fasta_filename: str) -> str:
-        """Return the path to the FASTA index file."""
-        if local_fasta_filename.endswith(".gz"):
-            return local_fasta_filename + ".tbi"
-        else:
-            return local_fasta_filename + ".fai"
 
     # ---------------------------------------------------------------------------------------------
     # GTF file
@@ -312,7 +349,11 @@ class Cache:
     def cache_gtf(self):
         """Convert the Ensembl GTF to a pandas DataFrame and cache it."""
         logger.debug(f"Converting {self.local_gtf_filepath} to {self.local_gtf_cache_filepath}")
-        read_gtf(self.local_gtf_filepath).to_pickle(self.local_gtf_cache_filepath)
+        df = read_gtf(self.local_gtf_filepath)
+        df.rename(columns={"seqname": "contig_id"}, inplace=True)
+        df.to_pickle(self.local_gtf_cache_filepath)
+        logger.debug(f"Removing {self.local_gtf_filepath}")
+        # os.remove(self.local_gtf_filepath)  # DEBUG
 
     def load_gtf(self) -> pandas.DataFrame:
         """Return the cached Ensembl GTF data."""
@@ -337,10 +378,3 @@ class Cache:
             ftp.quit()
         except Exception as exc:
             logger.exception(f"Download failed: {exc}")
-
-
-if __name__ == "__main__":
-    # DEBUG
-    Cache("homo_sapiens", "GRCh38", 100, "/home/matt/Downloads/ensembl_map_data").download_all()
-    Cache("homo_sapiens", "GRCh37", 69, "/home/matt/Downloads/ensembl_map_data/").download_all()
-    # /DEBUG

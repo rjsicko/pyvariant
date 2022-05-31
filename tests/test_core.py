@@ -530,13 +530,13 @@ def test_gene_names_from_protein_id(ensembl100):
 
 
 def test_gene_names_from_refseq_transcript(ensembl100):
-    ret_by_id = ensembl100.gene_names("NM_000244.3", TRANSCRIPT)
+    ret_by_id = ensembl100.gene_names("NM_000244", TRANSCRIPT)
     assert "MEN1" in ret_by_id
-    ret_by_id = ensembl100.gene_names("NM_007194.3", TRANSCRIPT)
+    ret_by_id = ensembl100.gene_names("NM_007194", TRANSCRIPT)
     assert "CHEK2" in ret_by_id
-    ret_by_id = ensembl100.gene_names("NM_001128849.1", TRANSCRIPT)
+    ret_by_id = ensembl100.gene_names("NM_001128849", TRANSCRIPT)
     assert "SMARCA4" in ret_by_id
-    ret_by_id = ensembl100.gene_names("NM_000314.4", TRANSCRIPT)
+    ret_by_id = ensembl100.gene_names("NM_000314", TRANSCRIPT)
     assert "PTEN" in ret_by_id
 
 

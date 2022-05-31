@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import pandas
 from logzero import logger
@@ -20,64 +21,136 @@ from .constants import (
 )
 from .utils import is_ensembl_id, reverse_complement, strip_version
 
-# column names
-# ['gene_id', 'gene_version', 'gene_name', 'gene_source', 'gene_biotype',
-# 'transcript_id', 'transcript_version', 'transcript_name', 'transcript_source',
-# 'transcript_biotype', 'tag', 'transcript_support_level', 'exon_number', 'exon_id',
-# 'exon_version', 'protein_id', 'protein_version', 'ccds_id']
-DEFAULT_COLS = [
-    "seqname",
-    "start",
-    "end",
-    "strand",
-]
-EXON_INFO_COLS = DEFAULT_COLS + [
-    "gene_id",
-    "gene_version",
-    "gene_name",
-    "gene_biotype",
-    "transcript_id",
-    "transcript_version",
-    "transcript_name",
-    "transcript_biotype",
-    "exon_number",
-    "exon_id",
-    "exon_version",
-    "protein_id",
-    "protein_version",
-]
-GENE_INFO_COLS = DEFAULT_COLS + [
-    "gene_id",
-    "gene_version",
-    "gene_name",
-    "gene_biotype",
-]
-TRANSCRIPT_INFO_COLS = DEFAULT_COLS + [
-    "gene_id",
-    "gene_version",
-    "gene_name",
-    "gene_biotype",
-    "transcript_id",
-    "transcript_version",
-    "transcript_name",
-    "transcript_biotype",
-    "protein_id",
-    "protein_version",
-]
 
+# -------------------------------------------------------------------------------------------------
+# data classes
+# -------------------------------------------------------------------------------------------------
+@dataclass(frozen=True, order=True)
+class _BaseRecord:
+    _release: EnsemblRelease = field(repr=False)
+    contig_id: str
+    start: int
+    end: int
+    strand: str
 
-class Record:
-
-    _rename = {"seqname": "contig_id"}
+    def __getitem__(self, item):
+        return getattr(self, item)
 
     @classmethod
-    def rename(cls, items: Dict) -> Dict:
-        return {cls._rename.get(key, key): value for key, value in items.items()}
+    def keys(cls) -> List[str]:
+        # ignore 'private' variables (starting with '_')
+        return [i for i in cls.__match_args__ if not i.startswith("_")]
 
-    def __init__(self, items: Dict):
-        self.__dict__.update(self.rename(items))
+    def on_negative_strand(self) -> bool:
+        return self.strand == "-"
+
+    def on_positive_strand(self) -> bool:
+        return self.strand == "+"
 
 
+@dataclass(frozen=True, order=True)
+class ContigRecord(_BaseRecord):
+    pass
+
+
+@dataclass(frozen=True, order=True)
+class CdsRecord(_BaseRecord):
+    gene_id: str
+    gene_version: str
+    gene_name: str
+    gene_biotype: str
+    transcript_id: str
+    transcript_version: str
+    transcript_name: str
+    transcript_biotype: str
+    protein_id: str
+    protein_version: str
+
+
+@dataclass(frozen=True, order=True)
+class ExonRecord(_BaseRecord):
+    gene_id: str
+    gene_version: str
+    gene_name: str
+    gene_biotype: str
+    transcript_id: str
+    transcript_version: str
+    transcript_name: str
+    transcript_biotype: str
+    exon_number: str
+    exon_id: str
+    exon_version: str
+    protein_id: str
+    protein_version: str
+
+
+@dataclass(frozen=True, order=True)
+class GeneRecord(_BaseRecord):
+    gene_id: str
+    gene_version: str
+    gene_name: str
+    gene_biotype: str
+
+
+@dataclass(frozen=True, order=True)
+class ProteinRecord(_BaseRecord):
+    pass
+
+
+@dataclass(frozen=True, order=True)
+class TranscriptRecord(_BaseRecord):
+    gene_id: str
+    gene_version: str
+    gene_name: str
+    gene_biotype: str
+    transcript_id: str
+    transcript_version: str
+    transcript_name: str
+    transcript_biotype: str
+    protein_id: str
+    protein_version: str
+
+    def cds(self):
+        """Return CDS records for this transcript."""
+        return self._release.cds_info(self.transcript_id, TRANSCRIPT)
+
+    def cds_intervals(self):
+        """Return a contig position ranges for each CDS in this transcript."""
+        return sorted([(i.start, i.end) for i in self.cds()])
+
+    def exons(self):
+        """Return exon records for this transcript."""
+        return self._release.cds_info(self.transcript_id, TRANSCRIPT)
+
+    def exon_intervals(self):
+        """Return a contig position ranges for each exon in this transcript."""
+        return sorted([(i.start, i.end) for i in self.exons()])
+
+    def first_start_codon_spliced_offset(self):
+        """Offset of first nucleotide in start codon into the spliced mRNA (excluding introns)."""
+
+
+Record = Union[
+    ContigRecord,
+    CdsRecord,
+    ExonRecord,
+    GeneRecord,
+    ProteinRecord,
+    TranscriptRecord,
+]
+RecordType = Union[
+    Type[ContigRecord],
+    Type[CdsRecord],
+    Type[ExonRecord],
+    Type[GeneRecord],
+    Type[ProteinRecord],
+    Type[TranscriptRecord],
+]
+
+
+# -------------------------------------------------------------------------------------------------
+# cache logic
+# -------------------------------------------------------------------------------------------------
 class CachedEnsemblRelease(type):
     _instances: Dict[Any, EnsemblRelease] = {}
     _current: Optional[EnsemblRelease] = None
@@ -137,7 +210,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # <feature_symbol>()
     # ---------------------------------------------------------------------------------------------
     def all_contig_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl["seqname"])
+        return self._uniquify_series(self.ensembl["contig_id"])
 
     def all_exon_ids(self) -> List[str]:
         return self._uniquify_series(self.ensembl["exon_id"])
@@ -375,28 +448,28 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return result
 
     def _contig_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "seqname", "seqname")
+        return self._query(feature, "contig_id", "contig_id")
 
     def _contig_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "exon_id", "seqname")
+        return self._query(feature, "exon_id", "contig_id")
 
     def _contig_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_id", "seqname")
+        return self._query(feature, "gene_id", "contig_id")
 
     def _contig_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_name", "seqname")
+        return self._query(feature, "gene_name", "contig_id")
 
     def _contig_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "protein_id", "seqname")
+        return self._query(feature, "protein_id", "contig_id")
 
     def _contig_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_id", "seqname")
+        return self._query(feature, "transcript_id", "contig_id")
 
     def _contig_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_name", "seqname")
+        return self._query(feature, "transcript_name", "contig_id")
 
     def _exon_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "seqname", "exon_id")
+        return self._query(feature, "contig_id", "exon_id")
 
     def _exon_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
         return self._query(feature, "exon_id", "exon_id")
@@ -417,7 +490,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return self._query(feature, "transcript_name", "exon_id")
 
     def _gene_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "seqname", "gene_id")
+        return self._query(feature, "contig_id", "gene_id")
 
     def _gene_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
         return self._query(feature, "exon_id", "gene_id")
@@ -438,7 +511,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return self._query(feature, "transcript_name", "gene_id")
 
     def _gene_names_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "seqname", "gene_name")
+        return self._query(feature, "contig_id", "gene_name")
 
     def _gene_names_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
         return self._query(feature, "exon_id", "gene_name")
@@ -459,7 +532,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return self._query(feature, "transcript_name", "gene_name")
 
     def _protein_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "seqname", "protein_id")
+        return self._query(feature, "contig_id", "protein_id")
 
     def _protein_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
         return self._query(self._transcript_ids_of_exon_id(feature), "transcript_id", "protein_id")
@@ -480,7 +553,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return self._query(feature, "transcript_name", "protein_id")
 
     def _transcript_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "seqname", "transcript_id")
+        return self._query(feature, "contig_id", "transcript_id")
 
     def _transcript_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
         return self._query(feature, "exon_id", "transcript_id")
@@ -501,7 +574,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return self._query(feature, "transcript_name", "transcript_id")
 
     def _transcript_names_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "seqname", "transcript_name")
+        return self._query(feature, "contig_id", "transcript_name")
 
     def _transcript_names_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
         return self._query(feature, "exon_id", "transcript_name")
@@ -647,7 +720,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # ---------------------------------------------------------------------------------------------
     # get_<feature>_info>(feature, feature_type)
     # ---------------------------------------------------------------------------------------------
-    def contig_info(self, feature: str, feature_type: str = "") -> List[Record]:
+    def contig_info(self, feature: str, feature_type: str = "") -> List[ContigRecord]:
         """Given a feature symbol, return information on the corresponding contig(s)."""
         result: List[Record] = []
 
@@ -677,7 +750,37 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
         return result
 
-    def exon_info(self, feature: str, feature_type: str = "") -> List[Record]:
+    def cds_info(self, feature: str, feature_type: str = "") -> List[CdsRecord]:
+        """Given a feature symbol, return information on the corresponding CDS(s)."""
+        result = []
+
+        for feature, feature_type in self.normalize_feature(feature, feature_type):
+            if is_ensembl_id(feature):
+                if feature_type == CONTIG:
+                    result.extend(self._cds_info_of_contig_id(feature))
+                elif feature_type == EXON:
+                    result.extend(self._cds_info_of_exon_id(feature))
+                elif feature_type == GENE:
+                    result.extend(self._cds_info_of_gene_id(feature))
+                elif feature_type == PROTEIN:
+                    result.extend(self._cds_info_of_protein_id(feature))
+                elif feature_type in (CDS, TRANSCRIPT):
+                    result.extend(self._cds_info_of_transcript_id(feature))
+                else:
+                    raise ValueError(f"Unable to get CDS info for {feature} ({feature_type})")
+            else:
+                if feature_type == CONTIG:
+                    result.extend(self._cds_info_of_contig_id(feature))
+                elif feature_type == GENE:
+                    result.extend(self._cds_info_of_gene_name(feature))
+                elif feature_type in (CDS, TRANSCRIPT):
+                    result.extend(self._cds_info_of_transcript_name(feature))
+                else:
+                    raise ValueError(f"Unable to get CDS info for {feature} ({feature_type})")
+
+        return result
+
+    def exon_info(self, feature: str, feature_type: str = "") -> List[ExonRecord]:
         """Given a feature symbol, return information on the corresponding exon(s)."""
         result = []
 
@@ -707,7 +810,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
         return result
 
-    def gene_info(self, feature: str, feature_type: str = "") -> List[Record]:
+    def gene_info(self, feature: str, feature_type: str = "") -> List[GeneRecord]:
         """Given a feature symbol, return information on the corresponding gene(s)."""
         result = []
 
@@ -737,7 +840,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
         return result
 
-    def protein_info(self, feature: str, feature_type: str = "") -> List[Record]:
+    def protein_info(self, feature: str, feature_type: str = "") -> List[ProteinRecord]:
         """Given a feature symbol, return information on the corresponding protein(s)."""
         result = []
 
@@ -767,7 +870,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
         return result
 
-    def transcript_info(self, feature: str, feature_type: str = "") -> List[Record]:
+    def transcript_info(self, feature: str, feature_type: str = "") -> List[TranscriptRecord]:
         """Given a feature symbol, return information on the corresponding transcript(s)."""
         result = []
 
@@ -801,161 +904,200 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
         return result
 
-    def _contig_info_of_contig_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _contig_info_of_contig_id(self, feature: Union[List[str], str]) -> List[ContigRecord]:
         return self._query_contig_info(feature)
 
-    def _contig_info_of_exon_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _contig_info_of_exon_id(self, feature: Union[List[str], str]) -> List[ContigRecord]:
         return self._contig_info_of_contig_id(self._contig_ids_of_exon_id(feature))
 
-    def _contig_info_of_gene_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _contig_info_of_gene_id(self, feature: Union[List[str], str]) -> List[ContigRecord]:
         return self._contig_info_of_contig_id(self._contig_ids_of_gene_id(feature))
 
-    def _contig_info_of_gene_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _contig_info_of_gene_name(self, feature: Union[List[str], str]) -> List[ContigRecord]:
         return self._contig_info_of_contig_id(self._contig_ids_of_gene_name(feature))
 
-    def _contig_info_of_protein_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _contig_info_of_protein_id(self, feature: Union[List[str], str]) -> List[ContigRecord]:
         return self._contig_info_of_contig_id(self._contig_ids_of_protein_id(feature))
 
-    def _contig_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _contig_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[ContigRecord]:
         return self._contig_info_of_contig_id(self._contig_ids_of_transcript_id(feature))
 
-    def _contig_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _contig_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[ContigRecord]:
         return self._contig_info_of_contig_id(self._contig_ids_of_transcript_name(feature))
 
-    def _exon_info_of_contig_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_exon_info(feature, "seqname")
+    def _cds_info_of_contig_id(self, feature: Union[List[str], str]) -> List[CdsRecord]:
+        return self._query_cds_info(feature, "contig_id")
 
-    def _exon_info_of_exon_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _cds_info_of_exon_id(self, feature: Union[List[str], str]) -> List[CdsRecord]:
+        return self._query_cds_info(self._transcript_ids_of_exon_id(feature), "transcript_id")
+
+    def _cds_info_of_gene_id(self, feature: Union[List[str], str]) -> List[CdsRecord]:
+        return self._query_cds_info(feature, "gene_id")
+
+    def _cds_info_of_gene_name(self, feature: Union[List[str], str]) -> List[CdsRecord]:
+        return self._query_cds_info(feature, "gene_name")
+
+    def _cds_info_of_protein_id(self, feature: Union[List[str], str]) -> List[CdsRecord]:
+        return self._query_cds_info(self._transcript_ids_of_protein_id(feature), "transcript_id")
+
+    def _cds_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[CdsRecord]:
+        return self._query_cds_info(feature, "transcript_id")
+
+    def _cds_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[CdsRecord]:
+        return self._query_cds_info(feature, "transcript_name")
+
+    def _exon_info_of_contig_id(self, feature: Union[List[str], str]) -> List[ExonRecord]:
+        return self._query_exon_info(feature, "contig_id")
+
+    def _exon_info_of_exon_id(self, feature: Union[List[str], str]) -> List[ExonRecord]:
         return self._query_exon_info(self._transcript_ids_of_exon_id(feature), "transcript_id")
 
-    def _exon_info_of_gene_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _exon_info_of_gene_id(self, feature: Union[List[str], str]) -> List[ExonRecord]:
         return self._query_exon_info(feature, "gene_id")
 
-    def _exon_info_of_gene_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _exon_info_of_gene_name(self, feature: Union[List[str], str]) -> List[ExonRecord]:
         return self._query_exon_info(feature, "gene_name")
 
-    def _exon_info_of_protein_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _exon_info_of_protein_id(self, feature: Union[List[str], str]) -> List[ExonRecord]:
         return self._query_exon_info(self._transcript_ids_of_protein_id(feature), "transcript_id")
 
-    def _exon_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _exon_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[ExonRecord]:
         return self._query_exon_info(feature, "transcript_id")
 
-    def _exon_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _exon_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[ExonRecord]:
         return self._query_exon_info(feature, "transcript_name")
 
-    def _gene_info_of_contig_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_gene_info(feature, "seqname")
+    def _gene_info_of_contig_id(self, feature: Union[List[str], str]) -> List[GeneRecord]:
+        return self._query_gene_info(feature, "contig_id")
 
-    def _gene_info_of_exon_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _gene_info_of_exon_id(self, feature: Union[List[str], str]) -> List[GeneRecord]:
         return self._query_gene_info(self._transcript_ids_of_exon_id(feature), "transcript_id")
 
-    def _gene_info_of_gene_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _gene_info_of_gene_id(self, feature: Union[List[str], str]) -> List[GeneRecord]:
         return self._query_gene_info(feature, "gene_id")
 
-    def _gene_info_of_gene_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _gene_info_of_gene_name(self, feature: Union[List[str], str]) -> List[GeneRecord]:
         return self._query_gene_info(feature, "gene_name")
 
-    def _gene_info_of_protein_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _gene_info_of_protein_id(self, feature: Union[List[str], str]) -> List[GeneRecord]:
         return self._query_gene_info(self._transcript_ids_of_protein_id(feature), "transcript_id")
 
-    def _gene_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _gene_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[GeneRecord]:
         return self._query_gene_info(feature, "transcript_id")
 
-    def _gene_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _gene_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[GeneRecord]:
         return self._query_gene_info(feature, "transcript_name")
 
-    def _protein_info_of_contig_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_protein_info(feature, "seqname")
+    def _protein_info_of_contig_id(self, feature: Union[List[str], str]) -> List[ProteinRecord]:
+        return self._query_protein_info(feature, "contig_id")
 
-    def _protein_info_of_exon_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _protein_info_of_exon_id(self, feature: Union[List[str], str]) -> List[ProteinRecord]:
         return self._query_protein_info(self._transcript_ids_of_exon_id(feature), "transcript_id")
 
-    def _protein_info_of_gene_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _protein_info_of_gene_id(self, feature: Union[List[str], str]) -> List[ProteinRecord]:
         return self._query_protein_info(feature, "gene_id")
 
-    def _protein_info_of_gene_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _protein_info_of_gene_name(self, feature: Union[List[str], str]) -> List[ProteinRecord]:
         return self._query_protein_info(feature, "gene_name")
 
-    def _protein_info_of_protein_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _protein_info_of_protein_id(self, feature: Union[List[str], str]) -> List[ProteinRecord]:
         return self._query_protein_info(
             self._transcript_ids_of_protein_id(feature), "transcript_id"
         )
 
-    def _protein_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _protein_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[ProteinRecord]:
         return self._query_protein_info(feature, "transcript_id")
 
-    def _protein_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _protein_info_of_transcript_name(
+        self, feature: Union[List[str], str]
+    ) -> List[ProteinRecord]:
         return self._query_protein_info(feature, "transcript_name")
 
-    def _transcript_info_of_contig_id(self, feature: Union[List[str], str]) -> List[Record]:
-        return self._query_transcript_info(feature, "seqname")
+    def _transcript_info_of_contig_id(
+        self, feature: Union[List[str], str]
+    ) -> List[TranscriptRecord]:
+        return self._query_transcript_info(feature, "contig_id")
 
-    def _transcript_info_of_exon_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _transcript_info_of_exon_id(self, feature: Union[List[str], str]) -> List[TranscriptRecord]:
         return self._query_transcript_info(
             self._transcript_ids_of_exon_id(feature), "transcript_id"
         )
 
-    def _transcript_info_of_gene_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _transcript_info_of_gene_id(self, feature: Union[List[str], str]) -> List[TranscriptRecord]:
         return self._query_transcript_info(feature, "gene_id")
 
-    def _transcript_info_of_gene_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _transcript_info_of_gene_name(
+        self, feature: Union[List[str], str]
+    ) -> List[TranscriptRecord]:
         return self._query_transcript_info(feature, "gene_name")
 
-    def _transcript_info_of_protein_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _transcript_info_of_protein_id(
+        self, feature: Union[List[str], str]
+    ) -> List[TranscriptRecord]:
         return self._query_transcript_info(
             self._transcript_ids_of_protein_id(feature), "transcript_id"
         )
 
-    def _transcript_info_of_transcript_id(self, feature: Union[List[str], str]) -> List[Record]:
+    def _transcript_info_of_transcript_id(
+        self, feature: Union[List[str], str]
+    ) -> List[TranscriptRecord]:
         return self._query_transcript_info(feature, "transcript_id")
 
-    def _transcript_info_of_transcript_name(self, feature: Union[List[str], str]) -> List[Record]:
+    def _transcript_info_of_transcript_name(
+        self, feature: Union[List[str], str]
+    ) -> List[TranscriptRecord]:
         return self._query_transcript_info(feature, "transcript_name")
 
-    def _query_contig_info(self, feature: Union[List[str], str]) -> List[Record]:
+    def _query_contig_info(self, feature: Union[List[str], str]) -> List[ContigRecord]:
         """Generic function for querying contig info from the data cache."""
         info = []
 
         feature = [feature] if isinstance(feature, str) else feature
-        for f in feature:
-            contig = self.dna[f]
-            values = Record({"contig_id": f, "start": 1, "end": len(contig)})
+        for contig_id in feature:
+            contig = self.dna[contig_id]
+            values = ContigRecord(self, contig_id, 1, len(contig), "+")
             if values not in info:
                 info.append(values)
 
         return info
 
-    def _query_exon_info(self, feature: Union[List[str], str], col: str) -> List[Record]:
+    def _query_cds_info(self, feature: Union[List[str], str], col: str) -> List[CdsRecord]:
+        """Generic function for querying CDS info from the data cache."""
+        return self._query_info(feature, "CDS", col, CdsRecord)
+
+    def _query_exon_info(self, feature: Union[List[str], str], col: str) -> List[ExonRecord]:
         """Generic function for querying exon info from the data cache."""
-        return self._query_info(feature, "exon", col, EXON_INFO_COLS)
+        return self._query_info(feature, "exon", col, ExonRecord)
 
-    def _query_gene_info(self, feature: Union[List[str], str], col: str) -> List[Record]:
+    def _query_gene_info(self, feature: Union[List[str], str], col: str) -> List[GeneRecord]:
         """Generic function for querying gene info from the data cache."""
-        return self._query_info(feature, "transcript", col, GENE_INFO_COLS)
+        return self._query_info(feature, "transcript", col, GeneRecord)
 
-    def _query_protein_info(self, feature: Union[List[str], str], col: str) -> List[Record]:
+    def _query_protein_info(self, feature: Union[List[str], str], col: str) -> List[ProteinRecord]:
         """Generic function for querying protein info from the data cache."""
         raise NotImplementedError()  # TODO
 
-    def _query_transcript_info(self, feature: Union[List[str], str], col: str) -> List[Record]:
+    def _query_transcript_info(
+        self, feature: Union[List[str], str], col: str
+    ) -> List[TranscriptRecord]:
         """Generic function for querying transcript info from the data cache."""
-        return self._query_info(feature, "transcript", col, TRANSCRIPT_INFO_COLS)
+        return self._query_info(feature, "transcript", col, TranscriptRecord)
 
     def _query_info(
         self,
         feature: Union[List[str], str],
         feature_col: str,
         id_col: str,
-        subset_cols: List[str],
-    ) -> List[Record]:
+        record: RecordType,
+    ) -> List:
         """Generic function for querying transcript info from the data cache."""
         info = []
 
         feature = [feature] if isinstance(feature, str) else feature
         select = (self.ensembl["feature"] == feature_col) & (self.ensembl[id_col].isin(feature))
-        df = self.ensembl.loc[select][subset_cols]
+        df = self.ensembl.loc[select][record.keys()]
         for _, row in df.iterrows():
-            values = Record(row.to_dict())
+            values = record(self, **row.to_dict())
             if values not in info:
                 info.append(values)
 
@@ -965,48 +1107,72 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # sequence
     # ---------------------------------------------------------------------------------------------
     def cdna_sequence(
-        self, transcript: str, start: int, end: Optional[int] = None, strand: str = "+"
+        self,
+        transcript: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        strand: str = "+",
     ) -> str:
         """Return the nucleotide sequence at the given cDNA coordinates."""
         return self._get_sequence(self.cdna, transcript, start, end, strand)
 
     def dna_sequence(
-        self, contig: str, start: int, end: Optional[int] = None, strand: str = "+"
+        self, contig: str, start: Optional[int] = None, end: Optional[int] = None, strand: str = "+"
     ) -> str:
         """Return the nucleotide sequence at the given contig coordinates."""
         return self._get_sequence(self.dna, contig, start, end, strand)
 
     def peptide_sequence(
-        self, protein: str, start: int, end: Optional[int] = None, strand: str = "+"
+        self,
+        protein: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        strand: str = "+",
     ) -> str:
         """Return the amino acid sequence at the given peptide coordinates."""
         return self._get_sequence(self.pep, protein, start, end, strand)
 
     def ncrna_sequence(
-        self, transcript: str, start: int, end: Optional[int] = None, strand: str = "+"
+        self,
+        transcript: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        strand: str = "+",
     ) -> str:
         """Return the nucleotide sequence at the given ncRNA coordinates."""
         return self._get_sequence(self.dna, transcript, start, end, strand)
 
     def _get_sequence(
-        self, fasta: Fasta, ref: str, start: int, end: Optional[int] = None, strand: str = "+"
+        self,
+        fasta: Fasta,
+        ref: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        strand: str = "+",
     ):
         """Return the sequence between the given positions (inclusive)."""
-        reflen = len(fasta[ref])
-        end = end if end else start
-        start = start - 1  # 0-based coordiantes
-        if not (0 <= start < reflen):
-            raise ValueError(f"Start must be from 1 to {reflen} ({start})")
-        if not (1 < end <= reflen):
-            raise ValueError(f"End must be from 2 to {reflen + 1} ({end})")
+        seq = fasta[ref]
+        seqlen = len(seq)
+
+        # if no positions are given, return the whole sequence
+        start = start if start is not None else 1
+        end = end if end is not None else seqlen
+
+        # validate that the given positions fall within the sequence
+        if not (0 <= start < seqlen):
+            raise ValueError(f"Start must be from 1 to {seqlen} ({start})")
+        if not (1 < end <= seqlen):
+            raise ValueError(f"End must be from 2 to {seqlen + 1} ({end})")
+
+        # sanity check that the end position is after the start
         if end <= start:
             raise ValueError(f"End must be > start ({end} <= {start})")
 
-        seq = fasta[ref][start:end]
+        subseq = seq[start - 1 : end - 1]
         if strand == "-":
-            seq = reverse_complement(seq)
+            subseq = reverse_complement(subseq)
 
-        return seq
+        return subseq
 
     # ---------------------------------------------------------------------------------------------
     # aliases

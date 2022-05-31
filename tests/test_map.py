@@ -1,6 +1,7 @@
 import pytest
 
 from ensembl_map.constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
+from ensembl_map.core import EnsemblRelease
 from ensembl_map.map import (
     _transcript_ids_with_exon,
     cds_to_cds,
@@ -41,8 +42,16 @@ from ensembl_map.map import (
     transcript_to_protein,
     transcript_to_transcript,
 )
-from ensembl_map.core import EnsemblRelease
-from . import CACHE_DIR, CANONICAL_TRANSCRIPT, CONTIG_ALIAS, EXON_ALIAS, GENE_ALIAS, TRANSCRIPT_ALIAS, PROTEIN_ALIAS
+
+from . import (
+    CACHE_DIR,
+    CANONICAL_TRANSCRIPT,
+    CONTIG_ALIAS,
+    EXON_ALIAS,
+    GENE_ALIAS,
+    PROTEIN_ALIAS,
+    TRANSCRIPT_ALIAS,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -59,7 +68,6 @@ def ensembl100():
         protein_alias=PROTEIN_ALIAS,
         transcript_alias=TRANSCRIPT_ALIAS,
     )
-
 
 
 def test_cds_to_cds_pos_strand_by_transcript_id():
