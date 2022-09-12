@@ -1,15 +1,17 @@
 from functools import lru_cache
 from typing import Optional, Union
 
-from .constants import CDS, CONTIG, GENE, PROTEIN, TRANSCRIPT
-from .features import Cds, Contig, Gene, Protein, Transcript
+from .constants import CDNA, CONTIG, GENE, PROTEIN, TRANSCRIPT
+from .features import Cdna, Contig, Gene, Protein, Transcript
 from .map import get_map_func
 
 
 @lru_cache()
-def cds_sequence(cds: str, start: int, end: Optional[int] = None, raise_error: bool = True) -> str:
-    """Return the sequence of a CDS at the given position(s)."""
-    return _get_feature(cds, start, end, CDS, raise_error).sequence
+def cdna_sequence(
+    cdna: str, start: int, end: Optional[int] = None, raise_error: bool = True
+) -> str:
+    """Return the sequence of a CDNA at the given position(s)."""
+    return _get_feature(cdna, start, end, CDNA, raise_error).sequence
 
 
 @lru_cache()
@@ -46,7 +48,7 @@ def transcript_sequence(
 
 def _get_feature(
     feature: str, start: int, end: Optional[int], feature_type: str, raise_error: bool
-) -> Union[Cds, Contig, Gene, Protein, Transcript]:
+) -> Union[Cdna, Contig, Gene, Protein, Transcript]:
     func = get_map_func(feature_type, feature_type)
     result = func(feature, start, end, raise_error=raise_error, feature_type=feature_type)
     if len(result) != 1:

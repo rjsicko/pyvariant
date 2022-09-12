@@ -18,11 +18,11 @@ class OutOfRangeErrorBase(ValueError):
         return f"{self.position} is outside {self.feature_type} {self.feature_id} {self.range}"
 
 
-class CdsOutOfRange(OutOfRangeErrorBase):
+class CdnaOutOfRange(OutOfRangeErrorBase):
     def __init__(self, transcript: pyensembl.Transcript, position: int):
         self.feature_id = transcript.transcript_id
         self.position = position
-        self.feature_type = "CDS"
+        self.feature_type = "cDNA"
         self.range = (1, len(transcript.coding_sequence))
 
 

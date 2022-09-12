@@ -1,7 +1,7 @@
-from ensembl_map.normalize import normalize_cds, normalize_protein, normalize_transcript
+from ensembl_map.normalize import normalize_cdna, normalize_protein, normalize_transcript
 
 
-def test_normalize_cds():
+def test_normalize_cdna():
     """
     Shifts position 3' from 2398 to 2410:
         2400 - CTATGTCCGGG - 2410
@@ -9,7 +9,7 @@ def test_normalize_cds():
         2400 - CTATGTCCGGG - 2410
                             ^
     """
-    result = normalize_cds("ENST00000275493", 2408)
+    result = normalize_cdna("ENST00000275493", 2408)
     assert result.sequence == "G"
     assert result.start == 2410
     assert result.end == 2410

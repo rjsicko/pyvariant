@@ -4,9 +4,9 @@ from typing import Any, Callable, List, Optional, Set, Tuple
 
 from logzero import logger
 
-from .constants import CDS, CONTIG, EXON, GENE, PROTEIN, STRAND_SYMBOLS, TRANSCRIPT
+from .constants import CDNA, CONTIG, EXON, GENE, PROTEIN, STRAND_SYMBOLS, TRANSCRIPT
 from .core import (
-    CdsRecord,
+    CdnaRecord,
     ContigRecord,
     ExonRecord,
     GeneRecord,
@@ -16,7 +16,7 @@ from .core import (
     TranscriptRecord,
 )
 from .core import instance as CM
-from .exceptions import CdsOutOfRange, ExonOutOfRange, GeneOutOfRange, TranscriptOutOfRange
+from .exceptions import CdnaOutOfRange, ExonOutOfRange, GeneOutOfRange, TranscriptOutOfRange
 from .utils import assert_valid_position
 
 
@@ -24,7 +24,7 @@ from .utils import assert_valid_position
 #  General mapping functions
 # --------------------------------------
 @lru_cache()
-def cds_to_cds(
+def cdna_to_cdna(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -32,17 +32,20 @@ def cds_to_cds(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map CDS coordinates."""
+    """Map cDNA coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        result |= _map(feature_id, start, end, CDS, CDS, best_only=best_only)
+    for cdna in CM().cdna_info(feature, feature_type):
+        if 1 <= start <= cdna.length and 1 <= end <= cdna.length:
+            new_cdna = _convert_record(CdnaRecord, cdna, start, end)
+            result.add(new_cdna)
 
-    return _validate_result(result, "CDS", "CDS", (feature, start, end), raise_error)
+    return _validate_result(result, "cDNA", "cDNA", (feature, start, end), raise_error)
 
 
 @lru_cache()
-def cds_to_contig(
+def cdna_to_contig(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -50,25 +53,64 @@ def cds_to_contig(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map CDS coordinates to contig coordinates."""
+    """Map cDNA coordinates to contig coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        for pos in cds_to_gene(
-            feature_id,
-            start,
-            end,
+    for cdna in cdna_to_cdna(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        contig_start = cdna.unspliced_position(start)
+        contig_end = cdna.unspliced_position(end)
+        contig_start, contig_end = sorted((contig_start, contig_end))
+        for contig in CM().contig_info(cdna.transcript_id, TRANSCRIPT):
+            new_contig = _convert_record(ContigRecord, contig, contig_start, contig_end)
+            result.add(new_contig)
+
+    return _validate_result(result, "cDNA", "contig", (feature, start, end), raise_error)
+
+
+@lru_cache()
+def cdna_to_exon(
+    feature: str,
+    start: int,
+    end: Optional[int] = None,
+    raise_error: bool = True,
+    best_only: bool = False,
+    feature_type: Optional[str] = None,
+) -> List:
+    """Map cDNA coordinates to exon coordinates."""
+    result = set()
+    end = end if end is not None else start
+
+    for transcript in cdna_to_transcript(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        for exon in transcript_to_exon(
+            transcript.transcript_id,
+            transcript.start,
+            end=transcript.end,
             raise_error=False,
             best_only=best_only,
-            feature_type=TRANSCRIPT,
+            feature_type=feature_type,
         ):
-            result |= _map(pos.gene_id, pos.start, pos.end, GENE, CONTIG, best_only=best_only)
+            result.add(exon)
 
-    return _validate_result(result, "CDS", "contig", (feature, start, end), raise_error)
+    return _validate_result(result, "cDNA", "exon", (feature, start, end), raise_error)
 
 
 @lru_cache()
-def cds_to_exon(
+def cdna_to_gene(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -76,34 +118,33 @@ def cds_to_exon(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map CDS coordinates to exon coordinates."""
+    """Map cDNA coordinates to gene coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        for pos in cds_to_transcript(
-            feature_id,
-            start,
-            end,
+    for transcript in cdna_to_transcript(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        for gene in transcript_to_gene(
+            transcript.transcript_id,
+            transcript.start,
+            end=transcript.end,
             raise_error=False,
             best_only=best_only,
-            feature_type=TRANSCRIPT,
+            feature_type=feature_type,
         ):
-            for pos2 in transcript_to_exon(
-                pos.transcript_id,
-                pos.start,
-                pos.end,
-                raise_error=False,
-                best_only=best_only,
-                feature_type=TRANSCRIPT,
-            ):
-                if pos2.transcript_id == feature_id:
-                    result.add(pos2)
+            result.add(gene)
 
-    return _validate_result(result, "CDS", "exon", (feature, start, end), raise_error)
+    return _validate_result(result, "cDNA", "gene", (feature, start, end), raise_error)
 
 
 @lru_cache()
-def cds_to_gene(
+def cdna_to_protein(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -111,33 +152,29 @@ def cds_to_gene(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map CDS coordinates to gene coordinates."""
+    """Map cDNA coordinates to protein coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        for pos in cds_to_transcript(
-            feature_id,
-            start,
-            end,
-            raise_error=False,
-            best_only=best_only,
-            feature_type=TRANSCRIPT,
-        ):
-            for pos2 in transcript_to_gene(
-                pos.transcript_id,
-                pos.start,
-                pos.end,
-                raise_error=False,
-                best_only=best_only,
-                feature_type=TRANSCRIPT,
-            ):
-                result.add(pos2)
+    for cdna in cdna_to_cdna(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        for protein in CM().protein_info(cdna.transcript_id, CDNA):
+            protein_start = floor((start - 1) / 3 + 1)
+            protein_end = floor((end - 1) / 3 + 1)
+            new_protein = _convert_record(ProteinRecord, protein, protein_start, protein_end)
+            result.add(new_protein)
 
-    return _validate_result(result, "CDS", "gene", (feature, start, end), raise_error)
+    return _validate_result(result, "cDNA", "protein", (feature, start, end), raise_error)
 
 
 @lru_cache()
-def cds_to_protein(
+def cdna_to_transcript(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -145,35 +182,31 @@ def cds_to_protein(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map CDS coordinates to protein coordinates."""
+    """Map cDNA coordinates to transcript coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        result |= _map(feature_id, start, end, CDS, PROTEIN, best_only=best_only)
+    for cdna in cdna_to_cdna(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        for transcript in CM().transcript_info(cdna.transcript_id, TRANSCRIPT):
+            transcript_start = start + transcript.first_start_codon_spliced_offset()
+            transcript_end = end + transcript.first_start_codon_spliced_offset()
+            new_transcript = _convert_record(
+                TranscriptRecord, transcript, transcript_start, transcript_end
+            )
+            result.add(new_transcript)
 
-    return _validate_result(result, "CDS", "protein", (feature, start, end), raise_error)
+    return _validate_result(result, "cDNA", "transcript", (feature, start, end), raise_error)
 
 
 @lru_cache()
-def cds_to_transcript(
-    feature: str,
-    start: int,
-    end: Optional[int] = None,
-    raise_error: bool = True,
-    best_only: bool = False,
-    feature_type: Optional[str] = None,
-) -> List:
-    """Map CDS coordinates to transcript coordinates."""
-    result = set()
-
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        result |= _map(feature_id, start, end, CDS, TRANSCRIPT, best_only=best_only)
-
-    return _validate_result(result, "CDS", "transcript", (feature, start, end), raise_error)
-
-
-@lru_cache()
-def contig_to_cds(
+def contig_to_cdna(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -182,7 +215,7 @@ def contig_to_cds(
     feature_type: Optional[str] = None,
     strand: Optional[str] = None,
 ) -> List:
-    """Map contig coordinates to CDS coordinates."""
+    """Map contig coordinates to cDNA coordinates."""
     result = set()
 
     if strand not in STRAND_SYMBOLS:
@@ -198,7 +231,7 @@ def contig_to_cds(
             feature_type=CONTIG,
             strand=strand,
         ):
-            for pos2 in gene_to_cds(
+            for pos2 in gene_to_cdna(
                 pos.gene_id,
                 pos.start,
                 pos.end,
@@ -208,7 +241,7 @@ def contig_to_cds(
             ):
                 result.add(pos2)
 
-    return _validate_result(result, "contig", "CDS", (feature, start, end), raise_error)
+    return _validate_result(result, "contig", "cDNA", (feature, start, end), raise_error)
 
 
 @lru_cache()
@@ -223,13 +256,12 @@ def contig_to_contig(
 ) -> List:
     """Map contig coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    strand = strand if strand is not None else "+"
-    if strand not in STRAND_SYMBOLS:
-        raise ValueError(f"strand must be one of {STRAND_SYMBOLS}")
-
-    for feature_id in CM().contig_ids(feature, feature_type):
-        result |= _map(feature_id, start, end, CONTIG, CONTIG, best_only=best_only)
+    for contig in CM().contig_info(feature, feature_type):
+        if 1 <= start <= contig.length and 1 <= end <= contig.length:
+            new_contig = _convert_record(ContigRecord, contig, start, end)
+            result.add(new_contig)
 
     return _validate_result(result, "contig", "contig", (feature, start, end), raise_error)
 
@@ -285,16 +317,12 @@ def contig_to_gene(
 ) -> List:
     """Map contig coordinates to gene coordinates."""
     result = set()
-
     end = end if end is not None else start
-    if strand not in STRAND_SYMBOLS:
-        raise ValueError(f"strand must be one of {STRAND_SYMBOLS}")
 
-    for feature_id in CM().contig_ids(feature, feature_type):
-        for gene in CM().ensembl.genes_at_locus(feature_id, start, end, strand):
-            gstart = start if start >= gene.start else gene.start
-            gend = end if end <= gene.end else gene.end
-            result |= _map(gene.gene_id, gstart, gend, GENE, GENE, best_only=best_only)
+    for gene in CM().gene_info(feature, feature_type):
+        if gene.start <= start <= gene.end and gene.start <= end <= gene.end:
+            new_gene = _convert_record(GeneRecord, gene, start, end)
+            result.add(new_gene)
 
     return _validate_result(result, "contig", "gene", (feature, start, end), raise_error)
 
@@ -378,7 +406,7 @@ def contig_to_transcript(
 
 
 @lru_cache()
-def exon_to_cds(
+def exon_to_cdna(
     feature: str,
     position: Optional[int] = None,
     _: Optional[int] = None,
@@ -386,16 +414,16 @@ def exon_to_cds(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map an exon to CDS coordinates."""
+    """Map an exon to cDNA coordinates."""
     result = set()
 
     for feature_id in CM().exon_ids(feature, feature_type):
         for pos in exon_to_gene(
             feature_id, position, raise_error=False, best_only=best_only, feature_type=EXON
         ):
-            result |= _map(pos.gene_id, pos.start, pos.end, GENE, CDS, best_only=best_only)
+            result |= _map(pos.gene_id, pos.start, pos.end, GENE, CDNA, best_only=best_only)
 
-    return _validate_result(result, "exon", "CDS", (feature, position), raise_error)
+    return _validate_result(result, "exon", "cDNA", (feature, position), raise_error)
 
 
 @lru_cache()
@@ -481,10 +509,10 @@ def exon_to_protein(
     result = set()
 
     for feature_id in CM().exon_ids(feature, feature_type):
-        for pos in exon_to_cds(
+        for pos in exon_to_cdna(
             feature_id, position, raise_error=False, best_only=best_only, feature_type=EXON
         ):
-            for pos2 in cds_to_protein(
+            for pos2 in cdna_to_protein(
                 pos.transcript_id,
                 pos.start,
                 pos.end,
@@ -529,7 +557,7 @@ def exon_to_transcript(
 
 
 @lru_cache()
-def gene_to_cds(
+def gene_to_cdna(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -537,17 +565,17 @@ def gene_to_cds(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map gene coordinates to CDS coordinates."""
+    """Map gene coordinates to cDNA coordinates."""
     result = set()
 
     if feature_type == CONTIG or CM().is_contig(feature):
-        return contig_to_cds((feature, start, end), raise_error, best_only, feature_type)
+        return contig_to_cdna((feature, start, end), raise_error, best_only, feature_type)
 
     for feature_id in CM().gene_ids(feature, feature_type):
         for pos in gene_to_transcript(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=GENE
         ):
-            for pos2 in transcript_to_cds(
+            for pos2 in transcript_to_cdna(
                 pos.transcript_id,
                 pos.start,
                 pos.end,
@@ -557,7 +585,7 @@ def gene_to_cds(
             ):
                 result.add(pos2)
 
-    return _validate_result(result, "gene", "CDS", (feature, start, end), raise_error)
+    return _validate_result(result, "gene", "cDNA", (feature, start, end), raise_error)
 
 
 @lru_cache()
@@ -639,10 +667,10 @@ def gene_to_protein(
         return contig_to_protein((feature, start, end), raise_error, best_only, feature_type)
 
     for feature_id in CM().gene_ids(feature, feature_type):
-        for pos in gene_to_cds(
+        for pos in gene_to_cdna(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=GENE
         ):
-            for pos2 in cds_to_protein(
+            for pos2 in cdna_to_protein(
                 pos.transcript_id,
                 pos.start,
                 pos.end,
@@ -677,7 +705,7 @@ def gene_to_transcript(
 
 
 @lru_cache()
-def protein_to_cds(
+def protein_to_cdna(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -685,13 +713,13 @@ def protein_to_cds(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map protein coordinates to CDS coordinates."""
+    """Map protein coordinates to cDNA coordinates."""
     result = set()
 
     for feature_id in CM().protein_ids(feature, feature_type):
-        result |= _map(feature_id, start, end, PROTEIN, CDS, best_only=best_only)
+        result |= _map(feature_id, start, end, PROTEIN, CDNA, best_only=best_only)
 
-    return _validate_result(result, "protein", "CDS", (feature, start, end), raise_error)
+    return _validate_result(result, "protein", "cDNA", (feature, start, end), raise_error)
 
 
 @lru_cache()
@@ -804,10 +832,10 @@ def protein_to_transcript(
     result = set()
 
     for feature_id in CM().protein_ids(feature, feature_type):
-        for pos in protein_to_cds(
+        for pos in protein_to_cdna(
             feature_id, start, end, raise_error=False, best_only=best_only, feature_type=PROTEIN
         ):
-            for pos2 in cds_to_transcript(
+            for pos2 in cdna_to_transcript(
                 pos.transcript_id,
                 pos.start,
                 pos.end,
@@ -821,7 +849,7 @@ def protein_to_transcript(
 
 
 @lru_cache()
-def transcript_to_cds(
+def transcript_to_cdna(
     feature: str,
     start: int,
     end: Optional[int] = None,
@@ -829,13 +857,26 @@ def transcript_to_cds(
     best_only: bool = False,
     feature_type: Optional[str] = None,
 ) -> List:
-    """Map transcript coordinates to CDS coordinates."""
+    """Map transcript coordinates to cDNA coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        result |= _map(feature_id, start, end, TRANSCRIPT, CDS, best_only=best_only)
+    for transcript in transcript_to_transcript(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        for cdna in CM().cdna_info(transcript.transcript_id, TRANSCRIPT):
+            offset = cdna.first_start_codon_spliced_offset()
+            cdna_start = start - offset
+            cdna_end = end - offset
+            new_cdna = _convert_record(CdnaRecord, cdna, cdna_start, cdna_end)
+            result.add(new_cdna)
 
-    return _validate_result(result, "transcript", "CDS", (feature, start, end), raise_error)
+    return _validate_result(result, "transcript", "cDNA", (feature, start, end), raise_error)
 
 
 @lru_cache()
@@ -849,17 +890,22 @@ def transcript_to_contig(
 ) -> List:
     """Map transcript coordinates to contig coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        for pos in transcript_to_gene(
-            feature_id,
-            start,
-            end,
-            raise_error=False,
-            best_only=best_only,
-            feature_type=TRANSCRIPT,
-        ):
-            result |= _map(pos.gene_id, pos.start, pos.end, GENE, CONTIG, best_only=best_only)
+    for transcript in transcript_to_transcript(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        contig_start = transcript.unspliced_position(start)
+        contig_end = transcript.unspliced_position(end)
+        contig_start, contig_end = sorted((contig_start, contig_end))
+        for contig in CM().contig_info(transcript.transcript_id, TRANSCRIPT):
+            new_contig = _convert_record(ContigRecord, contig, contig_start, contig_end)
+            result.add(new_contig)
 
     return _validate_result(result, "transcript", "contig", (feature, start, end), raise_error)
 
@@ -875,26 +921,34 @@ def transcript_to_exon(
 ) -> List:
     """Map transcript coordinates to exon coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        for pos in transcript_to_gene(
-            feature_id,
-            start,
-            end,
-            raise_error=False,
-            best_only=best_only,
-            feature_type=TRANSCRIPT,
-        ):
-            for pos2 in gene_to_exon(
-                pos.gene_id,
-                pos.start,
-                pos.end,
-                raise_error=False,
-                best_only=best_only,
-                feature_type=GENE,
-            ):
-                if pos2.transcript_id == feature_id:
-                    result.add(pos2)
+    for transcript in transcript_to_transcript(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        remain_start = start - 1
+        remain_end = end - 1
+        exons = CM().exon_info(transcript.transcript_id, TRANSCRIPT)
+        exons = sorted(exons, key=lambda x: (x.start, x.end))
+        exons = exons[::-1] if transcript.on_negative_strand() else exons
+        for i in exons:
+            # if both start and end fall inside the same exons, add the exon
+            if remain_start - i.length <= 0 and remain_end - i.length <= 0:
+                result.add(i)
+                break
+            # if the start and end fall inside different exons, raise a warning
+            elif remain_start - i.length <= 0 or remain_end - i.length <= 0:
+                logger.debug(f"{transcript.transcript_id} ({start}, {end}) are on different exons")
+                break
+            # otherwise, keep checking
+            else:
+                remain_start -= i.length
+                remain_end -= i.length
 
     return _validate_result(result, "transcript", "exon", (feature, start, end), raise_error)
 
@@ -910,9 +964,22 @@ def transcript_to_gene(
 ) -> List:
     """Map transcript coordinates to gene coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        result |= _map(feature_id, start, end, TRANSCRIPT, GENE, best_only=best_only)
+    for transcript in transcript_to_transcript(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        gene_start = transcript.unspliced_position(start)
+        gene_end = transcript.unspliced_position(end)
+        gene_start, gene_end = sorted((gene_start, gene_end))
+        for gene in CM().gene_info(transcript.transcript_id, TRANSCRIPT):
+            new_gene = _convert_record(GeneRecord, gene, gene_start, gene_end)
+            result.add(new_gene)
 
     return _validate_result(result, "transcript", "gene", (feature, start, end), raise_error)
 
@@ -928,25 +995,21 @@ def transcript_to_protein(
 ) -> List:
     """Map transcript coordinates to protein coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        for pos in transcript_to_cds(
-            feature_id,
-            start,
-            end,
-            raise_error=False,
-            best_only=best_only,
-            feature_type=TRANSCRIPT,
-        ):
-            for pos2 in cds_to_protein(
-                pos.transcript_id,
-                pos.start,
-                pos.end,
-                raise_error=False,
-                best_only=best_only,
-                feature_type=TRANSCRIPT,
-            ):
-                result.add(pos2)
+    for cdna in transcript_to_cdna(
+        feature,
+        start,
+        end=end,
+        raise_error=False,
+        best_only=best_only,
+        feature_type=feature_type,
+    ):
+        for protein in CM().protein_info(cdna.transcript_id, CDNA):
+            protein_start = floor((cdna.start - 1) / 3 + 1)
+            protein_end = floor((cdna.end - 1) / 3 + 1)
+            protein = _convert_record(ProteinRecord, protein, protein_start, protein_end)
+            result.add(protein)
 
     return _validate_result(result, "transcript", "protein", (feature, start, end), raise_error)
 
@@ -962,29 +1025,34 @@ def transcript_to_transcript(
 ) -> List:
     """Map transcript coordinates."""
     result = set()
+    end = end if end is not None else start
 
-    for feature_id in CM().transcript_ids(feature, feature_type):
-        result |= _map(feature_id, start, end, TRANSCRIPT, TRANSCRIPT, best_only=best_only)
+    for transcript in CM().transcript_info(feature, feature_type):
+        if 1 <= start <= transcript.length and 1 <= end <= transcript.length:
+            new_transcript = _convert_record(TranscriptRecord, transcript, start, end)
+            result.add(new_transcript)
+        else:
+            logger.debug(f"({start}, {end}) is outside transcript (1, {transcript.length})")
 
     return _validate_result(result, "transcript", "transcript", (feature, start, end), raise_error)
 
 
 def get_map_func(from_type: str, to_type: str) -> Callable:
     """Return a function for mapping between the specified feature types."""
-    if from_type == CDS and to_type == CDS:
-        return cds_to_cds
-    elif from_type == CDS and to_type == CONTIG:
-        return cds_to_contig
-    elif from_type == CDS and to_type == EXON:
-        return cds_to_exon
-    elif from_type == CDS and to_type == GENE:
-        return cds_to_gene
-    elif from_type == CDS and to_type == PROTEIN:
-        return cds_to_protein
-    elif from_type == CDS and to_type == TRANSCRIPT:
-        return cds_to_transcript
-    elif from_type == CONTIG and to_type == CDS:
-        return contig_to_cds
+    if from_type == CDNA and to_type == CDNA:
+        return cdna_to_cdna
+    elif from_type == CDNA and to_type == CONTIG:
+        return cdna_to_contig
+    elif from_type == CDNA and to_type == EXON:
+        return cdna_to_exon
+    elif from_type == CDNA and to_type == GENE:
+        return cdna_to_gene
+    elif from_type == CDNA and to_type == PROTEIN:
+        return cdna_to_protein
+    elif from_type == CDNA and to_type == TRANSCRIPT:
+        return cdna_to_transcript
+    elif from_type == CONTIG and to_type == CDNA:
+        return contig_to_cdna
     elif from_type == CONTIG and to_type == CONTIG:
         return contig_to_contig
     elif from_type == CONTIG and to_type == EXON:
@@ -995,8 +1063,8 @@ def get_map_func(from_type: str, to_type: str) -> Callable:
         return contig_to_protein
     elif from_type == CONTIG and to_type == TRANSCRIPT:
         return contig_to_transcript
-    elif from_type == EXON and to_type == CDS:
-        return exon_to_cds
+    elif from_type == EXON and to_type == CDNA:
+        return exon_to_cdna
     elif from_type == EXON and to_type == CONTIG:
         return exon_to_contig
     elif from_type == EXON and to_type == EXON:
@@ -1007,8 +1075,8 @@ def get_map_func(from_type: str, to_type: str) -> Callable:
         return exon_to_protein
     elif from_type == EXON and to_type == TRANSCRIPT:
         return exon_to_transcript
-    elif from_type == GENE and to_type == CDS:
-        return gene_to_cds
+    elif from_type == GENE and to_type == CDNA:
+        return gene_to_cdna
     elif from_type == GENE and to_type == CONTIG:
         return gene_to_contig
     elif from_type == GENE and to_type == EXON:
@@ -1019,8 +1087,8 @@ def get_map_func(from_type: str, to_type: str) -> Callable:
         return gene_to_protein
     elif from_type == GENE and to_type == TRANSCRIPT:
         return gene_to_transcript
-    elif from_type == PROTEIN and to_type == CDS:
-        return protein_to_cds
+    elif from_type == PROTEIN and to_type == CDNA:
+        return protein_to_cdna
     elif from_type == PROTEIN and to_type == CONTIG:
         return protein_to_contig
     elif from_type == PROTEIN and to_type == EXON:
@@ -1031,8 +1099,8 @@ def get_map_func(from_type: str, to_type: str) -> Callable:
         return protein_to_protein
     elif from_type == PROTEIN and to_type == TRANSCRIPT:
         return protein_to_transcript
-    elif from_type == TRANSCRIPT and to_type == CDS:
-        return transcript_to_cds
+    elif from_type == TRANSCRIPT and to_type == CDNA:
+        return transcript_to_cdna
     elif from_type == TRANSCRIPT and to_type == CONTIG:
         return transcript_to_contig
     elif from_type == TRANSCRIPT and to_type == EXON:
@@ -1089,10 +1157,10 @@ def _map(
 
         try:
             start_new, end_new = map_func(transcript, start, end)
-            recordl = info_func(transcript.transcript_id, TRANSCRIPT)
-            assert len(recordl) == 1, recordl
-            new_record = _convert_record(load_class, recordl[0], start_new, end_new)
-            result.add(new_record)
+            for record in info_func(transcript.transcript_id, TRANSCRIPT):
+                new_record = _convert_record(load_class, record, start_new, end_new)
+                if isinstance(new_record, ExonRecord) and new_record.exon_id == feature:
+                    result.add(new_record)
         except ValueError as exc:
             logger.debug(exc)
             continue
@@ -1110,9 +1178,9 @@ def _get_load_func(to_type: str) -> Tuple[Callable, RecordType]:
     info_func: Callable
     load_class: RecordType
 
-    if to_type == CDS:
-        info_func = CM().transcript_info
-        load_class = CdsRecord
+    if to_type == CDNA:
+        info_func = CM().cdna_info
+        load_class = CdnaRecord
     elif to_type == CONTIG:
         info_func = CM().contig_info
         load_class = ContigRecord
@@ -1152,16 +1220,16 @@ def _cpos_to_cpos(
     """Assert the given position falls actually falls on the given transcript.
 
     Args:
-        start (int): position relative to the CDS
-        end (int): optional, second position relative to the CDS
+        start (int): position relative to the cDNA
+        end (int): optional, second position relative to the cDNA
 
     Returns:
-        tuple of int: position relative to the CDS
+        tuple of int: position relative to the cDNA
     """
 
     def check(y):
         if not (1 <= y <= len(CM().cdna_sequence(transcript.transcript_id))):
-            raise CdsOutOfRange(transcript, y)
+            raise CdnaOutOfRange(transcript, y)
 
     check(start)
     if end:
@@ -1172,11 +1240,11 @@ def _cpos_to_cpos(
 
 
 def _cpos_to_ppos(_: TranscriptRecord, start: int, end: Optional[int] = None) -> Tuple[int, int]:
-    """Compute the equivalent protein position for a CDS position.
+    """Compute the equivalent protein position for a cDNA position.
 
     Args:
-        start (int): position relative to the CDS
-        end (int): optional, second position relative to the CDS
+        start (int): position relative to the cDNA
+        end (int): optional, second position relative to the cDNA
 
     Returns:
         tuple of int: amino acid position
@@ -1194,20 +1262,20 @@ def _cpos_to_ppos(_: TranscriptRecord, start: int, end: Optional[int] = None) ->
 def _cpos_to_tpos(
     transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
-    """Compute the equivalent transcript position for a CDS position.
+    """Compute the equivalent transcript position for a cDNA position.
 
     Args:
         transcript: `TranscriptRecord` instance
-        start (int): position relative to the CDS
-        end (int): optional, second position relative to the CDS
+        start (int): position relative to the cDNA
+        end (int): optional, second position relative to the cDNA
 
     Returns:
         tuple of int: position relative to the transcript
     """
 
     def convert(x):
-        y = x + transcript.first_start_codon_spliced_offset
-        if not (1 <= y <= len(transcript.sequence)):
+        y = x + transcript.first_start_codon_spliced_offset()
+        if not (1 <= y <= transcript.length):
             raise TranscriptOutOfRange(transcript, x)
         return y
 
@@ -1218,7 +1286,7 @@ def _cpos_to_tpos(
 
 
 def _gpos_to_cpos(transcript: TranscriptRecord, start: int, end: int) -> Tuple[int, int]:
-    """Compute the equivalent CDS position for an exon.
+    """Compute the equivalent cDNA position for an exon.
 
     Args:
         transcript: `TranscriptRecord` instance
@@ -1226,25 +1294,25 @@ def _gpos_to_cpos(transcript: TranscriptRecord, start: int, end: int) -> Tuple[i
         end (int): optional, second genomic coordinate
 
     Returns:
-        tuple of int: position relative to the CDS
+        tuple of int: position relative to the cDNA
     """
-    for cds in transcript.cds_intervals():
+    for cdna in transcript.cds_intervals():
         if end:
-            if (cds[0] <= start <= cds[1]) or (cds[0] <= end <= cds[1]):
-                gstart = max(start, cds[0])
-                gend = min(end, cds[1])
+            if (cdna[0] <= start <= cdna[1]) or (cdna[0] <= end <= cdna[1]):
+                gstart = max(start, cdna[0])
+                gend = min(end, cdna[1])
                 if start != gstart:
-                    logger.debug(f"CDS start adjusted from {start} to {gstart}")
+                    logger.debug(f"cDNA start adjusted from {start} to {gstart}")
                 if end != gend:
-                    logger.debug(f"CDS end adjusted from {end} to {gend}")
+                    logger.debug(f"cDNA end adjusted from {end} to {gend}")
                 break
         else:
-            if cds[0] <= start <= cds[1]:
+            if cdna[0] <= start <= cdna[1]:
                 gstart = start
                 gend = start
                 break
     else:
-        raise CdsOutOfRange(transcript, start)
+        raise CdnaOutOfRange(transcript, start)
 
     tstart, tend = _gpos_to_tpos(transcript, gstart, gend)
     cstart, cend = _tpos_to_cpos(transcript, tstart, tend)
@@ -1305,7 +1373,7 @@ def _gpos_to_tpos(
 def _ppos_to_cpos(
     transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
-    """Compute the equivalent protein position for a CDS position.
+    """Compute the equivalent protein position for a cDNA position.
 
     Args:
         transcript: `TranscriptRecord` instance
@@ -1313,13 +1381,13 @@ def _ppos_to_cpos(
         end (int): optional, second amino acid position
 
     Returns:
-        tuple of int: CDS position of the first base of the codon
+        tuple of int: cDNA position of the first base of the codon
     """
 
     def convert(x):
         y = (x - 1) * 3 + 1
         if not (1 <= y <= len(CM().cdna_sequence(transcript.transcript_id))):
-            raise CdsOutOfRange(transcript, y)
+            raise CdnaOutOfRange(transcript, y)
         else:
             return y
 
@@ -1371,7 +1439,7 @@ def _gpos_to_epos(
     """
 
     def convert(x):
-        for exon in sorted(transcript.exons, key=lambda x: x.start):
+        for exon in transcript.exons():
             if exon.start <= x <= exon.end:
                 return exon.start, exon.end
         else:
@@ -1391,7 +1459,7 @@ def _gpos_to_epos(
 def _tpos_to_cpos(
     transcript: TranscriptRecord, start: int, end: Optional[int] = None
 ) -> Tuple[int, int]:
-    """Compute the equivalent CDS position for a transcript position.
+    """Compute the equivalent cDNA position for a transcript position.
 
     Args:
         transcript: `TranscriptRecord` instance
@@ -1399,13 +1467,13 @@ def _tpos_to_cpos(
         end (int): optional, second position relative to the transcript
 
     Returns:
-        tuple of int: position relative to the CDS
+        tuple of int: position relative to the cDNA
     """
 
     def convert(x):
-        y = x - transcript.first_start_codon_spliced_offset
+        y = x - transcript.first_start_codon_spliced_offset()
         if not (1 <= y <= len(CM().cdna_sequence(transcript.transcript_id))):
-            raise CdsOutOfRange(transcript, x)
+            raise CdnaOutOfRange(transcript, x)
         return y
 
     cstart = convert(start)
@@ -1427,28 +1495,10 @@ def _tpos_to_gpos(
     Returns:
         tuple of int: genomic coordinate
     """
-    ranges = transcript.exon_intervals()
-
-    # for transcripts on the negative strand, start counting from the last position
-    if transcript.on_negative_strand():
-        ranges = ranges[::-1]
-
-    def convert(x):
-        remain = x - 1
-        for i in ranges:
-            length = i[1] - i[0] + 1
-            if remain >= length:
-                remain -= length
-            else:
-                if transcript.on_positive_strand:
-                    return i[0] + remain
-                elif transcript.on_negative_strand:
-                    return i[1] - remain
-        else:
-            raise TranscriptOutOfRange(transcript, x)
-
-    gstart = convert(start)
-    gend = convert(end) if end else gstart
+    gstart = transcript.unspliced_position(start)
+    gend = transcript.unspliced_position(end) if end else gstart
+    if gend < gstart:
+        gstart, gend = gend, gstart
 
     return gstart, gend
 
@@ -1468,7 +1518,7 @@ def _tpos_to_tpos(
     """
 
     def check(y):
-        if not (1 <= y <= len(transcript.sequence)):
+        if not (1 <= y <= transcript.length):
             raise TranscriptOutOfRange(transcript, y)
 
     check(start)
@@ -1488,15 +1538,15 @@ def _no_convert(_: Any, start: int, end: Optional[int] = None) -> Tuple[int, int
 
 
 def _get_pos_func(from_type: str, to_type: str) -> Callable:
-    if from_type == CDS and to_type == CDS:
+    if from_type == CDNA and to_type == CDNA:
         return _cpos_to_cpos
-    elif from_type == CDS and to_type == PROTEIN:
+    elif from_type == CDNA and to_type == PROTEIN:
         return _cpos_to_ppos
-    elif from_type == CDS and to_type == TRANSCRIPT:
+    elif from_type == CDNA and to_type == TRANSCRIPT:
         return _cpos_to_tpos
     elif from_type == EXON and to_type == TRANSCRIPT:
         return _gpos_to_tpos
-    elif from_type == GENE and to_type == CDS:
+    elif from_type == GENE and to_type == CDNA:
         return _gpos_to_cpos
     elif from_type == GENE and to_type == CONTIG:
         return _no_convert
@@ -1506,11 +1556,11 @@ def _get_pos_func(from_type: str, to_type: str) -> Callable:
         return _gpos_to_gpos
     elif from_type == GENE and to_type == TRANSCRIPT:
         return _gpos_to_tpos
-    elif from_type == PROTEIN and to_type == CDS:
+    elif from_type == PROTEIN and to_type == CDNA:
         return _ppos_to_cpos
     elif from_type == PROTEIN and to_type == PROTEIN:
         return _ppos_to_ppos
-    elif from_type == TRANSCRIPT and to_type == CDS:
+    elif from_type == TRANSCRIPT and to_type == CDNA:
         return _tpos_to_cpos
     elif from_type == TRANSCRIPT and to_type == GENE:
         return _tpos_to_gpos

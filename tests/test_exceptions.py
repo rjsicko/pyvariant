@@ -1,7 +1,7 @@
 import pytest
 
 from ensembl_map.exceptions import (
-    CdsOutOfRange,
+    CdnaOutOfRange,
     ExonOutOfRange,
     GeneOutOfRange,
     OutOfRangeErrorBase,
@@ -14,9 +14,9 @@ def test_out_of_range_error_inherits_from_value_error(mocker):
         raise OutOfRangeErrorBase()
 
 
-def test_cds_out_of_range_error_inherits_from_value_error(mocker):
+def test_cdna_out_of_range_error_inherits_from_value_error(mocker):
     with pytest.raises(ValueError):
-        raise CdsOutOfRange(mocker.MagicMock(), -1)
+        raise CdnaOutOfRange(mocker.MagicMock(), -1)
 
 
 def test_exon_out_of_range_error_inherits_from_value_error(mocker):

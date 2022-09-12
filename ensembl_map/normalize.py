@@ -16,19 +16,19 @@ from typing import Optional, Tuple
 import pyensembl
 from logzero import logger
 
-from .features import Cds, Protein, Transcript
+from .features import Cdna, Protein, Transcript
 from .map import (
-    cds_to_transcript,
+    cdna_to_transcript,
     protein_to_transcript,
-    transcript_to_cds,
+    transcript_to_cdna,
     transcript_to_protein,
     transcript_to_transcript,
 )
 
 
 @lru_cache()
-def normalize_cds(feature: str, start: int, end: Optional[int] = None) -> Cds:
-    """3' align a CDS variant according to HGVS rules.
+def normalize_cdna(feature: str, start: int, end: Optional[int] = None) -> Cdna:
+    """3' align a CDNA variant according to HGVS rules.
 
     Args:
         feature (str): transcript name or Ensembl ID
@@ -36,11 +36,11 @@ def normalize_cds(feature: str, start: int, end: Optional[int] = None) -> Cds:
         start (int): second position on the transcript
 
     Returns:
-        CDS: object with the re-aligned coordinates
+        CDNA: object with the re-aligned coordinates
     """
-    transcript = cds_to_transcript(feature, start, end)[0]
+    transcript = cdna_to_transcript(feature, start, end)[0]
     start_shift, end_shift = _normalize(transcript)
-    normalized = transcript_to_cds(transcript.transcript_id, start_shift, end_shift)[0]
+    normalized = transcript_to_cdna(transcript.transcript_id, start_shift, end_shift)[0]
 
     in_coordinate = (feature, start, end)
     out_coordinate = (normalized.transcript_id, normalized.start, normalized.end)

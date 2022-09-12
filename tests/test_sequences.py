@@ -1,5 +1,5 @@
 from ensembl_map.sequences import (
-    cds_sequence,
+    cdna_sequence,
     contig_sequence,
     gene_sequence,
     protein_sequence,
@@ -7,12 +7,12 @@ from ensembl_map.sequences import (
 )
 
 
-def test_cds_sequence():
-    assert cds_sequence("ENST00000288135", 1) == "A"
+def test_cdna_sequence():
+    assert cdna_sequence("ENST00000288135", 1) == "A"
 
 
-def test_cds_sequence_2():
-    assert cds_sequence("ENST00000288135", 1, 3) == "ATG"
+def test_cdna_sequence_2():
+    assert cdna_sequence("ENST00000288135", 1, 3) == "ATG"
 
 
 def test_contig_sequence():

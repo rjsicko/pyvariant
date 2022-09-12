@@ -6,7 +6,7 @@ from typing import Callable
 
 import pyensembl
 
-from .constants import CDS, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
+from .constants import CDNA, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
 from .core import instance as CM
 
 
@@ -20,15 +20,15 @@ class Feature(ABC):
 
 
 @dataclass(frozen=True, order=True)
-class Cds(Feature):
-    """CDS coordinate object.
+class Cdna(Feature):
+    """cDNA coordinate object.
 
     Attributes:
         biotype (str): biotype of the transcript
         contig (str): name of the contig the feature is mapped to
-        end (int): end position, relative to the CDS
-        sequence (str): CDS sequence from `start` to `end`, inclusive
-        start (int): start position, relative to the CDS
+        end (int): end position, relative to the cDNA
+        sequence (str): cDNA sequence from `start` to `end`, inclusive
+        start (int): start position, relative to the cDNA
         strand (str): orientation on the contig ("+" or "-")
         transcript (`pyensembl.Transcript`)
         transcript_id (str): Ensembl transcript ID
@@ -46,7 +46,7 @@ class Cds(Feature):
     sequence: str
 
     @classmethod
-    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Cds:
+    def load(cls, transcript: pyensembl.Transcript, start: int, end: int) -> Cdna:
         if start > end:
             start, end = end, start
 
@@ -279,7 +279,7 @@ class Protein(Feature):
         )
 
 
-class Transcript(Cds):
+class Transcript(Cdna):
     """Transcript coordinate object.
 
     Attributes:
@@ -319,8 +319,8 @@ class Transcript(Cds):
 
 
 def get_load_function(to_type: str) -> Callable:
-    if to_type == CDS:
-        return Cds.load
+    if to_type == CDNA:
+        return Cdna.load
     elif to_type == CONTIG:
         return Contig.load
     elif to_type == EXON:

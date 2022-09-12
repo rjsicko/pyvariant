@@ -2,7 +2,7 @@
 STRAND_SYMBOLS = ["+", "-", None]
 
 # literals used throughout the package
-CDS = "cds"
+CDNA = "cdna"
 CONTIG = "contig"
 EXON = "exon"
 GENE = "gene"
