@@ -41,6 +41,8 @@ GTF_FILENAME_TEMPLATE = "{species}.{reference}.{release}.gtf.gz"
 
 
 # load GTF into a pandas dataframe
+GTF_COLUMN_RENAME = {"seqname": "contig_id"}
+
 GTF_KEEP_COLUMNS = [
     "contig_id",
     "feature",
@@ -54,6 +56,13 @@ GTF_KEEP_COLUMNS = [
     "exon_id",
     "exon_number",
     "protein_id",
+]
+
+GTF_KEEP_FEATURES = [
+    "CDS",
+    "exon",
+    "stop_codon",
+    "transcript",
 ]
 
 
@@ -367,47 +376,56 @@ class Cache:
         """Normalize the data in the GTF to what's required by this package."""
         df = read_gtf(self.local_gtf_filepath)
 
-        # DEBUG
-        df = df[
-            df["gene_name"].isin(
-                [
-                    "AGBL1",
-                    "ALDOA",
-                    "BRCA2",
-                    "CHEK2",
-                    "KIT",
-                    "KMT2A",
-                    "MEN1",
-                    "MLL",
-                    "POU5F1",
-                    "PTEN",
-                    "SMARCA4",
-                    "SSX4",
-                    "TERT",
-                    "TCF19",
-                    "WNK1",
-                    "VPS53",
-                ]
-            )
-        ]
-        # /DEBUG
+        # # DEBUG
+        # df = df[
+        #     df["gene_name"].isin(
+        #         [
+        #             "AGBL1",
+        #             "ALDOA",
+        #             "BRCA2",
+        #             "CHEK2",
+        #             "KIT",
+        #             "KMT2A",
+        #             "MEN1",
+        #             "MLL",
+        #             "POU5F1",
+        #             "PTEN",
+        #             "SMARCA4",
+        #             "SSX4",
+        #             "TERT",
+        #             "TCF19",
+        #             "WNK1",
+        #             "VPS53",
+        #         ]
+        #     )
+        # ]
+        # # /DEBUG
 
+        logger.debug("_normalize_gtf_columns")
         df = self._normalize_gtf_columns(df)
+        logger.debug("_add_missing_transcripts")
         df = self._add_missing_transcripts(df)
-        df = self._add_missing_genes(df)
+        logger.debug("_calculate_exon_offset_from_transcript")
         df = self._calculate_exon_offset_from_transcript(df)
+        logger.debug("_calculate_cds_offset_from_transcript")
         df = self._calculate_cds_offset_from_transcript(df)
+        logger.debug("_calculate_cds_offset_from_cdna")
         df = self._calculate_cds_offset_from_cdna(df)
+        logger.debug("_assign_protein_id_to_stop_codon")
         df = self._assign_protein_id_to_stop_codon(df)
+
+        # df.to_csv(self.remote_gtf_filename, sep="\t", index=False)  # DEBUG
 
         return df
 
     def _normalize_gtf_columns(self, df: pandas.DataFrame) -> pandas.DataFrame:
-        """Rename columns, drop unused columns, and set data types for each column."""
-        # rename 'seqname' to 'contig_id'
-        df = df.rename(columns={"seqname": "contig_id"})
+        """Rename columns, drop unused data, and set data types for each column."""
+        # Rename column(s)
+        df = df.rename(columns=GTF_COLUMN_RENAME)
         # Drop unused columns
         df = df.drop(df.columns.difference(GTF_KEEP_COLUMNS), axis=1)
+        # Drop unused feature types
+        df = df[df.feature.isin(GTF_KEEP_FEATURES)]
         # Coerce the non-null values in the 'exon_number' to integers
         df["exon_number"] = df["exon_number"].astype(int, errors="ignore")
 
@@ -415,113 +433,70 @@ class Cache:
 
     def _add_missing_transcripts(self, df: pandas.DataFrame) -> pandas.DataFrame:
         """Infer transcripts position(s) from other features, if not already defined."""
+        transcript_rows = []
 
-        def has_gene(gene_id: str) -> pandas.Series:
-            mask = (df["gene_id"] == gene_id) & (df["feature"] == "gene")
-            subdf = df[mask]
-            return len(subdf) > 0
-
-        def has_transcript(transcript_id: str) -> pandas.Series:
-            mask = (df["transcript_id"] == transcript_id) & (df["feature"] == "transcript")
-            subdf = df[mask]
-            return len(subdf) > 0
+        def missing_transcript(group: pandas.DataFrame) -> pandas.Series:
+            return group[group.feature == "transcript"].empty
 
         # add in missing transcripts
         for transcript_id, group in df.groupby("transcript_id"):
             if not transcript_id:
                 continue
 
-            if not has_transcript(transcript_id):
-                all_features = group.sort_values(["start", "end"])
-                feature = all_features.iloc[0]
+            if missing_transcript(group):
+                features = group.sort_values(["start", "end"])
+                first = features.iloc[0]
+                last = features.iloc[-1]
                 logger.debug(f"Adding transcript for '{transcript_id}'")
-                transcript_row = pandas.DataFrame(
-                    [
-                        {
-                            "contig_id": feature.contig_id,
-                            "source": "",
-                            "feature": "transcript",
-                            "start": feature.start,
-                            "end": all_features.iloc[-1].end,
-                            "score": ".",
-                            "strand": feature.strand,
-                            "frame": ".",
-                            "gene_id": feature.gene_id,
-                            "gene_name": feature.gene_name,
-                            "transcript_id": transcript_id,
-                            "transcript_name": feature.transcript_name,
-                        }
-                    ]
+                transcript_rows.append(
+                    {
+                        "contig_id": first.contig_id,
+                        "source": "",
+                        "feature": "transcript",
+                        "start": first.start,
+                        "end": last.end,
+                        "score": ".",
+                        "strand": first.strand,
+                        "frame": ".",
+                        "gene_id": first.gene_id,
+                        "gene_name": first.gene_name,
+                        "transcript_id": transcript_id,
+                        "transcript_name": first.transcript_name,
+                    }
                 )
-                df = pandas.concat([df, transcript_row])
 
-        return df
-
-    def _add_missing_genes(self, df: pandas.DataFrame) -> pandas.DataFrame:
-        """Infer gene position(s) from transcripts, if not already defined."""
-
-        def has_gene(gene_id: str) -> pandas.Series:
-            mask = (df["gene_id"] == gene_id) & (df["feature"] == "gene")
-            subdf = df[mask]
-            return len(subdf) > 0
-
-        transcript_df = df[df.feature == "transcript"]
-        for gene_id, group in transcript_df.groupby("gene_id"):
-            if not gene_id:
-                continue
-
-            if not has_gene(gene_id):
-                all_features = group.sort_values(["start", "end"])
-                feature = all_features.iloc[0]
-                logger.debug(f"Adding gene for '{gene_id}'")
-                gene_row = pandas.DataFrame(
-                    [
-                        {
-                            "contig_id": feature.contig_id,
-                            "source": "",
-                            "feature": "gene",
-                            "start": feature.start,
-                            "end": all_features.iloc[-1].end,
-                            "score": ".",
-                            "strand": feature.strand,
-                            "frame": ".",
-                            "gene_id": gene_id,
-                            "gene_name": feature.gene_name,
-                        }
-                    ]
-                )
-                df = pandas.concat([df, gene_row])
+        new_transcript_df = pandas.DataFrame(transcript_rows)
+        df = pandas.concat([df, new_transcript_df], ignore_index=True)
 
         return df
 
     def _calculate_exon_offset_from_transcript(self, df: pandas.DataFrame) -> pandas.DataFrame:
         """Calculate the position of each exon, relative to the start of the transcript."""
 
-        def get_transcript(transcript_id: str) -> pandas.Series:
-            mask = (df["transcript_id"] == transcript_id) & (df["feature"] == "transcript")
-            subdf = df[mask]
-            assert len(subdf) == 1, (transcript_id, len(subdf))
+        def get_transcript(group: pandas.DataFrame) -> pandas.Series:
+            subdf = group[group.feature == "transcript"]
+            assert len(subdf) == 1, transcript_id
             return subdf.iloc[0]
 
         result = {}
 
-        feature_df = df[df.feature == "exon"]
-        for transcript_id, group in feature_df.groupby("transcript_id"):
+        for transcript_id, group in df.groupby("transcript_id"):
             if not transcript_id:
                 continue
 
             offset = 0
-            transcript = get_transcript(transcript_id)
+            transcript = get_transcript(group)
             ascending = transcript.strand == "+"
-            for _, feature in group.sort_values(["start", "end"], ascending=ascending).iterrows():
+            exon_df = group[group.feature == "exon"]
+            for _, exon in exon_df.sort_values(["start", "end"], ascending=ascending).iterrows():
                 # if this is the first exon/CDS/etc start the offset relative to the RNA
                 if offset == 0:
                     if ascending:
-                        offset = feature.start - transcript.start
+                        offset = exon.start - transcript.start
                     else:
-                        offset = transcript.end - feature.end
-                key = (transcript_id, feature.feature, feature.start, feature.end, feature.strand)
-                length = feature.end - feature.start + 1
+                        offset = transcript.end - exon.end
+                key = (transcript_id, exon.feature, exon.start, exon.end, exon.strand)
+                length = exon.end - exon.start + 1
                 transcript_start = offset + 1
                 transcript_end = length + offset
                 result[key] = (transcript_start, transcript_end)
@@ -550,24 +525,24 @@ class Cache:
     def _calculate_cds_offset_from_transcript(self, df: pandas.DataFrame) -> pandas.DataFrame:
         """Calculate the position of each CDS, relative to the start of the transcript."""
 
-        def get_exon(transcript_id: str, start: int, end: int) -> pandas.Series:
-            mask = (
-                (df["transcript_id"] == transcript_id)
-                & (df["feature"] == "exon")
-                & (df["start"] <= start)
-                & (df["end"] >= end)
-            )
-            subdf = df[mask]
-            assert len(subdf) == 1, len(subdf)
+        def get_exon(
+            group: pandas.DataFrame, transcript_id: str, start: int, end: int
+        ) -> pandas.Series:
+            mask = (group.start <= start) & (group.end >= end) & (group.feature == "exon")
+            subdf = group[mask]
+            assert len(subdf) == 1, (transcript_id, start, end)
             return subdf.iloc[0]
 
         result = {}
 
-        feature_df = df[df.feature.isin(["CDS", "stop_codon"])]
-        for transcript_id, group in feature_df.groupby("transcript_id"):
-            ascending = group.iloc[0].strand == "+" if len(group) > 1 else True
-            for _, cds in group.sort_values(["start", "end"], ascending=ascending).iterrows():
-                exon = get_exon(transcript_id, cds.start, cds.end)
+        for transcript_id, group in df.groupby("transcript_id"):
+            cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
+            if cds_df.empty:
+                continue
+
+            ascending = cds_df.iloc[0].strand == "+"
+            for _, cds in cds_df.sort_values(["start", "end"], ascending=ascending).iterrows():
+                exon = get_exon(group, transcript_id, cds.start, cds.end)
                 if ascending:
                     offset = cds.start - exon.start + exon.transcript_start
                 else:
@@ -602,14 +577,10 @@ class Cache:
     def _calculate_cds_offset_from_cdna(self, df: pandas.DataFrame) -> pandas.DataFrame:
         """Calculate the position of each CDS, relative to the start of the cDNA."""
 
-        def select(transcript_id):
-            mask = (df["transcript_id"] == transcript_id) & (
-                df["feature"].isin(["CDS", "stop_codon"])
-            )
-            subdf = df[mask]
+        def infer_cdna(subdf: pandas.DataFrame):
             if len(subdf) > 0:
+                subdf_sorted = subdf.sort_values(["start", "end"], ascending=True)
                 ascending = subdf.iloc[0].strand == "+"
-                subdf_sorted = group.sort_values(["start", "end"], ascending=True)
                 cdna_start = subdf_sorted.iloc[0].start
                 cdna_end = subdf_sorted.iloc[-1].end
                 return cdna_start, cdna_end, ascending
@@ -618,29 +589,29 @@ class Cache:
 
         result = {}
 
-        cds_df = df[df.feature.isin(["CDS", "stop_codon"])]
-        for transcript_id, group in cds_df.groupby("transcript_id"):
+        for transcript_id, group in df.groupby("transcript_id"):
             if not transcript_id:
                 continue
 
-            if cdna := select(transcript_id):
-                cdna_start, cdna_end, ascending = cdna
+            cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
+            if cdna := infer_cdna(cds_df):
+                cdna_start_pos, cdna_end_pos, ascending = cdna
             else:
                 continue
 
             offset = 0
-            for _, cds in group.sort_values(["start", "end"], ascending=ascending).iterrows():
+            for _, cds in cds_df.sort_values(["start", "end"], ascending=ascending).iterrows():
                 # if this is the first exon/CDS/etc start the offset relative to the RNA
                 if offset == 0:
                     if ascending:
-                        offset = cds.start - cdna_start
+                        offset = cds.start - cdna_start_pos
                     else:
-                        offset = cdna_end - cds.end
+                        offset = cdna_end_pos - cds.end
                 key = (transcript_id, cds.feature, cds.start, cds.end, cds.strand)
                 length = cds.end - cds.start + 1
-                transcript_start = offset + 1
-                transcript_end = length + offset
-                result[key] = (transcript_start, transcript_end)
+                cdna_start = offset + 1
+                cdna_end = length + offset
+                result[key] = (cdna_start, cdna_end)
                 offset += length
 
         # there's probably a better way to do this
@@ -653,9 +624,9 @@ class Cache:
                 feature.strand,
             )
             if (value := result.get(key)) is not None:  # type: ignore
-                transcript_start, transcript_end = value
-                df.loc[index, "cdna_start"] = transcript_start
-                df.loc[index, "cdna_end"] = transcript_end
+                cdna_start, cdna_end = value
+                df.loc[index, "cdna_start"] = cdna_start
+                df.loc[index, "cdna_end"] = cdna_end
 
         # convert the offset values to integers
         df["cdna_start"] = df["cdna_start"].astype("Int64")
@@ -666,16 +637,16 @@ class Cache:
     def _assign_protein_id_to_stop_codon(self, df: pandas.DataFrame) -> pandas.DataFrame:
         """Add the protein ID as info for each stop codon, if not already defined."""
 
-        def select(transcript_id: str) -> pandas.Series:
-            subdf = df[(df["transcript_id"] == transcript_id) & (df["feature"] == "CDS")]
+        def select(group: pandas.DataFrame) -> pandas.Series:
+            subdf = group[group.feature == "CDS"]
             return subdf.iloc[0] if len(subdf) > 0 else None
 
-        feature_df = df[df.feature == "stop_codon"]
-        for transcript_id, group in feature_df.groupby("transcript_id"):
-            if (cds := select(transcript_id)) is None:
+        for _, group in df.groupby("transcript_id"):
+            if (cds := select(group)) is None:
                 continue
 
-            for index, _ in group.iterrows():
+            stop_codon_df = group[group.feature == "stop_codon"]
+            for index, _ in stop_codon_df.iterrows():
                 if not df.loc[index, "protein_id"]:
                     df.loc[index, "protein_id"] = cds.protein_id
 

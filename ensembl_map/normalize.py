@@ -16,18 +16,12 @@ from typing import Optional, Tuple
 import pyensembl
 from logzero import logger
 
-from .features import Cdna, Protein, Transcript
-from .map import (
-    cdna_to_transcript,
-    protein_to_transcript,
-    transcript_to_cdna,
-    transcript_to_protein,
-    transcript_to_transcript,
-)
+from .core import CdnaPosition, ProteinPosition, RnaPosition
+from .map import cdna_to_rna, protein_to_rna, rna_to_cdna, rna_to_protein, rna_to_rna
 
 
 @lru_cache()
-def normalize_cdna(feature: str, start: int, end: Optional[int] = None) -> Cdna:
+def normalize_cdna(feature: str, start: int, end: Optional[int] = None) -> CdnaPosition:
     """3' align a CDNA variant according to HGVS rules.
 
     Args:
@@ -38,9 +32,9 @@ def normalize_cdna(feature: str, start: int, end: Optional[int] = None) -> Cdna:
     Returns:
         CDNA: object with the re-aligned coordinates
     """
-    transcript = cdna_to_transcript(feature, start, end)[0]
+    transcript = cdna_to_rna(feature, start, end)[0]
     start_shift, end_shift = _normalize(transcript)
-    normalized = transcript_to_cdna(transcript.transcript_id, start_shift, end_shift)[0]
+    normalized = rna_to_cdna(transcript.transcript_id, start_shift, end_shift)[0]
 
     in_coordinate = (feature, start, end)
     out_coordinate = (normalized.transcript_id, normalized.start, normalized.end)
@@ -53,7 +47,7 @@ def normalize_cdna(feature: str, start: int, end: Optional[int] = None) -> Cdna:
 
 
 @lru_cache()
-def normalize_protein(feature: str, start: int, end: Optional[int] = None) -> Protein:
+def normalize_protein(feature: str, start: int, end: Optional[int] = None) -> ProteinPosition:
     """3' align a protein variant according to HGVS rules.
 
     Args:
@@ -64,9 +58,9 @@ def normalize_protein(feature: str, start: int, end: Optional[int] = None) -> Pr
     Returns:
         Protein: object with the re-aligned coordinates
     """
-    transcript = protein_to_transcript(feature, start, end)[0]
+    transcript = protein_to_rna(feature, start, end)[0]
     start_shift, end_shift = _normalize(transcript)
-    normalized = transcript_to_protein(transcript.transcript_id, start_shift, end_shift)[0]
+    normalized = rna_to_protein(transcript.transcript_id, start_shift, end_shift)[0]
 
     in_coordinate = (feature, start, end)
     out_coordinate = (normalized.protein_id, normalized.start, normalized.end)
@@ -79,7 +73,7 @@ def normalize_protein(feature: str, start: int, end: Optional[int] = None) -> Pr
 
 
 @lru_cache()
-def normalize_transcript(feature: str, start: int, end: Optional[int] = None) -> Transcript:
+def normalize_transcript(feature: str, start: int, end: Optional[int] = None) -> RnaPosition:
     """3' align a transcript variant according to HGVS rules.
 
     Args:
@@ -124,9 +118,9 @@ def _normalize(transcript: pyensembl.Transcript) -> Tuple[int, int]:
     return start_shift, end_shift
 
 
-def _map_transcript(feature: str, start: int, end: Optional[int]) -> Transcript:
+def _map_transcript(feature: str, start: int, end: Optional[int]) -> RnaPosition:
     """Convert a transcript coordinate to a ``Transcript`` object."""
-    result = transcript_to_transcript(feature, start, end)
+    result = rna_to_rna(feature, start, end)
     if len(result) != 1:
         raise ValueError(f"Unable to uniquely map transcript {feature, start, end}: {result}")
     else:

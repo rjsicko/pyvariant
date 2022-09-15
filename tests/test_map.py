@@ -1,46 +1,33 @@
 import pytest
 
-from ensembl_map.constants import CDNA, CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
+from ensembl_map.constants import CONTIG
 from ensembl_map.core import EnsemblRelease
 from ensembl_map.map import (
-    _transcript_ids_with_exon,
     cdna_to_cdna,
-    cdna_to_contig,
+    cdna_to_dna,
     cdna_to_exon,
-    cdna_to_gene,
     cdna_to_protein,
-    cdna_to_transcript,
-    contig_to_cdna,
-    contig_to_contig,
-    contig_to_exon,
-    contig_to_gene,
-    contig_to_protein,
-    contig_to_transcript,
+    cdna_to_rna,
+    dna_to_cdna,
+    dna_to_dna,
+    dna_to_exon,
+    dna_to_protein,
+    dna_to_rna,
     exon_to_cdna,
-    exon_to_contig,
+    exon_to_dna,
     exon_to_exon,
-    exon_to_gene,
     exon_to_protein,
-    exon_to_transcript,
-    gene_to_cdna,
-    gene_to_contig,
-    gene_to_exon,
-    gene_to_gene,
-    gene_to_protein,
-    gene_to_transcript,
-    get_map_func,
+    exon_to_rna,
     protein_to_cdna,
-    protein_to_contig,
+    protein_to_dna,
     protein_to_exon,
-    protein_to_gene,
     protein_to_protein,
-    protein_to_transcript,
-    transcript_to_cdna,
-    transcript_to_contig,
-    transcript_to_exon,
-    transcript_to_gene,
-    transcript_to_protein,
-    transcript_to_transcript,
+    protein_to_rna,
+    rna_to_cdna,
+    rna_to_dna,
+    rna_to_exon,
+    rna_to_protein,
+    rna_to_rna,
 )
 
 from . import (
@@ -72,6 +59,7 @@ def ensembl100():
 
 def test_cdna_to_cdna_pos_strand_by_transcript_id():
     pos = cdna_to_cdna("ENST00000380152", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].start == 1
@@ -81,6 +69,7 @@ def test_cdna_to_cdna_pos_strand_by_transcript_id():
 
 def test_cdna_to_cdna_pos_strand_by_transcript_id_2():
     pos = cdna_to_cdna("ENST00000380152", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].start == 100
@@ -90,6 +79,7 @@ def test_cdna_to_cdna_pos_strand_by_transcript_id_2():
 
 def test_cdna_to_cdna_pos_strand_by_transcript_id_3():
     pos = cdna_to_cdna("ENST00000380152", 100, 101)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].start == 100
@@ -99,6 +89,7 @@ def test_cdna_to_cdna_pos_strand_by_transcript_id_3():
 
 def test_cdna_to_cdna_pos_strand_by_transcript_name():
     pos = cdna_to_cdna("BRCA2-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].start == 1
@@ -108,6 +99,7 @@ def test_cdna_to_cdna_pos_strand_by_transcript_name():
 
 def test_cdna_to_cdna_pos_strand_by_transcript_name_2():
     pos = cdna_to_cdna("BRCA2-201", 360)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].start == 360
@@ -117,6 +109,7 @@ def test_cdna_to_cdna_pos_strand_by_transcript_name_2():
 
 def test_cdna_to_cdna_pos_strand_by_transcript_name_3():
     pos = cdna_to_cdna("BRCA2-201", 360, 363)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].start == 360
@@ -150,8 +143,9 @@ def test_cdna_to_cdna_by_protein_id():
     assert result == ["ENST00000256078"]
 
 
-def test_cdna_to_contig_pos_strand_by_transcript_id():
-    pos = cdna_to_contig("ENST00000380152", 1)
+def test_cdna_to_dna_pos_strand_by_transcript_id():
+    pos = cdna_to_dna("ENST00000380152", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "13"
     assert pos[0].start == 32316461
@@ -159,8 +153,9 @@ def test_cdna_to_contig_pos_strand_by_transcript_id():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_contig_pos_strand_by_transcript_id_2():
-    pos = cdna_to_contig("ENST00000380152", 100)
+def test_cdna_to_dna_pos_strand_by_transcript_id_2():
+    pos = cdna_to_dna("ENST00000380152", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "13"
     assert pos[0].start == 32319109
@@ -168,8 +163,9 @@ def test_cdna_to_contig_pos_strand_by_transcript_id_2():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_contig_pos_strand_by_transcript_id_3():
-    pos = cdna_to_contig("ENST00000380152", 100, 103)
+def test_cdna_to_dna_pos_strand_by_transcript_id_3():
+    pos = cdna_to_dna("ENST00000380152", 100, 103)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "13"
     assert pos[0].start == 32319109
@@ -177,8 +173,9 @@ def test_cdna_to_contig_pos_strand_by_transcript_id_3():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_contig_pos_strand_by_transcript_name():
-    pos = cdna_to_contig("BRCA2-201", 1)
+def test_cdna_to_dna_pos_strand_by_transcript_name():
+    pos = cdna_to_dna("BRCA2-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "13"
     assert pos[0].start == 32316461
@@ -186,8 +183,9 @@ def test_cdna_to_contig_pos_strand_by_transcript_name():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_contig_pos_strand_by_transcript_name_2():
-    pos = cdna_to_contig("BRCA2-201", 100)
+def test_cdna_to_dna_pos_strand_by_transcript_name_2():
+    pos = cdna_to_dna("BRCA2-201", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "13"
     assert pos[0].start == 32319109
@@ -195,8 +193,9 @@ def test_cdna_to_contig_pos_strand_by_transcript_name_2():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_contig_pos_strand_by_transcript_name_3():
-    pos = cdna_to_contig("BRCA2-201", 100, 103)
+def test_cdna_to_dna_pos_strand_by_transcript_name_3():
+    pos = cdna_to_dna("BRCA2-201", 100, 103)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "13"
     assert pos[0].start == 32319109
@@ -204,202 +203,220 @@ def test_cdna_to_contig_pos_strand_by_transcript_name_3():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_contig_neg_strand_by_transcript_id():
-    pos = cdna_to_contig("ENST00000256078", 1)
+def test_cdna_to_dna_neg_strand_by_transcript_id():
+    pos = cdna_to_dna("ENST00000256078", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245384
     assert pos[0].end == 25245384
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_cdna_to_contig_neg_strand_by_transcript_id_2():
-    pos = cdna_to_contig("ENST00000256078", 100)
+def test_cdna_to_dna_neg_strand_by_transcript_id_2():
+    pos = cdna_to_dna("ENST00000256078", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245285
     assert pos[0].end == 25245285
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_cdna_to_contig_neg_strand_by_transcript_id_3():
-    pos = cdna_to_contig("ENST00000256078", 100, 103)
+def test_cdna_to_dna_neg_strand_by_transcript_id_3():
+    pos = cdna_to_dna("ENST00000256078", 100, 103)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245282
     assert pos[0].end == 25245285
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_cdna_to_contig_neg_strand_by_transcript_name():
-    pos = cdna_to_contig("KRAS-201", 1)
+def test_cdna_to_dna_neg_strand_by_transcript_name():
+    pos = cdna_to_dna("KRAS-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245384
     assert pos[0].end == 25245384
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_cdna_to_contig_neg_strand_by_transcript_name_2():
-    pos = cdna_to_contig("KRAS-201", 100)
+def test_cdna_to_dna_neg_strand_by_transcript_name_2():
+    pos = cdna_to_dna("KRAS-201", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245285
     assert pos[0].end == 25245285
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_cdna_to_contig_neg_strand_by_transcript_name_3():
-    pos = cdna_to_contig("KRAS-201", 100, 103)
+def test_cdna_to_dna_neg_strand_by_transcript_name_3():
+    pos = cdna_to_dna("KRAS-201", 100, 103)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245282
     assert pos[0].end == 25245285
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_cdna_to_contig_by_contig_id():
-    result = sorted([i.contig_id for i in cdna_to_contig("ENSE00000936617", 1)])
+def test_cdna_to_dna_by_contig_id():
+    result = sorted([i.contig_id for i in cdna_to_dna("ENSE00000936617", 1)])
     assert result == ["12"]
 
 
-def test_cdna_to_contig_by_exon_id():
-    result = sorted([i.contig_id for i in cdna_to_contig("ENSE00000936617", 1)])
+def test_cdna_to_dna_by_exon_id():
+    result = sorted([i.contig_id for i in cdna_to_dna("ENSE00000936617", 1)])
     assert result == ["12"]
 
 
-def test_cdna_to_contig_by_gene_id():
-    result = sorted([i.contig_id for i in cdna_to_contig("ENSG00000133703", 1)])
+def test_cdna_to_dna_by_gene_id():
+    result = sorted([i.contig_id for i in cdna_to_dna("ENSG00000133703", 1)])
     assert result == ["12"]
 
 
-def test_cdna_to_contig_by_gene_name():
-    result = sorted([i.contig_id for i in cdna_to_contig("KRAS", 1)])
+def test_cdna_to_dna_by_gene_name():
+    result = sorted([i.contig_id for i in cdna_to_dna("KRAS", 1)])
     assert result == ["12"]
 
 
-def test_cdna_to_contig_by_protein_id():
-    result = sorted([i.contig_id for i in cdna_to_contig("ENSP00000256078", 1)])
+def test_cdna_to_dna_by_protein_id():
+    result = sorted([i.contig_id for i in cdna_to_dna("ENSP00000256078", 1)])
     assert result == ["12"]
 
 
 def test_cdna_to_exon_pos_strand_by_transcript_id():
     pos = cdna_to_exon("ENST00000380152", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00001484009"
-    assert pos[0].start == 32316422
-    assert pos[0].end == 32316527
+    assert pos[0].start == 2
+    assert pos[0].end == 2
     assert pos[0].strand == "+"
 
 
 def test_cdna_to_exon_pos_strand_by_transcript_id_2():
     pos = cdna_to_exon("ENST00000380152", 360)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003659301"
-    assert pos[0].start == 32325076
-    assert pos[0].end == 32325184
+    assert pos[0].start == 4
+    assert pos[0].end == 4
     assert pos[0].strand == "+"
 
 
 def test_cdna_to_exon_pos_strand_by_transcript_id_3():
     pos = cdna_to_exon("ENST00000380152", 360, 380)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003659301"
-    assert pos[0].start == 32325076
-    assert pos[0].end == 32325184
+    assert pos[0].start == 4
+    assert pos[0].end == 4
     assert pos[0].strand == "+"
 
 
 def test_cdna_to_exon_pos_strand_by_transcript_name():
     pos = cdna_to_exon("BRCA2-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00001484009"
-    assert pos[0].start == 32316422
-    assert pos[0].end == 32316527
+    assert pos[0].start == 2
+    assert pos[0].end == 2
     assert pos[0].strand == "+"
 
 
 def test_cdna_to_exon_pos_strand_by_transcript_name_2():
     pos = cdna_to_exon("BRCA2-201", 360)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003659301"
-    assert pos[0].start == 32325076
-    assert pos[0].end == 32325184
+    assert pos[0].start == 4
+    assert pos[0].end == 4
     assert pos[0].strand == "+"
 
 
 def test_cdna_to_exon_pos_strand_by_transcript_name_3():
     pos = cdna_to_exon("BRCA2-201", 360, 380)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003659301"
-    assert pos[0].start == 32325076
-    assert pos[0].end == 32325184
+    assert pos[0].start == 4
+    assert pos[0].end == 4
     assert pos[0].strand == "+"
 
 
 def test_cdna_to_exon_neg_strand_by_transcript_id():
     pos = cdna_to_exon("ENST00000256078", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00000936617"
-    assert pos[0].start == 25245274
-    assert pos[0].end == 25245395
+    assert pos[0].start == 2
+    assert pos[0].end == 2
     assert pos[0].strand == "-"
 
 
 def test_cdna_to_exon_neg_strand_by_transcript_id_2():
     pos = cdna_to_exon("ENST00000256078", 144)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "-"
 
 
 def test_cdna_to_exon_neg_strand_by_transcript_id_3():
     pos = cdna_to_exon("ENST00000256078", 144, 156)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "-"
 
 
 def test_cdna_to_exon_neg_strand_by_transcript_name():
     pos = cdna_to_exon("KRAS-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00000936617"
-    assert pos[0].start == 25245274
-    assert pos[0].end == 25245395
+    assert pos[0].start == 2
+    assert pos[0].end == 2
     assert pos[0].strand == "-"
 
 
 def test_cdna_to_exon_neg_strand_by_transcript_name_2():
     pos = cdna_to_exon("KRAS-201", 144)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "-"
 
 
 def test_cdna_to_exon_neg_strand_by_transcript_name_3():
     pos = cdna_to_exon("KRAS-201", 144, 156)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "-"
 
 
@@ -438,246 +455,124 @@ def test_cdna_to_exon_by_protein_id():
     assert result == ["ENSE00000936617"]
 
 
-def test_cdna_to_gene_pos_strand_by_transcript_id():
-    pos = cdna_to_gene("ENST00000288135", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54658015
-    assert pos[0].end == 54658015
-    assert pos[0].strand == "+"
-
-
-def test_cdna_to_gene_pos_strand_by_transcript_id_2():
-    pos = cdna_to_gene("ENST00000288135", 213)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54695657
-    assert pos[0].end == 54695657
-    assert pos[0].strand == "+"
-
-
-def test_cdna_to_gene_pos_strand_by_transcript_id_3():
-    pos = cdna_to_gene("ENST00000288135", 213, 221)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54695657
-    assert pos[0].end == 54695665
-    assert pos[0].strand == "+"
-
-
-def test_cdna_to_gene_pos_strand_by_transcript_name():
-    pos = cdna_to_gene("KIT-201", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54658015
-    assert pos[0].end == 54658015
-    assert pos[0].strand == "+"
-
-
-def test_cdna_to_gene_pos_strand_by_transcript_name_2():
-    pos = cdna_to_gene("KIT-201", 213)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54695657
-    assert pos[0].end == 54695657
-    assert pos[0].strand == "+"
-
-
-def test_cdna_to_gene_pos_strand_by_transcript_name_3():
-    pos = cdna_to_gene("KIT-201", 213, 221)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54695657
-    assert pos[0].end == 54695665
-    assert pos[0].strand == "+"
-
-
-def test_cdna_to_gene_neg_strand_by_transcript_id():
-    pos = cdna_to_gene("ENST00000256078", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25245384
-    assert pos[0].end == 25245384
-    assert pos[0].strand == "-"
-
-
-def test_cdna_to_gene_neg_strand_by_transcript_id_2():
-    pos = cdna_to_gene("ENST00000256078", 201)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25227323
-    assert pos[0].end == 25227323
-    assert pos[0].strand == "-"
-
-
-def test_cdna_to_gene_neg_strand_by_transcript_id_3():
-    pos = cdna_to_gene("ENST00000256078", 201, 301)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25225763
-    assert pos[0].end == 25227323
-    assert pos[0].strand == "-"
-
-
-def test_cdna_to_gene_neg_strand_by_transcript_name():
-    pos = cdna_to_gene("KRAS-201", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25245384
-    assert pos[0].end == 25245384
-    assert pos[0].strand == "-"
-
-
-def test_cdna_to_gene_neg_strand_by_transcript_name_2():
-    pos = cdna_to_gene("KRAS-201", 201)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25227323
-    assert pos[0].end == 25227323
-    assert pos[0].strand == "-"
-
-
-def test_cdna_to_gene_neg_strand_by_transcript_name_3():
-    pos = cdna_to_gene("KRAS-201", 201, 301)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25225763
-    assert pos[0].end == 25227323
-    assert pos[0].strand == "-"
-
-
-def test_cdna_to_gene_by_contig_id():
-    # NOTE: I don't see this query being useful because it will return coordinates for every transcript on chr12.
-    # result = sorted([i.gene_id for i in cdna_to_gene("12", 1)])
-    pass
-
-
-def test_cdna_to_gene_by_exon_id():
-    result = sorted([i.gene_id for i in cdna_to_gene("ENSE00000936617", 1)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_cdna_to_gene_by_gene_id():
-    result = sorted([i.gene_id for i in cdna_to_gene("ENSG00000133703", 1)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_cdna_to_gene_by_gene_name():
-    result = sorted([i.gene_id for i in cdna_to_gene("KRAS", 1)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_cdna_to_gene_by_protein_id():
-    result = sorted([i.gene_id for i in cdna_to_gene("ENSP00000256078", 1)])
-    assert result == ["ENSG00000133703"]
-
-
 def test_cdna_to_protein_pos_strand_by_transcript_id():
     pos = cdna_to_protein("ENST00000288135", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 1
     assert pos[0].end == 1
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_cdna_to_protein_pos_strand_by_transcript_id_2():
     pos = cdna_to_protein("ENST00000288135", 213)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 71
     assert pos[0].end == 71
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_cdna_to_protein_pos_strand_by_transcript_id_3():
     pos = cdna_to_protein("ENST00000288135", 213, 221)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 71
     assert pos[0].end == 74
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_cdna_to_protein_pos_strand_by_transcript_name():
     pos = cdna_to_protein("KIT-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 1
     assert pos[0].end == 1
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_cdna_to_protein_pos_strand_by_transcript_name_2():
     pos = cdna_to_protein("KIT-201", 213)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 71
     assert pos[0].end == 71
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_cdna_to_protein_pos_strand_by_transcript_name_3():
     pos = cdna_to_protein("KIT-201", 213, 221)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 71
     assert pos[0].end == 74
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_cdna_to_protein_neg_strand_by_transcript_id():
     pos = cdna_to_protein("ENST00000256078", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000256078"
     assert pos[0].start == 1
     assert pos[0].end == 1
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_cdna_to_protein_neg_strand_by_transcript_id_2():
     pos = cdna_to_protein("ENST00000256078", 26)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000256078"
     assert pos[0].start == 9
     assert pos[0].end == 9
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_cdna_to_protein_neg_strand_by_transcript_id_3():
     pos = cdna_to_protein("ENST00000256078", 26, 56)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000256078"
     assert pos[0].start == 9
     assert pos[0].end == 19
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_cdna_to_protein_neg_strand_by_transcript_name():
     pos = cdna_to_protein("KRAS-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000256078"
     assert pos[0].start == 1
     assert pos[0].end == 1
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_cdna_to_protein_neg_strand_by_transcript_name_2():
     pos = cdna_to_protein("KRAS-201", 26)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000256078"
     assert pos[0].start == 9
     assert pos[0].end == 9
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_cdna_to_protein_neg_strand_by_transcript_name_3():
     pos = cdna_to_protein("KRAS-201", 26, 56)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000256078"
     assert pos[0].start == 9
     assert pos[0].end == 19
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_cdna_to_protein_by_contig_id():
@@ -706,8 +601,9 @@ def test_cdna_to_protein_by_protein_id():
     assert result == ["ENSP00000256078"]
 
 
-def test_cdna_to_transcript_pos_strand_by_transcript_id():
-    pos = cdna_to_transcript("ENST00000288135", 1)
+def test_cdna_to_rna_pos_strand_by_transcript_id():
+    pos = cdna_to_rna("ENST00000288135", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 59
@@ -715,8 +611,9 @@ def test_cdna_to_transcript_pos_strand_by_transcript_id():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_transcript_pos_strand_by_transcript_id_2():
-    pos = cdna_to_transcript("ENST00000288135", 213)
+def test_cdna_to_rna_pos_strand_by_transcript_id_2():
+    pos = cdna_to_rna("ENST00000288135", 213)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 271
@@ -724,8 +621,9 @@ def test_cdna_to_transcript_pos_strand_by_transcript_id_2():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_transcript_pos_strand_by_transcript_id_3():
-    pos = cdna_to_transcript("ENST00000288135", 213, 221)
+def test_cdna_to_rna_pos_strand_by_transcript_id_3():
+    pos = cdna_to_rna("ENST00000288135", 213, 221)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 271
@@ -733,8 +631,9 @@ def test_cdna_to_transcript_pos_strand_by_transcript_id_3():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_transcript_pos_strand_by_transcript_name():
-    pos = cdna_to_transcript("KIT-201", 1)
+def test_cdna_to_rna_pos_strand_by_transcript_name():
+    pos = cdna_to_rna("KIT-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 59
@@ -742,8 +641,9 @@ def test_cdna_to_transcript_pos_strand_by_transcript_name():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_transcript_pos_strand_by_transcript_name_2():
-    pos = cdna_to_transcript("KIT-201", 213)
+def test_cdna_to_rna_pos_strand_by_transcript_name_2():
+    pos = cdna_to_rna("KIT-201", 213)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 271
@@ -751,8 +651,9 @@ def test_cdna_to_transcript_pos_strand_by_transcript_name_2():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_transcript_pos_strand_by_transcript_name_3():
-    pos = cdna_to_transcript("KIT-201", 213, 221)
+def test_cdna_to_rna_pos_strand_by_transcript_name_3():
+    pos = cdna_to_rna("KIT-201", 213, 221)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 271
@@ -760,8 +661,9 @@ def test_cdna_to_transcript_pos_strand_by_transcript_name_3():
     assert pos[0].strand == "+"
 
 
-def test_cdna_to_transcript_neg_strand_by_transcript_id():
-    pos = cdna_to_transcript("ENST00000256078", 1)
+def test_cdna_to_rna_neg_strand_by_transcript_id():
+    pos = cdna_to_rna("ENST00000256078", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 191
@@ -769,8 +671,9 @@ def test_cdna_to_transcript_neg_strand_by_transcript_id():
     assert pos[0].strand == "-"
 
 
-def test_cdna_to_transcript_neg_strand_by_transcript_id_2():
-    pos = cdna_to_transcript("ENST00000256078", 87)
+def test_cdna_to_rna_neg_strand_by_transcript_id_2():
+    pos = cdna_to_rna("ENST00000256078", 87)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 277
@@ -778,8 +681,9 @@ def test_cdna_to_transcript_neg_strand_by_transcript_id_2():
     assert pos[0].strand == "-"
 
 
-def test_cdna_to_transcript_neg_strand_by_transcript_id_3():
-    pos = cdna_to_transcript("ENST00000256078", 87, 92)
+def test_cdna_to_rna_neg_strand_by_transcript_id_3():
+    pos = cdna_to_rna("ENST00000256078", 87, 92)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 277
@@ -787,8 +691,9 @@ def test_cdna_to_transcript_neg_strand_by_transcript_id_3():
     assert pos[0].strand == "-"
 
 
-def test_cdna_to_transcript_neg_strand_by_transcript_name():
-    pos = cdna_to_transcript("KRAS-201", 1)
+def test_cdna_to_rna_neg_strand_by_transcript_name():
+    pos = cdna_to_rna("KRAS-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 191
@@ -796,8 +701,9 @@ def test_cdna_to_transcript_neg_strand_by_transcript_name():
     assert pos[0].strand == "-"
 
 
-def test_cdna_to_transcript_neg_strand_by_transcript_name_2():
-    pos = cdna_to_transcript("KRAS-201", 87)
+def test_cdna_to_rna_neg_strand_by_transcript_name_2():
+    pos = cdna_to_rna("KRAS-201", 87)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 277
@@ -805,8 +711,9 @@ def test_cdna_to_transcript_neg_strand_by_transcript_name_2():
     assert pos[0].strand == "-"
 
 
-def test_cdna_to_transcript_neg_strand_by_transcript_name_3():
-    pos = cdna_to_transcript("KRAS-201", 87, 92)
+def test_cdna_to_rna_neg_strand_by_transcript_name_3():
+    pos = cdna_to_rna("KRAS-201", 87, 92)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 277
@@ -814,34 +721,35 @@ def test_cdna_to_transcript_neg_strand_by_transcript_name_3():
     assert pos[0].strand == "-"
 
 
-def test_cdna_to_transcript_by_contig_id():
+def test_cdna_to_rna_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every transcript on chr12.
-    # result = sorted([i.transcript_id for i in cdna_to_transcript("12", 1)])
+    # result = sorted([i.transcript_id for i in cdna_to_rna("12", 1)])
     pass
 
 
-def test_cdna_to_transcript_by_exon_id():
-    result = sorted([i.transcript_id for i in cdna_to_transcript("ENSE00000936617", 1)])
+def test_cdna_to_rna_by_exon_id():
+    result = sorted([i.transcript_id for i in cdna_to_rna("ENSE00000936617", 1)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_cdna_to_transcript_by_gene_id():
-    result = sorted([i.transcript_id for i in cdna_to_transcript("ENSG00000133703", 1)])
+def test_cdna_to_rna_by_gene_id():
+    result = sorted([i.transcript_id for i in cdna_to_rna("ENSG00000133703", 1)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_cdna_to_transcript_by_gene_name():
-    result = sorted([i.transcript_id for i in cdna_to_transcript("KRAS", 1)])
+def test_cdna_to_rna_by_gene_name():
+    result = sorted([i.transcript_id for i in cdna_to_rna("KRAS", 1)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_cdna_to_transcript_by_protein_id():
-    result = sorted([i.transcript_id for i in cdna_to_transcript("ENSP00000256078", 1)])
+def test_cdna_to_rna_by_protein_id():
+    result = sorted([i.transcript_id for i in cdna_to_rna("ENSP00000256078", 1)])
     assert result == ["ENST00000256078"]
 
 
-def test_contig_to_cdna():
-    pos = contig_to_cdna("5", 1294501)
+def test_dna_to_cdna():
+    pos = dna_to_cdna("5", 1294501)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000310581"
     assert pos[0].start == 385
@@ -849,8 +757,9 @@ def test_contig_to_cdna():
     assert pos[0].strand == "-"
 
 
-def test_contig_to_cdna_2():
-    pos = contig_to_cdna("5", 1294497, 1294501)
+def test_dna_to_cdna_2():
+    pos = dna_to_cdna("5", 1294497, 1294501)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000310581"
     assert pos[0].start == 385
@@ -858,38 +767,39 @@ def test_contig_to_cdna_2():
     assert pos[0].strand == "-"
 
 
-def test_contig_to_cdna_by_exon_id():
-    result = sorted([i.transcript_id for i in contig_to_cdna("ENSE00000936617", 25245275)])
+def test_dna_to_cdna_by_exon_id():
+    result = sorted([i.transcript_id for i in dna_to_cdna("ENSE00000936617", 25245275)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_cdna_by_gene_id():
-    result = sorted([i.transcript_id for i in contig_to_cdna("ENSG00000133703", 25245275)])
+def test_dna_to_cdna_by_gene_id():
+    result = sorted([i.transcript_id for i in dna_to_cdna("ENSG00000133703", 25245275)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_cdna_by_gene_name():
-    result = sorted([i.transcript_id for i in contig_to_cdna("KRAS", 25245275)])
+def test_dna_to_cdna_by_gene_name():
+    result = sorted([i.transcript_id for i in dna_to_cdna("KRAS", 25245275)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_cdna_by_protein_id():
-    result = sorted([i.transcript_id for i in contig_to_cdna("ENSP00000256078", 25245275)])
+def test_dna_to_cdna_by_protein_id():
+    result = sorted([i.transcript_id for i in dna_to_cdna("ENSP00000256078", 25245275)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_cdna_by_transcript_id():
-    result = sorted([i.transcript_id for i in contig_to_cdna("ENST00000256078", 25245275)])
+def test_dna_to_cdna_by_transcript_id():
+    result = sorted([i.transcript_id for i in dna_to_cdna("ENST00000256078", 25245275)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_cdna_by_transcript_name():
-    result = sorted([i.transcript_id for i in contig_to_cdna("KRAS-201", 25245275)])
+def test_dna_to_cdna_by_transcript_name():
+    result = sorted([i.transcript_id for i in dna_to_cdna("KRAS-201", 25245275)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_contig():
-    pos = contig_to_contig("5", 1253147, 1295068)
+def test_dna_to_dna():
+    pos = dna_to_dna("5", 1253147, 1295068)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "5"
     assert pos[0].start == 1253147
@@ -897,8 +807,9 @@ def test_contig_to_contig():
     assert pos[0].strand == "+"
 
 
-def test_contig_to_contig_2():
-    pos = contig_to_contig("5", 1254000)
+def test_dna_to_dna_2():
+    pos = dna_to_dna("5", 1254000)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "5"
     assert pos[0].start == 1254000
@@ -906,38 +817,39 @@ def test_contig_to_contig_2():
     assert pos[0].strand == "+"
 
 
-def test_contig_to_contig_by_exon_id():
-    result = sorted([i.contig_id for i in contig_to_contig("ENSE00000936617", 25245275)])
+def test_dna_to_dna_by_exon_id():
+    result = sorted([i.contig_id for i in dna_to_dna("ENSE00000936617", 25245275)])
     assert result == ["12"]
 
 
-def test_contig_to_contig_by_gene_id():
-    result = sorted([i.contig_id for i in contig_to_contig("ENSG00000133703", 25245275)])
+def test_dna_to_dna_by_gene_id():
+    result = sorted([i.contig_id for i in dna_to_dna("ENSG00000133703", 25245275)])
     assert result == ["12"]
 
 
-def test_contig_to_contig_by_gene_name():
-    result = sorted([i.contig_id for i in contig_to_contig("KRAS", 25245275)])
+def test_dna_to_dna_by_gene_name():
+    result = sorted([i.contig_id for i in dna_to_dna("KRAS", 25245275)])
     assert result == ["12"]
 
 
-def test_contig_to_contig_by_protein_id():
-    result = sorted([i.contig_id for i in contig_to_contig("ENSP00000256078", 25245275)])
+def test_dna_to_dna_by_protein_id():
+    result = sorted([i.contig_id for i in dna_to_dna("ENSP00000256078", 25245275)])
     assert result == ["12"]
 
 
-def test_contig_to_contig_by_transcript_id():
-    result = sorted([i.contig_id for i in contig_to_contig("ENST00000256078", 25245275)])
+def test_dna_to_dna_by_transcript_id():
+    result = sorted([i.contig_id for i in dna_to_dna("ENST00000256078", 25245275)])
     assert result == ["12"]
 
 
-def test_contig_to_contig_by_transcript_name():
-    result = sorted([i.contig_id for i in contig_to_contig("KRAS-201", 25245275)])
+def test_dna_to_dna_by_transcript_name():
+    result = sorted([i.contig_id for i in dna_to_dna("KRAS-201", 25245275)])
     assert result == ["12"]
 
 
-def test_contig_to_contig_with_chr():
-    pos = contig_to_contig("chr5", 1253147, 1295068, feature_type=CONTIG)
+def test_dna_to_dna_with_chr():
+    pos = dna_to_dna("chr5", 1253147, 1295068)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "5"
     assert pos[0].start == 1253147
@@ -945,104 +857,59 @@ def test_contig_to_contig_with_chr():
     assert pos[0].strand == "+"
 
 
-def test_contig_to_gene():
-    pos = contig_to_gene("5", 1253147, 1295068)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000164362"
-    assert pos[0].start == 1253147
-    assert pos[0].end == 1295068
-    assert pos[0].strand == "-"
-
-
-def test_contig_to_gene_2():
-    pos = contig_to_gene("5", 1254000)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000164362"
-    assert pos[0].start == 1254000
-    assert pos[0].end == 1254000
-    assert pos[0].strand == "-"
-
-
-def test_contig_to_gene_by_exon_id():
-    result = sorted([i.gene_id for i in contig_to_gene("ENSE00000936617", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_contig_to_gene_by_gene_id():
-    result = sorted([i.gene_id for i in contig_to_gene("ENSG00000133703", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_contig_to_gene_by_gene_name():
-    result = sorted([i.gene_id for i in contig_to_gene("KRAS", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_contig_to_gene_by_protein_id():
-    result = sorted([i.gene_id for i in contig_to_gene("ENSP00000256078", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_contig_to_gene_by_transcript_id():
-    result = sorted([i.gene_id for i in contig_to_gene("ENST00000256078", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_contig_to_gene_by_transcript_name():
-    result = sorted([i.gene_id for i in contig_to_gene("KRAS-201", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_contig_to_protein():
-    pos = contig_to_protein("5", 1294501)
+def test_dna_to_protein():
+    pos = dna_to_protein("5", 1294501)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000309572"
     assert pos[0].start == 129
     assert pos[0].end == 129
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
-def test_contig_to_protein_2():
-    pos = contig_to_protein("5", 1294497, 1294501)
+def test_dna_to_protein_2():
+    pos = dna_to_protein("5", 1294497, 1294501)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000309572"
     assert pos[0].start == 129
     assert pos[0].end == 130
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
-def test_contig_to_protein_by_exon_id():
-    result = sorted([i.protein_id for i in contig_to_protein("ENSE00000936617", 25245275)])
+def test_dna_to_protein_by_exon_id():
+    result = sorted([i.protein_id for i in dna_to_protein("ENSE00000936617", 25245275)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_contig_to_protein_by_gene_id():
-    result = sorted([i.protein_id for i in contig_to_protein("ENSG00000133703", 25245275)])
+def test_dna_to_protein_by_gene_id():
+    result = sorted([i.protein_id for i in dna_to_protein("ENSG00000133703", 25245275)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_contig_to_protein_by_gene_name():
-    result = sorted([i.protein_id for i in contig_to_protein("KRAS", 25245275)])
+def test_dna_to_protein_by_gene_name():
+    result = sorted([i.protein_id for i in dna_to_protein("KRAS", 25245275)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_contig_to_protein_by_protein_id():
-    result = sorted([i.protein_id for i in contig_to_protein("ENSP00000256078", 25245275)])
+def test_dna_to_protein_by_protein_id():
+    result = sorted([i.protein_id for i in dna_to_protein("ENSP00000256078", 25245275)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_contig_to_protein_by_transcript_id():
-    result = sorted([i.protein_id for i in contig_to_protein("ENST00000256078", 25245275)])
+def test_dna_to_protein_by_transcript_id():
+    result = sorted([i.protein_id for i in dna_to_protein("ENST00000256078", 25245275)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_contig_to_protein_by_transcript_name():
-    result = sorted([i.protein_id for i in contig_to_protein("KRAS-201", 25245275)])
+def test_dna_to_protein_by_transcript_name():
+    result = sorted([i.protein_id for i in dna_to_protein("KRAS-201", 25245275)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_contig_to_transcript():
-    pos = contig_to_transcript("5", 1294501)
+def test_dna_to_rna():
+    pos = dna_to_rna("5", 1294501)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000310581"
     assert pos[0].start == 464
@@ -1050,8 +917,9 @@ def test_contig_to_transcript():
     assert pos[0].strand == "-"
 
 
-def test_contig_to_transcript_2():
-    pos = contig_to_transcript("5", 1294497, 1294501)
+def test_dna_to_rna_2():
+    pos = dna_to_rna("5", 1294497, 1294501)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000310581"
     assert pos[0].start == 464
@@ -1059,42 +927,43 @@ def test_contig_to_transcript_2():
     assert pos[0].strand == "-"
 
 
-def test_contig_to_transcript_by_exon_id():
-    result = sorted([i.transcript_id for i in contig_to_transcript("ENSE00000936617", 25245275)])
+def test_dna_to_rna_by_exon_id():
+    result = sorted([i.transcript_id for i in dna_to_rna("ENSE00000936617", 25245275)])
 
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_transcript_by_gene_id():
-    result = sorted([i.transcript_id for i in contig_to_transcript("ENSG00000133703", 25245275)])
+def test_dna_to_rna_by_gene_id():
+    result = sorted([i.transcript_id for i in dna_to_rna("ENSG00000133703", 25245275)])
 
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_transcript_by_gene_name():
-    result = sorted([i.transcript_id for i in contig_to_transcript("KRAS", 25245275)])
+def test_dna_to_rna_by_gene_name():
+    result = sorted([i.transcript_id for i in dna_to_rna("KRAS", 25245275)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_transcript_by_protein_id():
-    result = sorted([i.transcript_id for i in contig_to_transcript("ENSP00000256078", 25245275)])
-
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-
-
-def test_contig_to_transcript_by_transcript_id():
-    result = sorted([i.transcript_id for i in contig_to_transcript("ENST00000256078", 25245275)])
+def test_dna_to_rna_by_protein_id():
+    result = sorted([i.transcript_id for i in dna_to_rna("ENSP00000256078", 25245275)])
 
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_contig_to_transcript_by_transcript_name():
-    result = sorted([i.transcript_id for i in contig_to_transcript("KRAS-201", 25245275)])
+def test_dna_to_rna_by_transcript_id():
+    result = sorted([i.transcript_id for i in dna_to_rna("ENST00000256078", 25245275)])
+
+    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
+
+
+def test_dna_to_rna_by_transcript_name():
+    result = sorted([i.transcript_id for i in dna_to_rna("KRAS-201", 25245275)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
 def test_exon_to_cdna_pos_strand_by_exon_id():
     pos = exon_to_cdna("ENSE00003659301")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].start == 317
@@ -1104,6 +973,7 @@ def test_exon_to_cdna_pos_strand_by_exon_id():
 
 def test_exon_to_cdna_neg_strand_by_exon_id():
     pos = exon_to_cdna("ENSE00001719809")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 112
@@ -1113,6 +983,7 @@ def test_exon_to_cdna_neg_strand_by_exon_id():
 
 def test_exon_to_cdna_neg_strand_by_exon_id_2():
     pos = exon_to_cdna("ENSE00000936617")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 1
@@ -1219,8 +1090,9 @@ def test_exon_to_cdna_by_transcript_name():
     ]
 
 
-def test_exon_to_contig_pos_strand_by_exon_id():
-    pos = exon_to_contig("ENSE00003659301")
+def test_exon_to_dna_pos_strand_by_exon_id():
+    pos = exon_to_dna("ENSE00003659301")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "13"
     assert pos[0].start == 32325076
@@ -1228,8 +1100,9 @@ def test_exon_to_contig_pos_strand_by_exon_id():
     assert pos[0].strand == "+"
 
 
-def test_exon_to_contig_neg_strand_by_exon_id():
-    pos = exon_to_contig("ENSE00001189807")
+def test_exon_to_dna_neg_strand_by_exon_id():
+    pos = exon_to_dna("ENSE00001189807")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25215437
@@ -1237,44 +1110,45 @@ def test_exon_to_contig_neg_strand_by_exon_id():
     assert pos[0].strand == "+"
 
 
-def test_exon_to_contig_by_contig_id():
+def test_exon_to_dna_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every exon on chr12.
-    # result = sorted([i.contig_id for i in exon_to_contig("12")])
+    # result = sorted([i.contig_id for i in exon_to_dna("12")])
     pass
 
 
-def test_exon_to_contig_by_gene_id():
-    result = sorted([i.contig_id for i in exon_to_contig("ENSG00000133703")])
+def test_exon_to_dna_by_gene_id():
+    result = sorted([i.contig_id for i in exon_to_dna("ENSG00000133703")])
     # multiple results because they are for different positions on chr12
     assert result == ["12", "12", "12", "12", "12", "12", "12", "12", "12", "12"]
 
 
-def test_exon_to_contig_by_gene_name():
-    result = sorted([i.contig_id for i in exon_to_contig("KRAS")])
+def test_exon_to_dna_by_gene_name():
+    result = sorted([i.contig_id for i in exon_to_dna("KRAS")])
     # multiple results because they are for different positions on chr12
     assert result == ["12", "12", "12", "12", "12", "12", "12", "12", "12", "12"]
 
 
-def test_exon_to_contig_by_protein_id():
-    result = sorted([i.contig_id for i in exon_to_contig("ENSP00000256078")])
+def test_exon_to_dna_by_protein_id():
+    result = sorted([i.contig_id for i in exon_to_dna("ENSP00000256078")])
     # multiple results because they are for different positions on chr12
     assert result == ["12", "12", "12", "12", "12", "12"]
 
 
-def test_exon_to_contig_by_transcript_id():
-    result = sorted([i.contig_id for i in exon_to_contig("ENST00000256078")])
+def test_exon_to_dna_by_transcript_id():
+    result = sorted([i.contig_id for i in exon_to_dna("ENST00000256078")])
     # multiple results because they are for different positions on chr12
     assert result == ["12", "12", "12", "12", "12", "12"]
 
 
-def test_exon_to_contig_by_transcript_name():
-    result = sorted([i.contig_id for i in exon_to_contig("KRAS-201")])
+def test_exon_to_dna_by_transcript_name():
+    result = sorted([i.contig_id for i in exon_to_dna("KRAS-201")])
     # multiple results because they are for different positions on chr12
     assert result == ["12", "12", "12", "12", "12", "12"]
 
 
 def test_exon_to_exon_pos_strand_by_exon_id():
     pos = exon_to_exon("ENSE00003659301")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003659301"
@@ -1285,6 +1159,7 @@ def test_exon_to_exon_pos_strand_by_exon_id():
 
 def test_exon_to_exon_neg_strand_by_exon_id():
     pos = exon_to_exon("ENSE00001189807")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001189807"
@@ -1396,114 +1271,24 @@ def test_exon_to_exon_by_transcript_name():
     ]
 
 
-def test_exon_to_gene_pos_strand_by_exon_id():
-    pos = exon_to_gene("ENSE00003659301")
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000139618"
-    assert pos[0].start == 32325076
-    assert pos[0].end == 32325184
-    assert pos[0].strand == "+"
-
-
-def test_exon_to_gene_neg_strand_by_exon_id():
-    pos = exon_to_gene("ENSE00001189807")
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25215437
-    assert pos[0].end == 25215560
-    assert pos[0].strand == "-"
-
-
-def test_exon_to_gene_by_contig_id():
-    # NOTE: I don't see this query being useful because it will return coordinates for every exon on chr12.
-    # result = sorted([i.gene_id for i in exon_to_gene("12")])
-    pass
-
-
-def test_exon_to_gene_by_gene_id():
-    result = sorted([i.gene_id for i in exon_to_gene("ENSG00000133703")])
-    assert result == [
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-    ]
-
-
-def test_exon_to_gene_by_gene_name():
-    result = sorted([i.gene_id for i in exon_to_gene("KRAS")])
-    assert result == [
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-    ]
-
-
-def test_exon_to_gene_by_protein_id():
-    result = sorted([i.gene_id for i in exon_to_gene("ENSP00000256078")])
-    assert result == [
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-    ]
-
-
-def test_exon_to_gene_by_transcript_id():
-    result = sorted([i.gene_id for i in exon_to_gene("ENST00000256078")])
-    assert result == [
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-    ]
-
-
-def test_exon_to_gene_by_transcript_name():
-    result = sorted([i.gene_id for i in exon_to_gene("KRAS-201")])
-    assert result == [
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-        "ENSG00000133703",
-    ]
-
-
 def test_exon_to_protein_pos_strand_by_exon_id():
     pos = exon_to_protein("ENSE00003659301")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000369497"
     assert pos[0].start == 106
     assert pos[0].end == 142
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_exon_to_protein_neg_strand_by_exon_id():
     pos = exon_to_protein("ENSE00001719809")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000256078"
     assert pos[0].start == 38
     assert pos[0].end == 97
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_exon_to_protein_by_contig_id():
@@ -1599,8 +1384,9 @@ def test_exon_to_protein_by_transcript_name():
     ]
 
 
-def test_exon_to_transcript_pos_strand_by_exon_id():
-    pos = exon_to_transcript("ENSE00003659301")
+def test_exon_to_rna_pos_strand_by_exon_id():
+    pos = exon_to_rna("ENSE00003659301")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].start == 550
@@ -1608,8 +1394,9 @@ def test_exon_to_transcript_pos_strand_by_exon_id():
     assert pos[0].strand == "+"
 
 
-def test_exon_to_transcript_neg_strand_by_exon_id():
-    pos = exon_to_transcript("ENSE00001719809")
+def test_exon_to_rna_neg_strand_by_exon_id():
+    pos = exon_to_rna("ENSE00001719809")
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 302
@@ -1617,14 +1404,14 @@ def test_exon_to_transcript_neg_strand_by_exon_id():
     assert pos[0].strand == "-"
 
 
-def test_exon_to_transcript_by_contig_id():
+def test_exon_to_rna_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every exon on chr12.
-    # result = sorted([i.transcript_id for i in exon_to_transcript("12")])
+    # result = sorted([i.transcript_id for i in exon_to_rna("12")])
     pass
 
 
-def test_exon_to_transcript_by_gene_id():
-    result = sorted([i.transcript_id for i in exon_to_transcript("ENSG00000133703")])
+def test_exon_to_rna_by_gene_id():
+    result = sorted([i.transcript_id for i in exon_to_rna("ENSG00000133703")])
     assert result == [
         "ENST00000256078",
         "ENST00000256078",
@@ -1646,8 +1433,8 @@ def test_exon_to_transcript_by_gene_id():
     ]
 
 
-def test_exon_to_transcript_by_gene_name():
-    result = sorted([i.transcript_id for i in exon_to_transcript("KRAS")])
+def test_exon_to_rna_by_gene_name():
+    result = sorted([i.transcript_id for i in exon_to_rna("KRAS")])
     assert result == [
         "ENST00000256078",
         "ENST00000256078",
@@ -1669,8 +1456,8 @@ def test_exon_to_transcript_by_gene_name():
     ]
 
 
-def test_exon_to_transcript_by_protein_id():
-    result = sorted([i.transcript_id for i in exon_to_transcript("ENSP00000256078")])
+def test_exon_to_rna_by_protein_id():
+    result = sorted([i.transcript_id for i in exon_to_rna("ENSP00000256078")])
     assert result == [
         "ENST00000256078",
         "ENST00000256078",
@@ -1686,8 +1473,8 @@ def test_exon_to_transcript_by_protein_id():
     ]
 
 
-def test_exon_to_transcript_by_transcript_id():
-    result = sorted([i.transcript_id for i in exon_to_transcript("ENST00000256078")])
+def test_exon_to_rna_by_transcript_id():
+    result = sorted([i.transcript_id for i in exon_to_rna("ENST00000256078")])
     assert result == [
         "ENST00000256078",
         "ENST00000256078",
@@ -1703,8 +1490,8 @@ def test_exon_to_transcript_by_transcript_id():
     ]
 
 
-def test_exon_to_transcript_by_transcript_name():
-    result = sorted([i.transcript_id for i in exon_to_transcript("KRAS-201")])
+def test_exon_to_rna_by_transcript_name():
+    result = sorted([i.transcript_id for i in exon_to_rna("KRAS-201")])
     assert result == [
         "ENST00000256078",
         "ENST00000256078",
@@ -1718,832 +1505,11 @@ def test_exon_to_transcript_by_transcript_name():
         "ENST00000556131",
         "ENST00000557334",
     ]
-
-
-def test_gene_to_cdna_pos_strand_by_gene_id():
-    pos = gene_to_cdna("ENSG00000157404", 54658015)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_cdna_pos_strand_by_gene_id_2():
-    pos = gene_to_cdna("ENSG00000157404", 54695656)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].start == 212
-    assert pos[0].end == 212
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_cdna_pos_strand_by_gene_id_3():
-    pos = gene_to_cdna("ENSG00000157404", 54695656, 54695664)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].start == 212
-    assert pos[0].end == 220
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_cdna_pos_strand_by_gene_name():
-    pos = gene_to_cdna("KIT", 54658015)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_cdna_pos_strand_by_gene_name_2():
-    pos = gene_to_cdna("KIT", 54695656)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].start == 212
-    assert pos[0].end == 212
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_cdna_pos_strand_by_gene_name_3():
-    pos = gene_to_cdna("KIT", 54695656, 54695664)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].start == 212
-    assert pos[0].end == 220
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_cdna_neg_strand_by_gene_id():
-    pos = gene_to_cdna("ENSG00000133703", 25245384)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_cdna_neg_strand_by_gene_id_2():
-    pos = gene_to_cdna("ENSG00000133703", 25225740)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 324
-    assert pos[0].end == 324
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_cdna_neg_strand_by_gene_id_3():
-    pos = gene_to_cdna("ENSG00000133703", 25225740, 25225750)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 314
-    assert pos[0].end == 324
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_cdna_neg_strand_by_gene_name():
-    pos = gene_to_cdna("KRAS", 25245384)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_cdna_neg_strand_by_gene_name_2():
-    pos = gene_to_cdna("KRAS", 25225740)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 324
-    assert pos[0].end == 324
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_cdna_neg_strand_by_gene_name_3():
-    pos = gene_to_cdna("KRAS", 25225740, 25225750)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 314
-    assert pos[0].end == 324
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_cdna_by_contig_id():
-    # TODO: This query can be useful but right now it is very slow because it iterates through every gene on chr12.
-    # result = sorted([i.transcript_id for i in gene_to_cdna("12", 25245275)])
-    # assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-    pass
-
-
-def test_gene_to_cdna_by_exon_id():
-    result = sorted([i.transcript_id for i in gene_to_cdna("ENSE00000936617", 25245275)])
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-
-
-def test_gene_to_cdna_by_protein_id():
-    result = sorted([i.transcript_id for i in gene_to_cdna("ENSP00000256078", 25245275)])
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-
-
-def test_gene_to_cdna_by_transcript_id():
-    result = sorted([i.transcript_id for i in gene_to_cdna("ENST00000256078", 25245275)])
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-
-
-def test_gene_to_cdna_by_transcript_name():
-    result = sorted([i.transcript_id for i in gene_to_cdna("KRAS-201", 25245275)])
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-
-
-def test_gene_to_contig_pos_strand_by_gene_id():
-    pos = gene_to_contig("ENSG00000157404", 54658015)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "4"
-    assert pos[0].start == 54658015
-    assert pos[0].end == 54658015
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_pos_strand_by_gene_id_2():
-    pos = gene_to_contig("ENSG00000157404", 54695656)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "4"
-    assert pos[0].start == 54695656
-    assert pos[0].end == 54695656
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_pos_strand_by_gene_id_3():
-    pos = gene_to_contig("ENSG00000157404", 54695656, 54695664)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "4"
-    assert pos[0].start == 54695656
-    assert pos[0].end == 54695664
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_pos_strand_by_gene_name():
-    pos = gene_to_contig("KIT", 54658015)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "4"
-    assert pos[0].start == 54658015
-    assert pos[0].end == 54658015
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_pos_strand_by_gene_name_2():
-    pos = gene_to_contig("KIT", 54695656)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "4"
-    assert pos[0].start == 54695656
-    assert pos[0].end == 54695656
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_pos_strand_by_gene_name_3():
-    pos = gene_to_contig("KIT", 54695656, 54695664)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "4"
-    assert pos[0].start == 54695656
-    assert pos[0].end == 54695664
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_neg_strand_by_gene_id():
-    pos = gene_to_contig("ENSG00000133703", 25245384)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "12"
-    assert pos[0].start == 25245384
-    assert pos[0].end == 25245384
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_neg_strand_by_gene_id_2():
-    pos = gene_to_contig("ENSG00000133703", 25225740)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "12"
-    assert pos[0].start == 25225740
-    assert pos[0].end == 25225740
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_neg_strand_by_gene_id_3():
-    pos = gene_to_contig("ENSG00000133703", 25225740, 25225750)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "12"
-    assert pos[0].start == 25225740
-    assert pos[0].end == 25225750
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_neg_strand_by_gene_name():
-    pos = gene_to_contig("KRAS", 25245384)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "12"
-    assert pos[0].start == 25245384
-    assert pos[0].end == 25245384
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_neg_strand_by_gene_name_2():
-    pos = gene_to_contig("KRAS", 25225740)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "12"
-    assert pos[0].start == 25225740
-    assert pos[0].end == 25225740
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_neg_strand_by_gene_name_3():
-    pos = gene_to_contig("KRAS", 25225740, 25225750)
-    assert isinstance(pos, list)
-    assert pos[0].contig_id == "12"
-    assert pos[0].start == 25225740
-    assert pos[0].end == 25225750
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_contig_by_contig_id():
-    # TODO: This query can be useful but right now it is very slow because it iterates through every gene on chr12.
-    # result = sorted([i.contig_id for i in gene_to_contig("12", 25245275)])
-    # assert result == ["12"]
-    pass
-
-
-def test_gene_to_contig_by_exon_id():
-    result = sorted([i.contig_id for i in gene_to_contig("ENSE00000936617", 25245275)])
-    assert result == ["12"]
-
-
-def test_gene_to_contig_by_protein_id():
-    result = sorted([i.contig_id for i in gene_to_contig("ENSP00000256078", 25245275)])
-    assert result == ["12"]
-
-
-def test_gene_to_contig_by_transcript_id():
-    result = sorted([i.contig_id for i in gene_to_contig("ENST00000256078", 25245275)])
-    assert result == ["12"]
-
-
-def test_gene_to_contig_by_transcript_name():
-    result = sorted([i.contig_id for i in gene_to_contig("KRAS-201", 25245275)])
-    assert result == ["12"]
-
-
-def test_gene_to_exon_pos_strand_by_gene_id():
-    pos = gene_to_exon("ENSG00000157404", 54657918)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000412167"
-    assert pos[0].exon_id, "ENSE00001905199"
-    assert pos[0].start == 54657918
-    assert pos[0].end == 54658081
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_exon_pos_strand_by_gene_id_2():
-    pos = gene_to_exon("ENSG00000157404", 54698301)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].exon_id, "ENSE00001074448"
-    assert pos[0].start == 54698284
-    assert pos[0].end == 54698565
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_exon_pos_strand_by_gene_id_3():
-    pos = gene_to_exon("ENSG00000157404", 54698301, 54698330)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].exon_id, "ENSE00001074448"
-    assert pos[0].start == 54698284
-    assert pos[0].end == 54698565
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_exon_pos_strand_by_gene_name():
-    pos = gene_to_exon("KIT", 54657918)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000412167"
-    assert pos[0].exon_id, "ENSE00001905199"
-    assert pos[0].start == 54657918
-    assert pos[0].end == 54658081
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_exon_pos_strand_by_gene_name_2():
-    pos = gene_to_exon("KIT", 54698301)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].exon_id, "ENSE00001074448"
-    assert pos[0].start == 54698284
-    assert pos[0].end == 54698565
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_exon_pos_strand_by_gene_name_3():
-    pos = gene_to_exon("KIT", 54698301, 54698330)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000288135"
-    assert pos[0].exon_id, "ENSE00001074448"
-    assert pos[0].start == 54698284
-    assert pos[0].end == 54698565
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_exon_neg_strand_by_gene_id():
-    pos = gene_to_exon("ENSG00000133703", 25250929)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].exon_id, "ENSE00000000028"
-    assert pos[0].start == 25250751
-    assert pos[0].end == 25250929
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_exon_neg_strand_by_gene_id_2():
-    pos = gene_to_exon("ENSG00000133703", 25227400)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_exon_neg_strand_by_gene_id_3():
-    pos = gene_to_exon("ENSG00000133703", 25227380, 25227400)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_exon_neg_strand_by_gene_name():
-    pos = gene_to_exon("KRAS", 25250929)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].exon_id, "ENSE00000000028"
-    assert pos[0].start == 25250751
-    assert pos[0].end == 25250929
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_exon_neg_strand_by_gene_name_2():
-    pos = gene_to_exon("KRAS", 25227400)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_exon_neg_strand_by_gene_name_3():
-    pos = gene_to_exon("KRAS", 25227380, 25227400)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_exon_by_contig_id():
-    # TODO: This query can be useful but right now it is very slow because it iterates through every gene on chr12.
-    # result = sorted([i.exon_id for i in gene_to_exon("12", 25245275)])
-    # assert result == ['ENSE00000936617', 'ENSE00000936617', 'ENSE00000936617', 'ENSE00000936617']
-    pass
-
-
-def test_gene_to_exon_by_exon_id():
-    result = sorted([i.exon_id for i in gene_to_exon("ENSE00000936617", 25245275)])
-    assert result == ["ENSE00000936617", "ENSE00000936617", "ENSE00000936617", "ENSE00000936617"]
-
-
-def test_gene_to_exon_by_protein_id():
-    result = sorted([i.exon_id for i in gene_to_exon("ENSP00000256078", 25245275)])
-    assert result == ["ENSE00000936617", "ENSE00000936617", "ENSE00000936617", "ENSE00000936617"]
-
-
-def test_gene_to_exon_by_transcript_id():
-    result = sorted([i.exon_id for i in gene_to_exon("ENST00000256078", 25245275)])
-    assert result == ["ENSE00000936617", "ENSE00000936617", "ENSE00000936617", "ENSE00000936617"]
-
-
-def test_gene_to_exon_by_transcript_name():
-    result = sorted([i.exon_id for i in gene_to_exon("KRAS-201", 25245275)])
-    assert result == ["ENSE00000936617", "ENSE00000936617", "ENSE00000936617", "ENSE00000936617"]
-
-
-def test_gene_to_gene_pos_strand_by_gene_id():
-    pos = gene_to_gene("ENSG00000157404", 54657918)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54657918
-    assert pos[0].end == 54657918
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_gene_pos_strand_by_gene_id_2():
-    pos = gene_to_gene("ENSG00000157404", 54658000)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54658000
-    assert pos[0].end == 54658000
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_gene_pos_strand_by_gene_id_3():
-    pos = gene_to_gene("ENSG00000157404", 54658000, 54658001)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54658000
-    assert pos[0].end == 54658001
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_gene_pos_strand_by_gene_name():
-    pos = gene_to_gene("KIT", 54657918)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54657918
-    assert pos[0].end == 54657918
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_gene_pos_strand_by_gene_name_2():
-    pos = gene_to_gene("KIT", 54658000)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54658000
-    assert pos[0].end == 54658000
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_gene_pos_strand_by_gene_name_3():
-    pos = gene_to_gene("KIT", 54658000, 54658001)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54658000
-    assert pos[0].end == 54658001
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_gene_neg_strand_by_gene_id():
-    pos = gene_to_gene("ENSG00000133703", 25205246)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25205246
-    assert pos[0].end == 25205246
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_gene_neg_strand_by_gene_id_2():
-    pos = gene_to_gene("ENSG00000133703", 25205300)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25205300
-    assert pos[0].end == 25205300
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_gene_neg_strand_by_gene_id_3():
-    pos = gene_to_gene("ENSG00000133703", 25205300, 25205301)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25205300
-    assert pos[0].end == 25205301
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_gene_neg_strand_by_gene_name():
-    pos = gene_to_gene("KRAS", 25205246)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25205246
-    assert pos[0].end == 25205246
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_gene_neg_strand_by_gene_name_2():
-    pos = gene_to_gene("KRAS", 25205300)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25205300
-    assert pos[0].end == 25205300
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_gene_neg_strand_by_gene_name_3():
-    pos = gene_to_gene("KRAS", 25205300, 25205301)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25205300
-    assert pos[0].end == 25205301
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_gene_by_contig_id():
-    # TODO: This query can be useful but right now it is very slow because it iterates through every gene on chr12.
-    # result = sorted([i.gene_id for i in gene_to_gene("12", 25245275)])
-    # assert result == ['ENSE00000936617', 'ENSE00000936617', 'ENSE00000936617', 'ENSE00000936617']
-    pass
-
-
-def test_gene_to_gene_by_exon_id():
-    result = sorted([i.gene_id for i in gene_to_gene("ENSE00000936617", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_gene_to_gene_by_protein_id():
-    result = sorted([i.gene_id for i in gene_to_gene("ENSP00000256078", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_gene_to_gene_by_transcript_id():
-    result = sorted([i.gene_id for i in gene_to_gene("ENST00000256078", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_gene_to_gene_by_transcript_name():
-    result = sorted([i.gene_id for i in gene_to_gene("KRAS-201", 25245275)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_gene_to_protein_pos_strand_by_gene_id():
-    pos = gene_to_protein("ENSG00000157404", 54658015)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000288135"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_pos_strand_by_gene_id_2():
-    pos = gene_to_protein("ENSG00000157404", 54695656)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000288135"
-    assert pos[0].start == 71
-    assert pos[0].end == 71
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_pos_strand_by_gene_id_3():
-    pos = gene_to_protein("ENSG00000157404", 54695656, 54695664)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000288135"
-    assert pos[0].start == 71
-    assert pos[0].end == 74
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_pos_strand_by_gene_name():
-    pos = gene_to_protein("KIT", 54658015)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000288135"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_pos_strand_by_gene_name_2():
-    pos = gene_to_protein("KIT", 54695656)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000288135"
-    assert pos[0].start == 71
-    assert pos[0].end == 71
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_pos_strand_by_gene_name_3():
-    pos = gene_to_protein("KIT", 54695656, 54695664)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000288135"
-    assert pos[0].start == 71
-    assert pos[0].end == 74
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_neg_strand_by_gene_id():
-    pos = gene_to_protein("ENSG00000133703", 25245384)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000256078"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_neg_strand_by_gene_id_2():
-    pos = gene_to_protein("ENSG00000133703", 25227402)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000256078"
-    assert pos[0].start == 41
-    assert pos[0].end == 41
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_neg_strand_by_gene_id_3():
-    pos = gene_to_protein("ENSG00000133703", 25227382, 25227402)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000256078"
-    assert pos[0].start == 41
-    assert pos[0].end == 48
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_neg_strand_by_gene_name():
-    pos = gene_to_protein("KRAS", 25245384)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000256078"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_neg_strand_by_gene_name_2():
-    pos = gene_to_protein("KRAS", 25227402)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000256078"
-    assert pos[0].start == 41
-    assert pos[0].end == 41
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_neg_strand_by_gene_name_3():
-    pos = gene_to_protein("KRAS", 25227382, 25227402)
-    assert isinstance(pos, list)
-    assert pos[0].protein_id, "ENSP00000256078"
-    assert pos[0].start == 41
-    assert pos[0].end == 48
-    assert pos[0].strand is None
-
-
-def test_gene_to_protein_by_contig_id():
-    # TODO: This query can be useful but right now it is very slow because it iterates through every gene on chr12.
-    # result = sorted([i.protein_id for i in gene_to_protein("12", 25245275)])
-    # assert result == ['ENSP00000256078', 'ENSP00000308495', 'ENSP00000451856', 'ENSP00000452512']
-    pass
-
-
-def test_gene_to_protein_by_exon_id():
-    result = sorted([i.protein_id for i in gene_to_protein("ENSE00000936617", 25245275)])
-    assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
-
-
-def test_gene_to_protein_by_protein_id():
-    result = sorted([i.protein_id for i in gene_to_protein("ENSP00000256078", 25245275)])
-    assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
-
-
-def test_gene_to_protein_by_transcript_id():
-    result = sorted([i.protein_id for i in gene_to_protein("ENST00000256078", 25245275)])
-    assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
-
-
-def test_gene_to_protein_by_transcript_name():
-    result = sorted([i.protein_id for i in gene_to_protein("KRAS-201", 25245275)])
-    assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
-
-
-def test_gene_to_transcript_pos_strand_by_gene_id():
-    pos = gene_to_transcript("ENSG00000188554", 43170481)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000341165"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_transcript_pos_strand_by_gene_id_2():
-    pos = gene_to_transcript("ENSG00000188554", 43189698)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000341165"
-    assert pos[0].start == 731
-    assert pos[0].end == 731
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_transcript_pos_strand_by_gene_id_3():
-    pos = gene_to_transcript("ENSG00000188554", 43189698, 43189784)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000341165"
-    assert pos[0].start == 731
-    assert pos[0].end == 817
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_transcript_pos_strand_by_gene_name():
-    pos = gene_to_transcript("NBR1", 43170481)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000341165"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_transcript_pos_strand_by_gene_name_2():
-    pos = gene_to_transcript("NBR1", 43189698)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000341165"
-    assert pos[0].start == 731
-    assert pos[0].end == 731
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_transcript_pos_strand_by_gene_name_3():
-    pos = gene_to_transcript("NBR1", 43189698, 43189784)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000341165"
-    assert pos[0].start == 731
-    assert pos[0].end == 817
-    assert pos[0].strand == "+"
-
-
-def test_gene_to_transcript_neg_strand_by_gene_id():
-    pos = gene_to_transcript("ENSG00000133703", 25250929)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 1
-    assert pos[0].end == 1
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_transcript_neg_strand_by_gene_id_2():
-    pos = gene_to_transcript("ENSG00000133703", 25225634)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 620
-    assert pos[0].end == 620
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_transcript_neg_strand_by_gene_id_3():
-    pos = gene_to_transcript("ENSG00000133703", 25225634, 25225651)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 603
-    assert pos[0].end == 620
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_transcript_neg_strand_by_gene_name():
-    pos = gene_to_transcript("KRAS", 25225634, 25225651)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 603
-    assert pos[0].end == 620
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_transcript_neg_strand_by_gene_name_2():
-    pos = gene_to_transcript("KRAS", 25225634, 25225651)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 603
-    assert pos[0].end == 620
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_transcript_neg_strand_by_gene_name_3():
-    pos = gene_to_transcript("KRAS", 25225634, 25225651)
-    assert isinstance(pos, list)
-    assert pos[0].transcript_id, "ENST00000256078"
-    assert pos[0].start == 603
-    assert pos[0].end == 620
-    assert pos[0].strand == "-"
-
-
-def test_gene_to_transcript_by_contig_id():
-    # TODO: This query can be useful but right now it is very slow because it iterates through every gene on chr12.
-    # result = sorted([i.transcript_id for i in gene_to_transcript("12", 25245275)])
-    # assert result == ['ENST00000256078', 'ENST00000311936', 'ENST00000556131', 'ENST00000557334']
-    pass
-
-
-def test_gene_to_transcript_by_exon_id():
-    result = sorted([i.transcript_id for i in gene_to_transcript("ENSE00000936617", 25245275)])
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-
-
-def test_gene_to_transcript_by_protein_id():
-    result = sorted([i.transcript_id for i in gene_to_transcript("ENSP00000256078", 25245275)])
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-
-
-def test_gene_to_transcript_by_transcript_id():
-    result = sorted([i.transcript_id for i in gene_to_transcript("ENST00000256078", 25245275)])
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
-
-
-def test_gene_to_transcript_by_transcript_name():
-    result = sorted([i.transcript_id for i in gene_to_transcript("KRAS-201", 25245275)])
-    assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
 def test_protein_to_cdna_pos_strand_by_protein_id():
     pos = protein_to_cdna("ENSP00000288135", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 1
@@ -2553,6 +1519,7 @@ def test_protein_to_cdna_pos_strand_by_protein_id():
 
 def test_protein_to_cdna_pos_strand_by_protein_id_2():
     pos = protein_to_cdna("ENSP00000288135", 12)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 34
@@ -2562,6 +1529,7 @@ def test_protein_to_cdna_pos_strand_by_protein_id_2():
 
 def test_protein_to_cdna_pos_strand_by_protein_id_3():
     pos = protein_to_cdna("ENSP00000288135", 12, 15)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 34
@@ -2571,6 +1539,7 @@ def test_protein_to_cdna_pos_strand_by_protein_id_3():
 
 def test_protein_to_cdna_neg_strand_by_protein_id():
     pos = protein_to_cdna("ENSP00000308495", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000311936"
     assert pos[0].start == 1
@@ -2580,6 +1549,7 @@ def test_protein_to_cdna_neg_strand_by_protein_id():
 
 def test_protein_to_cdna_neg_strand_by_protein_id_2():
     pos = protein_to_cdna("ENSP00000308495", 123)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000311936"
     assert pos[0].start == 367
@@ -2589,6 +1559,7 @@ def test_protein_to_cdna_neg_strand_by_protein_id_2():
 
 def test_protein_to_cdna_neg_strand_by_protein_id_3():
     pos = protein_to_cdna("ENSP00000308495", 123, 124)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000311936"
     assert pos[0].start == 367
@@ -2627,8 +1598,9 @@ def test_protein_to_cdna_by_transcript_name():
     assert result == ["ENST00000256078"]
 
 
-def test_protein_to_contig_pos_strand_by_protein_id():
-    pos = protein_to_contig("ENSP00000288135", 1)
+def test_protein_to_dna_pos_strand_by_protein_id():
+    pos = protein_to_dna("ENSP00000288135", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "4"
     assert pos[0].start == 54658015
@@ -2636,8 +1608,9 @@ def test_protein_to_contig_pos_strand_by_protein_id():
     assert pos[0].strand == "+"
 
 
-def test_protein_to_contig_pos_strand_by_protein_id_2():
-    pos = protein_to_contig("ENSP00000288135", 71)
+def test_protein_to_dna_pos_strand_by_protein_id_2():
+    pos = protein_to_dna("ENSP00000288135", 71)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "4"
     assert pos[0].start == 54695655
@@ -2645,8 +1618,9 @@ def test_protein_to_contig_pos_strand_by_protein_id_2():
     assert pos[0].strand == "+"
 
 
-def test_protein_to_contig_pos_strand_by_protein_id_3():
-    pos = protein_to_contig("ENSP00000288135", 71, 74)
+def test_protein_to_dna_pos_strand_by_protein_id_3():
+    pos = protein_to_dna("ENSP00000288135", 71, 74)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "4"
     assert pos[0].start == 54695655
@@ -2654,121 +1628,130 @@ def test_protein_to_contig_pos_strand_by_protein_id_3():
     assert pos[0].strand == "+"
 
 
-def test_protein_to_contig_neg_strand_by_protein_id():
-    pos = protein_to_contig("ENSP00000256078", 1)
+def test_protein_to_dna_neg_strand_by_protein_id():
+    pos = protein_to_dna("ENSP00000256078", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245382
     assert pos[0].end == 25245384
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_protein_to_contig_neg_strand_by_protein_id_2():
-    pos = protein_to_contig("ENSP00000256078", 6)
+def test_protein_to_dna_neg_strand_by_protein_id_2():
+    pos = protein_to_dna("ENSP00000256078", 6)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245367
     assert pos[0].end == 25245369
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_protein_to_contig_neg_strand_by_protein_id_3():
-    pos = protein_to_contig("ENSP00000256078", 6, 9)
+def test_protein_to_dna_neg_strand_by_protein_id_3():
+    pos = protein_to_dna("ENSP00000256078", 6, 9)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25245358
     assert pos[0].end == 25245369
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_protein_to_contig_by_contig_id():
+def test_protein_to_dna_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every protein on chr12.
-    # result = sorted([i.contig_id for i in protein_to_contig("12", 1)])
+    # result = sorted([i.contig_id for i in protein_to_dna("12", 1)])
     pass
 
 
-def test_protein_to_contig_by_exon_id():
-    result = sorted([i.contig_id for i in protein_to_contig("ENSE00000936617", 1)])
+def test_protein_to_dna_by_exon_id():
+    result = sorted([i.contig_id for i in protein_to_dna("ENSE00000936617", 1)])
     assert result == ["12"]
 
 
-def test_protein_to_contig_by_gene_id():
-    result = sorted([i.contig_id for i in protein_to_contig("ENSG00000133703", 1)])
+def test_protein_to_dna_by_gene_id():
+    result = sorted([i.contig_id for i in protein_to_dna("ENSG00000133703", 1)])
     assert result == ["12"]
 
 
-def test_protein_to_contig_by_gene_name():
-    result = sorted([i.contig_id for i in protein_to_contig("KRAS", 1)])
+def test_protein_to_dna_by_gene_name():
+    result = sorted([i.contig_id for i in protein_to_dna("KRAS", 1)])
     assert result == ["12"]
 
 
-def test_protein_to_contig_by_transcript_id():
-    result = sorted([i.contig_id for i in protein_to_contig("ENST00000256078", 1)])
+def test_protein_to_dna_by_transcript_id():
+    result = sorted([i.contig_id for i in protein_to_dna("ENST00000256078", 1)])
     assert result == ["12"]
 
 
-def test_protein_to_contig_by_transcript_name():
-    result = sorted([i.contig_id for i in protein_to_contig("KRAS-201", 1)])
+def test_protein_to_dna_by_transcript_name():
+    result = sorted([i.contig_id for i in protein_to_dna("KRAS-201", 1)])
     assert result == ["12"]
 
 
 def test_protein_to_exon_pos_strand_by_protein_id():
     pos = protein_to_exon("ENSP00000288135", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].exon_id, "ENSE00000000233"
-    assert pos[0].start == 54657957
-    assert pos[0].end == 54658081
+    assert pos[0].start == 1
+    assert pos[0].end == 1
     assert pos[0].strand == "+"
 
 
 def test_protein_to_exon_pos_strand_by_protein_id_2():
     pos = protein_to_exon("ENSP00000288135", 4)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].exon_id, "ENSE00000000233"
-    assert pos[0].start == 54657957
-    assert pos[0].end == 54658081
+    assert pos[0].start == 1
+    assert pos[0].end == 1
     assert pos[0].strand == "+"
 
 
 def test_protein_to_exon_pos_strand_by_protein_id_3():
     pos = protein_to_exon("ENSP00000288135", 4, 6)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].exon_id, "ENSE00000000233"
-    assert pos[0].start == 54657957
-    assert pos[0].end == 54658081
+    assert pos[0].start == 1
+    assert pos[0].end == 1
     assert pos[0].strand == "+"
 
 
 def test_protein_to_exon_neg_strand_by_protein_id():
     pos = protein_to_exon("ENSP00000308495", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000311936"
     assert pos[0].exon_id, "ENSE00000936617"
-    assert pos[0].start == 25245274
-    assert pos[0].end == 25245395
+    assert pos[0].start == 2
+    assert pos[0].end == 2
     assert pos[0].strand == "-"
 
 
 def test_protein_to_exon_neg_strand_by_protein_id_2():
     pos = protein_to_exon("ENSP00000308495", 4)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000311936"
     assert pos[0].exon_id, "ENSE00000936617"
-    assert pos[0].start == 25245274
-    assert pos[0].end == 25245395
+    assert pos[0].start == 2
+    assert pos[0].end == 2
     assert pos[0].strand == "-"
 
 
 def test_protein_to_exon_neg_strand_by_protein_id_3():
     pos = protein_to_exon("ENSP00000308495", 4, 6)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000311936"
     assert pos[0].exon_id, "ENSE00000936617"
-    assert pos[0].start == 25245274
-    assert pos[0].end == 25245395
+    assert pos[0].start == 2
+    assert pos[0].end == 2
     assert pos[0].strand == "-"
 
 
@@ -2803,143 +1786,64 @@ def test_protein_to_exon_by_transcript_name():
     assert result == ["ENSE00000936617"]
 
 
-def test_protein_to_gene_pos_strand_by_protein_id():
-    pos = protein_to_gene("ENSP00000288135", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54658015
-    assert pos[0].end == 54658017
-    assert pos[0].strand == "+"
-
-
-def test_protein_to_gene_pos_strand_by_protein_id_2():
-    pos = protein_to_gene("ENSP00000288135", 71)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54695655
-    assert pos[0].end == 54695657
-    assert pos[0].strand == "+"
-
-
-def test_protein_to_gene_pos_strand_by_protein_id_3():
-    pos = protein_to_gene("ENSP00000288135", 71, 74)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000157404"
-    assert pos[0].start == 54695655
-    assert pos[0].end == 54695666
-    assert pos[0].strand == "+"
-
-
-def test_protein_to_gene_neg_strand_by_protein_id():
-    pos = protein_to_gene("ENSP00000256078", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25245382
-    assert pos[0].end == 25245384
-    assert pos[0].strand == "-"
-
-
-def test_protein_to_gene_neg_strand_by_protein_id_2():
-    pos = protein_to_gene("ENSP00000256078", 6)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25245367
-    assert pos[0].end == 25245369
-    assert pos[0].strand == "-"
-
-
-def test_protein_to_gene_neg_strand_by_protein_id_3():
-    pos = protein_to_gene("ENSP00000256078", 6, 9)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25245358
-    assert pos[0].end == 25245369
-    assert pos[0].strand == "-"
-
-
-def test_protein_to_gene_by_contig_id():
-    # NOTE: I don't see this query being useful because it will return coordinates for every protein on chr12.
-    # result = sorted([i.gene_id for i in protein_to_gene("12", 1)])
-    pass
-
-
-def test_protein_to_gene_by_exon_id():
-    result = sorted([i.gene_id for i in protein_to_gene("ENSE00000936617", 1)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_protein_to_gene_by_gene_id():
-    result = sorted([i.gene_id for i in protein_to_gene("ENSG00000133703", 1)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_protein_to_gene_by_gene_name():
-    result = sorted([i.gene_id for i in protein_to_gene("KRAS", 1)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_protein_to_gene_by_transcript_id():
-    result = sorted([i.gene_id for i in protein_to_gene("ENST00000256078", 1)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_protein_to_gene_by_transcript_name():
-    result = sorted([i.gene_id for i in protein_to_gene("KRAS-201", 1)])
-    assert result == ["ENSG00000133703"]
-
-
 def test_protein_to_protein_pos_strand_by_protein_id():
     pos = protein_to_protein("ENSP00000288135", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 1
     assert pos[0].end == 1
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_protein_to_protein_pos_strand_by_protein_id_2():
     pos = protein_to_protein("ENSP00000288135", 12)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 12
     assert pos[0].end == 12
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_protein_to_protein_pos_strand_by_protein_id_3():
     pos = protein_to_protein("ENSP00000288135", 12, 21)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 12
     assert pos[0].end == 21
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
 def test_protein_to_protein_neg_strand_by_protein_id():
     pos = protein_to_protein("ENSP00000260947", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 1
     assert pos[0].end == 1
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_protein_to_protein_neg_strand_by_protein_id_2():
     pos = protein_to_protein("ENSP00000260947", 71)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 71
     assert pos[0].end == 71
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_protein_to_protein_neg_strand_by_protein_id_3():
     pos = protein_to_protein("ENSP00000260947", 71, 74)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 71
     assert pos[0].end == 74
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
 def test_protein_to_protein_by_contig_id():
@@ -2973,8 +1877,9 @@ def test_protein_to_protein_by_transcript_name():
     assert result == ["ENSP00000256078"]
 
 
-def test_protein_to_transcript_pos_strand_by_protein_id():
-    pos = protein_to_transcript("ENSP00000288135", 1)
+def test_protein_to_rna_pos_strand_by_protein_id():
+    pos = protein_to_rna("ENSP00000288135", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 59
@@ -2982,8 +1887,9 @@ def test_protein_to_transcript_pos_strand_by_protein_id():
     assert pos[0].strand == "+"
 
 
-def test_protein_to_transcript_pos_strand_by_protein_id_2():
-    pos = protein_to_transcript("ENSP00000288135", 12)
+def test_protein_to_rna_pos_strand_by_protein_id_2():
+    pos = protein_to_rna("ENSP00000288135", 12)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 92
@@ -2991,8 +1897,9 @@ def test_protein_to_transcript_pos_strand_by_protein_id_2():
     assert pos[0].strand == "+"
 
 
-def test_protein_to_transcript_pos_strand_by_protein_id_3():
-    pos = protein_to_transcript("ENSP00000288135", 12, 21)
+def test_protein_to_rna_pos_strand_by_protein_id_3():
+    pos = protein_to_rna("ENSP00000288135", 12, 21)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 92
@@ -3000,8 +1907,9 @@ def test_protein_to_transcript_pos_strand_by_protein_id_3():
     assert pos[0].strand == "+"
 
 
-def test_protein_to_transcript_neg_strand_by_protein_id():
-    pos = protein_to_transcript("ENSP00000260947", 1)
+def test_protein_to_rna_neg_strand_by_protein_id():
+    pos = protein_to_rna("ENSP00000260947", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000260947"
     assert pos[0].start == 115
@@ -3009,8 +1917,9 @@ def test_protein_to_transcript_neg_strand_by_protein_id():
     assert pos[0].strand == "-"
 
 
-def test_protein_to_transcript_neg_strand_by_protein_id_2():
-    pos = protein_to_transcript("ENSP00000260947", 71)
+def test_protein_to_rna_neg_strand_by_protein_id_2():
+    pos = protein_to_rna("ENSP00000260947", 71)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000260947"
     assert pos[0].start == 325
@@ -3018,8 +1927,9 @@ def test_protein_to_transcript_neg_strand_by_protein_id_2():
     assert pos[0].strand == "-"
 
 
-def test_protein_to_transcript_neg_strand_by_protein_id_3():
-    pos = protein_to_transcript("ENSP00000260947", 71, 74)
+def test_protein_to_rna_neg_strand_by_protein_id_3():
+    pos = protein_to_rna("ENSP00000260947", 71, 74)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000260947"
     assert pos[0].start == 325
@@ -3027,39 +1937,40 @@ def test_protein_to_transcript_neg_strand_by_protein_id_3():
     assert pos[0].strand == "-"
 
 
-def test_protein_to_transcript_by_contig_id():
+def test_protein_to_rna_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every protein on chr12.
-    # result = sorted([i.transcript_id for i in protein_to_transcript("12", 1)])
+    # result = sorted([i.transcript_id for i in protein_to_rna("12", 1)])
     pass
 
 
-def test_protein_to_transcript_by_exon_id():
-    result = sorted([i.transcript_id for i in protein_to_transcript("ENSE00000936617", 1)])
+def test_protein_to_rna_by_exon_id():
+    result = sorted([i.transcript_id for i in protein_to_rna("ENSE00000936617", 1)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_protein_to_transcript_by_gene_id():
-    result = sorted([i.transcript_id for i in protein_to_transcript("ENSG00000133703", 1)])
+def test_protein_to_rna_by_gene_id():
+    result = sorted([i.transcript_id for i in protein_to_rna("ENSG00000133703", 1)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_protein_to_transcript_by_gene_name():
-    result = sorted([i.transcript_id for i in protein_to_transcript("KRAS", 1)])
+def test_protein_to_rna_by_gene_name():
+    result = sorted([i.transcript_id for i in protein_to_rna("KRAS", 1)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_protein_to_transcript_by_transcript_id():
-    result = sorted([i.transcript_id for i in protein_to_transcript("ENST00000256078", 1)])
+def test_protein_to_rna_by_transcript_id():
+    result = sorted([i.transcript_id for i in protein_to_rna("ENST00000256078", 1)])
     assert result == ["ENST00000256078"]
 
 
-def test_protein_to_transcript_by_transcript_name():
-    result = sorted([i.transcript_id for i in protein_to_transcript("KRAS-201", 1)])
+def test_protein_to_rna_by_transcript_name():
+    result = sorted([i.transcript_id for i in protein_to_rna("KRAS-201", 1)])
     assert result == ["ENST00000256078"]
 
 
-def test_transcript_to_cdna_pos_strand_by_transcript_id():
-    pos = transcript_to_cdna("ENST00000288135", 98)
+def test_rna_to_cdna_pos_strand_by_transcript_id():
+    pos = rna_to_cdna("ENST00000288135", 98)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 40
@@ -3067,8 +1978,9 @@ def test_transcript_to_cdna_pos_strand_by_transcript_id():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_cdna_pos_strand_by_transcript_id_2():
-    pos = transcript_to_cdna("ENST00000288135", 100)
+def test_rna_to_cdna_pos_strand_by_transcript_id_2():
+    pos = rna_to_cdna("ENST00000288135", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 42
@@ -3076,8 +1988,9 @@ def test_transcript_to_cdna_pos_strand_by_transcript_id_2():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_cdna_pos_strand_by_transcript_id_3():
-    pos = transcript_to_cdna("ENST00000288135", 98, 100)
+def test_rna_to_cdna_pos_strand_by_transcript_id_3():
+    pos = rna_to_cdna("ENST00000288135", 98, 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 40
@@ -3085,8 +1998,9 @@ def test_transcript_to_cdna_pos_strand_by_transcript_id_3():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_cdna_pos_strand_by_transcript_name():
-    pos = transcript_to_cdna("KIT-201", 98)
+def test_rna_to_cdna_pos_strand_by_transcript_name():
+    pos = rna_to_cdna("KIT-201", 98)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 40
@@ -3094,8 +2008,9 @@ def test_transcript_to_cdna_pos_strand_by_transcript_name():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_cdna_pos_strand_by_transcript_name_2():
-    pos = transcript_to_cdna("KIT-201", 100)
+def test_rna_to_cdna_pos_strand_by_transcript_name_2():
+    pos = rna_to_cdna("KIT-201", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 42
@@ -3103,8 +2018,9 @@ def test_transcript_to_cdna_pos_strand_by_transcript_name_2():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_cdna_pos_strand_by_transcript_name_3():
-    pos = transcript_to_cdna("KIT-201", 98, 100)
+def test_rna_to_cdna_pos_strand_by_transcript_name_3():
+    pos = rna_to_cdna("KIT-201", 98, 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 40
@@ -3112,8 +2028,9 @@ def test_transcript_to_cdna_pos_strand_by_transcript_name_3():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_cdna_neg_strand_by_transcript_id():
-    pos = transcript_to_cdna("ENST00000256078", 191)
+def test_rna_to_cdna_neg_strand_by_transcript_id():
+    pos = rna_to_cdna("ENST00000256078", 191)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 1
@@ -3121,8 +2038,9 @@ def test_transcript_to_cdna_neg_strand_by_transcript_id():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_cdna_neg_strand_by_transcript_id_2():
-    pos = transcript_to_cdna("ENST00000256078", 301)
+def test_rna_to_cdna_neg_strand_by_transcript_id_2():
+    pos = rna_to_cdna("ENST00000256078", 301)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 111
@@ -3130,8 +2048,9 @@ def test_transcript_to_cdna_neg_strand_by_transcript_id_2():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_cdna_neg_strand_by_transcript_id_3():
-    pos = transcript_to_cdna("ENST00000256078", 301, 323)
+def test_rna_to_cdna_neg_strand_by_transcript_id_3():
+    pos = rna_to_cdna("ENST00000256078", 301, 323)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 111
@@ -3139,8 +2058,9 @@ def test_transcript_to_cdna_neg_strand_by_transcript_id_3():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_cdna_neg_strand_by_transcript_name():
-    pos = transcript_to_cdna("KRAS-201", 191)
+def test_rna_to_cdna_neg_strand_by_transcript_name():
+    pos = rna_to_cdna("KRAS-201", 191)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 1
@@ -3148,8 +2068,9 @@ def test_transcript_to_cdna_neg_strand_by_transcript_name():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_cdna_neg_strand_by_transcript_name_2():
-    pos = transcript_to_cdna("KRAS-201", 301)
+def test_rna_to_cdna_neg_strand_by_transcript_name_2():
+    pos = rna_to_cdna("KRAS-201", 301)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 111
@@ -3157,8 +2078,9 @@ def test_transcript_to_cdna_neg_strand_by_transcript_name_2():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_cdna_neg_strand_by_transcript_name_3():
-    pos = transcript_to_cdna("KRAS-201", 301, 323)
+def test_rna_to_cdna_neg_strand_by_transcript_name_3():
+    pos = rna_to_cdna("KRAS-201", 301, 323)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 111
@@ -3166,34 +2088,35 @@ def test_transcript_to_cdna_neg_strand_by_transcript_name_3():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_cdna_by_contig_id():
+def test_rna_to_cdna_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every transcript on chr12.
-    # result = sorted([i.transcript_id for i in transcript_to_cdna("12", 301)])
+    # result = sorted([i.transcript_id for i in rna_to_cdna("12", 301)])
     pass
 
 
-def test_transcript_to_cdna_by_exon_id():
-    result = sorted([i.transcript_id for i in transcript_to_cdna("ENSE00000936617", 301)])
+def test_rna_to_cdna_by_exon_id():
+    result = sorted([i.transcript_id for i in rna_to_cdna("ENSE00000936617", 301)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_transcript_to_cdna_by_gene_id():
-    result = sorted([i.transcript_id for i in transcript_to_cdna("ENSG00000133703", 301)])
+def test_rna_to_cdna_by_gene_id():
+    result = sorted([i.transcript_id for i in rna_to_cdna("ENSG00000133703", 301)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_transcript_to_cdna_by_gene_name():
-    result = sorted([i.transcript_id for i in transcript_to_cdna("KRAS", 301)])
+def test_rna_to_cdna_by_gene_name():
+    result = sorted([i.transcript_id for i in rna_to_cdna("KRAS", 301)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_transcript_to_cdna_by_protein_id():
-    result = sorted([i.transcript_id for i in transcript_to_cdna("ENSP00000256078", 301)])
+def test_rna_to_cdna_by_protein_id():
+    result = sorted([i.transcript_id for i in rna_to_cdna("ENSP00000256078", 301)])
     assert result == ["ENST00000256078"]
 
 
-def test_transcript_to_contig_pos_strand_by_transcript_id():
-    pos = transcript_to_contig("ENST00000341165", 1)
+def test_rna_to_dna_pos_strand_by_transcript_id():
+    pos = rna_to_dna("ENST00000341165", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "17"
     assert pos[0].start == 43170481
@@ -3201,8 +2124,9 @@ def test_transcript_to_contig_pos_strand_by_transcript_id():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_contig_pos_strand_by_transcript_id_2():
-    pos = transcript_to_contig("ENST00000341165", 731)
+def test_rna_to_dna_pos_strand_by_transcript_id_2():
+    pos = rna_to_dna("ENST00000341165", 731)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "17"
     assert pos[0].start == 43189698
@@ -3210,8 +2134,9 @@ def test_transcript_to_contig_pos_strand_by_transcript_id_2():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_contig_pos_strand_by_transcript_id_3():
-    pos = transcript_to_contig("ENST00000341165", 731, 817)
+def test_rna_to_dna_pos_strand_by_transcript_id_3():
+    pos = rna_to_dna("ENST00000341165", 731, 817)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "17"
     assert pos[0].start == 43189698
@@ -3219,8 +2144,9 @@ def test_transcript_to_contig_pos_strand_by_transcript_id_3():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_contig_pos_strand_by_transcript_name():
-    pos = transcript_to_contig("NBR1-201", 1)
+def test_rna_to_dna_pos_strand_by_transcript_name():
+    pos = rna_to_dna("NBR1-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "17"
     assert pos[0].start == 43170481
@@ -3228,8 +2154,9 @@ def test_transcript_to_contig_pos_strand_by_transcript_name():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_contig_pos_strand_by_transcript_name_2():
-    pos = transcript_to_contig("NBR1-201", 731)
+def test_rna_to_dna_pos_strand_by_transcript_name_2():
+    pos = rna_to_dna("NBR1-201", 731)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "17"
     assert pos[0].start == 43189698
@@ -3237,8 +2164,9 @@ def test_transcript_to_contig_pos_strand_by_transcript_name_2():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_contig_pos_strand_by_transcript_name_3():
-    pos = transcript_to_contig("NBR1-201", 731, 817)
+def test_rna_to_dna_pos_strand_by_transcript_name_3():
+    pos = rna_to_dna("NBR1-201", 731, 817)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "17"
     assert pos[0].start == 43189698
@@ -3246,62 +2174,69 @@ def test_transcript_to_contig_pos_strand_by_transcript_name_3():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_contig_neg_strand_by_transcript_id():
-    pos = transcript_to_contig("ENST00000256078", 1)
+def test_rna_to_dna_neg_strand_by_transcript_id():
+    pos = rna_to_dna("ENST00000256078", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25250929
     assert pos[0].end == 25250929
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_contig_neg_strand_by_transcript_id_2():
-    pos = transcript_to_contig("ENST00000256078", 466)
+def test_rna_to_dna_neg_strand_by_transcript_id_2():
+    pos = rna_to_dna("ENST00000256078", 466)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25227248
     assert pos[0].end == 25227248
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_contig_neg_strand_by_transcript_id_3():
-    pos = transcript_to_contig("ENST00000256078", 466, 501)
+def test_rna_to_dna_neg_strand_by_transcript_id_3():
+    pos = rna_to_dna("ENST00000256078", 466, 501)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25225753
     assert pos[0].end == 25227248
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_contig_neg_strand_by_transcript_name():
-    pos = transcript_to_contig("KRAS-201", 1)
+def test_rna_to_dna_neg_strand_by_transcript_name():
+    pos = rna_to_dna("KRAS-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25250929
     assert pos[0].end == 25250929
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_contig_neg_strand_by_transcript_name_2():
-    pos = transcript_to_contig("KRAS-201", 466)
+def test_rna_to_dna_neg_strand_by_transcript_name_2():
+    pos = rna_to_dna("KRAS-201", 466)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25227248
     assert pos[0].end == 25227248
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_contig_neg_strand_by_transcript_name_3():
-    pos = transcript_to_contig("KRAS-201", 466, 501)
+def test_rna_to_dna_neg_strand_by_transcript_name_3():
+    pos = rna_to_dna("KRAS-201", 466, 501)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "12"
     assert pos[0].start == 25225753
     assert pos[0].end == 25227248
-    assert pos[0].strand == "+"
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_contig_by_refseq_id():
-    pos = transcript_to_contig("NM_001004491", 1)
+def test_rna_to_dna_by_refseq_id():
+    pos = rna_to_dna("NM_001004491", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].contig_id == "1"
     assert pos[0].start == 247965233
@@ -3309,457 +2244,340 @@ def test_transcript_to_contig_by_refseq_id():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_contig_by_contig_id():
+def test_rna_to_dna_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every transcript on chr12.
-    # result = sorted([i.contig_id for i in transcript_to_contig("12", 301)])
+    # result = sorted([i.contig_id for i in rna_to_dna("12", 301)])
     pass
 
 
-def test_transcript_to_contig_by_exon_id():
-    result = sorted([i.contig_id for i in transcript_to_contig("ENSE00000936617", 301)])
+def test_rna_to_dna_by_exon_id():
+    result = sorted([i.contig_id for i in rna_to_dna("ENSE00000936617", 301)])
     assert result == ["12", "12", "12"]
 
 
-def test_transcript_to_contig_by_gene_id():
-    result = sorted([i.contig_id for i in transcript_to_contig("ENSG00000133703", 301)])
+def test_rna_to_dna_by_gene_id():
+    result = sorted([i.contig_id for i in rna_to_dna("ENSG00000133703", 301)])
     assert result == ["12", "12", "12"]
 
 
-def test_transcript_to_contig_by_gene_name():
-    result = sorted([i.contig_id for i in transcript_to_contig("KRAS", 301)])
+def test_rna_to_dna_by_gene_name():
+    result = sorted([i.contig_id for i in rna_to_dna("KRAS", 301)])
+    print(rna_to_dna("KRAS", 301))
     assert result == ["12", "12", "12"]
 
 
-def test_transcript_to_contig_by_protein_id():
-    result = sorted([i.contig_id for i in transcript_to_contig("ENSP00000256078", 301)])
+def test_rna_to_dna_by_protein_id():
+    result = sorted([i.contig_id for i in rna_to_dna("ENSP00000256078", 301)])
     assert result == ["12"]
 
 
-def test_transcript_to_exon_pos_strand_by_transcript_id():
-    pos = transcript_to_exon("ENST00000380152", 1)
+def test_rna_to_exon_pos_strand_by_transcript_id():
+    pos = rna_to_exon("ENST00000380152", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00001184784"
-    assert pos[0].start == 32315474
-    assert pos[0].end == 32315667
+    assert pos[0].start == 1
+    assert pos[0].end == 1
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_exon_pos_strand_by_transcript_id_2():
-    pos = transcript_to_exon("ENST00000380152", 500)
+def test_rna_to_exon_pos_strand_by_transcript_id_2():
+    pos = rna_to_exon("ENST00000380152", 500)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003666217"
-    assert pos[0].start == 32319077
-    assert pos[0].end == 32319325
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_exon_pos_strand_by_transcript_id_3():
-    pos = transcript_to_exon("ENST00000380152", 500, 510)
+def test_rna_to_exon_pos_strand_by_transcript_id_3():
+    pos = rna_to_exon("ENST00000380152", 500, 510)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003666217"
-    assert pos[0].start == 32319077
-    assert pos[0].end == 32319325
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_exon_pos_strand_by_transcript_name():
-    pos = transcript_to_exon("BRCA2-201", 1)
+def test_rna_to_exon_pos_strand_by_transcript_name():
+    pos = rna_to_exon("BRCA2-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00001184784"
-    assert pos[0].start == 32315474
-    assert pos[0].end == 32315667
+    assert pos[0].start == 1
+    assert pos[0].end == 1
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_exon_pos_strand_by_transcript_name_2():
-    pos = transcript_to_exon("BRCA2-201", 500)
+def test_rna_to_exon_pos_strand_by_transcript_name_2():
+    pos = rna_to_exon("BRCA2-201", 500)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003666217"
-    assert pos[0].start == 32319077
-    assert pos[0].end == 32319325
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_exon_pos_strand_by_transcript_name_3():
-    pos = transcript_to_exon("BRCA2-201", 500, 510)
+def test_rna_to_exon_pos_strand_by_transcript_name_3():
+    pos = rna_to_exon("BRCA2-201", 500, 510)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000380152"
     assert pos[0].exon_id, "ENSE00003666217"
-    assert pos[0].start == 32319077
-    assert pos[0].end == 32319325
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_exon_neg_strand_by_transcript_id():
-    pos = transcript_to_exon("ENST00000256078", 1)
+def test_rna_to_exon_neg_strand_by_transcript_id():
+    pos = rna_to_exon("ENST00000256078", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00000000028"
-    assert pos[0].start == 25250751
-    assert pos[0].end == 25250929
+    assert pos[0].start == 1
+    assert pos[0].end == 1
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_exon_neg_strand_by_transcript_id_2():
-    pos = transcript_to_exon("ENST00000256078", 400)
+def test_rna_to_exon_neg_strand_by_transcript_id_2():
+    pos = rna_to_exon("ENST00000256078", 400)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_exon_neg_strand_by_transcript_id_3():
-    pos = transcript_to_exon("ENST00000256078", 400, 420)
+def test_rna_to_exon_neg_strand_by_transcript_id_3():
+    pos = rna_to_exon("ENST00000256078", 400, 420)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_exon_neg_strand_by_transcript_name():
-    pos = transcript_to_exon("KRAS-201", 1)
+def test_rna_to_exon_neg_strand_by_transcript_name():
+    pos = rna_to_exon("KRAS-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00000000028"
-    assert pos[0].start == 25250751
-    assert pos[0].end == 25250929
+    assert pos[0].start == 1
+    assert pos[0].end == 1
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_exon_neg_strand_by_transcript_name_2():
-    pos = transcript_to_exon("KRAS-201", 400)
+def test_rna_to_exon_neg_strand_by_transcript_name_2():
+    pos = rna_to_exon("KRAS-201", 400)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_exon_neg_strand_by_transcript_name_3():
-    pos = transcript_to_exon("KRAS-201", 400, 420)
+def test_rna_to_exon_neg_strand_by_transcript_name_3():
+    pos = rna_to_exon("KRAS-201", 400, 420)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].exon_id, "ENSE00001719809"
-    assert pos[0].start == 25227234
-    assert pos[0].end == 25227412
+    assert pos[0].start == 3
+    assert pos[0].end == 3
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_exon_by_contig_id():
+def test_rna_to_exon_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every transcript on chr12.
-    # result = sorted([i.exon_id for i in transcript_to_exon("12", 1)])
+    # result = sorted([i.exon_id for i in rna_to_exon("12", 1)])
     pass
 
 
-def test_transcript_to_exon_by_exon_id():
-    result = sorted([i.exon_id for i in transcript_to_exon("ENSE00000936617", 1)])
+def test_rna_to_exon_by_exon_id():
+    result = sorted([i.exon_id for i in rna_to_exon("ENSE00000936617", 1)])
     assert result == ["ENSE00000000028", "ENSE00001189804", "ENSE00002446502", "ENSE00002530521"]
 
 
-def test_transcript_to_exon_by_gene_id():
-    result = sorted([i.exon_id for i in transcript_to_exon("ENSG00000133703", 1)])
+def test_rna_to_exon_by_gene_id():
+    result = sorted([i.exon_id for i in rna_to_exon("ENSG00000133703", 1)])
     assert result == ["ENSE00000000028", "ENSE00001189804", "ENSE00002446502", "ENSE00002530521"]
 
 
-def test_transcript_to_exon_by_gene_name():
-    result = sorted([i.exon_id for i in transcript_to_exon("KRAS", 1)])
+def test_rna_to_exon_by_gene_name():
+    result = sorted([i.exon_id for i in rna_to_exon("KRAS", 1)])
     assert result == ["ENSE00000000028", "ENSE00001189804", "ENSE00002446502", "ENSE00002530521"]
 
 
-def test_transcript_to_exon_by_protein_id():
-    result = sorted([i.exon_id for i in transcript_to_exon("ENSP00000256078", 1)])
+def test_rna_to_exon_by_protein_id():
+    result = sorted([i.exon_id for i in rna_to_exon("ENSP00000256078", 1)])
     assert result == ["ENSE00000000028"]
 
 
-def test_transcript_to_gene_pos_strand_by_transcript_id():
-    pos = transcript_to_gene("ENST00000341165", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000188554"
-    assert pos[0].start == 43170481
-    assert pos[0].end == 43170481
-    assert pos[0].strand == "+"
-
-
-def test_transcript_to_gene_pos_strand_by_transcript_id_2():
-    pos = transcript_to_gene("ENST00000341165", 731)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000188554"
-    assert pos[0].start == 43189698
-    assert pos[0].end == 43189698
-    assert pos[0].strand == "+"
-
-
-def test_transcript_to_gene_pos_strand_by_transcript_id_3():
-    pos = transcript_to_gene("ENST00000341165", 731, 817)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000188554"
-    assert pos[0].start == 43189698
-    assert pos[0].end == 43189784
-    assert pos[0].strand == "+"
-
-
-def test_transcript_to_gene_pos_strand_by_transcript_name():
-    pos = transcript_to_gene("NBR1-201", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000188554"
-    assert pos[0].start == 43170481
-    assert pos[0].end == 43170481
-    assert pos[0].strand == "+"
-
-
-def test_transcript_to_gene_pos_strand_by_transcript_name_2():
-    pos = transcript_to_gene("NBR1-201", 731)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000188554"
-    assert pos[0].start == 43189698
-    assert pos[0].end == 43189698
-    assert pos[0].strand == "+"
-
-
-def test_transcript_to_gene_pos_strand_by_transcript_name_3():
-    pos = transcript_to_gene("NBR1-201", 731, 817)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000188554"
-    assert pos[0].start == 43189698
-    assert pos[0].end == 43189784
-    assert pos[0].strand == "+"
-
-
-def test_transcript_to_gene_neg_strand_by_transcript_id():
-    pos = transcript_to_gene("ENST00000256078", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25250929
-    assert pos[0].end == 25250929
-    assert pos[0].strand == "-"
-
-
-def test_transcript_to_gene_neg_strand_by_transcript_id_2():
-    pos = transcript_to_gene("ENST00000256078", 466)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25227248
-    assert pos[0].end == 25227248
-    assert pos[0].strand == "-"
-
-
-def test_transcript_to_gene_neg_strand_by_transcript_id_3():
-    pos = transcript_to_gene("ENST00000256078", 466, 501)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25225753
-    assert pos[0].end == 25227248
-    assert pos[0].strand == "-"
-
-
-def test_transcript_to_gene_neg_strand_by_transcript_name():
-    pos = transcript_to_gene("KRAS-201", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25250929
-    assert pos[0].end == 25250929
-    assert pos[0].strand == "-"
-
-
-def test_transcript_to_gene_neg_strand_by_transcript_name_2():
-    pos = transcript_to_gene("KRAS-201", 466)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25227248
-    assert pos[0].end == 25227248
-    assert pos[0].strand == "-"
-
-
-def test_transcript_to_gene_neg_strand_by_transcript_name_3():
-    pos = transcript_to_gene("KRAS-201", 466, 501)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000133703"
-    assert pos[0].start == 25225753
-    assert pos[0].end == 25227248
-    assert pos[0].strand == "-"
-
-
-def test_transcript_to_gene_by_refseq_id():
-    pos = transcript_to_gene("NM_001004491", 1)
-    assert isinstance(pos, list)
-    assert pos[0].gene_id, "ENSG00000187080"
-    assert pos[0].start == 247965233
-    assert pos[0].end == 247965233
-    assert pos[0].strand == "+"
-
-
-def test_transcript_to_gene_by_contig_id():
-    # NOTE: I don't see this query being useful because it will return coordinates for every transcript on chr12.
-    # result = sorted([i.gene_id for i in transcript_to_gene("12", 1)])
-    pass
-
-
-def test_transcript_to_gene_by_exon_id():
-    result = sorted([i.gene_id for i in transcript_to_gene("ENSE00000936617", 1)])
-    assert result == ["ENSG00000133703", "ENSG00000133703"]
-
-
-def test_transcript_to_gene_by_gene_id():
-    result = sorted([i.gene_id for i in transcript_to_gene("ENSG00000133703", 1)])
-    assert result == ["ENSG00000133703", "ENSG00000133703"]
-
-
-def test_transcript_to_gene_by_gene_name():
-    result = sorted([i.gene_id for i in transcript_to_gene("KRAS", 1)])
-    assert result == ["ENSG00000133703", "ENSG00000133703"]
-
-
-def test_transcript_to_gene_by_protein_id():
-    result = sorted([i.gene_id for i in transcript_to_gene("ENSP00000256078", 1)])
-    assert result == ["ENSG00000133703"]
-
-
-def test_transcript_to_protein_pos_strand_by_transcript_id():
-    pos = transcript_to_protein("ENST00000288135", 98)
+def test_rna_to_protein_pos_strand_by_transcript_id():
+    pos = rna_to_protein("ENST00000288135", 98)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 14
     assert pos[0].end == 14
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
-def test_transcript_to_protein_pos_strand_by_transcript_id_2():
-    pos = transcript_to_protein("ENST00000288135", 128)
+def test_rna_to_protein_pos_strand_by_transcript_id_2():
+    pos = rna_to_protein("ENST00000288135", 128)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 24
     assert pos[0].end == 24
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
-def test_transcript_to_protein_pos_strand_by_transcript_id_3():
-    pos = transcript_to_protein("ENST00000288135", 128, 145)
+def test_rna_to_protein_pos_strand_by_transcript_id_3():
+    pos = rna_to_protein("ENST00000288135", 128, 145)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 24
     assert pos[0].end == 29
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
-def test_transcript_to_protein_pos_strand_by_transcript_name():
-    pos = transcript_to_protein("KIT-201", 98)
+def test_rna_to_protein_pos_strand_by_transcript_name():
+    pos = rna_to_protein("KIT-201", 98)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 14
     assert pos[0].end == 14
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
-def test_transcript_to_protein_pos_strand_by_transcript_name_2():
-    pos = transcript_to_protein("KIT-201", 128)
+def test_rna_to_protein_pos_strand_by_transcript_name_2():
+    pos = rna_to_protein("KIT-201", 128)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 24
     assert pos[0].end == 24
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
-def test_transcript_to_protein_pos_strand_by_transcript_name_3():
-    pos = transcript_to_protein("KIT-201", 128, 145)
+def test_rna_to_protein_pos_strand_by_transcript_name_3():
+    pos = rna_to_protein("KIT-201", 128, 145)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000288135"
     assert pos[0].start == 24
     assert pos[0].end == 29
-    assert pos[0].strand is None
+    assert pos[0].strand == "+"
 
 
-def test_transcript_to_protein_neg_strand_by_transcript_id():
-    pos = transcript_to_protein("ENST00000260947", 115)
+def test_rna_to_protein_neg_strand_by_transcript_id():
+    pos = rna_to_protein("ENST00000260947", 115)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 1
     assert pos[0].end == 1
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_protein_neg_strand_by_transcript_id_2():
-    pos = transcript_to_protein("ENST00000260947", 346)
+def test_rna_to_protein_neg_strand_by_transcript_id_2():
+    pos = rna_to_protein("ENST00000260947", 346)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 78
     assert pos[0].end == 78
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_protein_neg_strand_by_transcript_id_3():
-    pos = transcript_to_protein("ENST00000260947", 345, 356)
+def test_rna_to_protein_neg_strand_by_transcript_id_3():
+    pos = rna_to_protein("ENST00000260947", 345, 356)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 77
     assert pos[0].end == 81
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_protein_neg_strand_by_transcript_name():
-    pos = transcript_to_protein("BARD1-201", 115)
+def test_rna_to_protein_neg_strand_by_transcript_name():
+    pos = rna_to_protein("BARD1-201", 115)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 1
     assert pos[0].end == 1
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_protein_neg_strand_by_transcript_name_2():
-    pos = transcript_to_protein("BARD1-201", 346)
+def test_rna_to_protein_neg_strand_by_transcript_name_2():
+    pos = rna_to_protein("BARD1-201", 346)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 78
     assert pos[0].end == 78
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_protein_neg_strand_by_transcript_name_3():
-    pos = transcript_to_protein("BARD1-201", 345, 356)
+def test_rna_to_protein_neg_strand_by_transcript_name_3():
+    pos = rna_to_protein("BARD1-201", 345, 356)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].protein_id, "ENSP00000260947"
     assert pos[0].start == 77
     assert pos[0].end == 81
-    assert pos[0].strand is None
+    assert pos[0].strand == "-"
 
 
-def test_transcript_to_protein_by_contig_id():
+def test_rna_to_protein_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for every transcript on chr12.
-    # result = sorted([i.protein_id for i in transcript_to_protein("12", 1)])
+    # result = sorted([i.protein_id for i in rna_to_protein("12", 1)])
     pass
 
 
-def test_transcript_to_protein_by_exon_id():
-    result = sorted([i.protein_id for i in transcript_to_protein("ENSE00000936617", 301)])
+def test_rna_to_protein_by_exon_id():
+    result = sorted([i.protein_id for i in rna_to_protein("ENSE00000936617", 301)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_transcript_to_protein_by_gene_id():
-    result = sorted([i.protein_id for i in transcript_to_protein("ENSG00000133703", 301)])
+def test_rna_to_protein_by_gene_id():
+    result = sorted([i.protein_id for i in rna_to_protein("ENSG00000133703", 301)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_transcript_to_protein_by_gene_name():
-    result = sorted([i.protein_id for i in transcript_to_protein("KRAS", 301)])
+def test_rna_to_protein_by_gene_name():
+    result = sorted([i.protein_id for i in rna_to_protein("KRAS", 301)])
     assert result == ["ENSP00000256078", "ENSP00000308495", "ENSP00000451856", "ENSP00000452512"]
 
 
-def test_transcript_to_protein_by_protein_id():
-    result = sorted([i.protein_id for i in transcript_to_protein("ENSP00000256078", 301)])
+def test_rna_to_protein_by_protein_id():
+    result = sorted([i.protein_id for i in rna_to_protein("ENSP00000256078", 301)])
     assert result == ["ENSP00000256078"]
 
 
-def test_transcript_to_transcript_pos_strand_by_transcript_id():
-    pos = transcript_to_transcript("ENST00000288135", 1)
+def test_rna_to_rna_pos_strand_by_transcript_id():
+    pos = rna_to_rna("ENST00000288135", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 1
@@ -3767,8 +2585,9 @@ def test_transcript_to_transcript_pos_strand_by_transcript_id():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_transcript_pos_strand_by_transcript_id_2():
-    pos = transcript_to_transcript("ENST00000288135", 100)
+def test_rna_to_rna_pos_strand_by_transcript_id_2():
+    pos = rna_to_rna("ENST00000288135", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 100
@@ -3776,8 +2595,9 @@ def test_transcript_to_transcript_pos_strand_by_transcript_id_2():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_transcript_pos_strand_by_transcript_id_3():
-    pos = transcript_to_transcript("ENST00000288135", 98, 100)
+def test_rna_to_rna_pos_strand_by_transcript_id_3():
+    pos = rna_to_rna("ENST00000288135", 98, 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 98
@@ -3785,8 +2605,9 @@ def test_transcript_to_transcript_pos_strand_by_transcript_id_3():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_transcript_pos_strand_by_transcript_name():
-    pos = transcript_to_transcript("KIT-201", 1)
+def test_rna_to_rna_pos_strand_by_transcript_name():
+    pos = rna_to_rna("KIT-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 1
@@ -3794,8 +2615,9 @@ def test_transcript_to_transcript_pos_strand_by_transcript_name():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_transcript_pos_strand_by_transcript_name_2():
-    pos = transcript_to_transcript("KIT-201", 100)
+def test_rna_to_rna_pos_strand_by_transcript_name_2():
+    pos = rna_to_rna("KIT-201", 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 100
@@ -3803,8 +2625,9 @@ def test_transcript_to_transcript_pos_strand_by_transcript_name_2():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_transcript_pos_strand_by_transcript_name_3():
-    pos = transcript_to_transcript("KIT-201", 98, 100)
+def test_rna_to_rna_pos_strand_by_transcript_name_3():
+    pos = rna_to_rna("KIT-201", 98, 100)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000288135"
     assert pos[0].start == 98
@@ -3812,8 +2635,9 @@ def test_transcript_to_transcript_pos_strand_by_transcript_name_3():
     assert pos[0].strand == "+"
 
 
-def test_transcript_to_transcript_neg_strand_by_transcript_id():
-    pos = transcript_to_transcript("ENST00000256078", 1)
+def test_rna_to_rna_neg_strand_by_transcript_id():
+    pos = rna_to_rna("ENST00000256078", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 1
@@ -3821,8 +2645,9 @@ def test_transcript_to_transcript_neg_strand_by_transcript_id():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_transcript_neg_strand_by_transcript_id_2():
-    pos = transcript_to_transcript("ENST00000256078", 111)
+def test_rna_to_rna_neg_strand_by_transcript_id_2():
+    pos = rna_to_rna("ENST00000256078", 111)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 111
@@ -3830,8 +2655,9 @@ def test_transcript_to_transcript_neg_strand_by_transcript_id_2():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_transcript_neg_strand_by_transcript_id_3():
-    pos = transcript_to_transcript("ENST00000256078", 111, 133)
+def test_rna_to_rna_neg_strand_by_transcript_id_3():
+    pos = rna_to_rna("ENST00000256078", 111, 133)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 111
@@ -3839,8 +2665,9 @@ def test_transcript_to_transcript_neg_strand_by_transcript_id_3():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_transcript_neg_strand_by_transcript_name():
-    pos = transcript_to_transcript("KRAS-201", 1)
+def test_rna_to_rna_neg_strand_by_transcript_name():
+    pos = rna_to_rna("KRAS-201", 1)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 1
@@ -3848,8 +2675,9 @@ def test_transcript_to_transcript_neg_strand_by_transcript_name():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_transcript_neg_strand_by_transcript_name_2():
-    pos = transcript_to_transcript("KRAS-201", 111)
+def test_rna_to_rna_neg_strand_by_transcript_name_2():
+    pos = rna_to_rna("KRAS-201", 111)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 111
@@ -3857,8 +2685,9 @@ def test_transcript_to_transcript_neg_strand_by_transcript_name_2():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_transcript_neg_strand_by_transcript_name_3():
-    pos = transcript_to_transcript("KRAS-201", 111, 133)
+def test_rna_to_rna_neg_strand_by_transcript_name_3():
+    pos = rna_to_rna("KRAS-201", 111, 133)
+    assert pos
     assert isinstance(pos, list)
     assert pos[0].transcript_id, "ENST00000256078"
     assert pos[0].start == 111
@@ -3866,82 +2695,27 @@ def test_transcript_to_transcript_neg_strand_by_transcript_name_3():
     assert pos[0].strand == "-"
 
 
-def test_transcript_to_transcript_by_contig_id():
+def test_rna_to_rna_by_contig_id():
     # NOTE: I don't see this query being useful because it will return coordinates for essentially every transcript on chr12.
-    # result = sorted([i.transcript_id for i in transcript_to_transcript("12", 301)])
+    # result = sorted([i.transcript_id for i in rna_to_rna("12", 301)])
     pass
 
 
-def test_transcript_to_transcript_by_exon_id():
-    result = sorted([i.transcript_id for i in transcript_to_transcript("ENSE00000936617", 301)])
+def test_rna_to_rna_by_exon_id():
+    result = sorted([i.transcript_id for i in rna_to_rna("ENSE00000936617", 301)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_transcript_to_transcript_by_gene_id():
-    result = sorted([i.transcript_id for i in transcript_to_transcript("ENSG00000133703", 301)])
+def test_rna_to_rna_by_gene_id():
+    result = sorted([i.transcript_id for i in rna_to_rna("ENSG00000133703", 301)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_transcript_to_transcript_by_gene_name():
-    result = sorted([i.transcript_id for i in transcript_to_transcript("KRAS", 301)])
+def test_rna_to_rna_by_gene_name():
+    result = sorted([i.transcript_id for i in rna_to_rna("KRAS", 301)])
     assert result == ["ENST00000256078", "ENST00000311936", "ENST00000556131", "ENST00000557334"]
 
 
-def test_transcript_to_transcript_by_protein_id():
-    result = sorted([i.transcript_id for i in transcript_to_transcript("ENSP00000256078", 301)])
+def test_rna_to_rna_by_protein_id():
+    result = sorted([i.transcript_id for i in rna_to_rna("ENSP00000256078", 301)])
     assert result == ["ENST00000256078"]
-
-
-def test_best_transcript_only():
-    pos = gene_to_transcript("KIT", 54698359, best_only=False)
-    assert isinstance(pos, list)
-    assert len(pos), 2
-
-    pos = gene_to_transcript("KIT", 54698359, best_only=True)
-    assert isinstance(pos, list)
-    assert len(pos), 1
-
-
-def test_get_map_func():
-    assert get_map_func(CDNA, CDNA) == cdna_to_cdna
-    assert get_map_func(CDNA, CONTIG) == cdna_to_contig
-    assert get_map_func(CDNA, EXON) == cdna_to_exon
-    assert get_map_func(CDNA, GENE) == cdna_to_gene
-    assert get_map_func(CDNA, PROTEIN) == cdna_to_protein
-    assert get_map_func(CDNA, TRANSCRIPT) == cdna_to_transcript
-    assert get_map_func(CONTIG, CDNA) == contig_to_cdna
-    assert get_map_func(CONTIG, CONTIG) == contig_to_contig
-    assert get_map_func(CONTIG, EXON) == contig_to_exon
-    assert get_map_func(CONTIG, GENE) == contig_to_gene
-    assert get_map_func(CONTIG, PROTEIN) == contig_to_protein
-    assert get_map_func(CONTIG, TRANSCRIPT) == contig_to_transcript
-    assert get_map_func(EXON, CDNA) == exon_to_cdna
-    assert get_map_func(EXON, CONTIG) == exon_to_contig
-    assert get_map_func(EXON, EXON) == exon_to_exon
-    assert get_map_func(EXON, GENE) == exon_to_gene
-    assert get_map_func(EXON, PROTEIN) == exon_to_protein
-    assert get_map_func(EXON, TRANSCRIPT) == exon_to_transcript
-    assert get_map_func(GENE, CDNA) == gene_to_cdna
-    assert get_map_func(GENE, CONTIG) == gene_to_contig
-    assert get_map_func(GENE, EXON) == gene_to_exon
-    assert get_map_func(GENE, GENE) == gene_to_gene
-    assert get_map_func(GENE, PROTEIN) == gene_to_protein
-    assert get_map_func(GENE, TRANSCRIPT) == gene_to_transcript
-    assert get_map_func(PROTEIN, CDNA) == protein_to_cdna
-    assert get_map_func(PROTEIN, CONTIG) == protein_to_contig
-    assert get_map_func(PROTEIN, EXON) == protein_to_exon
-    assert get_map_func(PROTEIN, GENE) == protein_to_gene
-    assert get_map_func(PROTEIN, PROTEIN) == protein_to_protein
-    assert get_map_func(PROTEIN, TRANSCRIPT) == protein_to_transcript
-    assert get_map_func(TRANSCRIPT, CDNA) == transcript_to_cdna
-    assert get_map_func(TRANSCRIPT, CONTIG) == transcript_to_contig
-    assert get_map_func(TRANSCRIPT, EXON) == transcript_to_exon
-    assert get_map_func(TRANSCRIPT, GENE) == transcript_to_gene
-    assert get_map_func(TRANSCRIPT, PROTEIN) == transcript_to_protein
-    assert get_map_func(TRANSCRIPT, TRANSCRIPT) == transcript_to_transcript
-
-
-def test_transcript_ids_with_exon():
-    assert _transcript_ids_with_exon("ENSE00001719809") == ["ENST00000256078", "ENST00000311936"]
-    assert _transcript_ids_with_exon("ENSE00001719809", 1) == []
-    assert _transcript_ids_with_exon("ENSE00001719809", 3) == ["ENST00000256078", "ENST00000311936"]
