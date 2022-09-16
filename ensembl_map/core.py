@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, fields
 from itertools import product
-from math import floor, prod
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from math import floor
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas
 from logzero import logger
@@ -234,9 +234,6 @@ class RnaPosition(_Position):
 
     def to_rna(self) -> List[RnaPosition]:
         return self._data._rna_to_rna([self.transcript_id], self.start, self.end, [self.strand])
-
-
-PositionType = Type[Union[DnaPosition, CdnaPosition, ExonPosition, ProteinPosition, RnaPosition]]
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1039,19 +1036,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         strand: Optional[str] = None,
     ) -> List[CdnaPosition]:
         """Map an exon position to a cDNA position."""
-        strandl = [strand] if strand is not None else ["+", "-"]
-
-        if start is None and self.is_exon(feature):
-            positions = self._get_exon_number(feature)
-        else:
-            end = end if end is not None else start
-            positions = product(self.transcript_ids(feature), [start], [end])  # type: ignore
-
-        result = []
-        for transcript_id, start2, end2 in positions:
-            result.extend(self._exon_to_cdna([transcript_id], start2, end2, strandl))
-
-        return uniquify(result)
+        return self._to_exon(self._exon_to_cdna, feature, start, end, strand)
 
     def exon_to_dna(
         self,
@@ -1061,19 +1046,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         strand: Optional[str] = None,
     ) -> List[DnaPosition]:
         """Map an exon position to a DNA position."""
-        strandl = [strand] if strand is not None else ["+", "-"]
-
-        if start is None and self.is_exon(feature):
-            positions = self._get_exon_number(feature)
-        else:
-            end = end if end is not None else start
-            positions = product(self.transcript_ids(feature), [start], [end])  # type: ignore
-
-        result = []
-        for transcript_id, start2, end2 in positions:
-            result.extend(self._exon_to_dna([transcript_id], start2, end2, strandl))
-
-        return uniquify(result)
+        return self._to_exon(self._exon_to_dna, feature, start, end, strand)
 
     def exon_to_exon(
         self,
@@ -1083,19 +1056,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         strand: Optional[str] = None,
     ) -> List[ExonPosition]:
         """Map an exon position to an exon position."""
-        strandl = [strand] if strand is not None else ["+", "-"]
-
-        if start is None and self.is_exon(feature):
-            positions = self._get_exon_number(feature)
-        else:
-            end = end if end is not None else start
-            positions = product(self.transcript_ids(feature), [start], [end])  # type: ignore
-
-        result = []
-        for transcript_id, start2, end2 in positions:
-            result.extend(self._exon_to_exon([transcript_id], start2, end2, strandl))
-
-        return uniquify(result)
+        return self._to_exon(self._exon_to_exon, feature, start, end, strand)
 
     def exon_to_protein(
         self,
@@ -1105,19 +1066,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         strand: Optional[str] = None,
     ) -> List[ProteinPosition]:
         """Map an exon position to a protein position."""
-        strandl = [strand] if strand is not None else ["+", "-"]
-
-        if start is None and self.is_exon(feature):
-            positions = self._get_exon_number(feature)
-        else:
-            end = end if end is not None else start
-            positions = product(self.transcript_ids(feature), [start], [end])  # type: ignore
-
-        result = []
-        for transcript_id, start2, end2 in positions:
-            result.extend(self._exon_to_protein([transcript_id], start2, end2, strandl))
-
-        return uniquify(result)
+        return self._to_exon(self._exon_to_protein, feature, start, end, strand)
 
     def exon_to_rna(
         self,
@@ -1127,26 +1076,41 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         strand: Optional[str] = None,
     ) -> List[RnaPosition]:
         """Map an exon position to a RNA position."""
-        strandl = [strand] if strand is not None else ["+", "-"]
+        return self._to_exon(self._exon_to_rna, feature, start, end, strand)
 
-        if start is None and self.is_exon(feature):
-            positions = self._get_exon_number(feature)
+    def _to_exon(
+        self,
+        function: Callable,
+        feature: str,
+        start: Optional[int],
+        end: Optional[int],
+        strand: Optional[str],
+    ) -> List:
+        if start is None and end is not None:
+            start = end
+        if end is None and start is not None:
+            end = start
+
+        if start is None:
+            positions = []
+            for exon_id in self.exon_ids(feature):
+                positions.extend(self._get_exon_number(exon_id))
         else:
-            end = end if end is not None else start
-            positions = product(self.transcript_ids(feature), [start], [end])  # type: ignore
+            strandl = [strand] if strand is not None else ["+", "-"]
+            positions = product(self.transcript_ids(feature), [start], [end], strandl)  # type: ignore
 
         result = []
-        for transcript_id, start2, end2 in positions:
-            result.extend(self._exon_to_rna([transcript_id], start2, end2, strandl))
+        for transcript_id, start2, end2, strand2 in positions:
+            result.extend(function([transcript_id], start2, end2, [strand2]))
 
         return uniquify(result)
 
-    def _get_exon_number(self, exon_id: str) -> List[Tuple[str, int, int]]:
+    def _get_exon_number(self, exon_id: str) -> List[Tuple[str, int, int, str]]:
         result = []
 
         mask = (self.ensembl["exon_id"] == exon_id) & (self.ensembl["feature"] == "exon")
         for _, exon in self.ensembl[mask].iterrows():
-            result.append((exon.transcript_id, exon.exon_number, exon.exon_number))
+            result.append((exon.transcript_id, exon.exon_number, exon.exon_number, exon.strand))
 
         return result
 
@@ -1340,41 +1304,37 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def _cdna_to_exon(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
     ) -> List[ExonPosition]:
-        def select_unique(mask) -> pandas.Series:
-            subdf = self.ensembl[mask]
-            assert len(subdf) == 1, len(subdf)
-            return subdf.iloc[0]
-
         def convert(position: int):
             result = []
 
-            mask = (
+            mask_cds = (
                 (self.ensembl["transcript_id"].isin(transcript_ids))
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
                 & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
             )
-            for _, cds in self.ensembl[mask].iterrows():
-                exon = select_unique(
+            for _, cds in self.ensembl[mask_cds].iterrows():
+                mask_exon = (
                     (self.ensembl["transcript_id"].isin(transcript_ids))
                     & (self.ensembl["exon_number"] == cds.exon_number)
                     & (self.ensembl["feature"] == "exon")
                 )
-                result.append(
-                    ExonPosition(
-                        _data=self,
-                        contig_id=exon.contig_id,
-                        start=int(exon.exon_number),
-                        end=int(exon.exon_number),
-                        strand=exon.strand,
-                        gene_id=exon.gene_id,
-                        gene_name=exon.gene_name,
-                        transcript_id=exon.transcript_id,
-                        transcript_name=exon.transcript_name,
-                        exon_id=exon.exon_id,
+                for _, exon in self.ensembl[mask_exon].iterrows():
+                    result.append(
+                        ExonPosition(
+                            _data=self,
+                            contig_id=exon.contig_id,
+                            start=int(exon.exon_number),
+                            end=int(exon.exon_number),
+                            strand=exon.strand,
+                            gene_id=exon.gene_id,
+                            gene_name=exon.gene_name,
+                            transcript_id=exon.transcript_id,
+                            transcript_name=exon.transcript_name,
+                            exon_id=exon.exon_id,
+                        )
                     )
-                )
 
             return result
 
