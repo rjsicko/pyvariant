@@ -1,6 +1,14 @@
 import pytest
 
-from ensembl_map.constants import CONTIG, EXON, GENE, PROTEIN, TRANSCRIPT
+from ensembl_map.constants import (
+    CONTIG_ID,
+    EXON_ID,
+    GENE_ID,
+    GENE_NAME,
+    PROTEIN_ID,
+    TRANSCRIPT_ID,
+    TRANSCRIPT_NAME,
+)
 from ensembl_map.core import (
     CdnaPosition,
     DnaPosition,
@@ -21,13 +29,13 @@ from . import (
 )
 
 # features are from Ensembl 100
-EXON_ID = "ENSE00003826864"
-CONTIG_ID = "16"
-GENE_ID = "ENSG00000149925"
-GENE_NAME = "ALDOA"
-PROTEIN_ID = "ENSP00000494188"  # version 2
-TRANSCRIPT_ID = "ENST00000643777"  # version 3
-TRANSCRIPT_NAME = "ALDOA-219"
+TEST_EXON_ID = "ENSE00003826864"
+TEST_CONTIG_ID = "16"
+TEST_GENE_ID = "ENSG00000149925"
+TEST_GENE_NAME = "ALDOA"
+TEST_PROTEIN_ID = "ENSP00000494188"  # version 2
+TEST_TRANSCRIPT_ID = "ENST00000643777"  # version 3
+TEST_TRANSCRIPT_NAME = "ALDOA-219"
 
 
 @pytest.fixture
@@ -79,57 +87,52 @@ def test_unique_instances():
 def test_all_contig_ids(ensembl100):
     result = ensembl100.all_contig_ids()
     assert isinstance(result, list)
-    assert CONTIG_ID in result
+    assert TEST_CONTIG_ID in result
 
 
 def test_all_exon_ids(ensembl100):
     result = ensembl100.all_exon_ids()
     assert isinstance(result, list)
-    assert EXON_ID in result
+    assert TEST_EXON_ID in result
 
 
 def test_all_gene_ids(ensembl100):
     result = ensembl100.all_gene_ids()
     assert isinstance(result, list)
-    assert GENE_ID in result
+    assert TEST_GENE_ID in result
 
 
 def test_all_gene_names(ensembl100):
     result = ensembl100.all_gene_names()
     assert isinstance(result, list)
-    assert GENE_NAME in result
+    assert TEST_GENE_NAME in result
 
 
 def test_all_protein_ids(ensembl100):
     result = ensembl100.all_protein_ids()
     assert isinstance(result, list)
-    assert PROTEIN_ID in result
+    assert TEST_PROTEIN_ID in result
 
 
 def test_all_transcript_ids(ensembl100):
     result = ensembl100.all_transcript_ids()
     assert isinstance(result, list)
-    assert TRANSCRIPT_ID in result
+    assert TEST_TRANSCRIPT_ID in result
 
 
 def test_all_transcript_names(ensembl100):
     result = ensembl100.all_transcript_names()
     assert isinstance(result, list)
-    assert TRANSCRIPT_NAME in result
+    assert TEST_TRANSCRIPT_NAME in result
 
 
 # ---------------------------------------------------------------------------------------------
 # get_<feature_symbol>(feature)
 # ---------------------------------------------------------------------------------------------
-def test_contig_ids_from_contig(ensembl100):
-    ret_by_id = ensembl100.contig_ids(CONTIG_ID)
-    assert CONTIG_ID in ret_by_id
-
-
 def test_contig_ids_from_contig_id(ensembl100):
-    result = ensembl100.contig_ids(CONTIG_ID)
+    result = ensembl100.contig_ids(TEST_CONTIG_ID)
     assert isinstance(result, list)
-    assert CONTIG_ID in result
+    assert TEST_CONTIG_ID in result
 
 
 def test_contig_ids_from_contig_with_chr(ensembl100):
@@ -137,134 +140,76 @@ def test_contig_ids_from_contig_with_chr(ensembl100):
     assert "12" in ret_by_id
 
 
-def test_contig_ids_from_exon(ensembl100):
-    ret_by_id = ensembl100.contig_ids(EXON_ID, EXON)
-    assert CONTIG_ID in ret_by_id
-
-
 def test_contig_ids_from_exon_id(ensembl100):
-    result = ensembl100.contig_ids(EXON_ID, EXON)
+    result = ensembl100.contig_ids(TEST_EXON_ID)
     assert isinstance(result, list)
-    assert CONTIG_ID in result
+    assert TEST_CONTIG_ID in result
 
 
 def test_contig_ids_from_gene(ensembl100):
-    ret_by_id = ensembl100.contig_ids(GENE_ID)
-    ret_by_name = ensembl100.contig_ids(GENE_NAME)
-    assert CONTIG_ID in ret_by_id
-    assert CONTIG_ID in ret_by_name
+    ret_by_id = ensembl100.contig_ids(TEST_GENE_ID)
+    ret_by_name = ensembl100.contig_ids(TEST_GENE_NAME)
+    assert TEST_CONTIG_ID in ret_by_id
+    assert TEST_CONTIG_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_contig_ids_from_gene_id(ensembl100):
-    result = ensembl100.contig_ids(GENE_ID)
-    assert isinstance(result, list)
-    assert CONTIG_ID in result
-
-
-def test_contig_ids_from_gene_name(ensembl100):
-    result = ensembl100.contig_ids(GENE_NAME)
-    assert isinstance(result, list)
-    assert CONTIG_ID in result
 
 
 def test_contig_ids_from_protein(ensembl100):
-    ret_by_id = ensembl100.contig_ids(PROTEIN_ID)
-    assert CONTIG_ID in ret_by_id
+    ret_by_id = ensembl100.contig_ids(TEST_PROTEIN_ID)
+    assert TEST_CONTIG_ID in ret_by_id
 
 
 def test_contig_ids_from_protein_id(ensembl100):
-    result = ensembl100.contig_ids(PROTEIN_ID)
+    result = ensembl100.contig_ids(TEST_PROTEIN_ID)
     assert isinstance(result, list)
-    assert CONTIG_ID in result
+    assert TEST_CONTIG_ID in result
 
 
 def test_contig_ids_from_transcript(ensembl100):
-    ret_by_id = ensembl100.contig_ids(TRANSCRIPT_ID)
-    ret_by_name = ensembl100.contig_ids(TRANSCRIPT_NAME)
-    assert CONTIG_ID in ret_by_id
-    assert CONTIG_ID in ret_by_name
+    ret_by_id = ensembl100.contig_ids(TEST_TRANSCRIPT_ID)
+    ret_by_name = ensembl100.contig_ids(TEST_TRANSCRIPT_NAME)
+    assert TEST_CONTIG_ID in ret_by_id
+    assert TEST_CONTIG_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_contig_ids_from_transcript_id(ensembl100):
-    result = ensembl100.contig_ids(TRANSCRIPT_ID)
-    assert isinstance(result, list)
-    assert CONTIG_ID in result
-
-
-def test_contig_ids_from_transcript_name(ensembl100):
-    result = ensembl100.contig_ids(TRANSCRIPT_NAME)
-    assert isinstance(result, list)
-    assert CONTIG_ID in result
 
 
 def test_exon_ids_from_contig_id(ensembl100):
-    result = ensembl100.exon_ids(CONTIG_ID)
+    result = ensembl100.exon_ids(TEST_CONTIG_ID)
     assert isinstance(result, list)
-    assert EXON_ID in result
-
-
-def test_exon_ids_from_exon(ensembl100):
-    ret_by_id = ensembl100.exon_ids(EXON_ID, EXON)
-    assert EXON_ID in ret_by_id
+    assert TEST_EXON_ID in result
 
 
 def test_exon_ids_from_exon_id(ensembl100):
-    result = ensembl100.exon_ids(EXON_ID)
+    result = ensembl100.exon_ids(TEST_EXON_ID)
     assert isinstance(result, list)
-    assert EXON_ID in result
+    assert TEST_EXON_ID in result
 
 
 def test_exon_ids_from_gene(ensembl100):
-    ret_by_id = ensembl100.exon_ids(GENE_ID)
-    ret_by_name = ensembl100.exon_ids(GENE_NAME)
-    assert EXON_ID in ret_by_id
-    assert EXON_ID in ret_by_name
+    ret_by_id = ensembl100.exon_ids(TEST_GENE_ID)
+    ret_by_name = ensembl100.exon_ids(TEST_GENE_NAME)
+    assert TEST_EXON_ID in ret_by_id
+    assert TEST_EXON_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_exon_ids_from_gene_id(ensembl100):
-    result = ensembl100.exon_ids(GENE_ID)
-    assert isinstance(result, list)
-    assert EXON_ID in result
-
-
-def test_exon_ids_from_gene_name(ensembl100):
-    result = ensembl100.exon_ids(GENE_NAME)
-    assert isinstance(result, list)
-    assert EXON_ID in result
 
 
 def test_exon_ids_from_protein(ensembl100):
-    ret_by_id = ensembl100.exon_ids(PROTEIN_ID)
-    assert EXON_ID in ret_by_id
+    ret_by_id = ensembl100.exon_ids(TEST_PROTEIN_ID)
+    assert TEST_EXON_ID in ret_by_id
 
 
 def test_exon_ids_from_protein_id(ensembl100):
-    result = ensembl100.exon_ids(PROTEIN_ID)
+    result = ensembl100.exon_ids(TEST_PROTEIN_ID)
     assert isinstance(result, list)
-    assert EXON_ID in result
+    assert TEST_EXON_ID in result
 
 
 def test_exon_ids_from_transcript(ensembl100):
-    ret_by_id = ensembl100.exon_ids(TRANSCRIPT_ID)
-    ret_by_name = ensembl100.exon_ids(TRANSCRIPT_NAME)
-    assert EXON_ID in ret_by_id
-    assert EXON_ID in ret_by_name
+    ret_by_id = ensembl100.exon_ids(TEST_TRANSCRIPT_ID)
+    ret_by_name = ensembl100.exon_ids(TEST_TRANSCRIPT_NAME)
+    assert TEST_EXON_ID in ret_by_id
+    assert TEST_EXON_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_exon_ids_from_transcript_id(ensembl100):
-    result = ensembl100.exon_ids(TRANSCRIPT_ID)
-    assert isinstance(result, list)
-    assert EXON_ID in result
-
-
-def test_exon_ids_from_transcript_name(ensembl100):
-    result = ensembl100.exon_ids(TRANSCRIPT_NAME)
-    assert isinstance(result, list)
-    assert EXON_ID in result
 
 
 def test_gene_ids_different_gene_ids(ensembl69, ensembl100):
@@ -284,71 +229,47 @@ def test_gene_ids_different_gene_names(ensembl69, ensembl100):
 
 
 def test_gene_ids_from_contig_id(ensembl100):
-    result = ensembl100.gene_ids(CONTIG_ID)
+    result = ensembl100.gene_ids(TEST_CONTIG_ID)
     assert isinstance(result, list)
-    assert GENE_ID in result
+    assert TEST_GENE_ID in result
 
 
 def test_gene_ids_from_exon(ensembl100):
-    ret_by_id = ensembl100.gene_ids(EXON_ID)
-    assert GENE_ID in ret_by_id
+    ret_by_id = ensembl100.gene_ids(TEST_EXON_ID)
+    assert TEST_GENE_ID in ret_by_id
 
 
 def test_gene_ids_from_exon_id(ensembl100):
-    result = ensembl100.gene_ids(EXON_ID)
+    result = ensembl100.gene_ids(TEST_EXON_ID)
     assert isinstance(result, list)
-    assert GENE_ID in result
+    assert TEST_GENE_ID in result
 
 
 def test_gene_ids_from_gene(ensembl100):
-    ret_by_id = ensembl100.gene_ids(GENE_ID)
-    ret_by_name = ensembl100.gene_ids(GENE_NAME)
-    assert GENE_ID in ret_by_id
-    assert GENE_ID in ret_by_name
+    ret_by_id = ensembl100.gene_ids(TEST_GENE_ID)
+    ret_by_name = ensembl100.gene_ids(TEST_GENE_NAME)
+    assert TEST_GENE_ID in ret_by_id
+    assert TEST_GENE_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_gene_ids_from_gene_id(ensembl100):
-    result = ensembl100.gene_ids(GENE_ID)
-    assert isinstance(result, list)
-    assert GENE_ID in result
-
-
-def test_gene_ids_from_gene_name(ensembl100):
-    result = ensembl100.gene_ids(GENE_NAME)
-    assert isinstance(result, list)
-    assert GENE_ID in result
 
 
 def test_gene_ids_from_protein(ensembl100):
-    ret_by_id = ensembl100.gene_ids(PROTEIN_ID)
-    assert GENE_ID in ret_by_id
+    ret_by_id = ensembl100.gene_ids(TEST_PROTEIN_ID)
+    assert TEST_GENE_ID in ret_by_id
 
 
 def test_gene_ids_from_protein_id(ensembl100):
-    result = ensembl100.gene_ids(PROTEIN_ID)
+    result = ensembl100.gene_ids(TEST_PROTEIN_ID)
     assert isinstance(result, list)
-    assert GENE_ID in result
+    assert TEST_GENE_ID in result
 
 
 def test_gene_ids_from_transcript(ensembl100):
-    ret_by_id = ensembl100.gene_ids(TRANSCRIPT_ID)
-    ret_by_name = ensembl100.gene_ids(TRANSCRIPT_NAME)
-    assert GENE_ID in ret_by_id
-    assert GENE_ID in ret_by_name
+    ret_by_id = ensembl100.gene_ids(TEST_TRANSCRIPT_ID)
+    ret_by_name = ensembl100.gene_ids(TEST_TRANSCRIPT_NAME)
+    assert TEST_GENE_ID in ret_by_id
+    assert TEST_GENE_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_gene_ids_from_transcript_id(ensembl100):
-    result = ensembl100.gene_ids(TRANSCRIPT_ID)
-    assert isinstance(result, list)
-    assert GENE_ID in result
-
-
-def test_gene_ids_from_transcript_name(ensembl100):
-    result = ensembl100.gene_ids(TRANSCRIPT_NAME)
-    assert isinstance(result, list)
-    assert GENE_ID in result
 
 
 def test_gene_names_different_gene_ids(ensembl69, ensembl100):
@@ -368,51 +289,39 @@ def test_gene_names_different_gene_names(ensembl69, ensembl100):
 
 
 def test_gene_names_from_contig_id(ensembl100):
-    result = ensembl100.gene_names(CONTIG_ID)
+    result = ensembl100.gene_names(TEST_CONTIG_ID)
     assert isinstance(result, list)
-    assert GENE_NAME in result
+    assert TEST_GENE_NAME in result
 
 
 def test_gene_names_from_exon(ensembl100):
-    ret_by_id = ensembl100.gene_names(EXON_ID)
-    assert GENE_NAME in ret_by_id
+    ret_by_id = ensembl100.gene_names(TEST_EXON_ID)
+    assert TEST_GENE_NAME in ret_by_id
 
 
 def test_gene_names_from_exon_id(ensembl100):
-    result = ensembl100.gene_names(EXON_ID)
+    result = ensembl100.gene_names(TEST_EXON_ID)
     assert isinstance(result, list)
-    assert GENE_NAME in result
+    assert TEST_GENE_NAME in result
 
 
 def test_gene_names_from_gene(ensembl100):
-    ret_by_id = ensembl100.gene_names(GENE_ID)
-    ret_by_name = ensembl100.gene_names(GENE_NAME)
-    assert GENE_NAME in ret_by_id
-    assert GENE_NAME in ret_by_name
+    ret_by_id = ensembl100.gene_names(TEST_GENE_ID)
+    ret_by_name = ensembl100.gene_names(TEST_GENE_NAME)
+    assert TEST_GENE_NAME in ret_by_id
+    assert TEST_GENE_NAME in ret_by_name
     assert ret_by_id == ret_by_name
 
 
-def test_gene_names_from_gene_id(ensembl100):
-    result = ensembl100.gene_names(GENE_ID)
-    assert isinstance(result, list)
-    assert GENE_NAME in result
-
-
-def test_gene_names_from_gene_name(ensembl100):
-    result = ensembl100.gene_names(GENE_NAME)
-    assert isinstance(result, list)
-    assert GENE_NAME in result
-
-
 def test_gene_names_from_protein(ensembl100):
-    ret_by_id = ensembl100.gene_names(PROTEIN_ID)
-    assert GENE_NAME in ret_by_id
+    ret_by_id = ensembl100.gene_names(TEST_PROTEIN_ID)
+    assert TEST_GENE_NAME in ret_by_id
 
 
 def test_gene_names_from_protein_id(ensembl100):
-    result = ensembl100.gene_names(PROTEIN_ID)
+    result = ensembl100.gene_names(TEST_PROTEIN_ID)
     assert isinstance(result, list)
-    assert GENE_NAME in result
+    assert TEST_GENE_NAME in result
 
 
 def test_gene_names_from_refseq_transcript(ensembl100):
@@ -427,230 +336,128 @@ def test_gene_names_from_refseq_transcript(ensembl100):
 
 
 def test_gene_names_from_transcript(ensembl100):
-    ret_by_id = ensembl100.gene_names(TRANSCRIPT_ID)
-    ret_by_name = ensembl100.gene_names(TRANSCRIPT_NAME)
-    assert GENE_NAME in ret_by_id
-    assert GENE_NAME in ret_by_name
+    ret_by_id = ensembl100.gene_names(TEST_TRANSCRIPT_ID)
+    ret_by_name = ensembl100.gene_names(TEST_TRANSCRIPT_NAME)
+    assert TEST_GENE_NAME in ret_by_id
+    assert TEST_GENE_NAME in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_gene_names_from_transcript_id(ensembl100):
-    result = ensembl100.gene_names(TRANSCRIPT_ID)
-    assert isinstance(result, list)
-    assert GENE_NAME in result
-
-
-def test_gene_names_from_transcript_name(ensembl100):
-    result = ensembl100.gene_names(TRANSCRIPT_NAME)
-    assert isinstance(result, list)
-    assert GENE_NAME in result
 
 
 def test_protein_ids_from_contig_id(ensembl100):
-    result = ensembl100.protein_ids(CONTIG_ID)
+    result = ensembl100.protein_ids(TEST_CONTIG_ID)
     assert isinstance(result, list)
-    assert PROTEIN_ID in result
-
-
-def test_protein_ids_from_exon(ensembl100):
-    ret_by_id = ensembl100.protein_ids(EXON_ID, EXON)
-    assert PROTEIN_ID in ret_by_id
+    assert TEST_PROTEIN_ID in result
 
 
 def test_protein_ids_from_exon_id(ensembl100):
-    result = ensembl100.protein_ids(EXON_ID)
+    result = ensembl100.protein_ids(TEST_EXON_ID)
     assert isinstance(result, list)
-    assert PROTEIN_ID in result
+    assert TEST_PROTEIN_ID in result
 
 
 def test_protein_ids_from_gene(ensembl100):
-    ret_by_id = ensembl100.protein_ids(GENE_ID)
-    ret_by_name = ensembl100.protein_ids(GENE_NAME)
-    assert PROTEIN_ID in ret_by_id
-    assert PROTEIN_ID in ret_by_name
+    ret_by_id = ensembl100.protein_ids(TEST_GENE_ID)
+    ret_by_name = ensembl100.protein_ids(TEST_GENE_NAME)
+    assert TEST_PROTEIN_ID in ret_by_id
+    assert TEST_PROTEIN_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_protein_ids_from_gene_id(ensembl100):
-    result = ensembl100.protein_ids(GENE_ID)
-    assert isinstance(result, list)
-    assert PROTEIN_ID in result
-
-
-def test_protein_ids_from_gene_name(ensembl100):
-    result = ensembl100.protein_ids(GENE_NAME)
-    assert isinstance(result, list)
-    assert PROTEIN_ID in result
 
 
 def test_protein_ids_from_protein(ensembl100):
-    ret_by_id = ensembl100.protein_ids(PROTEIN_ID)
-    assert PROTEIN_ID in ret_by_id
+    ret_by_id = ensembl100.protein_ids(TEST_PROTEIN_ID)
+    assert TEST_PROTEIN_ID in ret_by_id
 
 
 def test_protein_ids_from_protein_id(ensembl100):
-    result = ensembl100.protein_ids(PROTEIN_ID)
+    result = ensembl100.protein_ids(TEST_PROTEIN_ID)
     assert isinstance(result, list)
-    assert PROTEIN_ID in result
+    assert TEST_PROTEIN_ID in result
 
 
 def test_protein_ids_from_transcript(ensembl100):
-    ret_by_id = ensembl100.protein_ids(TRANSCRIPT_ID)
-    ret_by_name = ensembl100.protein_ids(TRANSCRIPT_NAME)
-    assert PROTEIN_ID in ret_by_id
-    assert PROTEIN_ID in ret_by_name
+    ret_by_id = ensembl100.protein_ids(TEST_TRANSCRIPT_ID)
+    ret_by_name = ensembl100.protein_ids(TEST_TRANSCRIPT_NAME)
+    assert TEST_PROTEIN_ID in ret_by_id
+    assert TEST_PROTEIN_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_protein_ids_from_transcript_id(ensembl100):
-    result = ensembl100.protein_ids(TRANSCRIPT_ID)
-    assert isinstance(result, list)
-    assert PROTEIN_ID in result
-
-
-def test_protein_ids_from_transcript_name(ensembl100):
-    result = ensembl100.protein_ids(TRANSCRIPT_NAME)
-    assert isinstance(result, list)
-    assert PROTEIN_ID in result
 
 
 def test_transcript_ids_from_contig_id(ensembl100):
-    result = ensembl100.transcript_ids(CONTIG_ID)
+    result = ensembl100.transcript_ids(TEST_CONTIG_ID)
     assert isinstance(result, list)
-    assert TRANSCRIPT_ID in result
-
-
-def test_transcript_ids_from_exon(ensembl100):
-    ret_by_id = ensembl100.transcript_ids(EXON_ID, EXON)
-    assert TRANSCRIPT_ID in ret_by_id
+    assert TEST_TRANSCRIPT_ID in result
 
 
 def test_transcript_ids_from_exon_id(ensembl100):
-    result = ensembl100.transcript_ids(EXON_ID)
+    result = ensembl100.transcript_ids(TEST_EXON_ID)
     assert isinstance(result, list)
-    assert TRANSCRIPT_ID in result
+    assert TEST_TRANSCRIPT_ID in result
 
 
 def test_transcript_ids_from_gene(ensembl100):
-    ret_by_id = ensembl100.transcript_ids(GENE_ID)
-    ret_by_name = ensembl100.transcript_ids(GENE_NAME)
-    assert TRANSCRIPT_ID in ret_by_id
-    assert TRANSCRIPT_ID in ret_by_name
+    ret_by_id = ensembl100.transcript_ids(TEST_GENE_ID)
+    ret_by_name = ensembl100.transcript_ids(TEST_GENE_NAME)
+    assert TEST_TRANSCRIPT_ID in ret_by_id
+    assert TEST_TRANSCRIPT_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-@pytest.mark.xfail(reason="unsure if this will be implemented")
-def test_transcript_ids_from_gene_best_only(ensembl100):
-    # assumes ENST00000288135 is the best transcript for ENSG00000157404 (KIT)
-    ret_all = ensembl100.transcript_ids(GENE_ID, best_only=False)
-    ret_best = ensembl100.transcript_ids(GENE_ID, best_only=True)
-    assert "ENST00000412167" in ret_all
-    assert "ENST00000412167" not in ret_best
-
-
-def test_transcript_ids_from_gene_id(ensembl100):
-    result = ensembl100.transcript_ids(GENE_ID)
-    assert isinstance(result, list)
-    assert TRANSCRIPT_ID in result
-
-
-def test_transcript_ids_from_gene_name(ensembl100):
-    result = ensembl100.transcript_ids(GENE_NAME)
-    assert isinstance(result, list)
-    assert TRANSCRIPT_ID in result
 
 
 def test_transcript_ids_from_protein(ensembl100):
-    ret_by_id = ensembl100.transcript_ids(PROTEIN_ID)
-    assert TRANSCRIPT_ID in ret_by_id
+    ret_by_id = ensembl100.transcript_ids(TEST_PROTEIN_ID)
+    assert TEST_TRANSCRIPT_ID in ret_by_id
 
 
 def test_transcript_ids_from_protein_id(ensembl100):
-    result = ensembl100.transcript_ids(PROTEIN_ID)
+    result = ensembl100.transcript_ids(TEST_PROTEIN_ID)
     assert isinstance(result, list)
-    assert TRANSCRIPT_ID in result
+    assert TEST_TRANSCRIPT_ID in result
 
 
 def test_transcript_ids_from_transcript(ensembl100):
-    ret_by_id = ensembl100.transcript_ids(TRANSCRIPT_ID)
-    ret_by_name = ensembl100.transcript_ids(TRANSCRIPT_NAME)
-    assert TRANSCRIPT_ID in ret_by_id
-    assert TRANSCRIPT_ID in ret_by_name
+    ret_by_id = ensembl100.transcript_ids(TEST_TRANSCRIPT_ID)
+    ret_by_name = ensembl100.transcript_ids(TEST_TRANSCRIPT_NAME)
+    assert TEST_TRANSCRIPT_ID in ret_by_id
+    assert TEST_TRANSCRIPT_ID in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_transcript_ids_from_transcript_id(ensembl100):
-    result = ensembl100.transcript_ids(TRANSCRIPT_ID)
-    assert isinstance(result, list)
-    assert TRANSCRIPT_ID in result
-
-
-def test_transcript_ids_from_transcript_name(ensembl100):
-    result = ensembl100.transcript_ids(TRANSCRIPT_NAME)
-    assert isinstance(result, list)
-    assert TRANSCRIPT_ID in result
 
 
 def test_transcript_names_from_contig_id(ensembl100):
-    result = ensembl100.transcript_names(CONTIG_ID)
+    result = ensembl100.transcript_names(TEST_CONTIG_ID)
     assert isinstance(result, list)
-    assert TRANSCRIPT_NAME in result
-
-
-def test_transcript_names_from_exon(ensembl100):
-    ret_by_id = ensembl100.transcript_names(EXON_ID, EXON)
-    assert TRANSCRIPT_NAME in ret_by_id
+    assert TEST_TRANSCRIPT_NAME in result
 
 
 def test_transcript_names_from_exon_id(ensembl100):
-    result = ensembl100.transcript_names(EXON_ID)
+    result = ensembl100.transcript_names(TEST_EXON_ID)
     assert isinstance(result, list)
-    assert TRANSCRIPT_NAME in result
+    assert TEST_TRANSCRIPT_NAME in result
 
 
 def test_transcript_names_from_gene(ensembl100):
-    ret_by_id = ensembl100.transcript_names(GENE_ID)
-    ret_by_name = ensembl100.transcript_names(GENE_NAME)
-    assert TRANSCRIPT_NAME in ret_by_id
-    assert TRANSCRIPT_NAME in ret_by_name
+    ret_by_id = ensembl100.transcript_names(TEST_GENE_ID)
+    ret_by_name = ensembl100.transcript_names(TEST_GENE_NAME)
+    assert TEST_TRANSCRIPT_NAME in ret_by_id
+    assert TEST_TRANSCRIPT_NAME in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_transcript_names_from_gene_id(ensembl100):
-    result = ensembl100.transcript_names(GENE_ID)
-    assert isinstance(result, list)
-    assert TRANSCRIPT_NAME in result
-
-
-def test_transcript_names_from_gene_name(ensembl100):
-    result = ensembl100.transcript_names(GENE_NAME)
-    assert isinstance(result, list)
-    assert TRANSCRIPT_NAME in result
 
 
 def test_transcript_names_from_protein(ensembl100):
-    ret_by_id = ensembl100.transcript_names(PROTEIN_ID)
-    assert TRANSCRIPT_NAME in ret_by_id
+    ret_by_id = ensembl100.transcript_names(TEST_PROTEIN_ID)
+    assert TEST_TRANSCRIPT_NAME in ret_by_id
 
 
 def test_transcript_names_from_protein_id(ensembl100):
-    result = ensembl100.transcript_names(PROTEIN_ID)
+    result = ensembl100.transcript_names(TEST_PROTEIN_ID)
     assert isinstance(result, list)
-    assert TRANSCRIPT_NAME in result
+    assert TEST_TRANSCRIPT_NAME in result
 
 
 def test_transcript_names_from_transcript(ensembl100):
-    ret_by_id = ensembl100.transcript_names(TRANSCRIPT_ID)
-    ret_by_name = ensembl100.transcript_names(TRANSCRIPT_NAME)
-    assert TRANSCRIPT_NAME in ret_by_id
-    assert TRANSCRIPT_NAME in ret_by_name
+    ret_by_id = ensembl100.transcript_names(TEST_TRANSCRIPT_ID)
+    ret_by_name = ensembl100.transcript_names(TEST_TRANSCRIPT_NAME)
+    assert TEST_TRANSCRIPT_NAME in ret_by_id
+    assert TEST_TRANSCRIPT_NAME in ret_by_name
     assert ret_by_id == ret_by_name
-
-
-def test_transcript_names_from_transcript_id(ensembl100):
-    result = ensembl100.transcript_names(TRANSCRIPT_ID)
-    assert isinstance(result, list)
-    assert TRANSCRIPT_NAME in result
 
 
 # ---------------------------------------------------------------------------------------------
@@ -681,7 +488,7 @@ def test_is_exon_false(ensembl100):
 
 
 def test_is_exon_true(ensembl100):
-    assert ensembl100.is_exon(EXON_ID) is True
+    assert ensembl100.is_exon(TEST_EXON_ID) is True
 
 
 def test_is_gene_false(ensembl100):
@@ -689,11 +496,11 @@ def test_is_gene_false(ensembl100):
 
 
 def test_is_gene_true_from_id(ensembl100):
-    assert ensembl100.is_gene(GENE_ID) is True
+    assert ensembl100.is_gene(TEST_GENE_ID) is True
 
 
 def test_is_gene_true_from_name(ensembl100):
-    assert ensembl100.is_gene(GENE_NAME) is True
+    assert ensembl100.is_gene(TEST_GENE_NAME) is True
 
 
 def test_is_protein_false(ensembl100):
@@ -701,7 +508,7 @@ def test_is_protein_false(ensembl100):
 
 
 def test_is_protein_true(ensembl100):
-    assert ensembl100.is_protein(PROTEIN_ID) is True
+    assert ensembl100.is_protein(TEST_PROTEIN_ID) is True
 
 
 def test_is_transcript_false(ensembl100):
@@ -709,46 +516,48 @@ def test_is_transcript_false(ensembl100):
 
 
 def test_is_transcript_true_from_id(ensembl100):
-    assert ensembl100.is_transcript(TRANSCRIPT_ID) is True
+    assert ensembl100.is_transcript(TEST_TRANSCRIPT_ID) is True
 
 
 def test_is_transcript_true_from_name(ensembl100):
-    assert ensembl100.is_transcript(TRANSCRIPT_NAME) is True
+    assert ensembl100.is_transcript(TEST_TRANSCRIPT_NAME) is True
 
 
 # ---------------------------------------------------------------------------------------------
 # normalize_feature(feature, feature_type)
 # ---------------------------------------------------------------------------------------------
 def test_normalize_feature_contig_id(ensembl100):
-    assert ensembl100.normalize_feature("17") == [("17", CONTIG)]
+    assert ensembl100.normalize_feature("17") == [("17", CONTIG_ID)]
 
 
 def test_normalize_feature_exon_id(ensembl100):
-    assert ensembl100.normalize_feature(EXON_ID) == [(EXON_ID, EXON)]
+    assert ensembl100.normalize_feature(TEST_EXON_ID) == [(TEST_EXON_ID, EXON_ID)]
 
 
 def test_normalize_feature_gene_id(ensembl100):
-    assert ensembl100.normalize_feature(GENE_ID) == [(GENE_ID, GENE)]
+    assert ensembl100.normalize_feature(TEST_GENE_ID) == [(TEST_GENE_ID, GENE_ID)]
 
 
 def test_normalize_feature_gene_name(ensembl100):
-    assert ensembl100.normalize_feature(GENE_NAME) == [(GENE_NAME, GENE)]
+    assert ensembl100.normalize_feature(TEST_GENE_NAME) == [(TEST_GENE_NAME, GENE_NAME)]
 
 
 def test_normalize_feature_protein_id(ensembl100):
-    assert ensembl100.normalize_feature(PROTEIN_ID) == [(PROTEIN_ID, PROTEIN)]
+    assert ensembl100.normalize_feature(TEST_PROTEIN_ID) == [(TEST_PROTEIN_ID, PROTEIN_ID)]
 
 
 def test_normalize_feature_refseq_transcript_id(ensembl100):
-    assert ensembl100.normalize_feature("NM_000314.4") == [("ENST00000371953", TRANSCRIPT)]
+    assert ensembl100.normalize_feature("NM_000314.4") == [("ENST00000371953", TRANSCRIPT_ID)]
 
 
 def test_normalize_feature_transcript_id(ensembl100):
-    assert ensembl100.normalize_feature(TRANSCRIPT_ID) == [(TRANSCRIPT_ID, TRANSCRIPT)]
+    assert ensembl100.normalize_feature(TEST_TRANSCRIPT_ID) == [(TEST_TRANSCRIPT_ID, TRANSCRIPT_ID)]
 
 
 def test_normalize_feature_transcript_name(ensembl100):
-    assert ensembl100.normalize_feature(TRANSCRIPT_NAME) == [(TRANSCRIPT_NAME, TRANSCRIPT)]
+    assert ensembl100.normalize_feature(TEST_TRANSCRIPT_NAME) == [
+        (TEST_TRANSCRIPT_NAME, TRANSCRIPT_NAME)
+    ]
 
 
 # -------------------------------------------------------------------------------------------------

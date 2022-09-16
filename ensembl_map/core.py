@@ -11,17 +11,18 @@ from pyfaidx import Fasta
 
 from .cache import Cache
 from .constants import (
-    CDNA,
-    CONTIG,
+    CONTIG_ID,
     DEFAULT_REFERENCE,
     DEFAULT_RELEASE,
     DEFAULT_SPECIES,
-    EXON,
-    GENE,
-    PROTEIN,
-    TRANSCRIPT,
+    EXON_ID,
+    GENE_ID,
+    GENE_NAME,
+    PROTEIN_ID,
+    TRANSCRIPT_ID,
+    TRANSCRIPT_NAME,
 )
-from .utils import is_ensembl_id, reverse_complement, strip_version
+from .utils import reverse_complement, strip_version
 
 
 # -------------------------------------------------------------------------------------------------
@@ -298,25 +299,25 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # <feature_symbol>()
     # ---------------------------------------------------------------------------------------------
     def all_contig_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl["contig_id"])
+        return self._uniquify_series(self.ensembl[CONTIG_ID])
 
     def all_exon_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl["exon_id"])
+        return self._uniquify_series(self.ensembl[EXON_ID])
 
     def all_gene_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl["gene_id"])
+        return self._uniquify_series(self.ensembl[GENE_ID])
 
     def all_gene_names(self) -> List[str]:
-        return self._uniquify_series(self.ensembl["gene_name"])
+        return self._uniquify_series(self.ensembl[GENE_NAME])
 
     def all_protein_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl["protein_id"])
+        return self._uniquify_series(self.ensembl[PROTEIN_ID])
 
     def all_transcript_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl["transcript_id"])
+        return self._uniquify_series(self.ensembl[TRANSCRIPT_ID])
 
     def all_transcript_names(self) -> List[str]:
-        return self._uniquify_series(self.ensembl["transcript_name"])
+        return self._uniquify_series(self.ensembl[TRANSCRIPT_NAME])
 
     # ---------------------------------------------------------------------------------------------
     # get_<feature_symbol>(feature)
@@ -326,28 +327,22 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if is_ensembl_id(feature):
-                if feature_type == CONTIG:
-                    result.extend(self._contig_ids_of_contig_id(feature))
-                elif feature_type == EXON:
-                    result.extend(self._contig_ids_of_exon_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._contig_ids_of_gene_id(feature))
-                elif feature_type == PROTEIN:
-                    result.extend(self._contig_ids_of_protein_id(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._contig_ids_of_transcript_id(feature))
-                else:
-                    raise ValueError(f"Unable to get contig IDs for {feature} ({feature_type})")
+            if feature_type == CONTIG_ID:
+                result.extend(self._contig_ids_of_contig_id(feature))
+            elif feature_type == EXON_ID:
+                result.extend(self._contig_ids_of_exon_id(feature))
+            elif feature_type == GENE_ID:
+                result.extend(self._contig_ids_of_gene_id(feature))
+            elif feature_type == GENE_NAME:
+                result.extend(self._contig_ids_of_gene_name(feature))
+            elif feature_type == PROTEIN_ID:
+                result.extend(self._contig_ids_of_protein_id(feature))
+            elif feature_type == TRANSCRIPT_ID:
+                result.extend(self._contig_ids_of_transcript_id(feature))
+            elif feature_type == TRANSCRIPT_NAME:
+                result.extend(self._contig_ids_of_transcript_name(feature))
             else:
-                if feature_type == CONTIG:
-                    result.extend(self._contig_ids_of_contig_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._contig_ids_of_gene_name(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._contig_ids_of_transcript_name(feature))
-                else:
-                    raise ValueError(f"Unable to get contig IDs for {feature} ({feature_type})")
+                raise ValueError(f"Unable to get contig IDs for {feature} ({feature_type})")
 
         return result
 
@@ -356,28 +351,22 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if is_ensembl_id(feature):
-                if feature_type == CONTIG:
-                    result.extend(self._exon_ids_of_contig_id(feature))
-                elif feature_type == EXON:
-                    result.extend(self._exon_ids_of_exon_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._exon_ids_of_gene_id(feature))
-                elif feature_type == PROTEIN:
-                    result.extend(self._exon_ids_of_protein_id(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._exon_ids_of_transcript_id(feature))
-                else:
-                    raise ValueError(f"Unable to get exon IDs for {feature} ({feature_type})")
+            if feature_type == CONTIG_ID:
+                result.extend(self._exon_ids_of_contig_id(feature))
+            elif feature_type == EXON_ID:
+                result.extend(self._exon_ids_of_exon_id(feature))
+            elif feature_type == GENE_ID:
+                result.extend(self._exon_ids_of_gene_id(feature))
+            elif feature_type == GENE_NAME:
+                result.extend(self._exon_ids_of_gene_name(feature))
+            elif feature_type == PROTEIN_ID:
+                result.extend(self._exon_ids_of_protein_id(feature))
+            elif feature_type == TRANSCRIPT_ID:
+                result.extend(self._exon_ids_of_transcript_id(feature))
+            elif feature_type == TRANSCRIPT_NAME:
+                result.extend(self._exon_ids_of_transcript_name(feature))
             else:
-                if feature_type == CONTIG:
-                    result.extend(self._exon_ids_of_contig_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._exon_ids_of_gene_name(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._exon_ids_of_transcript_name(feature))
-                else:
-                    raise ValueError(f"Unable to get exon IDs for {feature} ({feature_type})")
+                raise ValueError(f"Unable to get exon IDs for {feature} ({feature_type})")
 
         return result
 
@@ -386,28 +375,22 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if is_ensembl_id(feature):
-                if feature_type == CONTIG:
-                    result.extend(self._gene_ids_of_contig_id(feature))
-                elif feature_type == EXON:
-                    result.extend(self._gene_ids_of_exon_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._gene_ids_of_gene_id(feature))
-                elif feature_type == PROTEIN:
-                    result.extend(self._gene_ids_of_protein_id(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._gene_ids_of_transcript_id(feature))
-                else:
-                    raise ValueError(f"Unable to get gene IDs for {feature} ({feature_type})")
+            if feature_type == CONTIG_ID:
+                result.extend(self._gene_ids_of_contig_id(feature))
+            elif feature_type == EXON_ID:
+                result.extend(self._gene_ids_of_exon_id(feature))
+            elif feature_type == GENE_ID:
+                result.extend(self._gene_ids_of_gene_id(feature))
+            elif feature_type == GENE_NAME:
+                result.extend(self._gene_ids_of_gene_name(feature))
+            elif feature_type == PROTEIN_ID:
+                result.extend(self._gene_ids_of_protein_id(feature))
+            elif feature_type == TRANSCRIPT_ID:
+                result.extend(self._gene_ids_of_transcript_id(feature))
+            elif feature_type == TRANSCRIPT_NAME:
+                result.extend(self._gene_ids_of_transcript_name(feature))
             else:
-                if feature_type == CONTIG:
-                    result.extend(self._gene_ids_of_contig_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._gene_ids_of_gene_name(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._gene_ids_of_transcript_name(feature))
-                else:
-                    raise ValueError(f"Unable to get gene IDs for {feature} ({feature_type})")
+                raise ValueError(f"Unable to get gene IDs for {feature} ({feature_type})")
 
         return result
 
@@ -416,28 +399,22 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if is_ensembl_id(feature):
-                if feature_type == CONTIG:
-                    result.extend(self._gene_names_of_contig_id(feature))
-                elif feature_type == EXON:
-                    result.extend(self._gene_names_of_exon_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._gene_names_of_gene_id(feature))
-                elif feature_type == PROTEIN:
-                    result.extend(self._gene_names_of_protein_id(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._gene_names_of_transcript_id(feature))
-                else:
-                    raise ValueError(f"Unable to get gene names for {feature} ({feature_type})")
+            if feature_type == CONTIG_ID:
+                result.extend(self._gene_names_of_contig_id(feature))
+            elif feature_type == EXON_ID:
+                result.extend(self._gene_names_of_exon_id(feature))
+            elif feature_type == GENE_ID:
+                result.extend(self._gene_names_of_gene_id(feature))
+            elif feature_type == GENE_NAME:
+                result.extend(self._gene_names_of_gene_name(feature))
+            elif feature_type == PROTEIN_ID:
+                result.extend(self._gene_names_of_protein_id(feature))
+            elif feature_type == TRANSCRIPT_ID:
+                result.extend(self._gene_names_of_transcript_id(feature))
+            elif feature_type == TRANSCRIPT_NAME:
+                result.extend(self._gene_names_of_transcript_name(feature))
             else:
-                if feature_type == CONTIG:
-                    result.extend(self._gene_names_of_contig_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._gene_names_of_gene_name(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._gene_names_of_transcript_name(feature))
-                else:
-                    raise ValueError(f"Unable to get gene names for {feature} ({feature_type})")
+                raise ValueError(f"Unable to get gene names for {feature} ({feature_type})")
 
         return result
 
@@ -446,28 +423,22 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if is_ensembl_id(feature):
-                if feature_type == CONTIG:
-                    result.extend(self._protein_ids_of_contig_id(feature))
-                elif feature_type == EXON:
-                    result.extend(self._protein_ids_of_exon_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._protein_ids_of_gene_id(feature))
-                elif feature_type == PROTEIN:
-                    result.extend(self._protein_ids_of_protein_id(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._protein_ids_of_transcript_id(feature))
-                else:
-                    raise ValueError(f"Unable to get protein IDs for {feature} ({feature_type})")
+            if feature_type == CONTIG_ID:
+                result.extend(self._protein_ids_of_contig_id(feature))
+            elif feature_type == EXON_ID:
+                result.extend(self._protein_ids_of_exon_id(feature))
+            elif feature_type == GENE_ID:
+                result.extend(self._protein_ids_of_gene_id(feature))
+            elif feature_type == GENE_NAME:
+                result.extend(self._protein_ids_of_gene_name(feature))
+            elif feature_type == PROTEIN_ID:
+                result.extend(self._protein_ids_of_protein_id(feature))
+            elif feature_type == TRANSCRIPT_ID:
+                result.extend(self._protein_ids_of_transcript_id(feature))
+            elif feature_type == TRANSCRIPT_NAME:
+                result.extend(self._protein_ids_of_transcript_name(feature))
             else:
-                if feature_type == CONTIG:
-                    result.extend(self._protein_ids_of_contig_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._protein_ids_of_gene_name(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._protein_ids_of_transcript_name(feature))
-                else:
-                    raise ValueError(f"Unable to get protein IDs for {feature} ({feature_type})")
+                raise ValueError(f"Unable to get protein IDs for {feature} ({feature_type})")
 
         return result
 
@@ -476,28 +447,22 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if is_ensembl_id(feature):
-                if feature_type == CONTIG:
-                    result.extend(self._transcript_ids_of_contig_id(feature))
-                elif feature_type == EXON:
-                    result.extend(self._transcript_ids_of_exon_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._transcript_ids_of_gene_id(feature))
-                elif feature_type == PROTEIN:
-                    result.extend(self._transcript_ids_of_protein_id(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._transcript_ids_of_transcript_id(feature))
-                else:
-                    raise ValueError(f"Unable to get transcript IDs for {feature} ({feature_type})")
+            if feature_type == CONTIG_ID:
+                result.extend(self._transcript_ids_of_contig_id(feature))
+            elif feature_type == EXON_ID:
+                result.extend(self._transcript_ids_of_exon_id(feature))
+            elif feature_type == GENE_ID:
+                result.extend(self._transcript_ids_of_gene_id(feature))
+            elif feature_type == GENE_NAME:
+                result.extend(self._transcript_ids_of_gene_name(feature))
+            elif feature_type == PROTEIN_ID:
+                result.extend(self._transcript_ids_of_protein_id(feature))
+            elif feature_type == TRANSCRIPT_ID:
+                result.extend(self._transcript_ids_of_transcript_id(feature))
+            elif feature_type == TRANSCRIPT_NAME:
+                result.extend(self._transcript_ids_of_transcript_name(feature))
             else:
-                if feature_type == CONTIG:
-                    result.extend(self._transcript_ids_of_contig_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._transcript_ids_of_gene_name(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._transcript_ids_of_transcript_name(feature))
-                else:
-                    raise ValueError(f"Unable to get transcript IDs for {feature} ({feature_type})")
+                raise ValueError(f"Unable to get transcript IDs for {feature} ({feature_type})")
 
         return result
 
@@ -506,181 +471,171 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if is_ensembl_id(feature):
-                if feature_type == CONTIG:
-                    result.extend(self._transcript_names_of_contig_id(feature))
-                elif feature_type == EXON:
-                    result.extend(self._transcript_names_of_exon_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._transcript_names_of_gene_id(feature))
-                elif feature_type == PROTEIN:
-                    result.extend(self._transcript_names_of_protein_id(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._transcript_names_of_transcript_id(feature))
-                else:
-                    raise ValueError(
-                        f"Unable to get transcript names for {feature} ({feature_type})"
-                    )
+            if feature_type == CONTIG_ID:
+                result.extend(self._transcript_names_of_contig_id(feature))
+            elif feature_type == EXON_ID:
+                result.extend(self._transcript_names_of_exon_id(feature))
+            elif feature_type == GENE_ID:
+                result.extend(self._transcript_names_of_gene_id(feature))
+            elif feature_type == GENE_NAME:
+                result.extend(self._transcript_names_of_gene_name(feature))
+            elif feature_type == PROTEIN_ID:
+                result.extend(self._transcript_names_of_protein_id(feature))
+            elif feature_type == TRANSCRIPT_ID:
+                result.extend(self._transcript_names_of_transcript_id(feature))
+            elif feature_type == TRANSCRIPT_NAME:
+                result.extend(self._transcript_names_of_transcript_name(feature))
             else:
-                if feature_type == CONTIG:
-                    result.extend(self._transcript_names_of_contig_id(feature))
-                elif feature_type == GENE:
-                    result.extend(self._transcript_names_of_gene_name(feature))
-                elif feature_type in (CDNA, TRANSCRIPT):
-                    result.extend(self._transcript_names_of_transcript_name(feature))
-                else:
-                    raise ValueError(
-                        f"Unable to get transcript names for {feature} ({feature_type})"
-                    )
+                raise ValueError(f"Unable to get transcript names for {feature} ({feature_type})")
 
         return result
 
     def _contig_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "contig_id", "contig_id")
+        return self._query(feature, CONTIG_ID, CONTIG_ID)
 
     def _contig_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "exon_id", "contig_id")
+        return self._query(feature, EXON_ID, CONTIG_ID)
 
     def _contig_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_id", "contig_id")
+        return self._query(feature, GENE_ID, CONTIG_ID)
 
     def _contig_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_name", "contig_id")
+        return self._query(feature, GENE_NAME, CONTIG_ID)
 
     def _contig_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "protein_id", "contig_id")
+        return self._query(feature, PROTEIN_ID, CONTIG_ID)
 
     def _contig_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_id", "contig_id")
+        return self._query(feature, TRANSCRIPT_ID, CONTIG_ID)
 
     def _contig_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_name", "contig_id")
+        return self._query(feature, TRANSCRIPT_NAME, CONTIG_ID)
 
     def _exon_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "contig_id", "exon_id")
+        return self._query(feature, CONTIG_ID, EXON_ID)
 
     def _exon_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "exon_id", "exon_id")
+        return self._query(feature, EXON_ID, EXON_ID)
 
     def _exon_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_id", "exon_id")
+        return self._query(feature, GENE_ID, EXON_ID)
 
     def _exon_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_name", "exon_id")
+        return self._query(feature, GENE_NAME, EXON_ID)
 
     def _exon_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(self._transcript_ids_of_protein_id(feature), "transcript_id", "exon_id")
+        return self._query(self._transcript_ids_of_protein_id(feature), TRANSCRIPT_ID, EXON_ID)
 
     def _exon_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_id", "exon_id")
+        return self._query(feature, TRANSCRIPT_ID, EXON_ID)
 
     def _exon_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_name", "exon_id")
+        return self._query(feature, TRANSCRIPT_NAME, EXON_ID)
 
     def _gene_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "contig_id", "gene_id")
+        return self._query(feature, CONTIG_ID, GENE_ID)
 
     def _gene_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "exon_id", "gene_id")
+        return self._query(feature, EXON_ID, GENE_ID)
 
     def _gene_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_id", "gene_id")
+        return self._query(feature, GENE_ID, GENE_ID)
 
     def _gene_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_name", "gene_id")
+        return self._query(feature, GENE_NAME, GENE_ID)
 
     def _gene_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "protein_id", "gene_id")
+        return self._query(feature, PROTEIN_ID, GENE_ID)
 
     def _gene_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_id", "gene_id")
+        return self._query(feature, TRANSCRIPT_ID, GENE_ID)
 
     def _gene_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_name", "gene_id")
+        return self._query(feature, TRANSCRIPT_NAME, GENE_ID)
 
     def _gene_names_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "contig_id", "gene_name")
+        return self._query(feature, CONTIG_ID, GENE_NAME)
 
     def _gene_names_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "exon_id", "gene_name")
+        return self._query(feature, EXON_ID, GENE_NAME)
 
     def _gene_names_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_id", "gene_name")
+        return self._query(feature, GENE_ID, GENE_NAME)
 
     def _gene_names_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_name", "gene_name")
+        return self._query(feature, GENE_NAME, GENE_NAME)
 
     def _gene_names_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "protein_id", "gene_name")
+        return self._query(feature, PROTEIN_ID, GENE_NAME)
 
     def _gene_names_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_id", "gene_name")
+        return self._query(feature, TRANSCRIPT_ID, GENE_NAME)
 
     def _gene_names_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_name", "gene_name")
+        return self._query(feature, TRANSCRIPT_NAME, GENE_NAME)
 
     def _protein_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "contig_id", "protein_id")
+        return self._query(feature, CONTIG_ID, PROTEIN_ID)
 
     def _protein_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(self._transcript_ids_of_exon_id(feature), "transcript_id", "protein_id")
+        return self._query(self._transcript_ids_of_exon_id(feature), TRANSCRIPT_ID, PROTEIN_ID)
 
     def _protein_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_id", "protein_id")
+        return self._query(feature, GENE_ID, PROTEIN_ID)
 
     def _protein_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_name", "protein_id")
+        return self._query(feature, GENE_NAME, PROTEIN_ID)
 
     def _protein_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "protein_id", "protein_id")
+        return self._query(feature, PROTEIN_ID, PROTEIN_ID)
 
     def _protein_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_id", "protein_id")
+        return self._query(feature, TRANSCRIPT_ID, PROTEIN_ID)
 
     def _protein_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_name", "protein_id")
+        return self._query(feature, TRANSCRIPT_NAME, PROTEIN_ID)
 
     def _transcript_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "contig_id", "transcript_id")
+        return self._query(feature, CONTIG_ID, TRANSCRIPT_ID)
 
     def _transcript_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "exon_id", "transcript_id")
+        return self._query(feature, EXON_ID, TRANSCRIPT_ID)
 
     def _transcript_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_id", "transcript_id")
+        return self._query(feature, GENE_ID, TRANSCRIPT_ID)
 
     def _transcript_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_name", "transcript_id")
+        return self._query(feature, GENE_NAME, TRANSCRIPT_ID)
 
     def _transcript_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "protein_id", "transcript_id")
+        return self._query(feature, PROTEIN_ID, TRANSCRIPT_ID)
 
     def _transcript_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_id", "transcript_id")
+        return self._query(feature, TRANSCRIPT_ID, TRANSCRIPT_ID)
 
     def _transcript_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_name", "transcript_id")
+        return self._query(feature, TRANSCRIPT_NAME, TRANSCRIPT_ID)
 
     def _transcript_names_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "contig_id", "transcript_name")
+        return self._query(feature, CONTIG_ID, TRANSCRIPT_NAME)
 
     def _transcript_names_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "exon_id", "transcript_name")
+        return self._query(feature, EXON_ID, TRANSCRIPT_NAME)
 
     def _transcript_names_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_id", "transcript_name")
+        return self._query(feature, GENE_ID, TRANSCRIPT_NAME)
 
     def _transcript_names_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "gene_name", "transcript_name")
+        return self._query(feature, GENE_NAME, TRANSCRIPT_NAME)
 
     def _transcript_names_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "protein_id", "transcript_name")
+        return self._query(feature, PROTEIN_ID, TRANSCRIPT_NAME)
 
     def _transcript_names_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_id", "transcript_name")
+        return self._query(feature, TRANSCRIPT_ID, TRANSCRIPT_NAME)
 
     def _transcript_names_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, "transcript_name", "transcript_name")
+        return self._query(feature, TRANSCRIPT_NAME, TRANSCRIPT_NAME)
 
     def _query(self, feature: Union[List[str], str], col: str, key: str) -> List[str]:
         """Generic function for querying the data cache."""
@@ -695,34 +650,40 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # ---------------------------------------------------------------------------------------------
     # normalize_feature(feature, feature_type)
     # ---------------------------------------------------------------------------------------------
-    def normalize_feature(self, feature: str, feature_type: str = "") -> List[Tuple[str, str]]:
+    def normalize_feature(
+        self, feature: str, feature_type: Union[List[str], str] = ""
+    ) -> List[Tuple[str, str]]:
         """Normalize a feature to the representation used by Ensembl."""
         normalized = []
 
         # first, check if the feature is found in the database
-        if feature_type == CONTIG or not feature_type:
+        if CONTIG_ID in feature_type or not feature_type:
             if normalized := self._normalize_contig_id(feature):
-                feature_type = CONTIG
+                feature_type = CONTIG_ID
 
-        if feature_type == EXON or not feature_type:
+        if EXON_ID in feature_type or not feature_type:
             if normalized := self._normalize_exon_id(feature):
-                feature_type = EXON
+                feature_type = EXON_ID
 
-        if feature_type == GENE or not feature_type:
+        if GENE_ID in feature_type or not feature_type:
             if normalized := self._normalize_gene_id(feature):
-                feature_type = GENE
-            elif normalized := self._normalize_gene_name(feature):
-                feature_type = GENE
+                feature_type = GENE_ID
 
-        if feature_type == PROTEIN or not feature_type:
+        if GENE_NAME in feature_type or not feature_type:
+            if normalized := self._normalize_gene_name(feature):
+                feature_type = GENE_NAME
+
+        if PROTEIN_ID in feature_type or not feature_type:
             if normalized := self._normalize_protein_id(feature):
-                feature_type = PROTEIN
+                feature_type = PROTEIN_ID
 
-        if feature_type in (CDNA, TRANSCRIPT) or not feature_type:
+        if TRANSCRIPT_ID in feature_type or not feature_type:
             if normalized := self._normalize_transcript_id(feature):
-                feature_type = TRANSCRIPT
-            elif normalized := self._normalize_transcript_name(feature):
-                feature_type = TRANSCRIPT
+                feature_type = TRANSCRIPT_ID
+
+        if TRANSCRIPT_NAME in feature_type or not feature_type:
+            if normalized := self._normalize_transcript_name(feature):
+                feature_type = TRANSCRIPT_NAME
 
         return [(i, feature_type) for i in normalized]
 
@@ -787,24 +748,32 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # ---------------------------------------------------------------------------------------------
     def is_contig(self, feature: str) -> bool:
         """Return True if the given feature is a contig."""
-        return any((i[1] == CONTIG for i in self.normalize_feature(feature, CONTIG)))
+        return any((i[1] == CONTIG_ID for i in self.normalize_feature(feature, CONTIG_ID)))
 
     def is_exon(self, feature: str) -> bool:
         """Return True if the given feature is an exon."""
-        return any((i[1] == EXON for i in self.normalize_feature(feature, EXON)))
+        return any((i[1] == EXON_ID for i in self.normalize_feature(feature, EXON_ID)))
 
     def is_gene(self, feature: str) -> bool:
         """Return True if the given feature is a gene."""
-        return any((i[1] == GENE for i in self.normalize_feature(feature, GENE)))
+        return any(
+            (
+                i[1] in [GENE_ID, GENE_NAME]
+                for i in self.normalize_feature(feature, [GENE_ID, GENE_NAME])
+            )
+        )
 
     def is_protein(self, feature: str) -> bool:
         """Return True if the given feature is a protein."""
-        return any((i[1] == PROTEIN for i in self.normalize_feature(feature, PROTEIN)))
+        return any((i[1] == PROTEIN_ID for i in self.normalize_feature(feature, PROTEIN_ID)))
 
     def is_transcript(self, feature: str) -> bool:
         """Return True if the given feature is a transcript."""
         return any(
-            (i[1] in (CDNA, TRANSCRIPT) for i in self.normalize_feature(feature, TRANSCRIPT))
+            (
+                i[1] in [TRANSCRIPT_ID, TRANSCRIPT_NAME]
+                for i in self.normalize_feature(feature, [TRANSCRIPT_ID, TRANSCRIPT_NAME])
+            )
         )
 
     # ---------------------------------------------------------------------------------------------
@@ -1108,7 +1077,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def _get_exon_number(self, exon_id: str) -> List[Tuple[str, int, int, str]]:
         result = []
 
-        mask = (self.ensembl["exon_id"] == exon_id) & (self.ensembl["feature"] == "exon")
+        mask = (self.ensembl[EXON_ID] == exon_id) & (self.ensembl["feature"] == "exon")
         for _, exon in self.ensembl[mask].iterrows():
             result.append((exon.transcript_id, exon.exon_number, exon.exon_number, exon.strand))
 
@@ -1231,7 +1200,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1260,7 +1229,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_dna(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1269,7 +1238,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1299,7 +1268,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "contig_id")
+            return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _cdna_to_exon(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1308,7 +1277,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask_cds = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1316,7 +1285,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             )
             for _, cds in self.ensembl[mask_cds].iterrows():
                 mask_exon = (
-                    (self.ensembl["transcript_id"].isin(transcript_ids))
+                    (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                     & (self.ensembl["exon_number"] == cds.exon_number)
                     & (self.ensembl["feature"] == "exon")
                 )
@@ -1365,7 +1334,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1395,7 +1364,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_cdna(
         self, contig_ids: List[str], start: int, end: int, strand: List[str]
@@ -1404,7 +1373,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["contig_id"].isin(contig_ids))
+                (self.ensembl[CONTIG_ID].isin(contig_ids))
                 & (self.ensembl["start"] <= position)
                 & (self.ensembl["end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1438,7 +1407,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_dna(
         self, contig_ids: List[str], start: int, end: int, strand: List[str]
@@ -1456,7 +1425,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["contig_id"].isin(contig_ids))
+                (self.ensembl[CONTIG_ID].isin(contig_ids))
                 & (self.ensembl["start"] <= position)
                 & (self.ensembl["end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1507,7 +1476,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["contig_id"].isin(contig_ids))
+                (self.ensembl[CONTIG_ID].isin(contig_ids))
                 & (self.ensembl["start"] <= position)
                 & (self.ensembl["end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1540,7 +1509,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_cdna(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1549,7 +1518,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["exon_number"] == str(position))  # TODO: exon number should be int
                 & (self.ensembl["strand"].isin(strand))
                 & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
@@ -1577,7 +1546,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_dna(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1586,7 +1555,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 # TODO: exon number should be int
                 & (self.ensembl["exon_number"] == str(position))
                 & (self.ensembl["strand"].isin(strand))
@@ -1610,7 +1579,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "contig_id")
+            return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _exon_to_exon(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1619,7 +1588,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 # TODO: exon number should be int
                 & (self.ensembl["exon_number"] == str(position))
                 & (self.ensembl["strand"].isin(strand))
@@ -1648,7 +1617,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_protein(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1666,7 +1635,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["exon_number"] == str(position))  # TODO: exon number should be int
                 & (self.ensembl["strand"].isin(strand))
                 & (self.ensembl["feature"] == "exon")
@@ -1693,7 +1662,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _protein_to_cdna(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1749,7 +1718,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["transcript_start"] <= position)
                 & (self.ensembl["transcript_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1780,7 +1749,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _rna_to_dna(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1789,7 +1758,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["transcript_start"] <= position)
                 & (self.ensembl["transcript_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1820,7 +1789,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "contig_id")
+            return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _rna_to_exon(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1829,7 +1798,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["transcript_start"] <= position)
                 & (self.ensembl["transcript_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1875,7 +1844,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl["transcript_id"].isin(transcript_ids))
+                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["transcript_start"] <= position)
                 & (self.ensembl["transcript_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
@@ -1903,7 +1872,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
-            return merge_positions(result_start, result_end, "transcript_id")
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
 
 def instance():
