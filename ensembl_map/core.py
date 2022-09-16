@@ -650,38 +650,36 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # ---------------------------------------------------------------------------------------------
     # normalize_feature(feature, feature_type)
     # ---------------------------------------------------------------------------------------------
-    def normalize_feature(
-        self, feature: str, feature_type: Union[List[str], str] = ""
-    ) -> List[Tuple[str, str]]:
+    def normalize_feature(self, feature: str, feature_type: str = "") -> List[Tuple[str, str]]:
         """Normalize a feature to the representation used by Ensembl."""
         normalized = []
 
         # first, check if the feature is found in the database
-        if CONTIG_ID in feature_type or not feature_type:
+        if feature_type == CONTIG_ID or not feature_type:
             if normalized := self._normalize_contig_id(feature):
                 feature_type = CONTIG_ID
 
-        if EXON_ID in feature_type or not feature_type:
+        if feature_type == EXON_ID or not feature_type:
             if normalized := self._normalize_exon_id(feature):
                 feature_type = EXON_ID
 
-        if GENE_ID in feature_type or not feature_type:
+        if feature_type == GENE_ID or not feature_type:
             if normalized := self._normalize_gene_id(feature):
                 feature_type = GENE_ID
 
-        if GENE_NAME in feature_type or not feature_type:
+        if feature_type == GENE_NAME or not feature_type:
             if normalized := self._normalize_gene_name(feature):
                 feature_type = GENE_NAME
 
-        if PROTEIN_ID in feature_type or not feature_type:
+        if feature_type == PROTEIN_ID or not feature_type:
             if normalized := self._normalize_protein_id(feature):
                 feature_type = PROTEIN_ID
 
-        if TRANSCRIPT_ID in feature_type or not feature_type:
+        if feature_type == TRANSCRIPT_ID or not feature_type:
             if normalized := self._normalize_transcript_id(feature):
                 feature_type = TRANSCRIPT_ID
 
-        if TRANSCRIPT_NAME in feature_type or not feature_type:
+        if feature_type == TRANSCRIPT_NAME or not feature_type:
             if normalized := self._normalize_transcript_name(feature):
                 feature_type = TRANSCRIPT_NAME
 
@@ -756,11 +754,8 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
 
     def is_gene(self, feature: str) -> bool:
         """Return True if the given feature is a gene."""
-        return any(
-            (
-                i[1] in [GENE_ID, GENE_NAME]
-                for i in self.normalize_feature(feature, [GENE_ID, GENE_NAME])
-            )
+        return any((i[1] == GENE_ID for i in self.normalize_feature(feature, GENE_ID))) or any(
+            (i[1] == GENE_NAME for i in self.normalize_feature(feature, GENE_NAME))
         )
 
     def is_protein(self, feature: str) -> bool:
@@ -770,10 +765,9 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def is_transcript(self, feature: str) -> bool:
         """Return True if the given feature is a transcript."""
         return any(
-            (
-                i[1] in [TRANSCRIPT_ID, TRANSCRIPT_NAME]
-                for i in self.normalize_feature(feature, [TRANSCRIPT_ID, TRANSCRIPT_NAME])
-            )
+            (i[1] == TRANSCRIPT_ID for i in self.normalize_feature(feature, TRANSCRIPT_ID))
+        ) or any(
+            (i[1] == TRANSCRIPT_NAME for i in self.normalize_feature(feature, TRANSCRIPT_NAME))
         )
 
     # ---------------------------------------------------------------------------------------------
