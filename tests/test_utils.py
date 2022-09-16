@@ -33,6 +33,7 @@ def uncompressed_file(tmpdir) -> str:
 
     return path.strpath
 
+
 def test_bgzip_gzip(gzip_file):
     bgzip(gzip_file)
     assert os.path.exists(gzip_file)
@@ -50,4 +51,3 @@ def test_is_bgzipped_false(gzip_file):
 
 def test_is_bgzipped_true(bgzip_file):
     assert is_bgzipped(bgzip_file) is True
-

@@ -59,6 +59,9 @@ class _Position:
     def on_positive_strand(self) -> bool:
         return self.strand == "+"
 
+    def sequence(self) -> str:
+        raise NotImplementedError()
+
     def to_cdna(self) -> List[CdnaPosition]:
         raise NotImplementedError()
 
@@ -88,6 +91,9 @@ class CdnaPosition(_Position):
     #         return f"{self.transcript_id}:c.{self.start}"
     #     else:
     #         return f"{self.transcript_id}:c.{self.start}-{self.end}"
+
+    def sequence(self) -> str:
+        return self._data.cdna_sequence(self.transcript_id, self.start, self.end, self.strand)
 
     def to_cdna(self) -> List[CdnaPosition]:
         return self._data._cdna_to_cdna([self.transcript_id], self.start, self.end, [self.strand])
@@ -124,6 +130,9 @@ class DnaPosition(_Position):
             ]
         )
 
+    def sequence(self) -> str:
+        return self._data.dna_sequence(self.contig_id, self.start, self.end, self.strand)
+
     def to_cdna(self) -> List[CdnaPosition]:
         return self._data._dna_to_cdna([self.contig_id], self.start, self.end, [self.strand])
 
@@ -153,6 +162,9 @@ class ExonPosition(_Position):
     #         return f"{self.exon_id}:e.{self.start}"
     #     else:
     #         return f"{self.exon_id}:e.{self.start}-{self.end}"
+
+    def sequence(self) -> str:
+        raise NotImplementedError()  # TODO
 
     def to_cdna(self) -> List[CdnaPosition]:
         return self._data._exon_to_cdna([self.transcript_id], self.start, self.end, [self.strand])
@@ -185,6 +197,9 @@ class ProteinPosition(_Position):
     #         return f"{self.protein_id}:p.{self.start}"
     #     else:
     #         return f"{self.protein_id}:p.{self.start}-{self.end}"
+
+    def sequence(self) -> str:
+        return self._data.peptide_sequence(self.protein_id, self.start, self.end, self.strand)
 
     def to_cdna(self) -> List[CdnaPosition]:
         return self._data._protein_to_cdna(
@@ -220,6 +235,9 @@ class RnaPosition(_Position):
     #         return f"{self.transcript_id}:r.{self.start}"
     #     else:
     #         return f"{self.transcript_id}:r.{self.start}-{self.end}"
+
+    def sequence(self) -> str:
+        return self._data.rna_sequence(self.transcript_id, self.start, self.end, self.strand)
 
     def to_cdna(self) -> List[CdnaPosition]:
         return self._data._rna_to_cdna([self.transcript_id], self.start, self.end, [self.strand])
@@ -775,39 +793,56 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # ---------------------------------------------------------------------------------------------
     def cdna_sequence(
         self,
-        transcript: str,
+        transcript_id: str,
         start: Optional[int] = None,
         end: Optional[int] = None,
-        strand: str = "+",
+        strand: Optional[str] = None,
     ) -> str:
         """Return the nucleotide sequence at the given cDNA coordinates."""
-        return self._get_sequence(self.cdna, transcript, start, end, strand)
+        return self._get_sequence(self.cdna, transcript_id, start, end, strand)
 
     def dna_sequence(
-        self, contig: str, start: Optional[int] = None, end: Optional[int] = None, strand: str = "+"
-    ) -> str:
-        """Return the nucleotide sequence at the given contig coordinates."""
-        return self._get_sequence(self.dna, contig, start, end, strand)
-
-    def peptide_sequence(
         self,
-        protein: str,
+        contig_id: str,
         start: Optional[int] = None,
         end: Optional[int] = None,
         strand: str = "+",
     ) -> str:
-        """Return the amino acid sequence at the given peptide coordinates."""
-        return self._get_sequence(self.pep, protein, start, end, strand)
+        """Return the nucleotide sequence at the given contig coordinates."""
+        return self._get_sequence(self.dna, contig_id, start, end, strand)
 
     def ncrna_sequence(
         self,
-        transcript: str,
+        transcript_id: str,
         start: Optional[int] = None,
         end: Optional[int] = None,
-        strand: str = "+",
+        strand: Optional[str] = None,
     ) -> str:
         """Return the nucleotide sequence at the given ncRNA coordinates."""
-        return self._get_sequence(self.dna, transcript, start, end, strand)
+        return self._get_sequence(self.ncrna, transcript_id, start, end, strand)
+
+    def peptide_sequence(
+        self,
+        protein_id: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+    ) -> str:
+        """Return the amino acid sequence at the given peptide coordinates."""
+        return self._get_sequence(self.pep, protein_id, start, end, strand)
+
+    def rna_sequence(
+        self,
+        transcript_id: str,
+        start: Optional[int] = None,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+    ) -> str:
+        """Return the nucleotide sequence at the given cDNA or ncRNA coordinates."""
+        try:
+            return self._get_sequence(self.cdna, transcript_id, start, end, strand)
+        except KeyError:
+            return self._get_sequence(self.ncrna, transcript_id, start, end, strand)
 
     def _get_sequence(
         self,
@@ -815,7 +850,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         ref: str,
         start: Optional[int] = None,
         end: Optional[int] = None,
-        strand: str = "+",
+        strand: Optional[str] = None,
     ):
         """Return the sequence between the given positions (inclusive)."""
         seq = fasta[ref]

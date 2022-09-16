@@ -2,10 +2,11 @@
 *.pyc
 .coverage
 .stignore
-.stversions
 .vscode
 .mypy_cache/
 .pytest_cache/
+.stfolder/
+.stversions/
 build/
 cover/
 dist/

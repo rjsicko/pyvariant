@@ -10,7 +10,6 @@ from Bio.Seq import Seq
 from logzero import logger
 
 
-
 def bgzip(path: str) -> str:
     """Compress a file in BGZF format."""
     chunk_size = 4096  # chunk size is set to balance runtime and memory usage
