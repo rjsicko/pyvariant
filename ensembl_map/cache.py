@@ -58,12 +58,7 @@ GTF_KEEP_COLUMNS = [
     "protein_id",
 ]
 
-GTF_KEEP_FEATURES = [
-    "CDS",
-    "exon",
-    "stop_codon",
-    "transcript",
-]
+GTF_KEEP_FEATURES = ["CDS", "exon", "stop_codon", "transcript"]
 
 
 class Cache:
@@ -346,9 +341,7 @@ class Cache:
     def remote_gtf_filename(self) -> str:
         """Name of the GTF file on the FTP server."""
         return GTF_FILENAME_TEMPLATE.format(
-            species=self.species.capitalize(),
-            reference=self.reference,
-            release=self.release,
+            species=self.species.capitalize(), reference=self.reference, release=self.release
         )
 
     @property
