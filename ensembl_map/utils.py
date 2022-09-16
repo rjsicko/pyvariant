@@ -1,24 +1,14 @@
 import gzip
 import os.path
-import re
 import shutil
 from functools import lru_cache
 from tempfile import TemporaryDirectory
-from typing import IO, Callable, Iterator, Optional
+from typing import Callable
 
 from Bio.bgzf import BgzfWriter, _bgzf_magic
 from Bio.Seq import Seq
 from logzero import logger
 
-
-def assert_valid_position(start: Optional[int] = None, end: Optional[int] = None) -> None:
-    if start is not None and start < 1:
-        raise ValueError(f"Start must be >= 1 ({start})")
-    if end is not None and end < 1:
-        raise ValueError(f"End must be >= 1 ({end})")
-
-    if (start is not None and end is not None) and start > end:
-        raise ValueError(f"Start ({start}) must be <= end ({end})")
 
 
 def bgzip(path: str) -> str:
@@ -70,44 +60,9 @@ def is_bgzipped(path: str) -> bool:
 
 
 @lru_cache()
-def is_ensembl_id(feature: str) -> bool:
-    """String looks like an Ensembl Stable ID."""
-    return bool(re.match(r"ENS[A-Z]+\d{11}(?:\.\d)?", feature.upper(), re.IGNORECASE))
-
-
-def iter_normalized_ids(key: str) -> Iterator[str]:
-    """Return an iterator of possible normalized keys."""
-    yield from (key, key.lower(), key.upper(), strip_version(key.lower()))
-
-
-def reference_by_release(release: int) -> str:
-    """Given the Ensembl release number, return the reference name.
-
-    Examples:
-        >>> reference_by_release(69)
-        hg19
-        >>> reference_by_release(100)
-        hg38
-    """
-    if release == 54:
-        return "NCBI36"
-    elif 54 < release <= 75:
-        return "GRCh37"
-    elif 75 < release:
-        return "GRCh38"
-    else:
-        raise ValueError(f"Unable to get reference name for '{release}'")
-
-
-@lru_cache()
 def reverse_complement(sequence: str) -> str:
     """Return the reverse complement of a given nucleotide sequence."""
     return str(Seq(sequence).reverse_complement())
-
-
-def skip_header(fh: IO, comment: str = "#") -> Iterator[str]:
-    """Return a file iterator that skips lines starting with the given string."""
-    return filter(lambda row: not row.startswith(comment), fh)
 
 
 def strip_version(key: str) -> str:
