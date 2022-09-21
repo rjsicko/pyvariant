@@ -560,6 +560,98 @@ def test_normalize_feature_transcript_name(ensembl100):
     ]
 
 
+# ---------------------------------------------------------------------------------------------
+# get_<feature>(feature)
+# ---------------------------------------------------------------------------------------------
+@pytest.fixture
+def test_exon(ensembl100):
+    return ExonPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        end=1,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        exon_id="ENSE00003896691",
+    )
+
+
+@pytest.mark.parametrize(
+    "feature,num_results",
+    [
+        ("ENSE00003896691", 1),
+        ("ENSG00000164362", 79),
+        ("ENSP00000309572", 23),
+        ("ENST00000310581", 33),
+        ("TERT", 79),
+        ("TERT-201", 33),
+    ],
+)
+def test_get_exon(ensembl100, test_exon, feature, num_results):
+    results = ensembl100.get_exons(feature)
+    assert len(results) == num_results
+    assert test_exon in results
+
+
+@pytest.fixture
+def test_gene(ensembl100):
+    return DnaPosition(_data=ensembl100, contig_id="5", start=1253147, end=1295068, strand="-")
+
+
+@pytest.mark.parametrize(
+    "feature,num_results",
+    [
+        ("ENSE00003896691", 1),
+        ("ENSG00000164362", 1),
+        ("ENSP00000309572", 1),
+        ("ENST00000310581", 1),
+        ("TERT", 1),
+        ("TERT-201", 1),
+    ],
+)
+def test_get_gene(ensembl100, test_gene, feature, num_results):
+    results = ensembl100.get_genes(feature)
+    assert len(results) == num_results
+    assert test_gene in results
+
+
+@pytest.fixture
+def test_transcript(ensembl100):
+    return RnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        end=4039,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+    )
+
+
+@pytest.mark.parametrize(
+    "feature,num_results",
+    [
+        ("ENSE00003896691", 1),
+        ("ENSG00000164362", 7),
+        ("ENSP00000309572", 1),
+        ("ENST00000310581", 1),
+        ("TERT", 7),
+        ("TERT-201", 1),
+    ],
+)
+def test_get_transcript(ensembl100, test_transcript, feature, num_results):
+    results = ensembl100.get_transcripts(feature)
+    print(results)
+    print(test_transcript)
+    assert len(results) == num_results
+    assert test_transcript in results
+
+
 # -------------------------------------------------------------------------------------------------
 # position classes
 # -------------------------------------------------------------------------------------------------

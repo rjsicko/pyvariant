@@ -914,6 +914,77 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return feature in self.canonical_transcript
 
     # ---------------------------------------------------------------------------------------------
+    # get_<feature>
+    # ---------------------------------------------------------------------------------------------
+    def get_exons(self, feature: str) -> List[ExonPosition]:
+        """Return the gene position(s) of the given feature."""
+        result = []
+
+        exon_ids = self.exon_ids(feature)
+        mask = (self.ensembl[EXON_ID].isin(exon_ids)) & (self.ensembl["feature"] == "exon")
+        for _, exon in self.ensembl[mask].iterrows():
+            result.append(
+                ExonPosition(
+                    _data=self,
+                    contig_id=exon.contig_id,
+                    start=int(exon.exon_number),
+                    end=int(exon.exon_number),
+                    strand=exon.strand,
+                    gene_id=exon.gene_id,
+                    gene_name=exon.gene_name,
+                    transcript_id=exon.transcript_id,
+                    transcript_name=exon.transcript_name,
+                    exon_id=exon.exon_id,
+                )
+            )
+
+        return uniquify(result)
+
+    def get_genes(self, feature: str) -> List[DnaPosition]:
+        """Return the gene position(s) of the given feature."""
+        result = []
+
+        gene_ids = self.gene_ids(feature)
+        mask = (self.ensembl[GENE_ID].isin(gene_ids)) & (self.ensembl["feature"] == "gene")
+        for _, gene in self.ensembl[mask].iterrows():
+            result.append(
+                DnaPosition(
+                    _data=self,
+                    contig_id=gene.contig_id,
+                    start=gene.start,
+                    end=gene.end,
+                    strand=gene.strand,
+                )
+            )
+
+        return uniquify(result)
+
+    def get_transcripts(self, feature: str) -> List[RnaPosition]:
+        """Return the transcript position(s) of the given feature."""
+        result = []
+
+        transcript_ids = self.transcript_ids(feature)
+        mask = (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids)) & (
+            self.ensembl["feature"] == "transcript"
+        )
+        for _, transcript in self.ensembl[mask].iterrows():
+            result.append(
+                RnaPosition(
+                    _data=self,
+                    contig_id=transcript.contig_id,
+                    start=transcript.transcript_start,
+                    end=transcript.transcript_end,
+                    strand=transcript.strand,
+                    gene_id=transcript.gene_id,
+                    gene_name=transcript.gene_name,
+                    transcript_id=transcript.transcript_id,
+                    transcript_name=transcript.transcript_name,
+                )
+            )
+
+        return uniquify(result)
+
+    # ---------------------------------------------------------------------------------------------
     # <feature>_to_<feature>
     # ---------------------------------------------------------------------------------------------
     def cdna_to_cdna(
