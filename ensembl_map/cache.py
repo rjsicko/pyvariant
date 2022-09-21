@@ -58,7 +58,7 @@ GTF_KEEP_COLUMNS = [
     "protein_id",
 ]
 
-GTF_KEEP_FEATURES = ["CDS", "exon", "stop_codon", "transcript"]
+GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
 
 
 class Cache:
@@ -81,7 +81,7 @@ class Cache:
         """Create the release cache directory, if it doesn't already exist."""
         Path(self.release_cache_dir).mkdir(exist_ok=True, parents=True)
 
-    def download_all(self):
+    def download_all(self, force: bool = False):
         """Download required data and cache it.
 
         NOTE: pyfaidx only supports compressed FASTA in BGZF format. Ensembl FASTA comes in GZ
@@ -115,15 +115,15 @@ class Cache:
                 self.index_ncrna_fasta,
             ),
         ]:
-            if not os.path.exists(fasta):
+            if not os.path.exists(fasta) or force:
                 downloadf()
-            if not is_bgzipped(fasta):
+            if not is_bgzipped(fasta) or force:
                 bgzip(fasta)
-            if not os.path.exists(index):
+            if not os.path.exists(index) or force:
                 indexf()
 
-        if not os.path.exists(self.local_gtf_cache_filepath):
-            if not os.path.exists(self.local_gtf_filepath):
+        if not os.path.exists(self.local_gtf_cache_filepath) or force:
+            if not os.path.exists(self.local_gtf_filepath) or force:
                 self.download_gtf()
             df = self.normalize_gtf()
             self.cache_gtf(df)
@@ -440,26 +440,55 @@ class Cache:
                 features = group.sort_values(["start", "end"])
                 first = features.iloc[0]
                 last = features.iloc[-1]
-                logger.debug(f"Adding transcript for '{transcript_id}'")
-                transcript_rows.append(
-                    {
-                        "contig_id": first.contig_id,
-                        "source": "",
-                        "feature": "transcript",
-                        "start": first.start,
-                        "end": last.end,
-                        "score": ".",
-                        "strand": first.strand,
-                        "frame": ".",
-                        "gene_id": first.gene_id,
-                        "gene_name": first.gene_name,
-                        "transcript_id": transcript_id,
-                        "transcript_name": first.transcript_name,
-                    }
-                )
+                new_row = {
+                    "contig_id": first.contig_id,
+                    "feature": "transcript",
+                    "start": first.start,
+                    "end": last.end,
+                    "strand": first.strand,
+                    "gene_id": first.gene_id,
+                    "gene_name": first.gene_name,
+                    "transcript_id": transcript_id,
+                    "transcript_name": first.transcript_name,
+                }
+                transcript_rows.append(new_row)
+                logger.debug(f"Inferred transcript {new_row}")
 
         new_transcript_df = pandas.DataFrame(transcript_rows)
         df = pandas.concat([df, new_transcript_df], ignore_index=True)
+
+        return df
+
+    def _add_missing_genes(self, df: pandas.DataFrame) -> pandas.DataFrame:
+        """Infer gene position(s) from other features, if not already defined."""
+        gene_rows = []
+
+        def missing_gene(group: pandas.DataFrame) -> pandas.Series:
+            return group[group.feature == "gene"].empty
+
+        # add in missing transcripts
+        for gene_id, group in df.groupby("gene_id"):
+            if not gene_id:
+                continue
+
+            if missing_gene(group):
+                features = group.sort_values(["start", "end"])
+                first = features.iloc[0]
+                last = features.iloc[-1]
+                new_row = {
+                    "contig_id": first.contig_id,
+                    "feature": "gene",
+                    "start": first.start,
+                    "end": last.end,
+                    "strand": first.strand,
+                    "gene_id": first.gene_id,
+                    "gene_name": first.gene_name,
+                }
+                gene_rows.append(new_row)
+                logger.debug(f"Inferred gene {new_row}")
+
+        new_gene_df = pandas.DataFrame(gene_rows)
+        df = pandas.concat([df, new_gene_df], ignore_index=True)
 
         return df
 
@@ -494,6 +523,16 @@ class Cache:
                 transcript_end = length + offset
                 result[key] = (transcript_start, transcript_end)
                 offset += length
+
+            # add in the transcript length to the transcript itself
+            key = (
+                transcript_id,
+                transcript.feature,
+                transcript.start,
+                transcript.end,
+                transcript.strand,
+            )
+            result[key] = (1, offset)
 
         # there's probably a better way to do this
         for index, feature in df.iterrows():
