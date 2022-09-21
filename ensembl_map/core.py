@@ -337,333 +337,98 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def all_transcript_names(self) -> List[str]:
         return self._uniquify_series(self.ensembl[TRANSCRIPT_NAME])
 
+    def _uniquify_series(self, series: pandas.Series) -> List:
+        return sorted(series.unique().tolist())
+
     # ---------------------------------------------------------------------------------------------
     # get_<feature_symbol>(feature)
     # ---------------------------------------------------------------------------------------------
     def contig_ids(self, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol, return the corresponding contig ID(s)."""
-        result = []
-
-        for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if feature_type == CONTIG_ID:
-                result.extend(self._contig_ids_of_contig_id(feature))
-            elif feature_type == EXON_ID:
-                result.extend(self._contig_ids_of_exon_id(feature))
-            elif feature_type == GENE_ID:
-                result.extend(self._contig_ids_of_gene_id(feature))
-            elif feature_type == GENE_NAME:
-                result.extend(self._contig_ids_of_gene_name(feature))
-            elif feature_type == PROTEIN_ID:
-                result.extend(self._contig_ids_of_protein_id(feature))
-            elif feature_type == TRANSCRIPT_ID:
-                result.extend(self._contig_ids_of_transcript_id(feature))
-            elif feature_type == TRANSCRIPT_NAME:
-                result.extend(self._contig_ids_of_transcript_name(feature))
-            else:
-                raise ValueError(f"Unable to get contig IDs for {feature} ({feature_type})")
-
-        return result
+        return self._get_feature_attr(CONTIG_ID, feature, feature_type)
 
     def exon_ids(self, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol, return the corresponding exon ID(s)."""
-        result = []
-
-        for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if feature_type == CONTIG_ID:
-                result.extend(self._exon_ids_of_contig_id(feature))
-            elif feature_type == EXON_ID:
-                result.extend(self._exon_ids_of_exon_id(feature))
-            elif feature_type == GENE_ID:
-                result.extend(self._exon_ids_of_gene_id(feature))
-            elif feature_type == GENE_NAME:
-                result.extend(self._exon_ids_of_gene_name(feature))
-            elif feature_type == PROTEIN_ID:
-                result.extend(self._exon_ids_of_protein_id(feature))
-            elif feature_type == TRANSCRIPT_ID:
-                result.extend(self._exon_ids_of_transcript_id(feature))
-            elif feature_type == TRANSCRIPT_NAME:
-                result.extend(self._exon_ids_of_transcript_name(feature))
-            else:
-                raise ValueError(f"Unable to get exon IDs for {feature} ({feature_type})")
-
-        return result
+        return self._get_feature_attr(EXON_ID, feature, feature_type)
 
     def gene_ids(self, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol, return the corresponding gene ID(s)."""
-        result = []
-
-        for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if feature_type == CONTIG_ID:
-                result.extend(self._gene_ids_of_contig_id(feature))
-            elif feature_type == EXON_ID:
-                result.extend(self._gene_ids_of_exon_id(feature))
-            elif feature_type == GENE_ID:
-                result.extend(self._gene_ids_of_gene_id(feature))
-            elif feature_type == GENE_NAME:
-                result.extend(self._gene_ids_of_gene_name(feature))
-            elif feature_type == PROTEIN_ID:
-                result.extend(self._gene_ids_of_protein_id(feature))
-            elif feature_type == TRANSCRIPT_ID:
-                result.extend(self._gene_ids_of_transcript_id(feature))
-            elif feature_type == TRANSCRIPT_NAME:
-                result.extend(self._gene_ids_of_transcript_name(feature))
-            else:
-                raise ValueError(f"Unable to get gene IDs for {feature} ({feature_type})")
-
-        return result
+        return self._get_feature_attr(GENE_ID, feature, feature_type)
 
     def gene_names(self, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol, return the corresponding gene names(s)."""
-        result = []
-
-        for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if feature_type == CONTIG_ID:
-                result.extend(self._gene_names_of_contig_id(feature))
-            elif feature_type == EXON_ID:
-                result.extend(self._gene_names_of_exon_id(feature))
-            elif feature_type == GENE_ID:
-                result.extend(self._gene_names_of_gene_id(feature))
-            elif feature_type == GENE_NAME:
-                result.extend(self._gene_names_of_gene_name(feature))
-            elif feature_type == PROTEIN_ID:
-                result.extend(self._gene_names_of_protein_id(feature))
-            elif feature_type == TRANSCRIPT_ID:
-                result.extend(self._gene_names_of_transcript_id(feature))
-            elif feature_type == TRANSCRIPT_NAME:
-                result.extend(self._gene_names_of_transcript_name(feature))
-            else:
-                raise ValueError(f"Unable to get gene names for {feature} ({feature_type})")
-
-        return result
+        return self._get_feature_attr(GENE_NAME, feature, feature_type)
 
     def protein_ids(self, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol, return the corresponding protein ID(s)."""
-        result = []
-
-        for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if feature_type == CONTIG_ID:
-                result.extend(self._protein_ids_of_contig_id(feature))
-            elif feature_type == EXON_ID:
-                result.extend(self._protein_ids_of_exon_id(feature))
-            elif feature_type == GENE_ID:
-                result.extend(self._protein_ids_of_gene_id(feature))
-            elif feature_type == GENE_NAME:
-                result.extend(self._protein_ids_of_gene_name(feature))
-            elif feature_type == PROTEIN_ID:
-                result.extend(self._protein_ids_of_protein_id(feature))
-            elif feature_type == TRANSCRIPT_ID:
-                result.extend(self._protein_ids_of_transcript_id(feature))
-            elif feature_type == TRANSCRIPT_NAME:
-                result.extend(self._protein_ids_of_transcript_name(feature))
-            else:
-                raise ValueError(f"Unable to get protein IDs for {feature} ({feature_type})")
-
-        return result
+        return self._get_feature_attr(PROTEIN_ID, feature, feature_type)
 
     def transcript_ids(self, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol, return the corresponding transcript ID(s)."""
-        result = []
-
-        for feature, feature_type in self.normalize_feature(feature, feature_type):
-            if feature_type == CONTIG_ID:
-                result.extend(self._transcript_ids_of_contig_id(feature))
-            elif feature_type == EXON_ID:
-                result.extend(self._transcript_ids_of_exon_id(feature))
-            elif feature_type == GENE_ID:
-                result.extend(self._transcript_ids_of_gene_id(feature))
-            elif feature_type == GENE_NAME:
-                result.extend(self._transcript_ids_of_gene_name(feature))
-            elif feature_type == PROTEIN_ID:
-                result.extend(self._transcript_ids_of_protein_id(feature))
-            elif feature_type == TRANSCRIPT_ID:
-                result.extend(self._transcript_ids_of_transcript_id(feature))
-            elif feature_type == TRANSCRIPT_NAME:
-                result.extend(self._transcript_ids_of_transcript_name(feature))
-            else:
-                raise ValueError(f"Unable to get transcript IDs for {feature} ({feature_type})")
-
-        return result
+        return self._get_feature_attr(TRANSCRIPT_ID, feature, feature_type)
 
     def transcript_names(self, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol, return the corresponding transcript names(s)."""
-        result = []
+        return self._get_feature_attr(TRANSCRIPT_NAME, feature, feature_type)
+
+    def _get_feature_attr(self, key: str, feature: str, feature_type: str = "") -> List[str]:
+        """Given a feature symbol, return the corresponding transcript names(s)."""
+        parts = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
             if feature_type == CONTIG_ID:
-                result.extend(self._transcript_names_of_contig_id(feature))
+                func = self._query_by_contig_id
             elif feature_type == EXON_ID:
-                result.extend(self._transcript_names_of_exon_id(feature))
+                func = self._query_by_exon_id
             elif feature_type == GENE_ID:
-                result.extend(self._transcript_names_of_gene_id(feature))
+                func = self._query_by_gene_id
             elif feature_type == GENE_NAME:
-                result.extend(self._transcript_names_of_gene_name(feature))
+                func = self._query_by_gene_name
             elif feature_type == PROTEIN_ID:
-                result.extend(self._transcript_names_of_protein_id(feature))
+                func = self._query_by_protein_id
             elif feature_type == TRANSCRIPT_ID:
-                result.extend(self._transcript_names_of_transcript_id(feature))
+                func = self._query_by_transcript_id
             elif feature_type == TRANSCRIPT_NAME:
-                result.extend(self._transcript_names_of_transcript_name(feature))
+                func = self._query_by_transcript_name
             else:
-                raise ValueError(f"Unable to get transcript names for {feature} ({feature_type})")
+                raise ValueError(f"Unable to get {key} for {feature} ({feature_type})")
 
-        return result
+            parts.append(func(feature)[key])
 
-    def _contig_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, CONTIG_ID, CONTIG_ID)
+        if parts:
+            result = pandas.concat(parts)
+        else:
+            result = pandas.Series()
 
-    def _contig_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, EXON_ID, CONTIG_ID)
+        return self._uniquify_series(result)
 
-    def _contig_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_ID, CONTIG_ID)
+    def _query_by_contig_id(self, feature: Union[List[str], str]) -> pandas.DataFrame:
+        return self._query(feature, CONTIG_ID)
 
-    def _contig_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_NAME, CONTIG_ID)
+    def _query_by_exon_id(self, feature: Union[List[str], str]) -> pandas.DataFrame:
+        return self._query(feature, EXON_ID)
 
-    def _contig_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, PROTEIN_ID, CONTIG_ID)
+    def _query_by_gene_id(self, feature: Union[List[str], str]) -> pandas.DataFrame:
+        return self._query(feature, GENE_ID)
 
-    def _contig_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_ID, CONTIG_ID)
+    def _query_by_gene_name(self, feature: Union[List[str], str]) -> pandas.DataFrame:
+        return self._query(feature, GENE_NAME)
 
-    def _contig_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_NAME, CONTIG_ID)
+    def _query_by_protein_id(self, feature: Union[List[str], str]) -> pandas.DataFrame:
+        return self._query(feature, PROTEIN_ID)
 
-    def _exon_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, CONTIG_ID, EXON_ID)
+    def _query_by_transcript_id(self, feature: Union[List[str], str]) -> pandas.DataFrame:
+        return self._query(feature, TRANSCRIPT_ID)
 
-    def _exon_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, EXON_ID, EXON_ID)
+    def _query_by_transcript_name(self, feature: Union[List[str], str]) -> pandas.DataFrame:
+        return self._query(feature, TRANSCRIPT_NAME)
 
-    def _exon_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_ID, EXON_ID)
-
-    def _exon_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_NAME, EXON_ID)
-
-    def _exon_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(self._transcript_ids_of_protein_id(feature), TRANSCRIPT_ID, EXON_ID)
-
-    def _exon_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_ID, EXON_ID)
-
-    def _exon_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_NAME, EXON_ID)
-
-    def _gene_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, CONTIG_ID, GENE_ID)
-
-    def _gene_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, EXON_ID, GENE_ID)
-
-    def _gene_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_ID, GENE_ID)
-
-    def _gene_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_NAME, GENE_ID)
-
-    def _gene_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, PROTEIN_ID, GENE_ID)
-
-    def _gene_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_ID, GENE_ID)
-
-    def _gene_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_NAME, GENE_ID)
-
-    def _gene_names_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, CONTIG_ID, GENE_NAME)
-
-    def _gene_names_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, EXON_ID, GENE_NAME)
-
-    def _gene_names_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_ID, GENE_NAME)
-
-    def _gene_names_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_NAME, GENE_NAME)
-
-    def _gene_names_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, PROTEIN_ID, GENE_NAME)
-
-    def _gene_names_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_ID, GENE_NAME)
-
-    def _gene_names_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_NAME, GENE_NAME)
-
-    def _protein_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, CONTIG_ID, PROTEIN_ID)
-
-    def _protein_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(self._transcript_ids_of_exon_id(feature), TRANSCRIPT_ID, PROTEIN_ID)
-
-    def _protein_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_ID, PROTEIN_ID)
-
-    def _protein_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_NAME, PROTEIN_ID)
-
-    def _protein_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, PROTEIN_ID, PROTEIN_ID)
-
-    def _protein_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_ID, PROTEIN_ID)
-
-    def _protein_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_NAME, PROTEIN_ID)
-
-    def _transcript_ids_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, CONTIG_ID, TRANSCRIPT_ID)
-
-    def _transcript_ids_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, EXON_ID, TRANSCRIPT_ID)
-
-    def _transcript_ids_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_ID, TRANSCRIPT_ID)
-
-    def _transcript_ids_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_NAME, TRANSCRIPT_ID)
-
-    def _transcript_ids_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, PROTEIN_ID, TRANSCRIPT_ID)
-
-    def _transcript_ids_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_ID, TRANSCRIPT_ID)
-
-    def _transcript_ids_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_NAME, TRANSCRIPT_ID)
-
-    def _transcript_names_of_contig_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, CONTIG_ID, TRANSCRIPT_NAME)
-
-    def _transcript_names_of_exon_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, EXON_ID, TRANSCRIPT_NAME)
-
-    def _transcript_names_of_gene_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_ID, TRANSCRIPT_NAME)
-
-    def _transcript_names_of_gene_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, GENE_NAME, TRANSCRIPT_NAME)
-
-    def _transcript_names_of_protein_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, PROTEIN_ID, TRANSCRIPT_NAME)
-
-    def _transcript_names_of_transcript_id(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_ID, TRANSCRIPT_NAME)
-
-    def _transcript_names_of_transcript_name(self, feature: Union[List[str], str]) -> List[str]:
-        return self._query(feature, TRANSCRIPT_NAME, TRANSCRIPT_NAME)
-
-    def _query(self, feature: Union[List[str], str], col: str, key: str) -> List[str]:
+    def _query(self, feature: Union[List[str], str], col: str) -> pandas.DataFrame:
         """Generic function for querying the data cache."""
         feature = [feature] if isinstance(feature, str) else feature
-        return self._uniquify_series(self.ensembl.loc[self.ensembl[col].isin(feature)][key])
+        sudbf = self.ensembl.loc[self.ensembl[col].isin(feature)]
 
-    @staticmethod
-    def _uniquify_series(values: pandas.Series) -> List:
-        """Convert a `pandas.Series` object into a sorted list of unique values."""
-        return sorted((i for i in values.unique().tolist() if i))
+        return sudbf
 
     # ---------------------------------------------------------------------------------------------
     # normalize_feature(feature, feature_type)
@@ -672,92 +437,65 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         """Normalize a feature to the representation used by Ensembl."""
         normalized = []
 
-        # first, check if the feature is found in the database
-        if feature_type == CONTIG_ID or not feature_type:
-            if normalized := self._normalize_contig_id(feature):
-                feature_type = CONTIG_ID
-
-        if feature_type == EXON_ID or not feature_type:
-            if normalized := self._normalize_exon_id(feature):
-                feature_type = EXON_ID
-
-        if feature_type == GENE_ID or not feature_type:
-            if normalized := self._normalize_gene_id(feature):
-                feature_type = GENE_ID
-
-        if feature_type == GENE_NAME or not feature_type:
-            if normalized := self._normalize_gene_name(feature):
-                feature_type = GENE_NAME
-
-        if feature_type == PROTEIN_ID or not feature_type:
-            if normalized := self._normalize_protein_id(feature):
-                feature_type = PROTEIN_ID
-
-        if feature_type == TRANSCRIPT_ID or not feature_type:
-            if normalized := self._normalize_transcript_id(feature):
-                feature_type = TRANSCRIPT_ID
-
-        if feature_type == TRANSCRIPT_NAME or not feature_type:
-            if normalized := self._normalize_transcript_name(feature):
-                feature_type = TRANSCRIPT_NAME
+        for key, func in [
+            (CONTIG_ID, self._normalize_contig_id),
+            (EXON_ID, self._normalize_exon_id),
+            (GENE_ID, self._normalize_gene_id),
+            (GENE_NAME, self._normalize_gene_name),
+            (PROTEIN_ID, self._normalize_protein_id),
+            (TRANSCRIPT_ID, self._normalize_transcript_id),
+            (TRANSCRIPT_NAME, self._normalize_transcript_name),
+        ]:
+            if feature_type == key or not feature_type:
+                result = func(feature)
+                if not result.empty:
+                    normalized = self._uniquify_series(result[key])
+                    feature_type = key
+                    break
 
         return [(i, feature_type) for i in normalized]
 
-    def _normalize_contig_id(self, feature: str) -> List[str]:
+    def _normalize_contig_id(self, feature: str) -> pandas.DataFrame:
         """Normalize a contig ID or it's alias to one or more matching Ensembl contig ID."""
         featurel = [feature] + self.get_contig_alias(feature)
-        if normalized := self._contig_ids_of_contig_id(featurel):
-            return normalized
-        else:
-            return []
 
-    def _normalize_exon_id(self, feature: str) -> List[str]:
+        return self._query_by_contig_id(featurel)
+
+    def _normalize_exon_id(self, feature: str) -> pandas.DataFrame:
         """Normalize an exon ID or it's alias to one or more matching Ensembl exon ID."""
         featurel = [feature] + self.get_exon_alias(feature)
-        if normalized := self._exon_ids_of_exon_id(featurel):
-            return normalized
-        else:
-            return []
 
-    def _normalize_gene_id(self, feature: str) -> List[str]:
+        return self._query_by_exon_id(featurel)
+
+    def _normalize_gene_id(self, feature: str) -> pandas.DataFrame:
         """Normalize a gene ID or it's alias to one or more matching Ensembl gene ID."""
         featurel = [feature] + self.get_gene_alias(feature)
-        if normalized := self._gene_ids_of_gene_id(featurel):
-            return normalized
-        else:
-            return []
 
-    def _normalize_gene_name(self, feature: str) -> List[str]:
+        return self._query_by_gene_id(featurel)
+
+    def _normalize_gene_name(self, feature: str) -> pandas.DataFrame:
         """Normalize a gene ID or it's alias to one or more matching Ensembl gene ID."""
         featurel = [feature] + self.get_gene_alias(feature)
-        if normalized := self._gene_names_of_gene_name(featurel):
-            return normalized
-        else:
-            return []
 
-    def _normalize_protein_id(self, feature: str) -> List[str]:
+        return self._query_by_gene_name(featurel)
+
+    def _normalize_protein_id(self, feature: str) -> pandas.DataFrame:
         """Normalize a protein ID or it's alias to one or more matching Ensembl protein ID."""
         featurel = [feature] + self.get_protein_alias(feature)
-        if normalized := self._protein_ids_of_protein_id(featurel):
-            return normalized
-        else:
-            return []
 
-    def _normalize_transcript_id(self, feature: str) -> List[str]:
+        return self._query_by_protein_id(featurel)
+
+    def _normalize_transcript_id(self, feature: str) -> pandas.DataFrame:
         """Normalize a transcript ID or it's alias to one or more matching Ensembl transcript ID."""
         featurel = [feature] + self.get_transcript_alias(feature)
-        if normalized := self._transcript_ids_of_transcript_id(featurel):
-            return normalized
-        else:
-            return []
 
-    def _normalize_transcript_name(self, feature: str) -> List[str]:
+        return self._query_by_transcript_id(featurel)
+
+    def _normalize_transcript_name(self, feature: str) -> pandas.DataFrame:
         """Normalize a transcript name or it's alias to one or more matching Ensembl transcript ID."""
         featurel = [feature] + self.get_transcript_alias(feature)
-        if normalized := self._transcript_names_of_transcript_name(featurel):
-            return normalized
-        else:
-            return []
+
+        return self._query_by_transcript_name(featurel)
 
     # ---------------------------------------------------------------------------------------------
     # is_<feature>(feature)
