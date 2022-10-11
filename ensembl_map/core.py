@@ -43,15 +43,15 @@ class _Position:
     def __getitem__(self, item):
         return getattr(self, item)
 
-    # def __repr__(self) -> str:
-    #     return str(self)
-
     @property
     def length(self) -> int:
         return self.end - self.start + 1
 
     def asdict(self) -> Dict[str, Any]:
         return {f.name: self[f.name] for f in fields(self)}
+
+    def to_str(self) -> str:
+        raise NotImplementedError()
 
     def on_negative_strand(self) -> bool:
         return self.strand == "-"
@@ -86,11 +86,11 @@ class CdnaPosition(_Position):
     transcript_name: str
     protein_id: str
 
-    # def __str__(self) -> str:
-    #     if self.start == self.end:
-    #         return f"{self.transcript_id}:c.{self.start}"
-    #     else:
-    #         return f"{self.transcript_id}:c.{self.start}-{self.end}"
+    def to_str(self) -> str:
+        if self.start == self.end:
+            return f"{self.transcript_id}:c.{self.start}"
+        else:
+            return f"{self.transcript_id}:c.{self.start}-{self.end}"
 
     def sequence(self) -> str:
         return self._data.cdna_sequence(self.transcript_id, self.start, self.end, self.strand)
@@ -115,11 +115,11 @@ class CdnaPosition(_Position):
 
 @dataclass(eq=True, frozen=True, order=True)
 class DnaPosition(_Position):
-    # def __str__(self) -> str:
-    #     if self.start == self.end:
-    #         return f"{self.contig_id}:g.{self.start}"
-    #     else:
-    #         return f"{self.contig_id}:g.{self.start}-{self.end}"
+    def to_str(self) -> str:
+        if self.start == self.end:
+            return f"{self.contig_id}:g.{self.start}"
+        else:
+            return f"{self.contig_id}:g.{self.start}-{self.end}"
 
     @classmethod
     def load(cls, row: pd.Series = None, **kwargs):
@@ -157,11 +157,11 @@ class ExonPosition(_Position):
     transcript_name: str
     exon_id: str
 
-    # def __str__(self) -> str:
-    #     if self.start == self.end:
-    #         return f"{self.exon_id}:e.{self.start}"
-    #     else:
-    #         return f"{self.exon_id}:e.{self.start}-{self.end}"
+    def to_str(self) -> str:
+        if self.start == self.end:
+            return f"{self.exon_id}:e.{self.start}"
+        else:
+            return f"{self.exon_id}:e.{self.start}-{self.end}"
 
     def sequence(self) -> str:
         raise NotImplementedError()  # TODO
@@ -192,11 +192,11 @@ class ProteinPosition(_Position):
     transcript_name: str
     protein_id: str
 
-    # def __str__(self) -> str:
-    #     if self.start == self.end:
-    #         return f"{self.protein_id}:p.{self.start}"
-    #     else:
-    #         return f"{self.protein_id}:p.{self.start}-{self.end}"
+    def to_str(self) -> str:
+        if self.start == self.end:
+            return f"{self.protein_id}:p.{self.start}"
+        else:
+            return f"{self.protein_id}:p.{self.start}-{self.end}"
 
     def sequence(self) -> str:
         return self._data.peptide_sequence(self.protein_id, self.start, self.end, self.strand)
@@ -230,11 +230,11 @@ class RnaPosition(_Position):
     transcript_id: str
     transcript_name: str
 
-    # def __str__(self) -> str:
-    #     if self.start == self.end:
-    #         return f"{self.transcript_id}:r.{self.start}"
-    #     else:
-    #         return f"{self.transcript_id}:r.{self.start}-{self.end}"
+    def to_str(self) -> str:
+        if self.start == self.end:
+            return f"{self.transcript_id}:r.{self.start}"
+        else:
+            return f"{self.transcript_id}:r.{self.start}-{self.end}"
 
     def sequence(self) -> str:
         return self._data.rna_sequence(self.transcript_id, self.start, self.end, self.strand)
@@ -312,6 +312,9 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         self.gene_alias = _parse_tsv_to_dict(gene_alias, "gene aliases")
         self.protein_alias = _parse_tsv_to_dict(protein_alias, "protein aliases")
         self.transcript_alias = _parse_tsv_to_dict(transcript_alias, "transcript aliases")
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(species={self.species}, reference={self.reference}, release={self.release})"
 
     # ---------------------------------------------------------------------------------------------
     # all_<feature_symbol>s
