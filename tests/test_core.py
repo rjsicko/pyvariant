@@ -519,6 +519,63 @@ def test_normalize_feature_transcript_name(ensembl100):
 # get_<feature>(feature)
 # ---------------------------------------------------------------------------------------------
 @pytest.fixture
+def test_cdna(ensembl100):
+    return CdnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        end=3399,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+
+
+@pytest.mark.parametrize(
+    "feature,num_results",
+    [
+        ("5", 4),
+        ("ENSE00003896691", 1),
+        ("ENSG00000164362", 4),
+        ("ENSP00000309572", 1),
+        ("ENST00000310581", 1),
+        ("TERT", 4),
+        ("TERT-201", 1),
+    ],
+)
+def test_get_cdna(ensembl100, test_cdna, feature, num_results):
+    results = ensembl100.get_cdna(feature)
+    assert len(results) == num_results
+    assert test_cdna in results
+
+
+@pytest.fixture
+def test_dna(ensembl100):
+    return DnaPosition(_data=ensembl100, contig_id="5", start=1, end=181538259, strand="-")
+
+
+@pytest.mark.parametrize(
+    "feature,num_results",
+    [
+        ("5", 1),
+        ("ENSE00003896691", 1),
+        ("ENSG00000164362", 1),
+        ("ENSP00000309572", 1),
+        ("ENST00000310581", 1),
+        ("TERT", 1),
+        ("TERT-201", 1),
+    ],
+)
+def test_get_dna(ensembl100, test_dna, feature, num_results):
+    results = ensembl100.get_dna(feature)
+    assert len(results) == num_results
+    assert test_dna in results
+
+
+@pytest.fixture
 def test_exon(ensembl100):
     return ExonPosition(
         _data=ensembl100,
@@ -537,9 +594,10 @@ def test_exon(ensembl100):
 @pytest.mark.parametrize(
     "feature,num_results",
     [
+        ("5", 79),
         ("ENSE00003896691", 1),
         ("ENSG00000164362", 79),
-        ("ENSP00000309572", 23),
+        ("ENSP00000309572", 33),
         ("ENST00000310581", 33),
         ("TERT", 79),
         ("TERT-201", 33),
@@ -559,6 +617,7 @@ def test_gene(ensembl100):
 @pytest.mark.parametrize(
     "feature,num_results",
     [
+        ("5", 1),
         ("ENSE00003896691", 1),
         ("ENSG00000164362", 1),
         ("ENSP00000309572", 1),
@@ -591,6 +650,7 @@ def test_transcript(ensembl100):
 @pytest.mark.parametrize(
     "feature,num_results",
     [
+        ("5", 7),
         ("ENSE00003896691", 1),
         ("ENSG00000164362", 7),
         ("ENSP00000309572", 1),
@@ -601,10 +661,292 @@ def test_transcript(ensembl100):
 )
 def test_get_transcript(ensembl100, test_transcript, feature, num_results):
     results = ensembl100.get_transcripts(feature)
-    print(results)
-    print(test_transcript)
     assert len(results) == num_results
     assert test_transcript in results
+
+
+# -------------------------------------------------------------------------------------------------
+# <feature>_to_<feature>
+# -------------------------------------------------------------------------------------------------
+@pytest.fixture
+def cdna(ensembl100):
+    return CdnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=220,
+        end=1572,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+
+
+@pytest.fixture
+def cdna_exon_end(ensembl100):
+    return CdnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=220,
+        end=1573,  # codon breaks across exon boundary
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+
+
+@pytest.fixture
+def dna(ensembl100):
+    return DnaPosition(_data=ensembl100, contig_id="5", start=1293314, end=1294666, strand="-")
+
+
+@pytest.fixture
+def dna_exon_end(ensembl100):
+    return DnaPosition(_data=ensembl100, contig_id="5", start=1293313, end=1294666, strand="-")
+
+
+@pytest.fixture
+def exon(ensembl100):
+    return ExonPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=2,
+        end=2,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        exon_id="ENSE00001197112",
+    )
+
+
+@pytest.fixture
+def protein(ensembl100):
+    return ProteinPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=74,
+        end=524,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+
+
+@pytest.fixture
+def protein_exon_end(ensembl100):
+    return ProteinPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=74,
+        end=525,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+
+
+@pytest.fixture
+def rna(ensembl100):
+    return RnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=299,
+        end=1651,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+    )
+
+
+@pytest.fixture
+def rna_exon_end(ensembl100):
+    return RnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=299,
+        end=1652,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+    )
+
+
+feature_list = [
+    "5",
+    "ENSE00001197112",
+    "ENSG00000164362",
+    "ENSP00000309572",
+    "ENST00000310581",
+    "TERT",
+    "TERT-201",
+]
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_cdna_to_cdna(ensembl100, cdna, feature):
+    results = ensembl100.cdna_to_cdna(feature, cdna.start, cdna.end)
+    assert cdna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_cdna_to_dna(ensembl100, cdna, dna, feature):
+    results = ensembl100.cdna_to_dna(feature, cdna.start, cdna.end)
+    assert dna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_cdna_to_exon(ensembl100, cdna_exon_end, exon, feature):
+    results = ensembl100.cdna_to_exon(feature, cdna_exon_end.start, cdna_exon_end.end)
+    assert exon in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_cdna_to_protein(ensembl100, cdna, protein, feature):
+    results = ensembl100.cdna_to_protein(feature, cdna.start, cdna.end)
+    assert protein in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_cdna_to_rna(ensembl100, cdna, rna, feature):
+    results = ensembl100.cdna_to_rna(feature, cdna.start, cdna.end)
+    assert rna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_dna_to_cdna(ensembl100, dna, cdna, feature):
+    results = ensembl100.dna_to_cdna(feature, dna.start, dna.end)
+    assert cdna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_dna_to_dna(ensembl100, dna, feature):
+    results = ensembl100.dna_to_dna(feature, dna.start, dna.end)
+    assert dna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_dna_to_exon(ensembl100, dna, exon, feature):
+    results = ensembl100.dna_to_exon(feature, dna.start, dna.end)
+    assert exon in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_dna_to_protein(ensembl100, dna, protein, feature):
+    results = ensembl100.dna_to_protein(feature, dna.start, dna.end)
+    assert protein in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_dna_to_rna(ensembl100, dna, rna, feature):
+    results = ensembl100.dna_to_rna(feature, dna.start, dna.end)
+    assert rna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_exon_to_cdna(ensembl100, exon, cdna_exon_end, feature):
+    results = ensembl100.exon_to_cdna(feature, exon.start, exon.end)
+    assert cdna_exon_end in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_exon_to_dna(ensembl100, exon, dna_exon_end, feature):
+    results = ensembl100.exon_to_dna(feature, exon.start, exon.end)
+    assert dna_exon_end in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_exon_to_exon(ensembl100, exon, feature):
+    results = ensembl100.exon_to_exon(feature, exon.start, exon.end)
+    assert exon in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_exon_to_protein(ensembl100, exon, protein_exon_end, feature):
+    results = ensembl100.exon_to_protein(feature, exon.start, exon.end)
+    assert protein_exon_end in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_exon_to_rna(ensembl100, exon, rna_exon_end, feature):
+    results = ensembl100.exon_to_rna(feature, exon.start, exon.end)
+    assert rna_exon_end in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_protein_to_cdna(ensembl100, protein, cdna, feature):
+    results = ensembl100.protein_to_cdna(feature, protein.start, protein.end)
+    assert cdna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_protein_to_dna(ensembl100, protein, dna, feature):
+    results = ensembl100.protein_to_dna(feature, protein.start, protein.end)
+    assert dna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_protein_to_exon(ensembl100, protein, exon, feature):
+    results = ensembl100.protein_to_exon(feature, protein.start, protein.end)
+    assert exon in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_protein_to_protein(ensembl100, protein, feature):
+    results = ensembl100.protein_to_protein(feature, protein.start, protein.end)
+    assert protein in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_protein_to_rna(ensembl100, protein, rna, feature):
+    results = ensembl100.protein_to_rna(feature, protein.start, protein.end)
+    assert rna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_rna_to_cdna(ensembl100, rna, cdna, feature):
+    results = ensembl100.rna_to_cdna(feature, rna.start, rna.end)
+    assert cdna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_rna_to_dna(ensembl100, rna, dna, feature):
+    results = ensembl100.rna_to_dna(feature, rna.start, rna.end)
+    assert dna in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_rna_to_exon(ensembl100, rna_exon_end, exon, feature):
+    results = ensembl100.rna_to_exon(feature, rna_exon_end.start, rna_exon_end.end)
+    assert exon in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_rna_to_protein(ensembl100, rna, protein, feature):
+    results = ensembl100.rna_to_protein(feature, rna.start, rna.end)
+    assert protein in results
+
+
+@pytest.mark.parametrize("feature", feature_list)
+def test_rna_to_rna(ensembl100, rna, feature):
+    results = ensembl100.rna_to_rna(feature, rna.start, rna.end)
+    assert rna in results
 
 
 # -------------------------------------------------------------------------------------------------
@@ -623,19 +965,7 @@ def test_cdna_to_cdna_negative_strand(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=124,
-        end=126,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_cdna_negative_strand_across_exon_boundary(ensembl100):
@@ -651,19 +981,7 @@ def test_cdna_to_cdna_negative_strand_across_exon_boundary(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1573,
-        end=1575,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_cdna_negative_strand_cDNA_protein_end(ensembl100):
@@ -679,19 +997,7 @@ def test_cdna_to_cdna_negative_strand_cDNA_protein_end(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=3397,
-        end=3399,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_cdna_negative_strand_cDNA_protein_start(ensembl100):
@@ -707,19 +1013,7 @@ def test_cdna_to_cdna_negative_strand_cDNA_protein_start(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1,
-        end=3,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_cdna_positive_strand(ensembl100):
@@ -735,19 +1029,7 @@ def test_cdna_to_cdna_positive_strand(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=8566,
-        end=8568,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        protein_id="ENSP00000369497",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_cdna_positive_strand_across_exon_boundary(ensembl100):
@@ -763,19 +1045,7 @@ def test_cdna_to_cdna_positive_strand_across_exon_boundary(ensembl100):
         transcript_name="KIT-201",
         protein_id="ENSP00000288135",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="4",
-        start=67,
-        end=69,
-        strand="+",
-        gene_id="ENSG00000157404",
-        gene_name="KIT",
-        transcript_id="ENST00000288135",
-        transcript_name="KIT-201",
-        protein_id="ENSP00000288135",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_cdna_positive_strand_cDNA_protein_end(ensembl100):
@@ -791,19 +1061,7 @@ def test_cdna_to_cdna_positive_strand_cDNA_protein_end(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=10255,
-        end=10257,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        protein_id="ENSP00000369497",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_cdna_positive_strand_cDNA_protein_start(ensembl100):
@@ -819,19 +1077,7 @@ def test_cdna_to_cdna_positive_strand_cDNA_protein_start(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=1,
-        end=3,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        protein_id="ENSP00000369497",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_cdna_positive_strand_overlapping_genes_different_strands(ensembl100):
@@ -847,19 +1093,7 @@ def test_cdna_to_cdna_positive_strand_overlapping_genes_different_strands(ensemb
         transcript_name="TCF19-204",
         protein_id="ENSP00000439397",
     )
-    expected = CdnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=580,
-        end=582,
-        strand="+",
-        gene_id="ENSG00000137310",
-        gene_name="TCF19",
-        transcript_id="ENST00000542218",
-        transcript_name="TCF19-204",
-        protein_id="ENSP00000439397",
-    )
-    assert position.to_cdna() == [expected]
+    assert position.to_cdna() == [position]
 
 
 def test_cdna_to_dna_negative_strand(ensembl100):
@@ -1881,118 +2115,88 @@ def test_dna_to_cdna_positive_strand_overlapping_genes_different_strands(ensembl
 
 def test_dna_to_dna_negative_strand(ensembl100):
     position = DnaPosition(_data=ensembl100, contig_id="5", start=1294864, end=1294866, strand="-")
-    expected = DnaPosition(_data=ensembl100, contig_id="5", start=1294864, end=1294866, strand="-")
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_negative_strand_across_exon_boundary(ensembl100):
     position = DnaPosition(_data=ensembl100, contig_id="5", start=1282623, end=1293313, strand="-")
-    expected = DnaPosition(_data=ensembl100, contig_id="5", start=1282623, end=1293313, strand="-")
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_negative_strand_cDNA_protein_end(ensembl100):
     position = DnaPosition(_data=ensembl100, contig_id="5", start=1253728, end=1253730, strand="-")
-    expected = DnaPosition(_data=ensembl100, contig_id="5", start=1253728, end=1253730, strand="-")
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_negative_strand_cDNA_protein_start(ensembl100):
     position = DnaPosition(_data=ensembl100, contig_id="5", start=1294987, end=1294989, strand="-")
-    expected = DnaPosition(_data=ensembl100, contig_id="5", start=1294987, end=1294989, strand="-")
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_negative_strand_overlapping_genes_different_strands(ensembl100):
     position = DnaPosition(
         _data=ensembl100, contig_id="6", start=31166302, end=31166304, strand="-"
     )
-    expected = DnaPosition(
-        _data=ensembl100, contig_id="6", start=31166302, end=31166304, strand="-"
-    )
-    assert position.to_dna() == [expected]
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_negative_strand_transcript_end(ensembl100):
     position = DnaPosition(_data=ensembl100, contig_id="5", start=1253167, end=1253169, strand="-")
-    expected = DnaPosition(_data=ensembl100, contig_id="5", start=1253167, end=1253169, strand="-")
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_negative_strand_transcript_start(ensembl100):
     position = DnaPosition(_data=ensembl100, contig_id="5", start=1295066, end=1295068, strand="-")
-    expected = DnaPosition(_data=ensembl100, contig_id="5", start=1295066, end=1295068, strand="-")
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_positive_strand(ensembl100):
     position = DnaPosition(
         _data=ensembl100, contig_id="13", start=32371034, end=32371036, strand="+"
     )
-    expected = DnaPosition(
-        _data=ensembl100, contig_id="13", start=32371034, end=32371036, strand="+"
-    )
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_positive_strand_across_exon_boundary(ensembl100):
     position = DnaPosition(
         _data=ensembl100, contig_id="4", start=54658081, end=54695513, strand="+"
     )
-    expected = DnaPosition(
-        _data=ensembl100, contig_id="4", start=54658081, end=54695513, strand="+"
-    )
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_positive_strand_cDNA_protein_end(ensembl100):
     position = DnaPosition(
         _data=ensembl100, contig_id="13", start=32398768, end=32398770, strand="+"
     )
-    expected = DnaPosition(
-        _data=ensembl100, contig_id="13", start=32398768, end=32398770, strand="+"
-    )
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_positive_strand_cDNA_protein_start(ensembl100):
     position = DnaPosition(
         _data=ensembl100, contig_id="13", start=32316461, end=32316463, strand="+"
     )
-    expected = DnaPosition(
-        _data=ensembl100, contig_id="13", start=32316461, end=32316463, strand="+"
-    )
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_positive_strand_overlapping_genes_different_strands(ensembl100):
     position = DnaPosition(
         _data=ensembl100, contig_id="6", start=31166302, end=31166304, strand="+"
     )
-    expected = DnaPosition(
-        _data=ensembl100, contig_id="6", start=31166302, end=31166304, strand="+"
-    )
-    assert position.to_dna() == [expected]
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_positive_strand_transcript_end(ensembl100):
     position = DnaPosition(
         _data=ensembl100, contig_id="13", start=32400264, end=32400266, strand="+"
     )
-    expected = DnaPosition(
-        _data=ensembl100, contig_id="13", start=32400264, end=32400266, strand="+"
-    )
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_dna_positive_strand_transcript_start(ensembl100):
     position = DnaPosition(
         _data=ensembl100, contig_id="13", start=32315474, end=32315476, strand="+"
     )
-    expected = DnaPosition(
-        _data=ensembl100, contig_id="13", start=32315474, end=32315476, strand="+"
-    )
-    assert expected in position.to_dna()
+    assert position.to_dna() == [position]
 
 
 def test_dna_to_exon_negative_strand(ensembl100):
@@ -2748,19 +2952,7 @@ def test_exon_to_exon_negative_strand(ensembl100):
         transcript_name="TERT-201",
         exon_id="ENSE00001197112",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=2,
-        end=2,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        exon_id="ENSE00001197112",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_negative_strand_cDNA_protein_end(ensembl100):
@@ -2776,19 +2968,7 @@ def test_exon_to_exon_negative_strand_cDNA_protein_end(ensembl100):
         transcript_name="TERT-201",
         exon_id="ENSE00001863787",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=16,
-        end=16,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        exon_id="ENSE00001863787",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_negative_strand_cDNA_protein_start(ensembl100):
@@ -2804,19 +2984,7 @@ def test_exon_to_exon_negative_strand_cDNA_protein_start(ensembl100):
         transcript_name="TERT-201",
         exon_id="ENSE00003896691",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1,
-        end=1,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        exon_id="ENSE00003896691",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_negative_strand_overlapping_genes_different_strands(ensembl100):
@@ -2832,19 +3000,7 @@ def test_exon_to_exon_negative_strand_overlapping_genes_different_strands(ensemb
         transcript_name="POU5F1-204",
         exon_id="ENSE00002568331",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=1,
-        end=1,
-        strand="-",
-        gene_id="ENSG00000204531",
-        gene_name="POU5F1",
-        transcript_id="ENST00000471529",
-        transcript_name="POU5F1-204",
-        exon_id="ENSE00002568331",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_negative_strand_transcript_end(ensembl100):
@@ -2860,19 +3016,7 @@ def test_exon_to_exon_negative_strand_transcript_end(ensembl100):
         transcript_name="TERT-201",
         exon_id="ENSE00001863787",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=16,
-        end=16,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        exon_id="ENSE00001863787",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_negative_strand_transcript_start(ensembl100):
@@ -2888,19 +3032,7 @@ def test_exon_to_exon_negative_strand_transcript_start(ensembl100):
         transcript_name="TERT-201",
         exon_id="ENSE00003896691",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1,
-        end=1,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        exon_id="ENSE00003896691",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_positive_strand(ensembl100):
@@ -2916,19 +3048,7 @@ def test_exon_to_exon_positive_strand(ensembl100):
         transcript_name="BRCA2-201",
         exon_id="ENSE00000939180",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=20,
-        end=20,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        exon_id="ENSE00000939180",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_positive_strand_cDNA_protein_end(ensembl100):
@@ -2944,19 +3064,7 @@ def test_exon_to_exon_positive_strand_cDNA_protein_end(ensembl100):
         transcript_name="BRCA2-201",
         exon_id="ENSE00003717596",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=27,
-        end=27,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        exon_id="ENSE00003717596",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_positive_strand_cDNA_protein_start(ensembl100):
@@ -2972,19 +3080,7 @@ def test_exon_to_exon_positive_strand_cDNA_protein_start(ensembl100):
         transcript_name="BRCA2-201",
         exon_id="ENSE00001484009",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=2,
-        end=2,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        exon_id="ENSE00001484009",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_positive_strand_overlapping_genes_different_strands(ensembl100):
@@ -3000,19 +3096,7 @@ def test_exon_to_exon_positive_strand_overlapping_genes_different_strands(ensemb
         transcript_name="TCF19-204",
         exon_id="ENSE00002283659",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=2,
-        end=2,
-        strand="+",
-        gene_id="ENSG00000137310",
-        gene_name="TCF19",
-        transcript_id="ENST00000542218",
-        transcript_name="TCF19-204",
-        exon_id="ENSE00002283659",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_positive_strand_transcript_end(ensembl100):
@@ -3028,19 +3112,7 @@ def test_exon_to_exon_positive_strand_transcript_end(ensembl100):
         transcript_name="BRCA2-201",
         exon_id="ENSE00003717596",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=27,
-        end=27,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        exon_id="ENSE00003717596",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_exon_positive_strand_transcript_start(ensembl100):
@@ -3056,19 +3128,7 @@ def test_exon_to_exon_positive_strand_transcript_start(ensembl100):
         transcript_name="BRCA2-201",
         exon_id="ENSE00001184784",
     )
-    expected = ExonPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=1,
-        end=1,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        exon_id="ENSE00001184784",
-    )
-    assert position.to_exon() == [expected]
+    assert position.to_exon() == [position]
 
 
 def test_exon_to_protein_negative_strand(ensembl100):
@@ -3805,19 +3865,7 @@ def test_protein_to_protein_negative_strand(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=42,
-        end=42,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_protein_negative_strand_across_exon_boundary(ensembl100):
@@ -3833,19 +3881,7 @@ def test_protein_to_protein_negative_strand_across_exon_boundary(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=525,
-        end=525,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_protein_negative_strand_cDNA_protein_end(ensembl100):
@@ -3861,19 +3897,7 @@ def test_protein_to_protein_negative_strand_cDNA_protein_end(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1133,
-        end=1133,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_protein_negative_strand_cDNA_protein_start(ensembl100):
@@ -3889,19 +3913,7 @@ def test_protein_to_protein_negative_strand_cDNA_protein_start(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1,
-        end=1,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_protein_positive_strand(ensembl100):
@@ -3917,19 +3929,7 @@ def test_protein_to_protein_positive_strand(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=2856,
-        end=2856,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        protein_id="ENSP00000369497",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_protein_positive_strand_across_exon_boundary(ensembl100):
@@ -3945,19 +3945,7 @@ def test_protein_to_protein_positive_strand_across_exon_boundary(ensembl100):
         transcript_name="KIT-201",
         protein_id="ENSP00000288135",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="4",
-        start=23,
-        end=23,
-        strand="+",
-        gene_id="ENSG00000157404",
-        gene_name="KIT",
-        transcript_id="ENST00000288135",
-        transcript_name="KIT-201",
-        protein_id="ENSP00000288135",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_protein_positive_strand_cDNA_protein_end(ensembl100):
@@ -3973,19 +3961,7 @@ def test_protein_to_protein_positive_strand_cDNA_protein_end(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=3419,
-        end=3419,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        protein_id="ENSP00000369497",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_protein_positive_strand_cDNA_protein_start(ensembl100):
@@ -4001,19 +3977,7 @@ def test_protein_to_protein_positive_strand_cDNA_protein_start(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=1,
-        end=1,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-        protein_id="ENSP00000369497",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_protein_positive_strand_overlapping_genes_different_strands(ensembl100):
@@ -4029,19 +3993,7 @@ def test_protein_to_protein_positive_strand_overlapping_genes_different_strands(
         transcript_name="TCF19-204",
         protein_id="ENSP00000439397",
     )
-    expected = ProteinPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=194,
-        end=194,
-        strand="+",
-        gene_id="ENSG00000137310",
-        gene_name="TCF19",
-        transcript_id="ENST00000542218",
-        transcript_name="TCF19-204",
-        protein_id="ENSP00000439397",
-    )
-    assert position.to_protein() == [expected]
+    assert position.to_protein() == [position]
 
 
 def test_protein_to_rna_negative_strand(ensembl100):
@@ -5349,18 +5301,7 @@ def test_rna_to_rna_negative_strand(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=203,
-        end=205,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_negative_strand_across_exon_boundary(ensembl100):
@@ -5375,18 +5316,7 @@ def test_rna_to_rna_negative_strand_across_exon_boundary(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1652,
-        end=1654,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_negative_strand_cDNA_protein_end(ensembl100):
@@ -5401,18 +5331,7 @@ def test_rna_to_rna_negative_strand_cDNA_protein_end(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=3476,
-        end=3478,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_negative_strand_cDNA_protein_start(ensembl100):
@@ -5427,18 +5346,7 @@ def test_rna_to_rna_negative_strand_cDNA_protein_start(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=80,
-        end=82,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_negative_strand_overlapping_genes_different_strands(ensembl100):
@@ -5453,18 +5361,7 @@ def test_rna_to_rna_negative_strand_overlapping_genes_different_strands(ensembl1
         transcript_id="ENST00000471529",
         transcript_name="POU5F1-204",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=535,
-        end=537,
-        strand="-",
-        gene_id="ENSG00000204531",
-        gene_name="POU5F1",
-        transcript_id="ENST00000471529",
-        transcript_name="POU5F1-204",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_negative_strand_transcript_end(ensembl100):
@@ -5479,18 +5376,7 @@ def test_rna_to_rna_negative_strand_transcript_end(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=4037,
-        end=4039,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_negative_strand_transcript_start(ensembl100):
@@ -5505,18 +5391,7 @@ def test_rna_to_rna_negative_strand_transcript_start(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1,
-        end=3,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_positive_strand(ensembl100):
@@ -5531,18 +5406,7 @@ def test_rna_to_rna_positive_strand(ensembl100):
         transcript_id="ENST00000380152",
         transcript_name="BRCA2-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=8799,
-        end=8801,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_positive_strand_across_exon_boundary(ensembl100):
@@ -5557,18 +5421,7 @@ def test_rna_to_rna_positive_strand_across_exon_boundary(ensembl100):
         transcript_id="ENST00000288135",
         transcript_name="KIT-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="4",
-        start=125,
-        end=127,
-        strand="+",
-        gene_id="ENSG00000157404",
-        gene_name="KIT",
-        transcript_id="ENST00000288135",
-        transcript_name="KIT-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_positive_strand_cDNA_protein_end(ensembl100):
@@ -5583,18 +5436,7 @@ def test_rna_to_rna_positive_strand_cDNA_protein_end(ensembl100):
         transcript_id="ENST00000380152",
         transcript_name="BRCA2-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=10488,
-        end=10490,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_positive_strand_cDNA_protein_start(ensembl100):
@@ -5609,18 +5451,7 @@ def test_rna_to_rna_positive_strand_cDNA_protein_start(ensembl100):
         transcript_id="ENST00000380152",
         transcript_name="BRCA2-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=234,
-        end=236,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_positive_strand_overlapping_genes_different_strands(ensembl100):
@@ -5635,18 +5466,7 @@ def test_rna_to_rna_positive_strand_overlapping_genes_different_strands(ensembl1
         transcript_id="ENST00000542218",
         transcript_name="TCF19-204",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=580,
-        end=582,
-        strand="+",
-        gene_id="ENSG00000137310",
-        gene_name="TCF19",
-        transcript_id="ENST00000542218",
-        transcript_name="TCF19-204",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_positive_strand_transcript_end(ensembl100):
@@ -5661,18 +5481,7 @@ def test_rna_to_rna_positive_strand_transcript_end(ensembl100):
         transcript_id="ENST00000380152",
         transcript_name="BRCA2-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=11984,
-        end=11986,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]
 
 
 def test_rna_to_rna_positive_strand_transcript_start(ensembl100):
@@ -5687,15 +5496,4 @@ def test_rna_to_rna_positive_strand_transcript_start(ensembl100):
         transcript_id="ENST00000380152",
         transcript_name="BRCA2-201",
     )
-    expected = RnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=1,
-        end=3,
-        strand="+",
-        gene_id="ENSG00000139618",
-        gene_name="BRCA2",
-        transcript_id="ENST00000380152",
-        transcript_name="BRCA2-201",
-    )
-    assert position.to_rna() == [expected]
+    assert position.to_rna() == [position]

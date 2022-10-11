@@ -3,12 +3,15 @@
 .coverage
 .stignore
 .vscode
+coverage.xml
+pytest.xml
 .mypy_cache/
 .pytest_cache/
 .stfolder/
 .stversions/
 build/
 cover/
+dev/
 dist/
 htmlcov/
 venv/

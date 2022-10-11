@@ -50,9 +50,10 @@ lint:  ## fix code style and formatting
 	flake8 --ignore E203,E501,W291,W503 ensembl_map/ tests/ setup.py
 
 test:  ## run tests
-	coverage run --source ensembl_map -m pytest
+	coverage run --source ensembl_map -m pytest --junitxml=pytest.xml
 	coverage report -m
 	coverage html
+	coverage xml
 
 upload: clean  ## upload package to the GSC pypi server
 	python setup.py sdist

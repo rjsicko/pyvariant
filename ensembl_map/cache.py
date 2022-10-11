@@ -2,6 +2,7 @@ import os.path
 from ftplib import FTP
 from pathlib import Path
 
+import numpy as np
 import pandas
 from gtfparse import read_gtf
 from logzero import logger
@@ -81,7 +82,7 @@ class Cache:
         """Create the release cache directory, if it doesn't already exist."""
         Path(self.release_cache_dir).mkdir(exist_ok=True, parents=True)
 
-    def download_all(self, force: bool = False):
+    def download_all(self, force: bool = False, re_index: bool = False):
         """Download required data and cache it.
 
         NOTE: pyfaidx only supports compressed FASTA in BGZF format. Ensembl FASTA comes in GZ
@@ -122,7 +123,7 @@ class Cache:
             if not os.path.exists(index) or force:
                 indexf()
 
-        if not os.path.exists(self.local_gtf_cache_filepath) or force:
+        if not os.path.exists(self.local_gtf_cache_filepath) or force or re_index:
             if not os.path.exists(self.local_gtf_filepath) or force:
                 self.download_gtf()
             df = self.normalize_gtf()
@@ -292,7 +293,7 @@ class Cache:
 
     def _index_fasta(self, local_fasta_filename: str):
         """(Re)build the index file for the FASTA file."""
-        logger.info(f"Indexing {local_fasta_filename} (this may take some time)...")
+        logger.info(f"Indexing {local_fasta_filename}...")
         _ = Fasta(
             local_fasta_filename,
             key_function=strip_version,
@@ -368,46 +369,15 @@ class Cache:
     def normalize_gtf(self) -> pandas.DataFrame:
         """Normalize the data in the GTF to what's required by this package."""
         df = read_gtf(self.local_gtf_filepath)
-
-        # # DEBUG
-        # df = df[
-        #     df["gene_name"].isin(
-        #         [
-        #             "AGBL1",
-        #             "ALDOA",
-        #             "BRCA2",
-        #             "CHEK2",
-        #             "KIT",
-        #             "KMT2A",
-        #             "MEN1",
-        #             "MLL",
-        #             "POU5F1",
-        #             "PTEN",
-        #             "SMARCA4",
-        #             "SSX4",
-        #             "TERT",
-        #             "TCF19",
-        #             "WNK1",
-        #             "VPS53",
-        #         ]
-        #     )
-        # ]
-        # # /DEBUG
-
-        logger.debug("_normalize_gtf_columns")
+        df = df.replace("", np.nan)
         df = self._normalize_gtf_columns(df)
-        logger.debug("_add_missing_transcripts")
         df = self._add_missing_transcripts(df)
-        logger.debug("_calculate_exon_offset_from_transcript")
+        df = self._add_missing_cdna(df)
         df = self._calculate_exon_offset_from_transcript(df)
-        logger.debug("_calculate_cds_offset_from_transcript")
         df = self._calculate_cds_offset_from_transcript(df)
-        logger.debug("_calculate_cds_offset_from_cdna")
         df = self._calculate_cds_offset_from_cdna(df)
-        logger.debug("_assign_protein_id_to_stop_codon")
-        df = self._assign_protein_id_to_stop_codon(df)
-
-        # df.to_csv(self.remote_gtf_filename, sep="\t", index=False)  # DEBUG
+        df = self._assign_protein_id(df)
+        df = df.replace("", np.nan)
 
         return df
 
@@ -456,6 +426,43 @@ class Cache:
 
         new_transcript_df = pandas.DataFrame(transcript_rows)
         df = pandas.concat([df, new_transcript_df], ignore_index=True)
+
+        return df
+
+    def _add_missing_cdna(self, df: pandas.DataFrame) -> pandas.DataFrame:
+        """Infer cDNA position(s) from other features, if not already defined."""
+        cdna_rows = []
+
+        def missing_cdna(group: pandas.DataFrame) -> pandas.Series:
+            return group[group.feature == "cdna"].empty
+
+        # add in missing cDNA
+        for transcript_id, group in df.groupby("transcript_id"):
+            if not transcript_id:
+                continue
+
+            if missing_cdna(group):
+                cds_df = group[group.feature == "CDS"]
+                if not cds_df.empty:
+                    features = cds_df.sort_values(["start", "end"])
+                    first = features.iloc[0]
+                    last = features.iloc[-1]
+                    new_row = {
+                        "contig_id": first.contig_id,
+                        "feature": "cdna",
+                        "start": first.start,
+                        "end": last.end,
+                        "strand": first.strand,
+                        "gene_id": first.gene_id,
+                        "gene_name": first.gene_name,
+                        "transcript_id": transcript_id,
+                        "transcript_name": first.transcript_name,
+                    }
+                    cdna_rows.append(new_row)
+                    logger.debug(f"Inferred cDNA {new_row}")
+
+        new_cdna_df = pandas.DataFrame(cdna_rows)
+        df = pandas.concat([df, new_cdna_df], ignore_index=True)
 
         return df
 
@@ -583,7 +590,7 @@ class Cache:
                 length = cds.end - cds.start
                 transcript_start = offset
                 transcript_end = length + offset
-                result[key] = (transcript_start, transcript_end)
+                result[key] = (transcript_start, transcript_end, exon.exon_id)
                 offset += length
 
         # there's probably a better way to do this
@@ -596,7 +603,8 @@ class Cache:
                 feature.strand,
             )
             if (value := result.get(key)) is not None:  # type: ignore
-                transcript_start, transcript_end = value
+                transcript_start, transcript_end, exon_id = value
+                df.loc[index, "exon_id"] = exon_id
                 df.loc[index, "transcript_start"] = transcript_start
                 df.loc[index, "transcript_end"] = transcript_end
 
@@ -608,17 +616,6 @@ class Cache:
 
     def _calculate_cds_offset_from_cdna(self, df: pandas.DataFrame) -> pandas.DataFrame:
         """Calculate the position of each CDS, relative to the start of the cDNA."""
-
-        def infer_cdna(subdf: pandas.DataFrame):
-            if len(subdf) > 0:
-                subdf_sorted = subdf.sort_values(["start", "end"], ascending=True)
-                ascending = subdf.iloc[0].strand == "+"
-                cdna_start = subdf_sorted.iloc[0].start
-                cdna_end = subdf_sorted.iloc[-1].end
-                return cdna_start, cdna_end, ascending
-            else:
-                return None
-
         result = {}
 
         for transcript_id, group in df.groupby("transcript_id"):
@@ -626,25 +623,43 @@ class Cache:
                 continue
 
             cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
-            if cdna := infer_cdna(cds_df):
-                cdna_start_pos, cdna_end_pos, ascending = cdna
+            if cds_df.empty:
+                continue
+
+            cdna_df = group[group.feature == "cdna"]
+            if cdna_df.empty:
+                logger.warning(f"No cDNA found for transcript {transcript_id}")
+                continue
             else:
+                if len(cdna_df) > 1:
+                    logger.error(f"Multiple cDNA found for transcript {transcript_id}")
+
+                cdna = cdna_df.iloc[0]
+                ascending = cdna.strand == "+"
+
+            cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
+            if cds_df.empty:
                 continue
 
             offset = 0
-            for _, cds in cds_df.sort_values(["start", "end"], ascending=ascending).iterrows():
+            cds_df = cds_df.sort_values(["start", "end"], ascending=ascending)
+            for _, cds in cds_df.iterrows():
                 # if this is the first exon/CDS/etc start the offset relative to the RNA
                 if offset == 0:
                     if ascending:
-                        offset = cds.start - cdna_start_pos
+                        offset = cds.start - cdna.start
                     else:
-                        offset = cdna_end_pos - cds.end
+                        offset = cdna.end - cds.end
                 key = (transcript_id, cds.feature, cds.start, cds.end, cds.strand)
                 length = cds.end - cds.start + 1
-                cdna_start = offset + 1
-                cdna_end = length + offset
-                result[key] = (cdna_start, cdna_end)
+                start_offset = offset + 1
+                end_offset = length + offset
+                result[key] = (start_offset, end_offset)
                 offset += length
+
+            # add in the cDNA length to the cDNA itself
+            key = (transcript_id, cdna.feature, cdna.start, cdna.end, cdna.strand)
+            result[key] = (1, offset)
 
         # there's probably a better way to do this
         for index, feature in df.iterrows():
@@ -656,9 +671,9 @@ class Cache:
                 feature.strand,
             )
             if (value := result.get(key)) is not None:  # type: ignore
-                cdna_start, cdna_end = value
-                df.loc[index, "cdna_start"] = cdna_start
-                df.loc[index, "cdna_end"] = cdna_end
+                start_offset, end_offset = value
+                df.loc[index, "cdna_start"] = start_offset
+                df.loc[index, "cdna_end"] = end_offset
 
         # convert the offset values to integers
         df["cdna_start"] = df["cdna_start"].astype("Int64")
@@ -666,8 +681,8 @@ class Cache:
 
         return df
 
-    def _assign_protein_id_to_stop_codon(self, df: pandas.DataFrame) -> pandas.DataFrame:
-        """Add the protein ID as info for each stop codon, if not already defined."""
+    def _assign_protein_id(self, df: pandas.DataFrame) -> pandas.DataFrame:
+        """Add the protein ID as info for each cDNA and stop codon, if not already defined."""
 
         def select(group: pandas.DataFrame) -> pandas.Series:
             subdf = group[group.feature == "CDS"]
@@ -677,9 +692,11 @@ class Cache:
             if (cds := select(group)) is None:
                 continue
 
-            stop_codon_df = group[group.feature == "stop_codon"]
-            for index, _ in stop_codon_df.iterrows():
-                if not df.loc[index, "protein_id"]:
+            subdf = group[group.feature.isin(["cdna", "stop_codon"])]
+            # subdf.iloc[:, 'protein_id'].fillna(cds.protein_id, inplace=True)
+            for index, _ in subdf.iterrows():
+                if pandas.isna(df.loc[index, "protein_id"]):
+                    logger.debug(f"Adding protein ID '{cds.protein_id}' to row {index}")
                     df.loc[index, "protein_id"] = cds.protein_id
 
         return df
@@ -688,8 +705,8 @@ class Cache:
         """Convert the Ensembl GTF to a pandas DataFrame and cache it."""
         logger.debug(f"Converting {self.local_gtf_filepath} to {self.local_gtf_cache_filepath}")
         df.to_pickle(self.local_gtf_cache_filepath)
-        # logger.debug(f"Removing {self.local_gtf_filepath}")
-        # os.remove(self.local_gtf_filepath)  # DEBUG
+        logger.debug(f"Removing {self.local_gtf_filepath}")
+        os.remove(self.local_gtf_filepath)
 
     def load_gtf(self) -> pandas.DataFrame:
         """Return the cached Ensembl GTF data."""

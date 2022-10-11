@@ -338,7 +338,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return self._uniquify_series(self.ensembl[TRANSCRIPT_NAME])
 
     def _uniquify_series(self, series: pandas.Series) -> List:
-        return sorted(series.unique().tolist())
+        return sorted(series.dropna().unique().tolist())
 
     # ---------------------------------------------------------------------------------------------
     # get_<feature_symbol>(feature)
@@ -372,7 +372,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return self._get_feature_attr(TRANSCRIPT_NAME, feature, feature_type)
 
     def _get_feature_attr(self, key: str, feature: str, feature_type: str = "") -> List[str]:
-        """Given a feature symbol, return the corresponding transcript names(s)."""
+        """Given a feature symbol, return the corresponding ID(s)."""
         parts = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
@@ -398,7 +398,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         if parts:
             result = pandas.concat(parts)
         else:
-            result = pandas.Series()
+            result = pandas.Series(dtype="object")
 
         return self._uniquify_series(result)
 
@@ -434,8 +434,20 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # normalize_feature(feature, feature_type)
     # ---------------------------------------------------------------------------------------------
     def normalize_feature(self, feature: str, feature_type: str = "") -> List[Tuple[str, str]]:
-        """Normalize a feature to the representation used by Ensembl."""
+        """Normalize a feature ID to the representation used by Ensembl."""
         normalized = []
+
+        feature_type, result = self._normalize_feature(feature, feature_type=feature_type)
+        if feature_type:
+            normalized = self._uniquify_series(result[feature_type])
+
+        return [(i, feature_type) for i in normalized]
+
+    def _normalize_feature(
+        self, feature: str, feature_type: str = ""
+    ) -> Tuple[str, pandas.DataFrame]:
+        """Normalize a feature to the representation used by Ensembl."""
+        result = pandas.DataFrame()
 
         for key, func in [
             (CONTIG_ID, self._normalize_contig_id),
@@ -449,11 +461,10 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             if feature_type == key or not feature_type:
                 result = func(feature)
                 if not result.empty:
-                    normalized = self._uniquify_series(result[key])
                     feature_type = key
                     break
 
-        return [(i, feature_type) for i in normalized]
+        return feature_type, result
 
     def _normalize_contig_id(self, feature: str) -> pandas.DataFrame:
         """Normalize a contig ID or it's alias to one or more matching Ensembl contig ID."""
@@ -654,6 +665,53 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     # ---------------------------------------------------------------------------------------------
     # get_<feature>
     # ---------------------------------------------------------------------------------------------
+    def get_cdna(self, feature: str) -> List[CdnaPosition]:
+        """Return the cDNA position(s) of the given feature."""
+        result = []
+
+        transcript_ids = self.transcript_ids(feature)
+        mask = (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids)) & (
+            self.ensembl["feature"] == "cdna"
+        )
+        for _, cdna in self.ensembl[mask].iterrows():
+            result.append(
+                CdnaPosition(
+                    _data=self,
+                    contig_id=cdna.contig_id,
+                    start=cdna.cdna_start,
+                    end=cdna.cdna_end,
+                    strand=cdna.strand,
+                    gene_id=cdna.gene_id,
+                    gene_name=cdna.gene_name,
+                    transcript_id=cdna.transcript_id,
+                    transcript_name=cdna.transcript_name,
+                    protein_id=cdna.protein_id,
+                )
+            )
+
+        return uniquify(result)
+
+    def get_dna(self, feature: str) -> List[CdnaPosition]:
+        """Return the DNA position(s) of the given feature."""
+        result = []
+
+        # get the strand of the original feature
+        _, df = self._normalize_feature(feature)
+        strand_list = self._uniquify_series(df["strand"])
+
+        for contig_id in self.contig_ids(feature):
+            contig_seq = self.dna[contig_id]
+            start = 1
+            end = len(contig_seq)
+            for strand in strand_list:
+                result.append(
+                    DnaPosition(
+                        _data=self, contig_id=contig_id, start=start, end=end, strand=strand
+                    )
+                )
+
+        return uniquify(result)
+
     def get_exons(self, feature: str) -> List[ExonPosition]:
         """Return the gene position(s) of the given feature."""
         result = []
@@ -729,54 +787,44 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[CdnaPosition]:
         """Map a cDNA position to a cDNA position."""
-        end = end if end is not None else start
-        strandl = [strand] if strand is not None else ["+", "-"]
-        transcript_ids = self.transcript_ids(feature)
-        result = self._cdna_to_cdna(transcript_ids, start, end, strandl)
-
-        return uniquify(result)
+        return self._cdna_to(self._cdna_to_cdna, feature, start, end=end, strand=strand)
 
     def cdna_to_dna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[DnaPosition]:
         """Map a cDNA position to a DNA position."""
-        end = end if end is not None else start
-        strandl = [strand] if strand is not None else ["+", "-"]
-        transcript_ids = self.transcript_ids(feature)
-        result = self._cdna_to_dna(transcript_ids, start, end, strandl)
-
-        return uniquify(result)
+        return self._cdna_to(self._cdna_to_dna, feature, start, end=end, strand=strand)
 
     def cdna_to_exon(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ExonPosition]:
         """Map a cDNA position to an exon position."""
-        end = end if end is not None else start
-        strandl = [strand] if strand is not None else ["+", "-"]
-        transcript_ids = self.transcript_ids(feature)
-        result = self._cdna_to_exon(transcript_ids, start, end, strandl)
-
-        return uniquify(result)
+        return self._cdna_to(self._cdna_to_exon, feature, start, end=end, strand=strand)
 
     def cdna_to_protein(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ProteinPosition]:
         """Map a cDNA position to a protein position."""
-        end = end if end is not None else start
-        strandl = [strand] if strand is not None else ["+", "-"]
-        transcript_ids = self.transcript_ids(feature)
-        result = self._cdna_to_protein(transcript_ids, start, end, strandl)
-
-        return uniquify(result)
+        return self._cdna_to(self._cdna_to_protein, feature, start, end=end, strand=strand)
 
     def cdna_to_rna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[RnaPosition]:
         """Map a cDNA position to a RNA position."""
+        return self._cdna_to(self._cdna_to_rna, feature, start, end=end, strand=strand)
+
+    def _cdna_to(
+        self,
+        function: Callable,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+    ) -> List:
         end = end if end is not None else start
         strandl = [strand] if strand is not None else ["+", "-"]
         transcript_ids = self.transcript_ids(feature)
-        result = self._cdna_to_rna(transcript_ids, start, end, strandl)
+        result = function(transcript_ids, start, end, strandl)
 
         return uniquify(result)
 
@@ -784,54 +832,44 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[CdnaPosition]:
         """Map a DNA position to a cDNA position."""
-        end = end if end is not None else start
-        strandl = [strand] if strand is not None else ["+", "-"]
-        contig_ids = self.contig_ids(feature)
-        result = self._dna_to_cdna(contig_ids, start, end, strandl)
-
-        return uniquify(result)
+        return self._dna_to(self._dna_to_cdna, feature, start, end=end, strand=strand)
 
     def dna_to_dna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[DnaPosition]:
         """Map a DNA position to a DNA position."""
-        end = end if end is not None else start
-        strandl = [strand] if strand is not None else ["+", "-"]
-        contig_ids = self.contig_ids(feature)
-        result = self._dna_to_dna(contig_ids, start, end, strandl)
-
-        return uniquify(result)
+        return self._dna_to(self._dna_to_dna, feature, start=start, end=end, strand=strand)
 
     def dna_to_exon(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ExonPosition]:
         """Map a DNA position to an exon position."""
-        end = end if end is not None else start
-        strandl = [strand] if strand is not None else ["+", "-"]
-        contig_ids = self.contig_ids(feature)
-        result = self._dna_to_exon(contig_ids, start, end, strandl)
-
-        return uniquify(result)
+        return self._dna_to(self._dna_to_exon, feature, start=start, end=end, strand=strand)
 
     def dna_to_protein(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ProteinPosition]:
         """Map a DNA position to a protein position."""
-        end = end if end is not None else start
-        strandl = [strand] if strand is not None else ["+", "-"]
-        contig_ids = self.contig_ids(feature)
-        result = self._dna_to_protein(contig_ids, start, end, strandl)
-
-        return uniquify(result)
+        return self._dna_to(self._dna_to_protein, feature, start=start, end=end, strand=strand)
 
     def dna_to_rna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[RnaPosition]:
         """Map a DNA position to a RNA position."""
+        return self._dna_to(self._dna_to_rna, feature, start=start, end=end, strand=strand)
+
+    def _dna_to(
+        self,
+        function: Callable,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+    ) -> List:
         end = end if end is not None else start
         strandl = [strand] if strand is not None else ["+", "-"]
-        contig_ids = self.contig_ids(feature)
-        result = self._dna_to_rna(contig_ids, start, end, strandl)
+        transcript_ids = self.contig_ids(feature)
+        result = function(transcript_ids, start, end, strandl)
 
         return uniquify(result)
 
@@ -1506,7 +1544,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
     ) -> List[CdnaPosition]:
         def convert(position: int):
-            return (position - 1) * 3 + 1
+            return ((position - 1) * 3) + 1
 
         cdna_start = convert(start)
         cdna_end = convert(end) + 2
@@ -1627,6 +1665,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result_start
         else:
             result_end = convert(end)
+            print(result_end)
             return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _rna_to_exon(
@@ -1661,10 +1700,11 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return result
 
         result_start = convert(start)
-        result_end = convert(end)
-        assert result_start == result_end  # TODO: mapping across introns?
-
-        return result_start
+        if start == end:
+            return result_start
+        else:
+            result_end = convert(end)
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _rna_to_protein(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1767,10 +1807,10 @@ def merge_positions(
 ) -> List:
     result = set()
 
-    start_dict = {getattr(pos, key): pos for pos in start_positions}
-    end_dict = {getattr(pos, key): pos for pos in end_positions}
-    for key, start_pos in start_dict.items():
-        if end_pos := end_dict.get(key):
+    for start_pos, end_pos in product(start_positions, end_positions):
+        start_key = getattr(start_pos, key)
+        end_key = getattr(end_pos, key)
+        if start_key == end_key:
             assert start_pos.__class__ == end_pos.__class__
             kwargs = start_pos.asdict()
             start = min((start_pos.start, end_pos.start))
