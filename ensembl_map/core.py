@@ -10,7 +10,7 @@ from pyfaidx import Fasta
 
 from .constants import (
     CONTIG_ID,
-    DEFAULT_RELEASE,
+    DEFAULT_ENSEMBL_RELEASE,
     DEFAULT_SPECIES,
     EXON_ID,
     GENE_ID,
@@ -29,6 +29,8 @@ from .utils import reverse_complement, strip_version
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True, order=True)
 class _Position:
+    """Base class for position data objects."""
+
     _data: Core
     contig_id: str
     start: int
@@ -79,6 +81,8 @@ class _Position:
 
 @dataclass(eq=True, frozen=True, order=True)
 class CdnaPosition(_Position):
+    """Stores information on a cDNA position and converts to other position types."""
+
     gene_id: str
     gene_name: str
     transcript_id: str
@@ -114,6 +118,8 @@ class CdnaPosition(_Position):
 
 @dataclass(eq=True, frozen=True, order=True)
 class DnaPosition(_Position):
+    """Stores information on a DNA position and converts to other position types."""
+
     def to_str(self) -> str:
         if self.start == self.end:
             return f"{self.contig_id}:g.{self.start}"
@@ -150,6 +156,8 @@ class DnaPosition(_Position):
 
 @dataclass(eq=True, frozen=True, order=True)
 class ExonPosition(_Position):
+    """Stores information on an exon position and converts to other position types."""
+
     gene_id: str
     gene_name: str
     transcript_id: str
@@ -185,6 +193,8 @@ class ExonPosition(_Position):
 
 @dataclass(eq=True, frozen=True, order=True)
 class ProteinPosition(_Position):
+    """Stores information on a protein position and converts to other position types."""
+
     gene_id: str
     gene_name: str
     transcript_id: str
@@ -224,6 +234,8 @@ class ProteinPosition(_Position):
 
 @dataclass(eq=True, frozen=True, order=True)
 class RnaPosition(_Position):
+    """Stores information on an RNA position and converts to other position types."""
+
     gene_id: str
     gene_name: str
     transcript_id: str
@@ -258,6 +270,10 @@ class RnaPosition(_Position):
 # cache logic
 # -------------------------------------------------------------------------------------------------
 class CachedCore(type):
+    """Metaclass that allows 'Core' objects, and objects that inherit from 'Core', to be treated as
+    singletons.
+    """
+
     _instances: Dict[Any, Core] = {}
     _current: Optional[Core] = None
 
@@ -279,6 +295,10 @@ class CachedCore(type):
 
 
 class Core(metaclass=CachedCore):
+    """Core class that handles converting between position types and retrieving information on
+    biological features.
+    """
+
     def __init__(
         self,
         df: pd.DataFrame,
@@ -293,7 +313,6 @@ class Core(metaclass=CachedCore):
         protein_alias: Dict[str, List[str]] = {},
         transcript_alias: Dict[str, List[str]] = {},
     ):
-        """Load annotations for the given release."""
         self.df = df
         self.cdna = cdna
         self.dna = dna
@@ -310,24 +329,31 @@ class Core(metaclass=CachedCore):
     # all_<feature_symbol>s
     # ---------------------------------------------------------------------------------------------
     def all_contig_ids(self) -> List[str]:
+        """Return a list of all contig (chromosome) IDs."""
         return self._uniquify_series(self.df[CONTIG_ID])
 
     def all_exon_ids(self) -> List[str]:
+        """Return a list of all exon IDs."""
         return self._uniquify_series(self.df[EXON_ID])
 
     def all_gene_ids(self) -> List[str]:
+        """Return a list of all gene IDs."""
         return self._uniquify_series(self.df[GENE_ID])
 
     def all_gene_names(self) -> List[str]:
+        """Return a list of all gene names."""
         return self._uniquify_series(self.df[GENE_NAME])
 
     def all_protein_ids(self) -> List[str]:
+        """Return a list of all protein IDs."""
         return self._uniquify_series(self.df[PROTEIN_ID])
 
     def all_transcript_ids(self) -> List[str]:
+        """Return a list of all transcript IDs."""
         return self._uniquify_series(self.df[TRANSCRIPT_ID])
 
     def all_transcript_names(self) -> List[str]:
+        """Return a list of all transcript names."""
         return self._uniquify_series(self.df[TRANSCRIPT_NAME])
 
     def _uniquify_series(self, series: pd.Series) -> List:
@@ -365,7 +391,7 @@ class Core(metaclass=CachedCore):
         return self._get_feature_attr(TRANSCRIPT_NAME, feature, feature_type)
 
     def _get_feature_attr(self, key: str, feature: str, feature_type: str = "") -> List[str]:
-        """Given a feature symbol, return the corresponding ID(s)."""
+        """Given a feature symbol and a desired ID type, return the corresponding ID(s)."""
         parts = []
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
@@ -396,28 +422,35 @@ class Core(metaclass=CachedCore):
         return self._uniquify_series(result)
 
     def _query_by_contig_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        """Given a contig ID, return a dataframe where all values have the ID."""
         return self._query(feature, CONTIG_ID)
 
     def _query_by_exon_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        """Given an exon ID, return a dataframe where all values have the ID."""
         return self._query(feature, EXON_ID)
 
     def _query_by_gene_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        """Given a gene ID, return a dataframe where all values have the ID."""
         return self._query(feature, GENE_ID)
 
     def _query_by_gene_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        """Given a gene name, return a dataframe where all values have the ID."""
         return self._query(feature, GENE_NAME)
 
     def _query_by_protein_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        """Given a protein ID, return a dataframe where all values have the ID."""
         return self._query(feature, PROTEIN_ID)
 
     def _query_by_transcript_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        """Given a transcript ID, return a dataframe where all values have the ID."""
         return self._query(feature, TRANSCRIPT_ID)
 
     def _query_by_transcript_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        """Given a transcript name, return a dataframe where all values have the ID."""
         return self._query(feature, TRANSCRIPT_NAME)
 
     def _query(self, feature: Union[List[str], str], col: str) -> pd.DataFrame:
-        """Generic function for querying the data cache."""
+        """Generic function for filtering the dataframe."""
         feature = [feature] if isinstance(feature, str) else feature
         sudbf = self.df.loc[self.df[col].isin(feature)]
 
@@ -427,7 +460,7 @@ class Core(metaclass=CachedCore):
     # normalize_feature
     # ---------------------------------------------------------------------------------------------
     def normalize_feature(self, feature: str, feature_type: str = "") -> List[Tuple[str, str]]:
-        """Normalize a feature ID to the representation used by Ensembl."""
+        """Normalize a feature ID to one or more representations."""
         normalized = []
 
         feature_type, result = self._normalize_feature(feature, feature_type=feature_type)
@@ -437,7 +470,7 @@ class Core(metaclass=CachedCore):
         return [(i, feature_type) for i in normalized]
 
     def _normalize_feature(self, feature: str, feature_type: str = "") -> Tuple[str, pd.DataFrame]:
-        """Normalize a feature to the representation used by Ensembl."""
+        """Normalize a feature ID, return its type and a dataframe of matching values."""
         result = pd.DataFrame()
 
         for key, func in [
@@ -458,43 +491,43 @@ class Core(metaclass=CachedCore):
         return feature_type, result
 
     def _normalize_contig_id(self, feature: str) -> pd.DataFrame:
-        """Normalize a contig ID or it's alias to one or more matching Ensembl contig ID."""
+        """Normalize a contig ID, return a dataframe of matching values."""
         featurel = [feature] + self.get_contig_alias(feature)
 
         return self._query_by_contig_id(featurel)
 
     def _normalize_exon_id(self, feature: str) -> pd.DataFrame:
-        """Normalize an exon ID or it's alias to one or more matching Ensembl exon ID."""
+        """Normalize an exon ID, return a dataframe of matching values."""
         featurel = [feature] + self.get_exon_alias(feature)
 
         return self._query_by_exon_id(featurel)
 
     def _normalize_gene_id(self, feature: str) -> pd.DataFrame:
-        """Normalize a gene ID or it's alias to one or more matching Ensembl gene ID."""
+        """Normalize a gene ID, return a dataframe of matching values."""
         featurel = [feature] + self.get_gene_alias(feature)
 
         return self._query_by_gene_id(featurel)
 
     def _normalize_gene_name(self, feature: str) -> pd.DataFrame:
-        """Normalize a gene ID or it's alias to one or more matching Ensembl gene ID."""
+        """Normalize a gene name, return a dataframe of matching values."""
         featurel = [feature] + self.get_gene_alias(feature)
 
         return self._query_by_gene_name(featurel)
 
     def _normalize_protein_id(self, feature: str) -> pd.DataFrame:
-        """Normalize a protein ID or it's alias to one or more matching Ensembl protein ID."""
+        """Normalize a protein ID, return a dataframe of matching values."""
         featurel = [feature] + self.get_protein_alias(feature)
 
         return self._query_by_protein_id(featurel)
 
     def _normalize_transcript_id(self, feature: str) -> pd.DataFrame:
-        """Normalize a transcript ID or it's alias to one or more matching Ensembl transcript ID."""
+        """Normalize a transcript ID, return a dataframe of matching values."""
         featurel = [feature] + self.get_transcript_alias(feature)
 
         return self._query_by_transcript_id(featurel)
 
     def _normalize_transcript_name(self, feature: str) -> pd.DataFrame:
-        """Normalize a transcript name or it's alias to one or more matching Ensembl transcript ID."""
+        """Normalize a transcript name, return a dataframe of matching values."""
         featurel = [feature] + self.get_transcript_alias(feature)
 
         return self._query_by_transcript_name(featurel)
@@ -503,25 +536,25 @@ class Core(metaclass=CachedCore):
     # is_<feature>(feature)
     # ---------------------------------------------------------------------------------------------
     def is_contig(self, feature: str) -> bool:
-        """Return True if the given feature is a contig."""
+        """Return True if the given feature is a contig ID."""
         return any((i[1] == CONTIG_ID for i in self.normalize_feature(feature, CONTIG_ID)))
 
     def is_exon(self, feature: str) -> bool:
-        """Return True if the given feature is an exon."""
+        """Return True if the given feature is an exon ID."""
         return any((i[1] == EXON_ID for i in self.normalize_feature(feature, EXON_ID)))
 
     def is_gene(self, feature: str) -> bool:
-        """Return True if the given feature is a gene."""
+        """Return True if the given feature is a gene ID or name."""
         return any((i[1] == GENE_ID for i in self.normalize_feature(feature, GENE_ID))) or any(
             (i[1] == GENE_NAME for i in self.normalize_feature(feature, GENE_NAME))
         )
 
     def is_protein(self, feature: str) -> bool:
-        """Return True if the given feature is a protein."""
+        """Return True if the given feature is a protein ID."""
         return any((i[1] == PROTEIN_ID for i in self.normalize_feature(feature, PROTEIN_ID)))
 
     def is_transcript(self, feature: str) -> bool:
-        """Return True if the given feature is a transcript."""
+        """Return True if the given feature is a transcript ID or name."""
         return any(
             (i[1] == TRANSCRIPT_ID for i in self.normalize_feature(feature, TRANSCRIPT_ID))
         ) or any(
@@ -650,7 +683,7 @@ class Core(metaclass=CachedCore):
     # canonical transcript
     # ---------------------------------------------------------------------------------------------
     def is_canonical_transcript(self, feature: str) -> bool:
-        """Return True if the transcript is in the list of canonical transcripts."""
+        """Return True if the given transcript ID is a canonical transcript."""
         return feature in self.canonical_transcript
 
     # ---------------------------------------------------------------------------------------------
@@ -702,7 +735,7 @@ class Core(metaclass=CachedCore):
         return sorted(set(result))
 
     def get_exons(self, feature: str) -> List[ExonPosition]:
-        """Return the gene position(s) of the given feature."""
+        """Return the exon position(s) of the given feature."""
         result = []
 
         exon_ids = self.exon_ids(feature)
@@ -773,7 +806,7 @@ class Core(metaclass=CachedCore):
     def cdna_to_cdna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[CdnaPosition]:
-        """Map a cDNA position to a cDNA position."""
+        """Map a cDNA position to zero or more cDNA positions."""
         return self._map(
             self.transcript_ids, self._cdna_to_cdna, feature, start, end=end, strand=strand
         )
@@ -781,7 +814,7 @@ class Core(metaclass=CachedCore):
     def cdna_to_dna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[DnaPosition]:
-        """Map a cDNA position to a DNA position."""
+        """Map a cDNA position to zero or more DNA positions."""
         return self._map(
             self.transcript_ids, self._cdna_to_dna, feature, start, end=end, strand=strand
         )
@@ -789,7 +822,7 @@ class Core(metaclass=CachedCore):
     def cdna_to_exon(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ExonPosition]:
-        """Map a cDNA position to an exon position."""
+        """Map a cDNA position to an exon positions."""
         return self._map(
             self.transcript_ids, self._cdna_to_exon, feature, start, end=end, strand=strand
         )
@@ -797,7 +830,7 @@ class Core(metaclass=CachedCore):
     def cdna_to_protein(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ProteinPosition]:
-        """Map a cDNA position to a protein position."""
+        """Map a cDNA position to zero or more protein positions."""
         return self._map(
             self.transcript_ids, self._cdna_to_protein, feature, start, end=end, strand=strand
         )
@@ -805,7 +838,7 @@ class Core(metaclass=CachedCore):
     def cdna_to_rna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[RnaPosition]:
-        """Map a cDNA position to a RNA position."""
+        """Map a cDNA position to zero or more RNA positions."""
         return self._map(
             self.transcript_ids, self._cdna_to_rna, feature, start, end=end, strand=strand
         )
@@ -813,13 +846,13 @@ class Core(metaclass=CachedCore):
     def dna_to_cdna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[CdnaPosition]:
-        """Map a DNA position to a cDNA position."""
+        """Map a DNA position to zero or more cDNA positions."""
         return self._map(self.contig_ids, self._dna_to_cdna, feature, start, end=end, strand=strand)
 
     def dna_to_dna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[DnaPosition]:
-        """Map a DNA position to a DNA position."""
+        """Map a DNA position to zero or more DNA positions."""
         return self._map(
             self.contig_ids, self._dna_to_dna, feature, start=start, end=end, strand=strand
         )
@@ -827,7 +860,7 @@ class Core(metaclass=CachedCore):
     def dna_to_exon(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ExonPosition]:
-        """Map a DNA position to an exon position."""
+        """Map a DNA position to zero or more exon positions."""
         return self._map(
             self.contig_ids, self._dna_to_exon, feature, start=start, end=end, strand=strand
         )
@@ -835,7 +868,7 @@ class Core(metaclass=CachedCore):
     def dna_to_protein(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ProteinPosition]:
-        """Map a DNA position to a protein position."""
+        """Map a DNA position to zero or more protein positions."""
         return self._map(
             self.contig_ids, self._dna_to_protein, feature, start=start, end=end, strand=strand
         )
@@ -843,7 +876,7 @@ class Core(metaclass=CachedCore):
     def dna_to_rna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[RnaPosition]:
-        """Map a DNA position to a RNA position."""
+        """Map a DNA position to zero or more RNA positions."""
         return self._map(
             self.contig_ids, self._dna_to_rna, feature, start=start, end=end, strand=strand
         )
@@ -855,7 +888,7 @@ class Core(metaclass=CachedCore):
         end: Optional[int] = None,
         strand: Optional[str] = None,
     ) -> List[CdnaPosition]:
-        """Map an exon position to a cDNA position."""
+        """Map an exon position to zero or more cDNA positions."""
         return self._map_exon(self._exon_to_cdna, feature, start, end, strand)
 
     def exon_to_dna(
@@ -865,7 +898,7 @@ class Core(metaclass=CachedCore):
         end: Optional[int] = None,
         strand: Optional[str] = None,
     ) -> List[DnaPosition]:
-        """Map an exon position to a DNA position."""
+        """Map an exon position to zero or more DNA positions."""
         return self._map_exon(self._exon_to_dna, feature, start, end, strand)
 
     def exon_to_exon(
@@ -875,7 +908,7 @@ class Core(metaclass=CachedCore):
         end: Optional[int] = None,
         strand: Optional[str] = None,
     ) -> List[ExonPosition]:
-        """Map an exon position to an exon position."""
+        """Map an exon position to an exon positions."""
         return self._map_exon(self._exon_to_exon, feature, start, end, strand)
 
     def exon_to_protein(
@@ -885,7 +918,7 @@ class Core(metaclass=CachedCore):
         end: Optional[int] = None,
         strand: Optional[str] = None,
     ) -> List[ProteinPosition]:
-        """Map an exon position to a protein position."""
+        """Map an exon position to zero or more protein positions."""
         return self._map_exon(self._exon_to_protein, feature, start, end, strand)
 
     def exon_to_rna(
@@ -895,13 +928,13 @@ class Core(metaclass=CachedCore):
         end: Optional[int] = None,
         strand: Optional[str] = None,
     ) -> List[RnaPosition]:
-        """Map an exon position to a RNA position."""
+        """Map an exon position to zero or more RNA positions."""
         return self._map_exon(self._exon_to_rna, feature, start, end, strand)
 
     def protein_to_cdna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[CdnaPosition]:
-        """Map a protein position to a cDNA position."""
+        """Map a protein position to zero or more cDNA positions."""
         return self._map(
             self.transcript_ids, self._protein_to_cdna, feature, start, end=end, strand=strand
         )
@@ -909,7 +942,7 @@ class Core(metaclass=CachedCore):
     def protein_to_dna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[DnaPosition]:
-        """Map a protein position to a DNA position."""
+        """Map a protein position to zero or more DNA positions."""
         return self._map(
             self.transcript_ids, self._protein_to_dna, feature, start, end=end, strand=strand
         )
@@ -917,7 +950,7 @@ class Core(metaclass=CachedCore):
     def protein_to_exon(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ExonPosition]:
-        """Map a protein position to an exon position."""
+        """Map a protein position to zero or more exon positions."""
         return self._map(
             self.transcript_ids, self._protein_to_exon, feature, start, end=end, strand=strand
         )
@@ -925,7 +958,7 @@ class Core(metaclass=CachedCore):
     def protein_to_protein(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ProteinPosition]:
-        """Map a protein position to a protein position."""
+        """Map a protein position to zero or more protein positions."""
         return self._map(
             self.transcript_ids, self._protein_to_protein, feature, start, end=end, strand=strand
         )
@@ -933,7 +966,7 @@ class Core(metaclass=CachedCore):
     def protein_to_rna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[RnaPosition]:
-        """Map a protein position to a RNA position."""
+        """Map a protein position to zero or more RNA positions."""
         return self._map(
             self.transcript_ids, self._protein_to_rna, feature, start, end=end, strand=strand
         )
@@ -941,7 +974,7 @@ class Core(metaclass=CachedCore):
     def rna_to_cdna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[CdnaPosition]:
-        """Map a RNA position to a cDNA position."""
+        """Map a RNA position to zero or more cDNA positions."""
         return self._map(
             self.transcript_ids, self._rna_to_cdna, feature, start, end=end, strand=strand
         )
@@ -949,7 +982,7 @@ class Core(metaclass=CachedCore):
     def rna_to_dna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[DnaPosition]:
-        """Map a RNA position to a DNA position."""
+        """Map a RNA position to zero or more DNA positions."""
         return self._map(
             self.transcript_ids, self._rna_to_dna, feature, start, end=end, strand=strand
         )
@@ -957,7 +990,7 @@ class Core(metaclass=CachedCore):
     def rna_to_exon(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ExonPosition]:
-        """Map a RNA position to an exon position."""
+        """Map a RNA position to an exon positions."""
         return self._map(
             self.transcript_ids, self._rna_to_exon, feature, start, end=end, strand=strand
         )
@@ -965,7 +998,7 @@ class Core(metaclass=CachedCore):
     def rna_to_protein(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ProteinPosition]:
-        """Map a RNA position to a protein position."""
+        """Map a RNA position to zero or more protein positions."""
         return self._map(
             self.transcript_ids, self._rna_to_protein, feature, start, end=end, strand=strand
         )
@@ -973,7 +1006,7 @@ class Core(metaclass=CachedCore):
     def rna_to_rna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[RnaPosition]:
-        """Map a RNA position to a RNA position."""
+        """Map a RNA position to zero or more RNA positions."""
         return self._map(
             self.transcript_ids, self._rna_to_rna, feature, start, end=end, strand=strand
         )
@@ -1764,10 +1797,14 @@ class Core(metaclass=CachedCore):
 
 
 class EnsemblRelease(Core):
+    """Handles converting between position types and retrieving information on biological features
+    based on an Ensembl release.
+    """
+
     def __init__(
         self,
         species: str = DEFAULT_SPECIES,
-        release: int = DEFAULT_RELEASE,
+        release: int = DEFAULT_ENSEMBL_RELEASE,
         cache_dir: str = "",
         canonical_transcript: str = "",
         contig_alias: str = "",
@@ -1776,7 +1813,6 @@ class EnsemblRelease(Core):
         protein_alias: str = "",
         transcript_alias: str = "",
     ):
-        """Load annotations for the given release."""
         self.ensembl_cache = EnsemblCache(species, release, cache_dir=cache_dir)
 
         self.cache_dir = self.ensembl_cache.release_cache_dir
@@ -1804,6 +1840,7 @@ class EnsemblRelease(Core):
 def merge_positions(
     start_positions: List[_Position], end_positions: List[_Position], key: str
 ) -> List:
+    """Merge two list of position objects into one list by the given key (e.g. 'transcript_id')"""
     result = set()
 
     for start_pos, end_pos in product(start_positions, end_positions):

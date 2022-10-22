@@ -62,7 +62,7 @@ GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
 
 
 class EnsemblCache:
-    """Class for managing Ensembl files used by this package."""
+    """Class for managing Ensembl files."""
 
     def __init__(self, species: str, release: int, cache_dir: str = DEFAULT_CACHE_DIR):
         self.species = species
@@ -71,7 +71,7 @@ class EnsemblCache:
         self.reference = reference_by_release(self.release)
 
     def make(self, redownload: bool = False, recache: bool = False):
-        """Download required data, process, and cache."""
+        """Download missing data, process, and cache."""
 
         # Create the cache directory structure
         self.make_release_cache_dir()
@@ -311,7 +311,6 @@ class EnsemblCache:
         return self._index_fasta(self.local_pep_fasta_filepath)
 
     def _index_fasta(self, local_fasta_filename: str):
-        """(Re)build the index file for the FASTA file."""
         logger.info(f"Indexing {local_fasta_filename}...")
         _ = Fasta(
             local_fasta_filename,
@@ -325,24 +324,23 @@ class EnsemblCache:
     # ---------------------------------------------------------------------------------------------
     # Load FASTA files
     # ---------------------------------------------------------------------------------------------
-    def load_cdna_fasta(self):
-        """Load and return the cDNA Fasta."""
+    def load_cdna_fasta(self) -> Fasta:
+        """Load and return the cDNA a `pyfaidx.Fasta` object."""
         return self._load_fasta(self.local_cdna_fasta_filepath)
 
-    def load_dna_fasta(self):
-        """Load and return the DNA Fasta."""
+    def load_dna_fasta(self) -> Fasta:
+        """Load and return the DNA a `pyfaidx.Fasta` object."""
         return self._load_fasta(self.local_dna_fasta_filepath)
 
-    def load_ncrna_fasta(self):
-        """Load and return the cDNA Fasta."""
+    def load_ncrna_fasta(self) -> Fasta:
+        """Load and return the ncDNA a `pyfaidx.Fasta` object."""
         return self._load_fasta(self.local_ncrna_fasta_filepath)
 
-    def load_pep_fasta(self):
-        """Load and return the peptide Fasta."""
+    def load_pep_fasta(self) -> Fasta:
+        """Load and return the peptide a `pyfaidx.Fasta` object."""
         return self._load_fasta(self.local_pep_fasta_filepath)
 
     def _load_fasta(self, local_fasta_filename: str) -> Fasta:
-        """Return a `pyfaidx.Fasta` object for the Ensembl genome."""
         return Fasta(
             local_fasta_filename,
             key_function=strip_version,

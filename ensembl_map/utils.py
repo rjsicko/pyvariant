@@ -10,7 +10,7 @@ def reverse_complement(sequence: str) -> str:
 
 
 def strip_version(key: str) -> str:
-    """Strip the version number from the transcript symbol.
+    """Strip the version number from a transcript symbol.
 
     Examples:
         >>> _strip_version('NM_000546.5')

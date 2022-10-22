@@ -56,29 +56,29 @@ def is_bgzipped(path: str) -> bool:
         return file_start == _bgzf_magic
 
 
-def txt_to_list(path: str, message: str) -> List[str]:
-    """Parse a text file into a list of unique values."""
+def txt_to_list(path: str, label: str) -> List[str]:
+    """Parse a text file into a list of unique strings."""
     result = set()
 
     if path:
-        logger.debug(f"Loading {message} from {path}")
+        logger.debug(f"Loading {label} from {path}")
         with open(path, "r") as fh:
             for line in fh:
                 if line:
                     result.add(line.strip())
     else:
-        logger.debug(f"No {message} to load")
+        logger.debug(f"No {label} to load")
 
     return sorted(result)
 
 
-def tsv_to_dict(path: str, message: str) -> Dict[str, List[str]]:
-    """Parse a TSV of one-to-one alias-to-name mappings."""
+def tsv_to_dict(path: str, label: str) -> Dict[str, List[str]]:
+    """Parse a TSV of one-to-one mappings."""
     result: Dict = {}
 
     if path:
         # load data from the TSV file, keep only unique values
-        logger.debug(f"Loading {message} from {path}")
+        logger.debug(f"Loading {label} from {path}")
         with open(path, "r") as fh:
             for line in fh:
                 if line:
@@ -90,6 +90,6 @@ def tsv_to_dict(path: str, message: str) -> Dict[str, List[str]]:
         for alias in result:
             result[alias] = sorted(result[alias])
     else:
-        logger.debug(f"No {message} to load")
+        logger.debug(f"No {label} to load")
 
     return result
