@@ -1,6 +1,8 @@
 import os.path
 from ftplib import FTP
 from pathlib import Path
+from string import punctuation
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -11,6 +13,9 @@ from pyfaidx import Fasta
 from .constants import DEFAULT_CACHE_DIR
 from .files import bgzip, is_bgzipped
 from .utils import strip_version
+
+# Dictionary used to replace punctuation in a string
+PUNCTUATION_TO_UNDERSCORE = str.maketrans(punctuation, "_" * len(punctuation))
 
 # Ensembl FTP URL
 ENSEMBL_FTP_SERVER = "ftp.ensembl.org"
@@ -65,8 +70,8 @@ class EnsemblCache:
     """Class for managing Ensembl files."""
 
     def __init__(self, species: str, release: int, cache_dir: str = DEFAULT_CACHE_DIR):
-        self.species = species
-        self.release = release
+        self.species = normalize_species(species)
+        self.release = normalize_release(release)
         self.cache_dir = os.path.abspath(cache_dir)
         self.reference = reference_by_release(self.release)
 
@@ -748,6 +753,16 @@ def df_set_protein_id(df: pd.DataFrame) -> pd.DataFrame:
                 df.loc[index, "protein_id"] = cds.protein_id
 
     return df
+
+
+def normalize_release(release: Union[float, int, str]) -> int:
+    """Normalize a release number."""
+    return int(release)
+
+
+def normalize_species(species: str) -> str:
+    """Normalize a species name."""
+    return species.translate(PUNCTUATION_TO_UNDERSCORE)
 
 
 def reference_by_release(release: int) -> str:
