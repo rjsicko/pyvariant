@@ -1515,8 +1515,8 @@ def test_cdna_to_protein_negative_strand_cDNA_protein_end(ensembl100):
     position = CdnaPosition(
         _data=ensembl100,
         contig_id="5",
-        start=3397,
-        end=3399,
+        start=3394,
+        end=3396,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -1527,8 +1527,8 @@ def test_cdna_to_protein_negative_strand_cDNA_protein_end(ensembl100):
     expected = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
-        start=1133,
-        end=1133,
+        start=1132,
+        end=1132,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -1537,6 +1537,22 @@ def test_cdna_to_protein_negative_strand_cDNA_protein_end(ensembl100):
         protein_id="ENSP00000309572",
     )
     assert position.to_protein() == [expected]
+
+
+def test_cdna_to_protein_negative_strand_stop_codon(ensembl100):
+    position = CdnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=3397,
+        end=3399,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+    assert position.to_protein() == []
 
 
 def test_cdna_to_protein_negative_strand_cDNA_protein_start(ensembl100):
@@ -1627,8 +1643,8 @@ def test_cdna_to_protein_positive_strand_cDNA_protein_end(ensembl100):
     position = CdnaPosition(
         _data=ensembl100,
         contig_id="13",
-        start=10255,
-        end=10257,
+        start=10252,
+        end=10254,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -1639,8 +1655,8 @@ def test_cdna_to_protein_positive_strand_cDNA_protein_end(ensembl100):
     expected = ProteinPosition(
         _data=ensembl100,
         contig_id="13",
-        start=3419,
-        end=3419,
+        start=3418,
+        end=3418,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -1649,6 +1665,22 @@ def test_cdna_to_protein_positive_strand_cDNA_protein_end(ensembl100):
         protein_id="ENSP00000369497",
     )
     assert position.to_protein() == [expected]
+
+
+def test_cdna_to_protein_positive_strand_stop_codon(ensembl100):
+    position = CdnaPosition(
+        _data=ensembl100,
+        contig_id="13",
+        start=10255,
+        end=10257,
+        strand="+",
+        gene_id="ENSG00000139618",
+        gene_name="BRCA2",
+        transcript_id="ENST00000380152",
+        transcript_name="BRCA2-201",
+        protein_id="ENSP00000369497",
+    )
+    assert position.to_protein() == []
 
 
 def test_cdna_to_protein_positive_strand_cDNA_protein_start(ensembl100):
@@ -2466,12 +2498,12 @@ def test_dna_to_protein_negative_strand_across_exon_boundary(ensembl100):
 
 
 def test_dna_to_protein_negative_strand_cDNA_protein_end(ensembl100):
-    position = DnaPosition(_data=ensembl100, contig_id="5", start=1253728, end=1253730, strand="-")
+    position = DnaPosition(_data=ensembl100, contig_id="5", start=1253731, end=1253733, strand="-")
     expected = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
-        start=1133,
-        end=1133,
+        start=1132,
+        end=1132,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -2480,6 +2512,11 @@ def test_dna_to_protein_negative_strand_cDNA_protein_end(ensembl100):
         protein_id="ENSP00000309572",
     )
     assert expected in position.to_protein()
+
+
+def test_dna_to_protein_negative_strand_stop_codong(ensembl100):
+    position = DnaPosition(_data=ensembl100, contig_id="5", start=1253728, end=1253730, strand="-")
+    assert position.to_protein() == []
 
 
 def test_dna_to_protein_negative_strand_cDNA_protein_start(ensembl100):
@@ -2539,13 +2576,13 @@ def test_dna_to_protein_positive_strand_across_exon_boundary(ensembl100):
 
 def test_dna_to_protein_positive_strand_cDNA_protein_end(ensembl100):
     position = DnaPosition(
-        _data=ensembl100, contig_id="13", start=32398768, end=32398770, strand="+"
+        _data=ensembl100, contig_id="13", start=32398765, end=32398767, strand="+"
     )
     expected = ProteinPosition(
         _data=ensembl100,
         contig_id="13",
-        start=3419,
-        end=3419,
+        start=3418,
+        end=3418,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -2554,6 +2591,13 @@ def test_dna_to_protein_positive_strand_cDNA_protein_end(ensembl100):
         protein_id="ENSP00000369497",
     )
     assert expected in position.to_protein()
+
+
+def test_dna_to_protein_positive_strand_stop_codon(ensembl100):
+    position = DnaPosition(
+        _data=ensembl100, contig_id="13", start=32398768, end=32398770, strand="+"
+    )
+    assert position.to_protein() == []
 
 
 def test_dna_to_protein_positive_strand_cDNA_protein_start(ensembl100):
@@ -3301,8 +3345,8 @@ def test_protein_to_cdna_negative_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
-        start=1133,
-        end=1133,
+        start=1132,
+        end=1132,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -3313,8 +3357,8 @@ def test_protein_to_cdna_negative_strand_cDNA_protein_end(ensembl100):
     expected = CdnaPosition(
         _data=ensembl100,
         contig_id="5",
-        start=3397,
-        end=3399,
+        start=3394,
+        end=3396,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -3413,8 +3457,8 @@ def test_protein_to_cdna_positive_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="13",
-        start=3419,
-        end=3419,
+        start=3418,
+        end=3418,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -3425,8 +3469,8 @@ def test_protein_to_cdna_positive_strand_cDNA_protein_end(ensembl100):
     expected = CdnaPosition(
         _data=ensembl100,
         contig_id="13",
-        start=10255,
-        end=10257,
+        start=10252,
+        end=10254,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -3531,8 +3575,8 @@ def test_protein_to_dna_negative_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
-        start=1133,
-        end=1133,
+        start=1132,
+        end=1132,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -3540,7 +3584,7 @@ def test_protein_to_dna_negative_strand_cDNA_protein_end(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = DnaPosition(_data=ensembl100, contig_id="5", start=1253728, end=1253730, strand="-")
+    expected = DnaPosition(_data=ensembl100, contig_id="5", start=1253731, end=1253733, strand="-")
     assert position.to_dna() == [expected]
 
 
@@ -3603,8 +3647,8 @@ def test_protein_to_dna_positive_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="13",
-        start=3419,
-        end=3419,
+        start=3418,
+        end=3418,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -3613,7 +3657,7 @@ def test_protein_to_dna_positive_strand_cDNA_protein_end(ensembl100):
         protein_id="ENSP00000369497",
     )
     expected = DnaPosition(
-        _data=ensembl100, contig_id="13", start=32398768, end=32398770, strand="+"
+        _data=ensembl100, contig_id="13", start=32398765, end=32398767, strand="+"
     )
     assert position.to_dna() == [expected]
 
@@ -3688,8 +3732,8 @@ def test_protein_to_exon_negative_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
-        start=1133,
-        end=1133,
+        start=1132,
+        end=1132,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -3772,8 +3816,8 @@ def test_protein_to_exon_positive_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="13",
-        start=3419,
-        end=3419,
+        start=3418,
+        end=3418,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -3888,6 +3932,22 @@ def test_protein_to_protein_negative_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
+        start=1132,
+        end=1132,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+    assert position.to_protein() == [position]
+
+
+def test_protein_to_protein_negative_strand_stop_codon(ensembl100):
+    position = ProteinPosition(
+        _data=ensembl100,
+        contig_id="5",
         start=1133,
         end=1133,
         strand="-",
@@ -3897,7 +3957,7 @@ def test_protein_to_protein_negative_strand_cDNA_protein_end(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    assert position.to_protein() == [position]
+    assert position.to_protein() == []
 
 
 def test_protein_to_protein_negative_strand_cDNA_protein_start(ensembl100):
@@ -3952,6 +4012,22 @@ def test_protein_to_protein_positive_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="13",
+        start=3418,
+        end=3418,
+        strand="+",
+        gene_id="ENSG00000139618",
+        gene_name="BRCA2",
+        transcript_id="ENST00000380152",
+        transcript_name="BRCA2-201",
+        protein_id="ENSP00000369497",
+    )
+    assert position.to_protein() == [position]
+
+
+def test_protein_to_protein_positive_strand_stop_codon(ensembl100):
+    position = ProteinPosition(
+        _data=ensembl100,
+        contig_id="13",
         start=3419,
         end=3419,
         strand="+",
@@ -3961,7 +4037,7 @@ def test_protein_to_protein_positive_strand_cDNA_protein_end(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    assert position.to_protein() == [position]
+    assert position.to_protein() == []
 
 
 def test_protein_to_protein_positive_strand_cDNA_protein_start(ensembl100):
@@ -4054,8 +4130,8 @@ def test_protein_to_rna_negative_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
-        start=1133,
-        end=1133,
+        start=1132,
+        end=1132,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -4066,8 +4142,8 @@ def test_protein_to_rna_negative_strand_cDNA_protein_end(ensembl100):
     expected = RnaPosition(
         _data=ensembl100,
         contig_id="5",
-        start=3476,
-        end=3478,
+        start=3473,
+        end=3475,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -4162,8 +4238,8 @@ def test_protein_to_rna_positive_strand_cDNA_protein_end(ensembl100):
     position = ProteinPosition(
         _data=ensembl100,
         contig_id="13",
-        start=3419,
-        end=3419,
+        start=3418,
+        end=3418,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -4174,8 +4250,8 @@ def test_protein_to_rna_positive_strand_cDNA_protein_end(ensembl100):
     expected = RnaPosition(
         _data=ensembl100,
         contig_id="13",
-        start=10488,
-        end=10490,
+        start=10485,
+        end=10487,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -5104,8 +5180,8 @@ def test_rna_to_protein_negative_strand_cDNA_protein_end(ensembl100):
     position = RnaPosition(
         _data=ensembl100,
         contig_id="5",
-        start=3476,
-        end=3478,
+        start=3473,
+        end=3475,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -5115,8 +5191,8 @@ def test_rna_to_protein_negative_strand_cDNA_protein_end(ensembl100):
     expected = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
-        start=1133,
-        end=1133,
+        start=1132,
+        end=1132,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -5125,6 +5201,21 @@ def test_rna_to_protein_negative_strand_cDNA_protein_end(ensembl100):
         protein_id="ENSP00000309572",
     )
     assert position.to_protein() == [expected]
+
+
+def test_rna_to_protein_negative_strand_stop_codon(ensembl100):
+    position = RnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=3476,
+        end=3478,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+    )
+    assert position.to_protein() == []
 
 
 def test_rna_to_protein_negative_strand_cDNA_protein_start(ensembl100):
@@ -5212,8 +5303,8 @@ def test_rna_to_protein_positive_strand_cDNA_protein_end(ensembl100):
     position = RnaPosition(
         _data=ensembl100,
         contig_id="13",
-        start=10488,
-        end=10490,
+        start=10485,
+        end=10487,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -5223,8 +5314,8 @@ def test_rna_to_protein_positive_strand_cDNA_protein_end(ensembl100):
     expected = ProteinPosition(
         _data=ensembl100,
         contig_id="13",
-        start=3419,
-        end=3419,
+        start=3418,
+        end=3418,
         strand="+",
         gene_id="ENSG00000139618",
         gene_name="BRCA2",
@@ -5233,6 +5324,21 @@ def test_rna_to_protein_positive_strand_cDNA_protein_end(ensembl100):
         protein_id="ENSP00000369497",
     )
     assert position.to_protein() == [expected]
+
+
+def test_rna_to_protein_positive_strand_stop_codon(ensembl100):
+    position = RnaPosition(
+        _data=ensembl100,
+        contig_id="13",
+        start=10488,
+        end=10490,
+        strand="+",
+        gene_id="ENSG00000139618",
+        gene_name="BRCA2",
+        transcript_id="ENST00000380152",
+        transcript_name="BRCA2-201",
+    )
+    assert position.to_protein() == []
 
 
 def test_rna_to_protein_positive_strand_cDNA_protein_start(ensembl100):

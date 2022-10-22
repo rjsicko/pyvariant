@@ -993,8 +993,15 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         )
 
     def _cdna_to_cdna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        end: int,
+        strand: List[str],
+        include_stop: bool = True,
     ) -> List[CdnaPosition]:
+        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+
         def convert(position: int):
             result = []
 
@@ -1003,7 +1010,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
+                & (self.ensembl["feature"].isin(feature))
             )
             for _, cds in self.ensembl[mask].iterrows():
                 result.append(
@@ -1031,8 +1038,15 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_dna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        end: int,
+        strand: List[str],
+        include_stop: bool = True,
     ) -> List[DnaPosition]:
+        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+
         def convert(position: int):
             result = []
 
@@ -1041,7 +1055,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
+                & (self.ensembl["feature"].isin(feature))
             )
             for _, cds in self.ensembl[mask].iterrows():
                 offset = position - cds.cdna_start
@@ -1070,8 +1084,15 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _cdna_to_exon(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        end: int,
+        strand: List[str],
+        include_stop: bool = True,
     ) -> List[ExonPosition]:
+        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+
         def convert(position: int):
             result = []
 
@@ -1080,7 +1101,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
+                & (self.ensembl["feature"].isin(feature))
             )
             for _, cds in self.ensembl[mask_cds].iterrows():
                 mask_exon = (
@@ -1119,7 +1140,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return floor((x - 1) / 3 + 1)
 
         protein = []
-        for cdna in self._cdna_to_cdna(transcript_ids, start, end, strand):
+        for cdna in self._cdna_to_cdna(transcript_ids, start, end, strand, include_stop=False):
             pstart = convert(start)
             pend = convert(end)
             protein.append(ProteinPosition.copy_from(cdna, start=pstart, end=pend))
@@ -1127,8 +1148,15 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return protein
 
     def _cdna_to_rna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        end: int,
+        strand: List[str],
+        include_stop: bool = True,
     ) -> List[RnaPosition]:
+        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+
         def convert(position: int):
             result = []
 
@@ -1137,7 +1165,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
                 & (self.ensembl["cdna_start"] <= position)
                 & (self.ensembl["cdna_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
+                & (self.ensembl["feature"].isin(feature))
             )
             for _, cds in self.ensembl[mask].iterrows():
                 offset = position - cds.cdna_start
@@ -1166,8 +1194,15 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_cdna(
-        self, contig_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        contig_ids: List[str],
+        start: int,
+        end: int,
+        strand: List[str],
+        include_stop: bool = True,
     ) -> List[CdnaPosition]:
+        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+
         def convert(position: int):
             result = []
 
@@ -1176,7 +1211,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
                 & (self.ensembl["start"] <= position)
                 & (self.ensembl["end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
+                & (self.ensembl["feature"].isin(feature))
             )
             for _, cds in self.ensembl[mask].iterrows():
                 if cds.strand == "-":
@@ -1261,7 +1296,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return floor((x - 1) / 3 + 1)
 
         protein = []
-        for cdna in self._dna_to_cdna(contig_ids, start, end, strand):
+        for cdna in self._dna_to_cdna(contig_ids, start, end, strand, include_stop=False):
             pstart = convert(cdna.start)
             pend = convert(cdna.end)
             protein.append(ProteinPosition.copy_from(cdna, start=pstart, end=pend, _data=self))
@@ -1311,8 +1346,15 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_cdna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        end: int,
+        strand: List[str],
+        include_stop: bool = True,
     ) -> List[CdnaPosition]:
+        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+
         def convert(position: int):
             result = []
 
@@ -1320,7 +1362,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
                 (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
                 & (self.ensembl["exon_number"] == str(position))  # TODO: exon number should be int
                 & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
+                & (self.ensembl["feature"].isin(feature))
             )
             for _, cds in self.ensembl[mask].iterrows():
                 result.append(
@@ -1422,7 +1464,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
     ) -> List[ProteinPosition]:
         result = []
-        for cdna in self._exon_to_cdna(transcript_ids, start, end, strand):
+        for cdna in self._exon_to_cdna(transcript_ids, start, end, strand, include_stop=False):
             result.extend(cdna.to_protein())
 
         return result
@@ -1472,7 +1514,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         cdna_start = convert(start)
         cdna_end = convert(end) + 2
 
-        return self._cdna_to_cdna(transcript_ids, cdna_start, cdna_end, strand)
+        return self._cdna_to_cdna(transcript_ids, cdna_start, cdna_end, strand, include_stop=False)
 
     def _protein_to_dna(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1511,8 +1553,15 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         return result
 
     def _rna_to_cdna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        end: int,
+        strand: List[str],
+        include_stop: bool = True,
     ) -> List[CdnaPosition]:
+        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+
         def convert(position: int):
             result = []
 
@@ -1521,7 +1570,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
                 & (self.ensembl["transcript_start"] <= position)
                 & (self.ensembl["transcript_end"] >= position)
                 & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["CDS", "stop_codon"]))
+                & (self.ensembl["feature"].isin(feature))
             )
             for _, cds in self.ensembl[mask].iterrows():
                 offset = position - cds.transcript_start
@@ -1633,7 +1682,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
     ) -> List[ProteinPosition]:
         result = []
-        for cdna in self._rna_to_cdna(transcript_ids, start, end, strand):
+        for cdna in self._rna_to_cdna(transcript_ids, start, end, strand, include_stop=False):
             result.extend(cdna.to_protein())
 
         return result
