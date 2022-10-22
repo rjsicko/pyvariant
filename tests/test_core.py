@@ -42,7 +42,6 @@ TEST_TRANSCRIPT_NAME = "ALDOA-219"
 def ensembl69():
     return EnsemblRelease(
         species="homo_sapiens",
-        reference="GRCh37",
         release=69,
         cache_dir=CACHE_DIR,
         canonical_transcript="",
@@ -58,7 +57,6 @@ def ensembl69():
 def ensembl100():
     return EnsemblRelease(
         species="homo_sapiens",
-        reference="GRCh38",
         release=100,
         cache_dir=CACHE_DIR,
         canonical_transcript=CANONICAL_TRANSCRIPT,
@@ -74,9 +72,9 @@ def ensembl100():
 # cache logic
 # -------------------------------------------------------------------------------------------------
 def test_unique_instances():
-    a = EnsemblRelease(species="homo_sapiens", reference="GRCh38", release=100, cache_dir=CACHE_DIR)
-    b = EnsemblRelease(species="homo_sapiens", reference="GRCh38", release=100, cache_dir=CACHE_DIR)
-    c = EnsemblRelease(species="homo_sapiens", reference="GRCh37", release=69, cache_dir=CACHE_DIR)
+    a = EnsemblRelease(species="homo_sapiens", release=100, cache_dir=CACHE_DIR)
+    b = EnsemblRelease(species="homo_sapiens", release=100, cache_dir=CACHE_DIR)
+    c = EnsemblRelease(species="homo_sapiens", release=69, cache_dir=CACHE_DIR)
     assert a is b
     assert a is not c
 

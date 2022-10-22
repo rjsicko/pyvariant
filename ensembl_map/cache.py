@@ -63,13 +63,11 @@ GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
 class Cache:
     """Class for managing the data files required by this package."""
 
-    def __init__(
-        self, species: str, reference: str, release: int, cache_dir: str = DEFAULT_CACHE_DIR
-    ):
+    def __init__(self, species: str, release: int, cache_dir: str = DEFAULT_CACHE_DIR):
         self.species = species
-        self.reference = reference
         self.release = release
         self.cache_dir = os.path.abspath(cache_dir)
+        self.reference = reference_by_release(self.release)
 
     def make(self, redownload: bool = False, recache: bool = False):
         """Download required data, process, and cache."""
@@ -751,3 +749,22 @@ def df_set_protein_id(df: pd.DataFrame) -> pd.DataFrame:
                 df.loc[index, "protein_id"] = cds.protein_id
 
     return df
+
+
+def reference_by_release(release: int) -> str:
+    """Given the Ensembl release number, return the reference name.
+
+    Examples:
+        >>> reference_by_release(69)
+        'GRCh37'
+        >>> reference_by_release(100)
+        'GRCh38'
+    """
+    if release == 54:
+        return "GRCh36"
+    elif 54 < release <= 75:
+        return "GRCh37"
+    elif 75 < release:
+        return "GRCh38"
+    else:
+        raise ValueError(f"Unknown reference for release '{release}'")

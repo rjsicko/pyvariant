@@ -12,7 +12,6 @@ from pyfaidx import Fasta
 from .cache import Cache
 from .constants import (
     CONTIG_ID,
-    DEFAULT_REFERENCE,
     DEFAULT_RELEASE,
     DEFAULT_SPECIES,
     EXON_ID,
@@ -283,7 +282,6 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def __init__(
         self,
         species: str = DEFAULT_SPECIES,
-        reference: str = DEFAULT_REFERENCE,
         release: int = DEFAULT_RELEASE,
         cache_dir: str = "",
         canonical_transcript: str = "",
@@ -295,11 +293,10 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     ):
         """Load annotations for the given release."""
         self.species = species
-        self.reference = reference
         self.release = release
         self.cache_dir = cache_dir
 
-        self.cache = Cache(species, reference, release, cache_dir=cache_dir)
+        self.cache = Cache(species, release, cache_dir=cache_dir)
         self.ensembl = self.cache.load_df()
         self.cdna = self.cache.load_cdna_fasta()
         self.dna = self.cache.load_dna_fasta()
@@ -314,7 +311,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         self.transcript_alias = _parse_tsv_to_dict(transcript_alias, "transcript aliases")
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(species={self.species}, reference={self.reference}, release={self.release})"
+        return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
 
     # ---------------------------------------------------------------------------------------------
     # all_<feature_symbol>s
