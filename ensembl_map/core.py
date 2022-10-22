@@ -1801,16 +1801,6 @@ class EnsemblRelease(Core):
         return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
 
 
-def instance():
-    """Return the last called instance of `EnsemblRelease` otherwise initialize an instance with
-    the default parameters and return that.
-    """
-    if EnsemblRelease._current is None:
-        EnsemblRelease._current = EnsemblRelease()
-
-    return EnsemblRelease._current
-
-
 def _parse_txt_to_list(path: str, message: str) -> List[str]:
     """Parse a text file into a list of unique values."""
     result = set()
