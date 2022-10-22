@@ -4,7 +4,7 @@ import os.path
 import pytest
 from Bio.bgzf import BgzfWriter
 
-from ensembl_map.utils import bgzip, is_bgzipped
+from ensembl_map.files import bgzip, is_bgzipped
 
 
 @pytest.fixture

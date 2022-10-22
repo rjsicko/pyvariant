@@ -6,7 +6,6 @@ from math import floor
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
-from logzero import logger
 from pyfaidx import Fasta
 
 from .constants import (
@@ -21,6 +20,7 @@ from .constants import (
     TRANSCRIPT_NAME,
 )
 from .ensembl_cache import EnsemblCache
+from .files import tsv_to_dict, txt_to_list
 from .utils import reverse_complement, strip_version
 
 
@@ -1790,54 +1790,15 @@ class EnsemblRelease(Core):
         self.pep = self.ensembl_cache.load_pep_fasta()
         self.ncrna = self.ensembl_cache.load_ncrna_fasta()
 
-        self.canonical_transcript = _parse_txt_to_list(canonical_transcript, "canonical transcript")
-        self.contig_alias = _parse_tsv_to_dict(contig_alias, "contig aliases")
-        self.exon_alias = _parse_tsv_to_dict(exon_alias, "exon aliases")
-        self.gene_alias = _parse_tsv_to_dict(gene_alias, "gene aliases")
-        self.protein_alias = _parse_tsv_to_dict(protein_alias, "protein aliases")
-        self.transcript_alias = _parse_tsv_to_dict(transcript_alias, "transcript aliases")
+        self.canonical_transcript = txt_to_list(canonical_transcript, "canonical transcript")
+        self.contig_alias = tsv_to_dict(contig_alias, "contig aliases")
+        self.exon_alias = tsv_to_dict(exon_alias, "exon aliases")
+        self.gene_alias = tsv_to_dict(gene_alias, "gene aliases")
+        self.protein_alias = tsv_to_dict(protein_alias, "protein aliases")
+        self.transcript_alias = tsv_to_dict(transcript_alias, "transcript aliases")
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
-
-
-def _parse_txt_to_list(path: str, message: str) -> List[str]:
-    """Parse a text file into a list of unique values."""
-    result = set()
-
-    if path:
-        logger.debug(f"Loading {message} from {path}")
-        with open(path, "r") as fh:
-            for line in fh:
-                if line:
-                    result.add(line.strip())
-    else:
-        logger.debug(f"No {message} to load")
-
-    return sorted(result)
-
-
-def _parse_tsv_to_dict(path: str, message: str) -> Dict[str, List[str]]:
-    """Parse a TSV of one-to-one alias-to-name mappings."""
-    result: Dict = {}
-
-    if path:
-        # load data from the TSV file, keep only unique values
-        logger.debug(f"Loading {message} from {path}")
-        with open(path, "r") as fh:
-            for line in fh:
-                if line:
-                    alias, name = line.strip().split("\t")[:2]
-                    result.setdefault(alias, set())
-                    result[alias].add(name)
-
-        # convert values to sorted lists
-        for alias in result:
-            result[alias] = sorted(result[alias])
-    else:
-        logger.debug(f"No {message} to load")
-
-    return result
 
 
 def merge_positions(

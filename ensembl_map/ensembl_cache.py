@@ -9,7 +9,8 @@ from logzero import logger
 from pyfaidx import Fasta
 
 from .constants import DEFAULT_CACHE_DIR
-from .utils import bgzip, is_bgzipped, strip_version
+from .files import bgzip, is_bgzipped
+from .utils import strip_version
 
 # Ensembl FTP URL
 ENSEMBL_FTP_SERVER = "ftp.ensembl.org"
