@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import pandas as pd
 from pyfaidx import Fasta
 
+from .cache import EnsemblCache
 from .constants import (
     CONTIG_ID,
     DEFAULT_ENSEMBL_RELEASE,
@@ -19,7 +20,6 @@ from .constants import (
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
-from .ensembl_cache import EnsemblCache
 from .files import tsv_to_dict, txt_to_list
 from .utils import reverse_complement, strip_version
 

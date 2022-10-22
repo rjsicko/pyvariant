@@ -10,8 +10,8 @@ from logzero import logger
 from pyfaidx import Fasta
 
 from .constants import DEFAULT_CACHE_DIR
-from .dataframe import normalize_df
 from .files import bgzip, is_bgzipped
+from .normalize import normalize_df
 from .utils import strip_version
 
 # Dictionary used to replace punctuation in a string

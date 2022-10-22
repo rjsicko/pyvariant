@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from ensembl_map.dataframe import df_set_protein_id
+from ensembl_map.normalize import df_set_protein_id
 
 
 def test_df_set_protein_id():
