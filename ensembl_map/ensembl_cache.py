@@ -23,8 +23,8 @@ ENSEMBL_FTP_SERVER = "ftp.ensembl.org"
 # FASTA directory example: pub/release-100/fasta/homo_sapiens
 FASTA_SUBDIR_TEMPLATE = "pub/release-{release}/fasta/{species}/{type}"
 
-# FASTA example: Homo_sapiens.GRCh38.100.dna.toplevel.fa.gz
-# the file name format changed after Ensembl release 75
+# FASTA file name example: Homo_sapiens.GRCh38.100.dna.toplevel.fa.gz
+# NOTE: The file name format changed after Ensembl release 75
 FASTA_FILENAME_TEMPLATE_OLD = {
     "cdna": "{species}.{reference}.{release}.{type}.all.fa.gz",
     "dna": "{species}.{reference}.{release}.{type}.toplevel.fa.gz",
@@ -44,10 +44,8 @@ GTF_SUBDIR_TEMPLATE = "pub/release-{release}/gtf/{species}"
 # GTF annotation file example: Homo_sapiens.GRCh38.100.gtf.gz
 GTF_FILENAME_TEMPLATE = "{species}.{reference}.{release}.gtf.gz"
 
-
-# load GTF into a pandas dataframe
+# GTF values used in the pandas.Dataframe
 GTF_COLUMN_RENAME = {"seqname": "contig_id"}
-
 GTF_KEEP_COLUMNS = [
     "contig_id",
     "feature",
@@ -62,7 +60,6 @@ GTF_KEEP_COLUMNS = [
     "exon_number",
     "protein_id",
 ]
-
 GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
 
 
