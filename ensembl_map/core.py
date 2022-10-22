@@ -678,9 +678,9 @@ class Core(metaclass=CachedCore):
                 )
             )
 
-        return uniquify(result)
+        return sorted(set(result))
 
-    def get_dna(self, feature: str) -> List[CdnaPosition]:
+    def get_dna(self, feature: str) -> List[DnaPosition]:
         """Return the DNA position(s) of the given feature."""
         result = []
 
@@ -699,7 +699,7 @@ class Core(metaclass=CachedCore):
                     )
                 )
 
-        return uniquify(result)
+        return sorted(set(result))
 
     def get_exons(self, feature: str) -> List[ExonPosition]:
         """Return the gene position(s) of the given feature."""
@@ -723,7 +723,7 @@ class Core(metaclass=CachedCore):
                 )
             )
 
-        return uniquify(result)
+        return sorted(set(result))
 
     def get_genes(self, feature: str) -> List[DnaPosition]:
         """Return the gene position(s) of the given feature."""
@@ -742,7 +742,7 @@ class Core(metaclass=CachedCore):
                 )
             )
 
-        return uniquify(result)
+        return sorted(set(result))
 
     def get_transcripts(self, feature: str) -> List[RnaPosition]:
         """Return the transcript position(s) of the given feature."""
@@ -765,7 +765,7 @@ class Core(metaclass=CachedCore):
                 )
             )
 
-        return uniquify(result)
+        return sorted(set(result))
 
     # ---------------------------------------------------------------------------------------------
     # <feature>_to_<feature>
@@ -1724,7 +1724,7 @@ class Core(metaclass=CachedCore):
         featurel = idfunc(feature)
         result = mapfunc(featurel, start, end, strandl)
 
-        return uniquify(result)
+        return sorted(set(result))
 
     def _map_exon(
         self,
@@ -1751,7 +1751,7 @@ class Core(metaclass=CachedCore):
         for transcript_id, start2, end2, strand2 in positions:
             result.extend(function([transcript_id], start2, end2, [strand2]))
 
-        return uniquify(result)
+        return sorted(set(result))
 
     def _get_exon_number(self, exon_id: str) -> List[Tuple[str, int, int, str]]:
         result = []
@@ -1858,8 +1858,3 @@ def merge_positions(
             result.add(new_position)
 
     return sorted(result)
-
-
-def uniquify(positions: List) -> List:
-    """Return a list of only unique positions."""
-    return sorted(set(positions))
