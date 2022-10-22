@@ -60,8 +60,8 @@ GTF_KEEP_COLUMNS = [
 GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
 
 
-class Cache:
-    """Class for managing the data files required by this package."""
+class EnsemblCache:
+    """Class for managing Ensembl files used by this package."""
 
     def __init__(self, species: str, release: int, cache_dir: str = DEFAULT_CACHE_DIR):
         self.species = species

@@ -9,7 +9,6 @@ import pandas as pd
 from logzero import logger
 from pyfaidx import Fasta
 
-from .cache import Cache
 from .constants import (
     CONTIG_ID,
     DEFAULT_RELEASE,
@@ -21,6 +20,7 @@ from .constants import (
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
+from .ensembl_cache import EnsemblCache
 from .utils import reverse_complement, strip_version
 
 
@@ -29,7 +29,7 @@ from .utils import reverse_complement, strip_version
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True, order=True)
 class _Position:
-    _data: EnsemblRelease
+    _data: Core
     contig_id: str
     start: int
     end: int
@@ -257,9 +257,9 @@ class RnaPosition(_Position):
 # -------------------------------------------------------------------------------------------------
 # cache logic
 # -------------------------------------------------------------------------------------------------
-class CachedEnsemblRelease(type):
-    _instances: Dict[Any, EnsemblRelease] = {}
-    _current: Optional[EnsemblRelease] = None
+class CachedCore(type):
+    _instances: Dict[Any, Core] = {}
+    _current: Optional[Core] = None
 
     def __call__(cls, *args, **kwargs):
         # convert the given arguments to a hashable tuple
@@ -269,7 +269,7 @@ class CachedEnsemblRelease(type):
             instance = cls._instances[key]
         else:
             # create a new instance and cache it
-            instance = super(CachedEnsemblRelease, cls).__call__(*args, **kwargs)
+            instance = super().__call__(*args, **kwargs)
             cls._instances[key] = instance
 
         # track which instance was called last
@@ -278,64 +278,57 @@ class CachedEnsemblRelease(type):
         return cls._instances[key]
 
 
-class EnsemblRelease(metaclass=CachedEnsemblRelease):
+class Core(metaclass=CachedCore):
     def __init__(
         self,
-        species: str = DEFAULT_SPECIES,
-        release: int = DEFAULT_RELEASE,
-        cache_dir: str = "",
-        canonical_transcript: str = "",
-        contig_alias: str = "",
-        exon_alias: str = "",
-        gene_alias: str = "",
-        protein_alias: str = "",
-        transcript_alias: str = "",
+        df: pd.DataFrame,
+        cdna: Fasta,
+        dna: Fasta,
+        pep: Fasta,
+        ncrna: Fasta,
+        canonical_transcript: List[str] = [],
+        contig_alias: Dict[str, List[str]] = {},
+        exon_alias: Dict[str, List[str]] = {},
+        gene_alias: Dict[str, List[str]] = {},
+        protein_alias: Dict[str, List[str]] = {},
+        transcript_alias: Dict[str, List[str]] = {},
     ):
         """Load annotations for the given release."""
-        self.species = species
-        self.release = release
-        self.cache_dir = cache_dir
-
-        self.cache = Cache(species, release, cache_dir=cache_dir)
-        self.ensembl = self.cache.load_df()
-        self.cdna = self.cache.load_cdna_fasta()
-        self.dna = self.cache.load_dna_fasta()
-        self.pep = self.cache.load_pep_fasta()
-        self.ncrna = self.cache.load_ncrna_fasta()
-
-        self.canonical_transcript = _parse_txt_to_list(canonical_transcript, "canonical transcript")
-        self.contig_alias = _parse_tsv_to_dict(contig_alias, "contig aliases")
-        self.exon_alias = _parse_tsv_to_dict(exon_alias, "exon aliases")
-        self.gene_alias = _parse_tsv_to_dict(gene_alias, "gene aliases")
-        self.protein_alias = _parse_tsv_to_dict(protein_alias, "protein aliases")
-        self.transcript_alias = _parse_tsv_to_dict(transcript_alias, "transcript aliases")
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
+        self.df = df
+        self.cdna = cdna
+        self.dna = dna
+        self.pep = pep
+        self.ncrna = ncrna
+        self.canonical_transcript = canonical_transcript
+        self.contig_alias = contig_alias
+        self.exon_alias = exon_alias
+        self.gene_alias = gene_alias
+        self.protein_alias = protein_alias
+        self.transcript_alias = transcript_alias
 
     # ---------------------------------------------------------------------------------------------
     # all_<feature_symbol>s
     # ---------------------------------------------------------------------------------------------
     def all_contig_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl[CONTIG_ID])
+        return self._uniquify_series(self.df[CONTIG_ID])
 
     def all_exon_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl[EXON_ID])
+        return self._uniquify_series(self.df[EXON_ID])
 
     def all_gene_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl[GENE_ID])
+        return self._uniquify_series(self.df[GENE_ID])
 
     def all_gene_names(self) -> List[str]:
-        return self._uniquify_series(self.ensembl[GENE_NAME])
+        return self._uniquify_series(self.df[GENE_NAME])
 
     def all_protein_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl[PROTEIN_ID])
+        return self._uniquify_series(self.df[PROTEIN_ID])
 
     def all_transcript_ids(self) -> List[str]:
-        return self._uniquify_series(self.ensembl[TRANSCRIPT_ID])
+        return self._uniquify_series(self.df[TRANSCRIPT_ID])
 
     def all_transcript_names(self) -> List[str]:
-        return self._uniquify_series(self.ensembl[TRANSCRIPT_NAME])
+        return self._uniquify_series(self.df[TRANSCRIPT_NAME])
 
     def _uniquify_series(self, series: pd.Series) -> List:
         return sorted(series.dropna().unique().tolist())
@@ -426,7 +419,7 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def _query(self, feature: Union[List[str], str], col: str) -> pd.DataFrame:
         """Generic function for querying the data cache."""
         feature = [feature] if isinstance(feature, str) else feature
-        sudbf = self.ensembl.loc[self.ensembl[col].isin(feature)]
+        sudbf = self.df.loc[self.df[col].isin(feature)]
 
         return sudbf
 
@@ -668,10 +661,8 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         transcript_ids = self.transcript_ids(feature)
-        mask = (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids)) & (
-            self.ensembl["feature"] == "cdna"
-        )
-        for _, cdna in self.ensembl[mask].iterrows():
+        mask = (self.df[TRANSCRIPT_ID].isin(transcript_ids)) & (self.df["feature"] == "cdna")
+        for _, cdna in self.df[mask].iterrows():
             result.append(
                 CdnaPosition(
                     _data=self,
@@ -715,8 +706,8 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         exon_ids = self.exon_ids(feature)
-        mask = (self.ensembl[EXON_ID].isin(exon_ids)) & (self.ensembl["feature"] == "exon")
-        for _, exon in self.ensembl[mask].iterrows():
+        mask = (self.df[EXON_ID].isin(exon_ids)) & (self.df["feature"] == "exon")
+        for _, exon in self.df[mask].iterrows():
             result.append(
                 ExonPosition(
                     _data=self,
@@ -739,8 +730,8 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         gene_ids = self.gene_ids(feature)
-        mask = (self.ensembl[GENE_ID].isin(gene_ids)) & (self.ensembl["feature"] == "gene")
-        for _, gene in self.ensembl[mask].iterrows():
+        mask = (self.df[GENE_ID].isin(gene_ids)) & (self.df["feature"] == "gene")
+        for _, gene in self.df[mask].iterrows():
             result.append(
                 DnaPosition(
                     _data=self,
@@ -758,10 +749,8 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
         result = []
 
         transcript_ids = self.transcript_ids(feature)
-        mask = (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids)) & (
-            self.ensembl["feature"] == "transcript"
-        )
-        for _, transcript in self.ensembl[mask].iterrows():
+        mask = (self.df[TRANSCRIPT_ID].isin(transcript_ids)) & (self.df["feature"] == "transcript")
+        for _, transcript in self.df[mask].iterrows():
             result.append(
                 RnaPosition(
                     _data=self,
@@ -1003,13 +992,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["cdna_start"] <= position)
-                & (self.ensembl["cdna_end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(feature))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["cdna_start"] <= position)
+                & (self.df["cdna_end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(feature))
             )
-            for _, cds in self.ensembl[mask].iterrows():
+            for _, cds in self.df[mask].iterrows():
                 result.append(
                     CdnaPosition(
                         _data=self,
@@ -1048,13 +1037,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["cdna_start"] <= position)
-                & (self.ensembl["cdna_end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(feature))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["cdna_start"] <= position)
+                & (self.df["cdna_end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(feature))
             )
-            for _, cds in self.ensembl[mask].iterrows():
+            for _, cds in self.df[mask].iterrows():
                 offset = position - cds.cdna_start
                 if cds.strand == "-":
                     new_start = new_end = cds.end - offset
@@ -1094,19 +1083,19 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask_cds = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["cdna_start"] <= position)
-                & (self.ensembl["cdna_end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(feature))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["cdna_start"] <= position)
+                & (self.df["cdna_end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(feature))
             )
-            for _, cds in self.ensembl[mask_cds].iterrows():
+            for _, cds in self.df[mask_cds].iterrows():
                 mask_exon = (
-                    (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                    & (self.ensembl["exon_number"] == cds.exon_number)
-                    & (self.ensembl["feature"] == "exon")
+                    (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                    & (self.df["exon_number"] == cds.exon_number)
+                    & (self.df["feature"] == "exon")
                 )
-                for _, exon in self.ensembl[mask_exon].iterrows():
+                for _, exon in self.df[mask_exon].iterrows():
                     result.append(
                         ExonPosition(
                             _data=self,
@@ -1158,13 +1147,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["cdna_start"] <= position)
-                & (self.ensembl["cdna_end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(feature))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["cdna_start"] <= position)
+                & (self.df["cdna_end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(feature))
             )
-            for _, cds in self.ensembl[mask].iterrows():
+            for _, cds in self.df[mask].iterrows():
                 offset = position - cds.cdna_start
                 new_start = new_end = cds.transcript_start + offset
                 result.append(
@@ -1204,13 +1193,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[CONTIG_ID].isin(contig_ids))
-                & (self.ensembl["start"] <= position)
-                & (self.ensembl["end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(feature))
+                (self.df[CONTIG_ID].isin(contig_ids))
+                & (self.df["start"] <= position)
+                & (self.df["end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(feature))
             )
-            for _, cds in self.ensembl[mask].iterrows():
+            for _, cds in self.df[mask].iterrows():
                 if cds.strand == "-":
                     new_start = new_end = cds.end - position + cds.cdna_start
                 else:
@@ -1256,13 +1245,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[CONTIG_ID].isin(contig_ids))
-                & (self.ensembl["start"] <= position)
-                & (self.ensembl["end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["exon"]))
+                (self.df[CONTIG_ID].isin(contig_ids))
+                & (self.df["start"] <= position)
+                & (self.df["end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(["exon"]))
             )
-            for _, exon in self.ensembl[mask].iterrows():
+            for _, exon in self.df[mask].iterrows():
                 result.append(
                     ExonPosition(
                         _data=self,
@@ -1307,13 +1296,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[CONTIG_ID].isin(contig_ids))
-                & (self.ensembl["start"] <= position)
-                & (self.ensembl["end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"] == "exon")
+                (self.df[CONTIG_ID].isin(contig_ids))
+                & (self.df["start"] <= position)
+                & (self.df["end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"] == "exon")
             )
-            for _, exon in self.ensembl[mask].iterrows():
+            for _, exon in self.df[mask].iterrows():
                 if exon.strand == "-":
                     new_start = new_end = exon.end - position + exon.transcript_start
                 else:
@@ -1356,12 +1345,12 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["exon_number"] == str(position))  # TODO: exon number should be int
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(feature))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["exon_number"] == str(position))  # TODO: exon number should be int
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(feature))
             )
-            for _, cds in self.ensembl[mask].iterrows():
+            for _, cds in self.df[mask].iterrows():
                 result.append(
                     CdnaPosition(
                         _data=self,
@@ -1393,13 +1382,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
                 # TODO: exon number should be int
-                & (self.ensembl["exon_number"] == str(position))
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"] == "exon")
+                & (self.df["exon_number"] == str(position))
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"] == "exon")
             )
-            for _, exon in self.ensembl[mask].iterrows():
+            for _, exon in self.df[mask].iterrows():
                 result.append(
                     DnaPosition(
                         _data=self,
@@ -1426,13 +1415,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
                 # TODO: exon number should be int
-                & (self.ensembl["exon_number"] == str(position))
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"] == "exon")
+                & (self.df["exon_number"] == str(position))
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"] == "exon")
             )
-            for _, exon in self.ensembl[mask].iterrows():
+            for _, exon in self.df[mask].iterrows():
                 result.append(
                     ExonPosition(
                         _data=self,
@@ -1473,12 +1462,12 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["exon_number"] == str(position))  # TODO: exon number should be int
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"] == "exon")
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["exon_number"] == str(position))  # TODO: exon number should be int
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"] == "exon")
             )
-            for _, exon in self.ensembl[mask].iterrows():
+            for _, exon in self.df[mask].iterrows():
                 result.append(
                     RnaPosition(
                         _data=self,
@@ -1563,13 +1552,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["transcript_start"] <= position)
-                & (self.ensembl["transcript_end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(feature))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["transcript_start"] <= position)
+                & (self.df["transcript_end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(feature))
             )
-            for _, cds in self.ensembl[mask].iterrows():
+            for _, cds in self.df[mask].iterrows():
                 offset = position - cds.transcript_start
                 new_start = new_end = cds.cdna_start + offset
                 result.append(
@@ -1603,13 +1592,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["transcript_start"] <= position)
-                & (self.ensembl["transcript_end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["exon"]))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["transcript_start"] <= position)
+                & (self.df["transcript_end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(["exon"]))
             )
-            exon_df = self.ensembl[mask]
+            exon_df = self.df[mask]
             for _, exon in exon_df.iterrows():
                 offset = position - exon.transcript_start
                 if exon.strand == "-":
@@ -1644,13 +1633,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["transcript_start"] <= position)
-                & (self.ensembl["transcript_end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"].isin(["exon"]))
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["transcript_start"] <= position)
+                & (self.df["transcript_end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"].isin(["exon"]))
             )
-            for _, exon in self.ensembl[mask].iterrows():
+            for _, exon in self.df[mask].iterrows():
                 result.append(
                     ExonPosition(
                         _data=self,
@@ -1691,13 +1680,13 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
             result = []
 
             mask = (
-                (self.ensembl[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.ensembl["transcript_start"] <= position)
-                & (self.ensembl["transcript_end"] >= position)
-                & (self.ensembl["strand"].isin(strand))
-                & (self.ensembl["feature"] == "exon")
+                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                & (self.df["transcript_start"] <= position)
+                & (self.df["transcript_end"] >= position)
+                & (self.df["strand"].isin(strand))
+                & (self.df["feature"] == "exon")
             )
-            for _, exon in self.ensembl[mask].iterrows():
+            for _, exon in self.df[mask].iterrows():
                 result.append(
                     RnaPosition(
                         _data=self,
@@ -1767,11 +1756,49 @@ class EnsemblRelease(metaclass=CachedEnsemblRelease):
     def _get_exon_number(self, exon_id: str) -> List[Tuple[str, int, int, str]]:
         result = []
 
-        mask = (self.ensembl[EXON_ID] == exon_id) & (self.ensembl["feature"] == "exon")
-        for _, exon in self.ensembl[mask].iterrows():
+        mask = (self.df[EXON_ID] == exon_id) & (self.df["feature"] == "exon")
+        for _, exon in self.df[mask].iterrows():
             result.append((exon.transcript_id, exon.exon_number, exon.exon_number, exon.strand))
 
         return result
+
+
+class EnsemblRelease(Core):
+    def __init__(
+        self,
+        species: str = DEFAULT_SPECIES,
+        release: int = DEFAULT_RELEASE,
+        cache_dir: str = "",
+        canonical_transcript: str = "",
+        contig_alias: str = "",
+        exon_alias: str = "",
+        gene_alias: str = "",
+        protein_alias: str = "",
+        transcript_alias: str = "",
+    ):
+        """Load annotations for the given release."""
+        self.ensembl_cache = EnsemblCache(species, release, cache_dir=cache_dir)
+
+        self.cache_dir = self.ensembl_cache.release_cache_dir
+        self.reference = self.ensembl_cache.reference
+        self.release = self.ensembl_cache.release
+        self.species = self.ensembl_cache.species
+
+        self.df = self.ensembl_cache.load_df()
+        self.cdna = self.ensembl_cache.load_cdna_fasta()
+        self.dna = self.ensembl_cache.load_dna_fasta()
+        self.pep = self.ensembl_cache.load_pep_fasta()
+        self.ncrna = self.ensembl_cache.load_ncrna_fasta()
+
+        self.canonical_transcript = _parse_txt_to_list(canonical_transcript, "canonical transcript")
+        self.contig_alias = _parse_tsv_to_dict(contig_alias, "contig aliases")
+        self.exon_alias = _parse_tsv_to_dict(exon_alias, "exon aliases")
+        self.gene_alias = _parse_tsv_to_dict(gene_alias, "gene aliases")
+        self.protein_alias = _parse_tsv_to_dict(protein_alias, "protein aliases")
+        self.transcript_alias = _parse_tsv_to_dict(transcript_alias, "transcript aliases")
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
 
 
 def instance():
