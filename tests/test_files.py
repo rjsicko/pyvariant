@@ -7,7 +7,7 @@ from pyfaidx import Fasta
 
 from ensembl_map.files import bgzip, is_bgzipped, read_fasta, tsv_to_dict, txt_to_list
 
-from . import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_DATA
+from . import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_CDNA_FASTA
 
 
 @pytest.fixture
@@ -57,8 +57,7 @@ def test_is_bgzipped_true(bgzip_file):
 
 
 def test_read_fasta():
-    fasta = os.path.join(TEST_DATA, "Homo_sapiens.GRCh38.cdna.all.fa.gz")
-    result = read_fasta(fasta)
+    result = read_fasta(TEST_CDNA_FASTA)
     assert isinstance(result, Fasta)
     assert result["ENST00000643777"]
 

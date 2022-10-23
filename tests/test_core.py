@@ -1,4 +1,6 @@
+import pandas as pd
 import pytest
+from pyfaidx import Fasta
 
 from ensembl_map.constants import (
     CONTIG_ID,
@@ -11,6 +13,7 @@ from ensembl_map.constants import (
 )
 from ensembl_map.core import (
     CdnaPosition,
+    Core,
     DnaPosition,
     EnsemblRelease,
     ExonPosition,
@@ -25,6 +28,11 @@ from . import (
     EXON_ALIAS,
     GENE_ALIAS,
     PROTEIN_ALIAS,
+    TEST_CDNA_FASTA,
+    TEST_DNA_FASTA,
+    TEST_GTF,
+    TEST_NCRNA_FASTA,
+    TEST_PEP_FASTA,
     TRANSCRIPT_ALIAS,
 )
 
@@ -38,7 +46,7 @@ TEST_TRANSCRIPT_ID = "ENST00000643777"  # version 3
 TEST_TRANSCRIPT_NAME = "ALDOA-219"
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def ensembl69():
     return EnsemblRelease(
         species="homo_sapiens",
@@ -53,7 +61,7 @@ def ensembl69():
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def ensembl100():
     return EnsemblRelease(
         species="homo_sapiens",
@@ -69,6 +77,37 @@ def ensembl100():
 
 
 # -------------------------------------------------------------------------------------------------
+# custom core
+# -------------------------------------------------------------------------------------------------
+@pytest.mark.skip(reason="takes too long")
+def test_custom_core():
+    obj = Core(
+        gtf=TEST_GTF,
+        cdna=TEST_CDNA_FASTA,
+        dna=TEST_DNA_FASTA,
+        pep=TEST_PEP_FASTA,
+        ncrna=TEST_NCRNA_FASTA,
+        canonical_transcript=CANONICAL_TRANSCRIPT,
+        contig_alias=CONTIG_ALIAS,
+        exon_alias=EXON_ALIAS,
+        gene_alias=GENE_ALIAS,
+        protein_alias=PROTEIN_ALIAS,
+        transcript_alias=TRANSCRIPT_ALIAS,
+    )
+    assert isinstance(obj.df, pd.DataFrame)
+    assert isinstance(obj.cdna, Fasta)
+    assert isinstance(obj.dna, Fasta)
+    assert isinstance(obj.pep, Fasta)
+    assert isinstance(obj.ncrna, Fasta)
+    assert isinstance(obj.canonical_transcript, list)
+    assert isinstance(obj.contig_alias, dict)
+    assert isinstance(obj.exon_alias, dict)
+    assert isinstance(obj.gene_alias, dict)
+    assert isinstance(obj.protein_alias, dict)
+    assert isinstance(obj.transcript_alias, dict)
+
+
+# -------------------------------------------------------------------------------------------------
 # cache logic
 # -------------------------------------------------------------------------------------------------
 def test_unique_instances():
@@ -79,9 +118,9 @@ def test_unique_instances():
     assert a is not c
 
 
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 # <feature_symbol>()
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 def test_all_contig_ids(ensembl100):
     result = ensembl100.all_contig_ids()
     assert isinstance(result, list)
@@ -124,9 +163,9 @@ def test_all_transcript_names(ensembl100):
     assert TEST_TRANSCRIPT_NAME in result
 
 
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 # get_<feature_symbol>(feature)
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 def test_contig_ids_from_contig_id(ensembl100):
     result = ensembl100.contig_ids(TEST_CONTIG_ID)
     assert isinstance(result, list)
@@ -413,17 +452,17 @@ def test_transcript_names_from_transcript(ensembl100):
     assert ret_by_id == ret_by_name
 
 
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 # canonical transcript
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 def test_is_canonical_transcript(ensembl100):
     assert ensembl100.is_canonical_transcript("ENST00000000233") is True
     assert ensembl100.is_canonical_transcript("spam") is False
 
 
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 # is_<feature>(feature)
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 def test_is_contig_false(ensembl100):
     assert ensembl100.is_contig("spam") is False
 
@@ -476,9 +515,9 @@ def test_is_transcript_true_from_name(ensembl100):
     assert ensembl100.is_transcript(TEST_TRANSCRIPT_NAME) is True
 
 
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 # normalize_feature(feature, feature_type)
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 def test_normalize_feature_contig_id(ensembl100):
     assert ensembl100.normalize_feature("17") == [("17", CONTIG_ID)]
 
@@ -513,9 +552,9 @@ def test_normalize_feature_transcript_name(ensembl100):
     ]
 
 
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 # get_<feature>(feature)
-# ---------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 @pytest.fixture
 def test_cdna(ensembl100):
     return CdnaPosition(
