@@ -9,6 +9,7 @@ def test_df_set_protein_id():
     data = [
         ["CDS", "ENST00000123456", "ENSP00000654321"],
         ["CDS", "ENST00000412167", "ENSP00000390987"],
+        ["exon", "ENST00000999999", np.nan],
         ["stop_codon", "ENST00000412167", np.nan],
         ["cdna", "ENST00000412167", np.nan],
     ]
@@ -17,6 +18,7 @@ def test_df_set_protein_id():
     assert out_df["protein_id"].to_list() == [
         "ENSP00000654321",
         "ENSP00000390987",
+        np.nan,
         "ENSP00000390987",
         "ENSP00000390987",
     ]

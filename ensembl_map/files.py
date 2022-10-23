@@ -1,11 +1,16 @@
 import gzip
 import os.path
 import shutil
+import sys
 from tempfile import TemporaryDirectory
 from typing import Callable, Dict, List
 
 from Bio.bgzf import BgzfWriter, _bgzf_magic
-from logzero import logger
+from pyfaidx import Fasta
+
+from .utils import strip_version
+
+EMPTY_FASTA = os.path.join(os.path.dirname(__file__), "data", "empty.fa")
 
 
 def bgzip(path: str) -> str:
@@ -31,8 +36,8 @@ def bgzip(path: str) -> str:
     # compress to a temporary file first to avoid overwritting the file as it's being read
     with TemporaryDirectory() as tempdir:
         tempfile = os.path.join(tempdir, os.path.basename(output))
-        logger.info(f"Compressing {path} with bgzip (this may take some time)...")
-        logger.debug(f"Writing compressed output to temporary file '{tempfile}'")
+        print(f"Compressing {path} with bgzip (this may take some time)...", file=sys.stderr)
+        print(f"Writing compressed output to temporary file '{tempfile}'", file=sys.stderr)
         with openfunc(path, openmode) as inf:
             with BgzfWriter(tempfile, compresslevel=9) as outf:
                 chunk = inf.read(chunk_size)
@@ -56,29 +61,27 @@ def is_bgzipped(path: str) -> bool:
         return file_start == _bgzf_magic
 
 
-def txt_to_list(path: str, label: str) -> List[str]:
-    """Parse a text file into a list of unique strings."""
-    result = set()
+def read_fasta(path: str) -> Fasta:
+    """Parse a FASTA/FASTQ file into a 'pyfaidx.Fasta' object."""
+    if not path:
+        path = EMPTY_FASTA
 
-    if path:
-        logger.debug(f"Loading {label} from {path}")
-        with open(path, "r") as fh:
-            for line in fh:
-                if line:
-                    result.add(line.strip())
-    else:
-        logger.debug(f"No {label} to load")
-
-    return sorted(result)
+    return Fasta(
+        path,
+        key_function=strip_version,
+        as_raw=True,
+        sequence_always_upper=True,
+        build_index=False,
+        rebuild=False,
+    )
 
 
-def tsv_to_dict(path: str, label: str) -> Dict[str, List[str]]:
+def tsv_to_dict(path: str) -> Dict[str, List[str]]:
     """Parse a TSV of one-to-one mappings."""
     result: Dict = {}
 
     if path:
         # load data from the TSV file, keep only unique values
-        logger.debug(f"Loading {label} from {path}")
         with open(path, "r") as fh:
             for line in fh:
                 if line:
@@ -89,7 +92,18 @@ def tsv_to_dict(path: str, label: str) -> Dict[str, List[str]]:
         # convert values to sorted lists
         for alias in result:
             result[alias] = sorted(result[alias])
-    else:
-        logger.debug(f"No {label} to load")
 
     return result
+
+
+def txt_to_list(path: str) -> List[str]:
+    """Parse a text file into a list of unique strings."""
+    result = set()
+
+    if path:
+        with open(path, "r") as fh:
+            for line in fh:
+                if line:
+                    result.add(line.strip())
+
+    return sorted(result)

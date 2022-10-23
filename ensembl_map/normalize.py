@@ -1,6 +1,7 @@
+import sys
+
 import numpy as np
 import pandas as pd
-from logzero import logger
 
 GTF_COLUMN_RENAME = {"seqname": "contig_id"}
 GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
@@ -80,7 +81,7 @@ def df_infer_transcripts(df: pd.DataFrame) -> pd.DataFrame:
                 "transcript_name": first.transcript_name,
             }
             transcript_rows.append(new_row)
-            logger.debug(f"Inferred transcript {new_row}")
+            print(f"Inferred transcript {new_row}", file=sys.stderr)
 
     new_transcript_df = pd.DataFrame(transcript_rows)
     df = pd.concat([df, new_transcript_df], ignore_index=True)
@@ -118,7 +119,7 @@ def df_infer_cdna(df: pd.DataFrame) -> pd.DataFrame:
                     "transcript_name": first.transcript_name,
                 }
                 cdna_rows.append(new_row)
-                logger.debug(f"Inferred cDNA {new_row}")
+                print(f"Inferred cDNA {new_row}", file=sys.stderr)
 
     new_cdna_df = pd.DataFrame(cdna_rows)
     df = pd.concat([df, new_cdna_df], ignore_index=True)
@@ -152,7 +153,7 @@ def df_infer_missing_genes(df: pd.DataFrame) -> pd.DataFrame:
                 "gene_name": first.gene_name,
             }
             gene_rows.append(new_row)
-            logger.debug(f"Inferred gene {new_row}")
+            print(f"Inferred gene {new_row}", file=sys.stderr)
 
     new_gene_df = pd.DataFrame(gene_rows)
     df = pd.concat([df, new_gene_df], ignore_index=True)
@@ -277,11 +278,11 @@ def df_cds_offset_cdna(df: pd.DataFrame) -> pd.DataFrame:
 
         cdna_df = group[group.feature == "cdna"]
         if cdna_df.empty:
-            logger.warning(f"No cDNA found for transcript {transcript_id}")
+            print(f"No cDNA found for transcript {transcript_id}", file=sys.stderr)
             continue
         else:
             if len(cdna_df) > 1:
-                logger.error(f"Multiple cDNA found for transcript {transcript_id}")
+                print(f"Multiple cDNA found for transcript {transcript_id}", file=sys.stderr)
 
             cdna = cdna_df.iloc[0]
             ascending = cdna.strand == "+"
@@ -340,7 +341,7 @@ def df_set_protein_id(df: pd.DataFrame) -> pd.DataFrame:
         # subdf.iloc[:, 'protein_id'].fillna(cds.protein_id, inplace=True)
         for index, _ in subdf.iterrows():
             if pd.isna(df.loc[index, "protein_id"]):
-                logger.debug(f"Adding protein ID '{cds.protein_id}' to row {index}")
+                print(f"Adding protein ID '{cds.protein_id}' to row {index}", file=sys.stderr)
                 df.loc[index, "protein_id"] = cds.protein_id
 
     return df

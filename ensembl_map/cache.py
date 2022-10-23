@@ -1,4 +1,5 @@
 import os.path
+import sys
 from ftplib import FTP
 from pathlib import Path
 from string import punctuation
@@ -6,11 +7,10 @@ from typing import Union
 
 import pandas as pd
 from gtfparse import read_gtf
-from logzero import logger
 from pyfaidx import Fasta
 
 from .constants import DEFAULT_CACHE_DIR
-from .files import bgzip, is_bgzipped
+from .files import bgzip, is_bgzipped, read_fasta
 from .normalize import normalize_df
 from .utils import strip_version
 
@@ -295,7 +295,7 @@ class EnsemblCache:
         return self._index_fasta(self.local_pep_fasta_filepath)
 
     def _index_fasta(self, local_fasta_filename: str):
-        logger.info(f"Indexing {local_fasta_filename}...")
+        print(f"Indexing {local_fasta_filename}...", file=sys.stderr)
         _ = Fasta(
             local_fasta_filename,
             key_function=strip_version,
@@ -310,29 +310,19 @@ class EnsemblCache:
     # ---------------------------------------------------------------------------------------------
     def load_cdna_fasta(self) -> Fasta:
         """Load and return the cDNA a `pyfaidx.Fasta` object."""
-        return self._load_fasta(self.local_cdna_fasta_filepath)
+        return read_fasta(self.local_cdna_fasta_filepath)
 
     def load_dna_fasta(self) -> Fasta:
         """Load and return the DNA a `pyfaidx.Fasta` object."""
-        return self._load_fasta(self.local_dna_fasta_filepath)
+        return read_fasta(self.local_dna_fasta_filepath)
 
     def load_ncrna_fasta(self) -> Fasta:
         """Load and return the ncDNA a `pyfaidx.Fasta` object."""
-        return self._load_fasta(self.local_ncrna_fasta_filepath)
+        return read_fasta(self.local_ncrna_fasta_filepath)
 
     def load_pep_fasta(self) -> Fasta:
         """Load and return the peptide a `pyfaidx.Fasta` object."""
-        return self._load_fasta(self.local_pep_fasta_filepath)
-
-    def _load_fasta(self, local_fasta_filename: str) -> Fasta:
-        return Fasta(
-            local_fasta_filename,
-            key_function=strip_version,
-            as_raw=True,
-            sequence_always_upper=True,
-            build_index=False,
-            rebuild=False,
-        )
+        return read_fasta(self.local_pep_fasta_filepath)
 
     # ---------------------------------------------------------------------------------------------
     # GTF files
@@ -375,9 +365,12 @@ class EnsemblCache:
     # ---------------------------------------------------------------------------------------------
     def cache_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """Convert the Ensembl GTF to a pandas DataFrame and cache it."""
-        logger.debug(f"Converting {self.local_gtf_filepath} to {self.local_gtf_cache_filepath}")
+        print(
+            f"Converting {self.local_gtf_filepath} to {self.local_gtf_cache_filepath}",
+            file=sys.stderr,
+        )
         df.to_pickle(self.local_gtf_cache_filepath)
-        logger.debug(f"Removing {self.local_gtf_filepath}")
+        print(f"Removing {self.local_gtf_filepath}", file=sys.stderr)
         os.remove(self.local_gtf_filepath)
 
     def load_df(self) -> pd.DataFrame:
@@ -391,18 +384,18 @@ class EnsemblCache:
         """Download a file from an FTP server."""
         try:
             ftp = FTP(server)
-            logger.debug(f"Connecting to {server}")
+            print(f"Connecting to {server}", file=sys.stderr)
             ftp.login()
             url = "ftp://" + server + "/" + subdir + "/" + remote_file
-            logger.debug(f"Downloading {url} to {local_file}")
+            print(f"Downloading {url} to {local_file}", file=sys.stderr)
             ftp.cwd(subdir)
             self.make_release_cache_dir()
             with open(local_file, "wb") as fh:
                 ftp.retrbinary(f"RETR {remote_file}", fh.write)
-            logger.debug("Download successful")
+            print("Download successful", file=sys.stderr)
             ftp.quit()
         except Exception as exc:
-            logger.exception(f"Download failed: {exc}")
+            raise RuntimeError(f"Download failed: {exc}")
 
 
 def normalize_release(release: Union[float, int, str]) -> int:

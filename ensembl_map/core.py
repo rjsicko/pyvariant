@@ -6,6 +6,7 @@ from math import floor
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
+from gtfparse import read_gtf
 from pyfaidx import Fasta
 
 from .cache import EnsemblCache
@@ -20,12 +21,12 @@ from .constants import (
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
-from .files import tsv_to_dict, txt_to_list
+from .files import read_fasta, tsv_to_dict, txt_to_list
 from .utils import reverse_complement, strip_version
 
 
 # -------------------------------------------------------------------------------------------------
-# position classes
+# Position classes
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True, order=True)
 class _Position:
@@ -267,7 +268,7 @@ class RnaPosition(_Position):
 
 
 # -------------------------------------------------------------------------------------------------
-# cache logic
+# Core classes and methods
 # -------------------------------------------------------------------------------------------------
 class CachedCore(type):
     """Metaclass that allows 'Core' objects, and objects that inherit from 'Core', to be treated as
@@ -301,29 +302,43 @@ class Core(metaclass=CachedCore):
 
     def __init__(
         self,
-        df: pd.DataFrame,
-        cdna: Fasta,
-        dna: Fasta,
-        pep: Fasta,
-        ncrna: Fasta,
-        canonical_transcript: List[str] = [],
-        contig_alias: Dict[str, List[str]] = {},
-        exon_alias: Dict[str, List[str]] = {},
-        gene_alias: Dict[str, List[str]] = {},
-        protein_alias: Dict[str, List[str]] = {},
-        transcript_alias: Dict[str, List[str]] = {},
+        gtf: str,
+        cdna: str,
+        dna: str,
+        pep: str,
+        ncrna: str,
+        canonical_transcript: str = "",
+        contig_alias: str = "",
+        exon_alias: str = "",
+        gene_alias: str = "",
+        protein_alias: str = "",
+        transcript_alias: str = "",
     ):
-        self.df = df
-        self.cdna = cdna
-        self.dna = dna
-        self.pep = pep
-        self.ncrna = ncrna
-        self.canonical_transcript = canonical_transcript
-        self.contig_alias = contig_alias
-        self.exon_alias = exon_alias
-        self.gene_alias = gene_alias
-        self.protein_alias = protein_alias
-        self.transcript_alias = transcript_alias
+        """
+        Args:
+            gtf: path to a GTF files with feature annotations
+            cdna: path to a FASTA files of cDNA sequences
+            dna: path to a FASTA files of DNA sequences
+            pep: path to a FASTA files of peptide sequences
+            ncrna: path to a FASTA files of ncRNA sequences
+            canonical_transcript: path to a text file of canonical transcript IDs
+            contig_alias: path to a TSV file mapping contig IDs to their alias(es)
+            exon_alias: path to a TSV file mapping contig IDs to their alias(es)
+            gene_alias: path to a TSV file mapping contig IDs to their alias(es)
+            protein_alias: path to a TSV file mapping contig IDs to their alias(es)
+            transcript_alias: path to a TSV file mapping contig IDs to their alias(es)
+        """
+        self.df = read_gtf(gtf)
+        self.cdna = read_fasta(cdna)
+        self.dna = read_fasta(dna)
+        self.pep = read_fasta(pep)
+        self.ncrna = read_fasta(ncrna)
+        self.canonical_transcript = txt_to_list(canonical_transcript)
+        self.contig_alias = tsv_to_dict(contig_alias)
+        self.exon_alias = tsv_to_dict(exon_alias)
+        self.gene_alias = tsv_to_dict(gene_alias)
+        self.protein_alias = tsv_to_dict(protein_alias)
+        self.transcript_alias = tsv_to_dict(transcript_alias)
 
     # ---------------------------------------------------------------------------------------------
     # all_<feature_symbol>s
@@ -1656,7 +1671,6 @@ class Core(metaclass=CachedCore):
             return result_start
         else:
             result_end = convert(end)
-            print(result_end)
             return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _rna_to_exon(
@@ -1826,12 +1840,12 @@ class EnsemblRelease(Core):
         self.pep = self.ensembl_cache.load_pep_fasta()
         self.ncrna = self.ensembl_cache.load_ncrna_fasta()
 
-        self.canonical_transcript = txt_to_list(canonical_transcript, "canonical transcript")
-        self.contig_alias = tsv_to_dict(contig_alias, "contig aliases")
-        self.exon_alias = tsv_to_dict(exon_alias, "exon aliases")
-        self.gene_alias = tsv_to_dict(gene_alias, "gene aliases")
-        self.protein_alias = tsv_to_dict(protein_alias, "protein aliases")
-        self.transcript_alias = tsv_to_dict(transcript_alias, "transcript aliases")
+        self.canonical_transcript = txt_to_list(canonical_transcript)
+        self.contig_alias = tsv_to_dict(contig_alias)
+        self.exon_alias = tsv_to_dict(exon_alias)
+        self.gene_alias = tsv_to_dict(gene_alias)
+        self.protein_alias = tsv_to_dict(protein_alias)
+        self.transcript_alias = tsv_to_dict(transcript_alias)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
