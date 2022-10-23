@@ -1,32 +1,14 @@
-# Ensembl Map
+# EnsemblMap
 
-- [Ensembl Map](#ensembl-map)
-  - [Description](#description)
-  - [Quick Start](#quick-start)
-  - [How to Install](#how-to-install)
-  - [How to Build Annotations](#how-to-build-annotations)
-  - [How to Use](#how-to-use)
-  - [Examples](#examples)
+- [EnsemblMap](#ensemblmap)
+  - [Example](#example)
+  - [Installation](#installation)
+    - [Download Annotations](#download-annotations)
+    - [Custom Annotations](#custom-annotations)
 
-## Description
+EnsemblMap is a Python package for mapping between chromosome, cDNA, gene, exon, protein, and transcript representations.
 
-This is a Python package for mapping sequence variants between chromosome, gene, exon, protein, and transcript representations.
-
-## Quick Start
-
-TODO
-
-## How to Install
-
-```pytest
-pip install ensembl_map
-```
-
-## How to Build Annotations
-
-TODO
-
-## How to Use
+## Example
 
 ```python
 >>> from ensembl_map import EnsemblRelease
@@ -44,6 +26,22 @@ TODO
 [DnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=1282623, end=1293313, strand='-')]
 ```
 
-## Examples
+## Installation
+
+You can install EnsemblMap using [pip](https://pip.pypa.io/en/latest/quickstart.html):
+
+```sh
+pip install ensembl_map
+```
+
+This will also install any required Python packages.
+
+Before using EnsemblMap, you will need to either download the annotation files or build them yourself.
+
+### Download Annotations
+
+TODO
+
+### Custom Annotations
 
 TODO
