@@ -1,5 +1,19 @@
 import pandas as pd
 import pytest
+from constants import (
+    CACHE_DIR,
+    CANONICAL_TRANSCRIPT,
+    CONTIG_ALIAS,
+    EXON_ALIAS,
+    GENE_ALIAS,
+    PROTEIN_ALIAS,
+    TEST_CDNA_FASTA,
+    TEST_DNA_FASTA,
+    TEST_GTF,
+    TEST_NCRNA_FASTA,
+    TEST_PEP_FASTA,
+    TRANSCRIPT_ALIAS,
+)
 from pyfaidx import Fasta
 
 from ensembl_map.constants import (
@@ -19,21 +33,6 @@ from ensembl_map.core import (
     ExonPosition,
     ProteinPosition,
     RnaPosition,
-)
-
-from . import (
-    CACHE_DIR,
-    CANONICAL_TRANSCRIPT,
-    CONTIG_ALIAS,
-    EXON_ALIAS,
-    GENE_ALIAS,
-    PROTEIN_ALIAS,
-    TEST_CDNA_FASTA,
-    TEST_DNA_FASTA,
-    TEST_GTF,
-    TEST_NCRNA_FASTA,
-    TEST_PEP_FASTA,
-    TRANSCRIPT_ALIAS,
 )
 
 # features are from Ensembl 100
@@ -173,8 +172,8 @@ def test_contig_ids_from_contig_id(ensembl100):
 
 
 def test_contig_ids_from_contig_with_chr(ensembl100):
-    ret_by_id = ensembl100.contig_ids("chr12")
-    assert "12" in ret_by_id
+    ret_by_id = ensembl100.contig_ids("chr4")
+    assert "4" in ret_by_id
 
 
 def test_contig_ids_from_exon_id(ensembl100):
@@ -468,11 +467,11 @@ def test_is_contig_false(ensembl100):
 
 
 def test_is_contig_true(ensembl100):
-    assert ensembl100.is_contig("12") is True
+    assert ensembl100.is_contig("4") is True
 
 
 def test_is_contig_true_alias(ensembl100):
-    assert ensembl100.is_contig("chr12") is True
+    assert ensembl100.is_contig("chr4") is True
 
 
 def test_is_exon_false(ensembl100):
@@ -519,7 +518,7 @@ def test_is_transcript_true_from_name(ensembl100):
 # normalize_feature(feature, feature_type)
 # -------------------------------------------------------------------------------------------------
 def test_normalize_feature_contig_id(ensembl100):
-    assert ensembl100.normalize_feature("17") == [("17", CONTIG_ID)]
+    assert ensembl100.normalize_feature("4") == [("4", CONTIG_ID)]
 
 
 def test_normalize_feature_exon_id(ensembl100):

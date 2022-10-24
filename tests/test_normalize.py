@@ -1,7 +1,28 @@
 import numpy as np
 import pandas as pd
 
-from ensembl_map.normalize import df_set_protein_id
+from ensembl_map.normalize import df_exon_offset_transcript, df_set_protein_id
+
+
+def test_df_exon_offset_transcript():
+    columns = [
+        "feature",
+        "start",
+        "end",
+        "strand",
+        "transcript_id",
+        "transcript_start",
+        "transcript_end",
+    ]
+    data = [
+        ["transcript", 1, 123, "+", "ENST00000123456", np.nan, np.nan],
+        ["exon", 1, 12, "+", "ENST00000123456", np.nan, np.nan],
+        ["exon", 97, 123, "+", "ENST00000123456", np.nan, np.nan],
+    ]
+    in_df = pd.DataFrame(data, columns=columns)
+    out_df = df_exon_offset_transcript(in_df)
+    assert out_df["transcript_start"].to_list() == [1, 1, 13]
+    assert out_df["transcript_end"].to_list() == [39, 12, 39]
 
 
 def test_df_set_protein_id():

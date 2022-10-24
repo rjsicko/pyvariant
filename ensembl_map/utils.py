@@ -1,9 +1,6 @@
-from functools import lru_cache
-
 from Bio.Seq import Seq
 
 
-@lru_cache()
 def reverse_complement(sequence: str) -> str:
     """Return the reverse complement of a given nucleotide sequence."""
     return str(Seq(sequence).reverse_complement())

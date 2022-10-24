@@ -24,4 +24,5 @@ setup(
             "wheel",
         ]
     },
+    entry_points={"console_scripts": ["ensembl-map = ensembl_map.cli:main"]},
 )

@@ -2,8 +2,8 @@
 DEFAULT_SPECIES = "homo_sapiens"
 DEFAULT_ENSEMBL_RELEASE = 100
 
-# Default cache directory
-DEFAULT_CACHE_DIR = "."
+# Variable set the cache directory
+ENSEMBL_MAP_CACHE_VAR = "ENSEMBL_MAP_CACHE"
 
 # Literals used throughout the package
 CONTIG_ID = "contig_id"

@@ -3,13 +3,14 @@ import sys
 from ftplib import FTP
 from pathlib import Path
 from string import punctuation
-from typing import Union
+from typing import List, Union
 
 import pandas as pd
+from appdirs import user_data_dir
 from gtfparse import read_gtf
 from pyfaidx import Fasta
 
-from .constants import DEFAULT_CACHE_DIR
+from .constants import ENSEMBL_MAP_CACHE_VAR
 from .files import bgzip, is_bgzipped, read_fasta
 from .normalize import normalize_df
 from .utils import strip_version
@@ -48,13 +49,23 @@ GTF_FILENAME_TEMPLATE = "{species}.{reference}.{release}.gtf.gz"
 class EnsemblCache:
     """Class for managing Ensembl files."""
 
-    def __init__(self, species: str, release: int, cache_dir: str = DEFAULT_CACHE_DIR):
+    def __init__(self, species: str, release: int, cache_dir: str = ""):
         self.species = normalize_species(species)
         self.release = normalize_release(release)
-        self.cache_dir = os.path.abspath(cache_dir)
         self.reference = reference_by_release(self.release)
 
-    def make(self, redownload: bool = False, recache: bool = False):
+        if cache_dir:
+            self.cache_dir = os.path.abspath(cache_dir)
+        else:
+            self.cache_dir = get_cache_dir()
+
+    def make(
+        self,
+        clean: bool = True,
+        recache: bool = False,
+        redownload: bool = False,
+        restrict_genes: List[str] = [],
+    ):
         """Download missing data, process, and cache."""
 
         # Create the cache directory structure
@@ -99,14 +110,19 @@ class EnsemblCache:
         # Download the GTF file
         gtf_missing = not os.path.exists(self.local_gtf_filepath)
         cache_missing = not os.path.exists(self.local_gtf_cache_filepath)
-        if (gtf_missing and cache_missing) or recache:
+        if (gtf_missing and cache_missing) or redownload:
             self.download_gtf()
 
         # Process and cache the GTF file
         if cache_missing or recache:
             df = read_gtf(self.local_gtf_filepath)
+            if restrict_genes:
+                df = df[df["gene_name"].isin(restrict_genes)]
+
             df = normalize_df(df)
             self.cache_df(df)
+            if clean:
+                self.delete_gtf()
 
     # ---------------------------------------------------------------------------------------------
     # Release cache directory
@@ -360,6 +376,11 @@ class EnsemblCache:
             self.local_gtf_filepath,
         )
 
+    def delete_gtf(self):
+        """Delete the GTF file from the local filesystem."""
+        print(f"Removing {self.local_gtf_filepath}", file=sys.stderr)
+        os.remove(self.local_gtf_filepath)
+
     # ---------------------------------------------------------------------------------------------
     # Database cache
     # ---------------------------------------------------------------------------------------------
@@ -370,8 +391,6 @@ class EnsemblCache:
             file=sys.stderr,
         )
         df.to_pickle(self.local_gtf_cache_filepath)
-        print(f"Removing {self.local_gtf_filepath}", file=sys.stderr)
-        os.remove(self.local_gtf_filepath)
 
     def load_df(self) -> pd.DataFrame:
         """Return the cached Ensembl GTF data."""
@@ -380,6 +399,7 @@ class EnsemblCache:
     # ---------------------------------------------------------------------------------------------
     # Generic functions
     # ---------------------------------------------------------------------------------------------
+
     def _ftp_download(self, server: str, subdir: str, remote_file: str, local_file: str):
         """Download a file from an FTP server."""
         try:
@@ -396,6 +416,17 @@ class EnsemblCache:
             ftp.quit()
         except Exception as exc:
             raise RuntimeError(f"Download failed: {exc}")
+
+
+def get_cache_dir() -> str:
+    f"""Get the cache root directory. If the environmental variable '{ENSEMBL_MAP_CACHE_VAR}' is set, this
+    package will use that as the directory. Otherwise, this package will use the default appdata
+    dir for the user (platform dependant).
+    """
+    try:
+        return os.environ[ENSEMBL_MAP_CACHE_VAR]
+    except KeyError:
+        return user_data_dir()
 
 
 def normalize_release(release: Union[float, int, str]) -> int:

@@ -55,6 +55,9 @@ test:  ## run tests
 	coverage html
 	coverage xml
 
+test-cache:  # build cache required for tests
+	python tests/make_cache.py
+
 upload: clean  ## upload package to the GSC pypi server
 	python setup.py sdist
 	python setup.py install

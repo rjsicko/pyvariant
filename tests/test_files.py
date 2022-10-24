@@ -3,11 +3,10 @@ import os.path
 
 import pytest
 from Bio.bgzf import BgzfWriter
+from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_CDNA_FASTA
 from pyfaidx import Fasta
 
 from ensembl_map.files import bgzip, is_bgzipped, read_fasta, tsv_to_dict, txt_to_list
-
-from . import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_CDNA_FASTA
 
 
 @pytest.fixture
@@ -69,7 +68,7 @@ def test_read_fasta_empty():
 
 def test_tsv_to_dict():
     result = tsv_to_dict(CONTIG_ALIAS)
-    assert result == {"chr12": ["12"]}
+    assert result == {"chr4": ["4"]}
 
 
 def test_tsv_to_dict_empty():
