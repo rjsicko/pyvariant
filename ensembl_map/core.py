@@ -1825,12 +1825,6 @@ class EnsemblRelease(Core):
         self.release = self.ensembl_cache.release
         self.species = self.ensembl_cache.species
 
-        self.df = self.ensembl_cache.load_df()
-        self.cdna = self.ensembl_cache.load_cdna_fasta()
-        self.dna = self.ensembl_cache.load_dna_fasta()
-        self.pep = self.ensembl_cache.load_pep_fasta()
-        self.ncrna = self.ensembl_cache.load_ncrna_fasta()
-
         self.canonical_transcript = txt_to_list(canonical_transcript)
         self.contig_alias = tsv_to_dict(contig_alias)
         self.exon_alias = tsv_to_dict(exon_alias)
@@ -1838,8 +1832,81 @@ class EnsemblRelease(Core):
         self.protein_alias = tsv_to_dict(protein_alias)
         self.transcript_alias = tsv_to_dict(transcript_alias)
 
+        self._df = None
+        self._cdna = None
+        self._dna = None
+        self._pep = None
+        self._ncrna = None
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
+
+    @property
+    def df(self) -> pd.Dataframe:
+        if self._df is None:
+            self._df = self.ensembl_cache.load_df()
+
+        return self._df
+
+    @df.setter
+    def df(self, value: pd.DataFrame):
+        self._df = value
+
+    @property
+    def cdna(self) -> Fasta:
+        if self._cdna is None:
+            self._cdna = self.ensembl_cache.load_cdna_fasta()
+
+        return self._cdna
+
+    @cdna.setter
+    def cdna(self, value: Fasta):
+        self._cdna = value
+
+    @property
+    def dna(self) -> Fasta:
+        if self._dna is None:
+            self._dna = self.ensembl_cache.load_dna_fasta()
+
+        return self._dna
+
+    @dna.setter
+    def dna(self, value: Fasta):
+        self._dna = value
+
+    @property
+    def pep(self) -> Fasta:
+        if self._pep is None:
+            self._pep = self.ensembl_cache.load_pep_fasta()
+
+        return self._pep
+
+    @pep.setter
+    def pep(self, value: Fasta):
+        self._pep = value
+
+    @property
+    def ncrna(self) -> Fasta:
+        if self._ncrna is None:
+            self._ncrna = self.ensembl_cache.load_ncrna_fasta()
+
+        return self._ncrna
+
+    @ncrna.setter
+    def ncrna(self, value: Fasta):
+        self._ncrna = value
+
+    def install(
+        self,
+        clean: bool = True,
+        recache: bool = False,
+        redownload: bool = False,
+        restrict_genes: List[str] = [],
+    ):
+        """Download missing data, process, and cache."""
+        self.ensembl_cache.install(
+            clean=clean, recache=recache, redownload=redownload, restrict_genes=restrict_genes
+        )
 
 
 def merge_positions(

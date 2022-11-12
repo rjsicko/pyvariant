@@ -8,9 +8,8 @@ from typing import Callable, Dict, List
 from Bio.bgzf import BgzfWriter, _bgzf_magic
 from pyfaidx import Fasta
 
+from .constants import EMPTY_FASTA
 from .utils import strip_version
-
-EMPTY_FASTA = os.path.join(os.path.dirname(__file__), "data", "empty.fa")
 
 
 def bgzip(path: str) -> str:

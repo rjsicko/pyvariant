@@ -3,7 +3,9 @@ import sys
 import numpy as np
 import pandas as pd
 
-GTF_COLUMN_RENAME = {"seqname": "contig_id"}
+from .constants import CONTIG_ID
+
+GTF_COLUMN_RENAME = {"seqname": CONTIG_ID}
 GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
 GTF_KEEP_COLUMNS = [
     "contig_id",

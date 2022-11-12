@@ -1,7 +1,6 @@
 import os
 
 import pytest
-from appdirs import user_data_dir
 
 from ensembl_map.cache import (
     get_cache_dir,
@@ -9,18 +8,18 @@ from ensembl_map.cache import (
     normalize_species,
     reference_by_release,
 )
-from ensembl_map.constants import ENSEMBL_MAP_CACHE_VAR
+from ensembl_map.constants import CACHE_DIR_ENV, NAME
 
 
 @pytest.fixture
 def cache_env_var():
-    os.environ[ENSEMBL_MAP_CACHE_VAR] = "TEST"
+    os.environ[CACHE_DIR_ENV] = "TEST"
     yield
-    del os.environ[ENSEMBL_MAP_CACHE_VAR]
+    del os.environ[CACHE_DIR_ENV]
 
 
 def test_get_cache_dir():
-    assert get_cache_dir() == user_data_dir()
+    assert get_cache_dir().endswith(NAME)
 
 
 def test_get_cache_dir_env_var(cache_env_var):

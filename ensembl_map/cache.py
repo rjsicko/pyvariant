@@ -10,7 +10,7 @@ from appdirs import user_data_dir
 from gtfparse import read_gtf
 from pyfaidx import Fasta
 
-from .constants import ENSEMBL_MAP_CACHE_VAR
+from .constants import CACHE_DIR_ENV, NAME
 from .files import bgzip, is_bgzipped, read_fasta
 from .normalize import normalize_df
 from .utils import strip_version
@@ -59,7 +59,7 @@ class EnsemblCache:
         else:
             self.cache_dir = get_cache_dir()
 
-    def make(
+    def install(
         self,
         clean: bool = True,
         recache: bool = False,
@@ -418,14 +418,14 @@ class EnsemblCache:
 
 
 def get_cache_dir() -> str:
-    f"""Get the cache root directory. If the environmental variable '{ENSEMBL_MAP_CACHE_VAR}' is set, this
+    f"""Get the cache root directory. If the environmental variable '{CACHE_DIR_ENV}' is set, this
     package will use that as the directory. Otherwise, this package will use the default appdata
     dir for the user (platform dependant).
     """
     try:
-        return os.environ[ENSEMBL_MAP_CACHE_VAR]
+        return os.environ[CACHE_DIR_ENV]
     except KeyError:
-        return user_data_dir()
+        return os.path.join(user_data_dir(), NAME)
 
 
 def normalize_release(release: Union[float, int, str]) -> int:

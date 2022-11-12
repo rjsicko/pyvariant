@@ -1,47 +1,85 @@
-# EnsemblMap
+# ensembl_map
 
-- [EnsemblMap](#ensemblmap)
-  - [Example](#example)
-  - [Installation](#installation)
-    - [Download Annotations](#download-annotations)
-    - [Custom Annotations](#custom-annotations)
+## What is it?
 
-EnsemblMap is a Python package for mapping between chromosome, cDNA, gene, exon, protein, and transcript representations.
+**ensembl_map** is a Python package for converting between equivalent chromosome, cDNA, gene, exon, protein, and transcript positions.
 
-## Example
+## How to get it
 
-```python
->>> from ensembl_map import EnsemblRelease
->>> release = EnsemblRelease(species='homo_sapiens', release=100)
-```
-
-```python
->>> positions = release.protein_to_cdna("ENSP00000309572", 525)
->>> positions
-[CdnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=1573, end=1575, strand='-', gene_id='ENSG00000164362', gene_name='TERT', transcript_id='ENST00000310581', transcript_name='TERT-201', protein_id='ENSP00000309572')]
-```
-
-```python
->>> positions[0].to_dna()
-[DnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=1282623, end=1293313, strand='-')]
-```
-
-## Installation
-
-You can install EnsemblMap using [pip](https://pip.pypa.io/en/latest/quickstart.html):
+The easiest way to get ensembl_map is using [pip](https://pip.pypa.io/en/latest/quickstart.html):
 
 ```sh
 pip install ensembl_map
 ```
 
-This will also install any required Python packages.
+The source code is hosted on GitHub at: <https://github.com/mattdoug604/ensembl_map>
 
-Before using EnsemblMap, you will need to either download the annotation files or build them yourself.
+## How to use it
 
-### Download Annotations
+Before you can use ensembl_map, you will need the appropriate data files on your local filesystem. 
 
-TODO
+To download and install Ensembl data, run:
 
-### Custom Annotations
+```shell
+ensembl_map install --species <species-name> --release <Ensembl-release-number>
+```
 
-TODO
+For example:
+
+```shell
+ensembl_map install --species homo_sapiens --release 100
+```
+
+By default, the data is downloaded to the user's platform-specific data directory. You can download the data to a different directory of your choosing with the `--cache` option. This can be useful if you want the data to be somewhere where multiple users can access it. Example:
+
+```shell
+ensembl_map install --species homo_sapiens --release 100 --cache /path/to/cache/
+```
+
+For more options, run:
+
+```shell
+ensembl_map install --help
+```
+
+Alternatively, you can run the installation from inside a Python process. Example:
+
+```python
+>>> from ensembl_map import EnsemblRelease
+>>> ensembl100 = EnsemblRelease(species='homo_sapiens', release=100, cache_dir="/path/to/cache/")
+>>> ensembl100.install()
+```
+
+Once the data is installed, the `EnsemblRelease` object provides methods for getting information about different features, getting the DNA/RNA/protein sequence at a position, and converting between positions, etc. Here are some examples:
+
+Convert from a protein position to a cDNA position:
+
+```python
+>>> ensembl100.protein_to_cdna("TERT", 525)
+[CdnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=1573, end=1575, strand='-', gene_id='ENSG00000164362', gene_name='TERT', transcript_id='ENST00000310581', transcript_name='TERT-201', protein_id='ENSP00000309572'), CdnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=1573, end=1575, strand='-', gene_id='ENSG00000164362', gene_name='TERT', transcript_id='ENST00000334602', transcript_name='TERT-202', protein_id='ENSP00000334346'), CdnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=1573, end=1575, strand='-', gene_id='ENSG00000164362', gene_name='TERT', transcript_id='ENST00000460137', transcript_name='TERT-203', protein_id='ENSP00000425003'), CdnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=1573, end=1575, strand='-', gene_id='ENSG00000164362', gene_name='TERT', transcript_id='ENST00000656021', transcript_name='TERT-206', protein_id='ENSP00000499759')]
+```
+
+Get a list of transcript IDs for a gene:
+
+```python
+>>> ensembl100.transcript_ids("BRCA2")
+['ENST00000380152', 'ENST00000470094', 'ENST00000528762', 'ENST00000530893', 'ENST00000533776', 'ENST00000544455', 'ENST00000614259', 'ENST00000665585', 'ENST00000666593', 'ENST00000670614', 'ENST00000671466']
+```
+
+Get the DNA sequence at a specific chromosome position:
+
+```python
+>>> ensembl100.dna_sequence("5", 1293313, 1293323) 
+'CTGGGCTCCT
+```
+
+For a complete list of methods, run:
+
+```python
+>>> help(EnsemblRelease)
+```
+
+## License
+
+This package is distributed with the [MIT](LICENSE) license.
+
