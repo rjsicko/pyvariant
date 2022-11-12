@@ -1057,7 +1057,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1103,7 +1103,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, CONTIG_ID)
@@ -1156,7 +1156,7 @@ class Core(metaclass=CachedCore):
         result_end = convert(end)
         assert result_start == result_end  # TODO: mapping across introns?
 
-        return result_start
+        return sorted(result_start)
 
     def _cdna_to_protein(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1213,7 +1213,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1263,7 +1263,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1312,7 +1312,7 @@ class Core(metaclass=CachedCore):
         result_end = convert(end)
         assert result_start == result_end  # TODO: mapping across introns?
 
-        return result_start
+        return sorted(result_start)
 
     def _dna_to_protein(
         self, contig_ids: List[str], start: int, end: int, strand: List[str]
@@ -1365,7 +1365,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1409,7 +1409,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1442,7 +1442,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, CONTIG_ID)
@@ -1480,7 +1480,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1525,7 +1525,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1548,7 +1548,7 @@ class Core(metaclass=CachedCore):
         for cdna in self._protein_to_cdna(transcript_ids, start, end, strand):
             result.extend(cdna.to_dna())
 
-        return result
+        return sorted(set(result))
 
     def _protein_to_exon(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1557,7 +1557,7 @@ class Core(metaclass=CachedCore):
         for cdna in self._protein_to_cdna(transcript_ids, start, end, strand):
             result.extend(cdna.to_exon())
 
-        return result
+        return sorted(set(result))
 
     def _protein_to_protein(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1566,7 +1566,7 @@ class Core(metaclass=CachedCore):
         for cdna in self._protein_to_cdna(transcript_ids, start, end, strand):
             result.extend(cdna.to_protein())
 
-        return result
+        return sorted(set(result))
 
     def _protein_to_rna(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1575,7 +1575,7 @@ class Core(metaclass=CachedCore):
         for cdna in self._protein_to_cdna(transcript_ids, start, end, strand):
             result.extend(cdna.to_rna())
 
-        return result
+        return sorted(set(result))
 
     def _rna_to_cdna(
         self,
@@ -1619,7 +1619,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1659,7 +1659,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, CONTIG_ID)
@@ -1697,7 +1697,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1709,7 +1709,7 @@ class Core(metaclass=CachedCore):
         for cdna in self._rna_to_cdna(transcript_ids, start, end, strand, include_stop=False):
             result.extend(cdna.to_protein())
 
-        return result
+        return sorted(set(result))
 
     def _rna_to_rna(
         self, transcript_ids: List[str], start: int, end: int, strand: List[str]
@@ -1743,7 +1743,7 @@ class Core(metaclass=CachedCore):
 
         result_start = convert(start)
         if start == end:
-            return result_start
+            return sorted(result_start)
         else:
             result_end = convert(end)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
@@ -1798,7 +1798,7 @@ class Core(metaclass=CachedCore):
         for _, exon in self.df[mask].iterrows():
             result.append((exon.transcript_id, exon.exon_number, exon.exon_number, exon.strand))
 
-        return result
+        return sorted(set(result))
 
 
 class EnsemblRelease(Core):
