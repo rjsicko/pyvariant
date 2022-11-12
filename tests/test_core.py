@@ -552,6 +552,130 @@ def test_normalize_feature_transcript_name(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
+# str()
+# -------------------------------------------------------------------------------------------------
+def test_cdna_to_str(ensembl100):
+    position1 = CdnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=3399,
+        end=3399,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+    position2 = CdnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        end=3399,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+    assert str(position1) == "ENST00000310581:c.3399"
+    assert str(position2) == "ENST00000310581:c.1_3399"
+
+
+def test_dna_to_str(ensembl100):
+    position1 = DnaPosition(_data=ensembl100, contig_id="5", start=1234, end=1234, strand="-")
+    position2 = DnaPosition(_data=ensembl100, contig_id="5", start=1, end=1234, strand="-")
+    assert str(position1) == "5:g.1234"
+    assert str(position2) == "5:g.1_1234"
+
+
+def test_exon_to_str(ensembl100):
+    position1 = ExonPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        end=1,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        exon_id="ENSE00003896691",
+    )
+    position2 = ExonPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        end=2,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        exon_id="ENSE00003896691",
+    )
+    assert str(position1) == "ENST00000310581:e.1"
+    assert str(position2) == "ENST00000310581:e.1_2"
+
+
+def test_protein_to_str(ensembl100):
+    position1 = ProteinPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=524,
+        end=524,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+    position2 = ProteinPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=74,
+        end=524,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+    assert str(position1) == "ENSP00000309572:p.524"
+    assert str(position2) == "ENSP00000309572:p.74_524"
+
+
+def test_transcript_to_str(ensembl100):
+    position1 = RnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=4039,
+        end=4039,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+    )
+    position2 = RnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        end=4039,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+    )
+    assert str(position1) == "ENST00000310581:r.4039"
+    assert str(position2) == "ENST00000310581:r.1_4039"
+
+
+# -------------------------------------------------------------------------------------------------
 # get_<feature>(feature)
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture

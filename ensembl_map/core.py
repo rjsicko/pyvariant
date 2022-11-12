@@ -45,15 +45,15 @@ class _Position:
     def __getitem__(self, item):
         return getattr(self, item)
 
+    def __str__(self) -> str:
+        return self.__repr__()
+
     @property
     def length(self) -> int:
         return self.end - self.start + 1
 
     def asdict(self) -> Dict[str, Any]:
         return {f.name: self[f.name] for f in fields(self)}
-
-    def to_str(self) -> str:
-        raise NotImplementedError()
 
     def on_negative_strand(self) -> bool:
         return self.strand == "-"
@@ -90,11 +90,11 @@ class CdnaPosition(_Position):
     transcript_name: str
     protein_id: str
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         if self.start == self.end:
             return f"{self.transcript_id}:c.{self.start}"
         else:
-            return f"{self.transcript_id}:c.{self.start}-{self.end}"
+            return f"{self.transcript_id}:c.{self.start}_{self.end}"
 
     def sequence(self) -> str:
         return self._data.cdna_sequence(self.transcript_id, self.start, self.end, self.strand)
@@ -121,20 +121,11 @@ class CdnaPosition(_Position):
 class DnaPosition(_Position):
     """Stores information on a DNA position and converts to other position types."""
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         if self.start == self.end:
             return f"{self.contig_id}:g.{self.start}"
         else:
-            return f"{self.contig_id}:g.{self.start}-{self.end}"
-
-    @classmethod
-    def load(cls, row: pd.Series = None, **kwargs):
-        return cls(
-            *[
-                kwargs[f.name] if f.name in kwargs else row[f.name] if row is not None else None
-                for f in fields(cls)
-            ]
-        )
+            return f"{self.contig_id}:g.{self.start}_{self.end}"
 
     def sequence(self) -> str:
         return self._data.dna_sequence(self.contig_id, self.start, self.end, self.strand)
@@ -165,11 +156,11 @@ class ExonPosition(_Position):
     transcript_name: str
     exon_id: str
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         if self.start == self.end:
-            return f"{self.exon_id}:e.{self.start}"
+            return f"{self.transcript_id}:e.{self.start}"
         else:
-            return f"{self.exon_id}:e.{self.start}-{self.end}"
+            return f"{self.transcript_id}:e.{self.start}_{self.end}"
 
     def sequence(self) -> str:
         raise NotImplementedError()  # TODO
@@ -202,11 +193,11 @@ class ProteinPosition(_Position):
     transcript_name: str
     protein_id: str
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         if self.start == self.end:
             return f"{self.protein_id}:p.{self.start}"
         else:
-            return f"{self.protein_id}:p.{self.start}-{self.end}"
+            return f"{self.protein_id}:p.{self.start}_{self.end}"
 
     def sequence(self) -> str:
         return self._data.peptide_sequence(self.protein_id, self.start, self.end, self.strand)
@@ -242,11 +233,11 @@ class RnaPosition(_Position):
     transcript_id: str
     transcript_name: str
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         if self.start == self.end:
             return f"{self.transcript_id}:r.{self.start}"
         else:
-            return f"{self.transcript_id}:r.{self.start}-{self.end}"
+            return f"{self.transcript_id}:r.{self.start}_{self.end}"
 
     def sequence(self) -> str:
         return self._data.rna_sequence(self.transcript_id, self.start, self.end, self.strand)
