@@ -16,7 +16,7 @@ from .normalize import normalize_df
 from .utils import strip_version
 
 # Dictionary used to replace punctuation in a string
-PUNCTUATION_TO_UNDERSCORE = str.maketrans(punctuation, "_" * len(punctuation))
+PUNCTUATION_TO_UNDERSCORE = str.maketrans(punctuation + " ", "_" * len(punctuation + " "))
 
 # Ensembl FTP URL
 ENSEMBL_FTP_SERVER = "ftp.ensembl.org"
@@ -435,7 +435,7 @@ def normalize_release(release: Union[float, int, str]) -> int:
 
 def normalize_species(species: str) -> str:
     """Normalize a species name."""
-    return species.translate(PUNCTUATION_TO_UNDERSCORE)
+    return species.lower().translate(PUNCTUATION_TO_UNDERSCORE)
 
 
 def reference_by_release(release: int) -> str:
