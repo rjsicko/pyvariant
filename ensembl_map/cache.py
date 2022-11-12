@@ -399,7 +399,6 @@ class EnsemblCache:
     # ---------------------------------------------------------------------------------------------
     # Generic functions
     # ---------------------------------------------------------------------------------------------
-
     def _ftp_download(self, server: str, subdir: str, remote_file: str, local_file: str):
         """Download a file from an FTP server."""
         try:
