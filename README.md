@@ -16,7 +16,7 @@ The source code is hosted on GitHub at: <https://github.com/mattdoug604/ensembl_
 
 ## How to use it
 
-Before you can use ensembl_map, you will need the appropriate data files on your local filesystem. 
+Before you can use ensembl_map, you will need to download the necessary genomic data. 
 
 To download and install Ensembl data, run:
 
@@ -30,7 +30,7 @@ For example:
 ensembl_map install --species homo_sapiens --release 100
 ```
 
-By default, the data is downloaded to the user's platform-specific data directory. You can download the data to a different directory of your choosing with the `--cache` option. This can be useful if you want the data to be somewhere where multiple users can access it. Example:
+By default, the data is downloaded to a [platform-specific data directory](https://pypi.org/project/appdirs/) that is generally only accessible by the user. If you want the data to be accessible to other users, you may to specify a custom data directory with the `--cache` option:
 
 ```shell
 ensembl_map install --species homo_sapiens --release 100 --cache /path/to/cache/
@@ -42,7 +42,7 @@ For more options, run:
 ensembl_map install --help
 ```
 
-Alternatively, you can run the installation from inside a Python process. Example:
+Alternatively, you can run the installation from inside a Python process:
 
 ```python
 >>> from ensembl_map import EnsemblRelease
