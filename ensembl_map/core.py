@@ -35,7 +35,9 @@ class _Position:
     _data: Core
     contig_id: str
     start: int
+    start_offset: int
     end: int
+    end_offset: int
     strand: str
 
     @classmethod
@@ -707,7 +709,9 @@ class Core(metaclass=CachedCore):
                     _data=self,
                     contig_id=cdna.contig_id,
                     start=cdna.cdna_start,
+                    start_offset=0,
                     end=cdna.cdna_end,
+                    end_offset=0,
                     strand=cdna.strand,
                     gene_id=cdna.gene_id,
                     gene_name=cdna.gene_name,
@@ -734,7 +738,13 @@ class Core(metaclass=CachedCore):
             for strand in strand_list:
                 result.append(
                     DnaPosition(
-                        _data=self, contig_id=contig_id, start=start, end=end, strand=strand
+                        _data=self,
+                        contig_id=contig_id,
+                        start=start,
+                        start_offset=0,
+                        end=end,
+                        end_offset=0,
+                        strand=strand,
                     )
                 )
 
@@ -752,7 +762,9 @@ class Core(metaclass=CachedCore):
                     _data=self,
                     contig_id=exon.contig_id,
                     start=int(exon.exon_number),
+                    start_offset=0,
                     end=int(exon.exon_number),
+                    end_offset=0,
                     strand=exon.strand,
                     gene_id=exon.gene_id,
                     gene_name=exon.gene_name,
@@ -776,7 +788,9 @@ class Core(metaclass=CachedCore):
                     _data=self,
                     contig_id=gene.contig_id,
                     start=gene.start,
+                    start_offset=0,
                     end=gene.end,
+                    end_offset=0,
                     strand=gene.strand,
                 )
             )
@@ -795,7 +809,9 @@ class Core(metaclass=CachedCore):
                     _data=self,
                     contig_id=transcript.contig_id,
                     start=transcript.transcript_start,
+                    start_offset=0,
                     end=transcript.transcript_end,
+                    end_offset=0,
                     strand=transcript.strand,
                     gene_id=transcript.gene_id,
                     gene_name=transcript.gene_name,
@@ -859,33 +875,27 @@ class Core(metaclass=CachedCore):
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[DnaPosition]:
         """Map a DNA position to zero or more DNA positions."""
-        return self._map(
-            self.contig_ids, self._dna_to_dna, feature, start=start, end=end, strand=strand
-        )
+        return self._map(self.contig_ids, self._dna_to_dna, feature, start, end=end, strand=strand)
 
     def dna_to_exon(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ExonPosition]:
         """Map a DNA position to zero or more exon positions."""
-        return self._map(
-            self.contig_ids, self._dna_to_exon, feature, start=start, end=end, strand=strand
-        )
+        return self._map(self.contig_ids, self._dna_to_exon, feature, start, end=end, strand=strand)
 
     def dna_to_protein(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[ProteinPosition]:
         """Map a DNA position to zero or more protein positions."""
         return self._map(
-            self.contig_ids, self._dna_to_protein, feature, start=start, end=end, strand=strand
+            self.contig_ids, self._dna_to_protein, feature, start, end=end, strand=strand
         )
 
     def dna_to_rna(
         self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
     ) -> List[RnaPosition]:
         """Map a DNA position to zero or more RNA positions."""
-        return self._map(
-            self.contig_ids, self._dna_to_rna, feature, start=start, end=end, strand=strand
-        )
+        return self._map(self.contig_ids, self._dna_to_rna, feature, start, end=end, strand=strand)
 
     def exon_to_cdna(
         self,
@@ -1043,7 +1053,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=cds.contig_id,
                         start=start,
+                        start_offset=0,
                         end=end,
+                        end_offset=0,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -1094,7 +1106,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
+                        start_offset=0,
                         end=new_end,
+                        end_offset=0,
                         strand=cds.strand,
                     )
                 )
@@ -1140,7 +1154,9 @@ class Core(metaclass=CachedCore):
                             _data=self,
                             contig_id=exon.contig_id,
                             start=int(exon.exon_number),
+                            start_offset=0,
                             end=int(exon.exon_number),
+                            end_offset=0,
                             strand=exon.strand,
                             gene_id=exon.gene_id,
                             gene_name=exon.gene_name,
@@ -1168,7 +1184,11 @@ class Core(metaclass=CachedCore):
         for cdna in self._cdna_to_cdna(transcript_ids, start, end, strand, include_stop=False):
             pstart = convert(start)
             pend = convert(end)
-            protein.append(ProteinPosition.copy_from(cdna, start=pstart, end=pend))
+            protein.append(
+                ProteinPosition.copy_from(
+                    cdna, start=pstart, start_offset=0, end=pend, end_offset=0
+                )
+            )
 
         return protein
 
@@ -1200,7 +1220,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
+                        start_offset=0,
                         end=new_end,
+                        end_offset=0,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -1249,7 +1271,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
+                        start_offset=0,
                         end=new_end,
+                        end_offset=0,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -1273,7 +1297,17 @@ class Core(metaclass=CachedCore):
     ) -> List[DnaPosition]:
         result = []
         for c, s in product(contig_ids, strand):
-            result.append(DnaPosition(self, c, start, end, s))
+            result.append(
+                DnaPosition(
+                    _data=self,
+                    contig_id=c,
+                    start=start,
+                    start_offset=0,
+                    end=end,
+                    end_offset=0,
+                    strand=s,
+                )
+            )
 
         return result
 
@@ -1296,7 +1330,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=int(exon.exon_number),
+                        start_offset=0,
                         end=int(exon.exon_number),
+                        end_offset=0,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
@@ -1324,7 +1360,11 @@ class Core(metaclass=CachedCore):
         for cdna in self._dna_to_cdna(contig_ids, start, end, strand, include_stop=False):
             pstart = convert(cdna.start)
             pend = convert(cdna.end)
-            protein.append(ProteinPosition.copy_from(cdna, start=pstart, end=pend, _data=self))
+            protein.append(
+                ProteinPosition.copy_from(
+                    cdna, start=pstart, start_offset=0, end=pend, end_offset=0, _data=self
+                )
+            )
 
         return protein
 
@@ -1352,7 +1392,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=new_start,
+                        start_offset=0,
                         end=new_end,
+                        end_offset=0,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
@@ -1395,7 +1437,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=cds.contig_id,
                         start=cds.cdna_start,
+                        start_offset=0,
                         end=cds.cdna_end,
+                        end_offset=0,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -1433,7 +1477,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=exon.start,
+                        start_offset=0,
                         end=exon.end,
+                        end_offset=0,
                         strand=exon.strand,
                     )
                 )
@@ -1466,7 +1512,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=int(exon.exon_number),
+                        start_offset=0,
                         end=int(exon.exon_number),
+                        end_offset=0,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
@@ -1512,7 +1560,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=exon.transcript_start,
+                        start_offset=0,
                         end=exon.transcript_end,
+                        end_offset=0,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
@@ -1605,7 +1655,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
+                        start_offset=0,
                         end=new_end,
+                        end_offset=0,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -1650,7 +1702,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=new_start,
+                        start_offset=0,
                         end=new_end,
+                        end_offset=0,
                         strand=exon.strand,
                     )
                 )
@@ -1683,7 +1737,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=int(exon.exon_number),
+                        start_offset=0,
                         end=int(exon.exon_number),
+                        end_offset=0,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
@@ -1730,7 +1786,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=start,
+                        start_offset=0,
                         end=end,
+                        end_offset=0,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
