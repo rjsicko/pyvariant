@@ -2,12 +2,10 @@
 
 .PHONY:
 	clean
-	install
-	install-dev
+	dist
 	lint
-	test
 	upload
-	venv
+	upload-test
 	help
 
 clean:  ## remove all build, coverage, Python, and test artifacts
@@ -33,36 +31,21 @@ clean:  ## remove all build, coverage, Python, and test artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
-install: clean  ## install the package for production
-	pip install -U pip
-	pip install -U setuptools
-	pip install -U .
-
-install-dev: clean  ## install the package for development
-	pip install -U pip
-	pip install -U setuptools
-	pip install -U -e .[dev]
+dist: clean  ## generate the distributable files
+	python3 -m pip install --upgrade build
+	python3 -m build
 
 lint:  ## fix code style and formatting
-	isort --line-length 100 --profile black ensembl_map/ tests/ setup.py
-	black -C --line-length 100 ensembl_map/ tests/ setup.py
-	mypy --ignore-missing-imports ensembl_map/ tests/ setup.py
-	flake8 --ignore E203,E501,W291,W503 ensembl_map/ tests/ setup.py
+	isort ensembl_map/ tests/
+	black ensembl_map/ tests/
+	mypy ensembl_map/ tests/
+	flake8 ensembl_map/ tests/
 
-test:  ## run tests
-	coverage run --source ensembl_map -m pytest --junitxml=pytest.xml
-	coverage report -m
-	coverage html
-	coverage xml
-
-test-cache:  # build cache required for tests
-	python tests/make_cache.py
-
-upload: clean  ## upload package to the GSC pypi server
-	python setup.py sdist
-	python setup.py install
-	python setup.py bdist_wheel
+upload: dist  ## upload package to PyPI
 	twine upload dist/*
+
+upload-test: dist  ## upload package to TestPyPI
+	twine upload --repository testpypi dist/*
 
 help:  ## show this message and exit
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[32m%-13s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
