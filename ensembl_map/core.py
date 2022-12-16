@@ -99,23 +99,61 @@ class CdnaPosition(_Position):
             return f"{self.transcript_id}:c.{self.start}_{self.end}"
 
     def sequence(self) -> str:
+        if self.start_offset or self.end_offset:
+            raise ValueError(
+                f"Unable to get cDNA sequence of offset position ({self.start_offset}, {self.end_offset})"
+            )
+
         return self._data.cdna_sequence(self.transcript_id, self.start, self.end, self.strand)
 
     def to_cdna(self) -> List[CdnaPosition]:
-        return self._data._cdna_to_cdna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._cdna_to_cdna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_dna(self) -> List[DnaPosition]:
-        return self._data._cdna_to_dna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._cdna_to_dna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_exon(self) -> List[ExonPosition]:
-        return self._data._cdna_to_exon([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._cdna_to_exon(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_rna(self) -> List[RnaPosition]:
-        return self._data._cdna_to_rna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._cdna_to_rna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_protein(self) -> List[ProteinPosition]:
         return self._data._cdna_to_protein(
-            [self.transcript_id], self.start, self.end, [self.strand]
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
         )
 
 
@@ -130,22 +168,62 @@ class DnaPosition(_Position):
             return f"{self.contig_id}:g.{self.start}_{self.end}"
 
     def sequence(self) -> str:
+        if self.start_offset or self.end_offset:
+            raise ValueError(
+                f"Unable to get DNA sequence of offset position ({self.start_offset}, {self.end_offset})"
+            )
+
         return self._data.dna_sequence(self.contig_id, self.start, self.end, self.strand)
 
     def to_cdna(self) -> List[CdnaPosition]:
-        return self._data._dna_to_cdna([self.contig_id], self.start, self.end, [self.strand])
+        return self._data._dna_to_cdna(
+            [self.contig_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_dna(self) -> List[DnaPosition]:
-        return self._data._dna_to_dna([self.contig_id], self.start, self.end, [self.strand])
+        return self._data._dna_to_dna(
+            [self.contig_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_exon(self) -> List[ExonPosition]:
-        return self._data._dna_to_exon([self.contig_id], self.start, self.end, [self.strand])
+        return self._data._dna_to_exon(
+            [self.contig_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_protein(self) -> List[ProteinPosition]:
-        return self._data._dna_to_protein([self.contig_id], self.start, self.end, [self.strand])
+        return self._data._dna_to_protein(
+            [self.contig_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_rna(self) -> List[RnaPosition]:
-        return self._data._dna_to_rna([self.contig_id], self.start, self.end, [self.strand])
+        return self._data._dna_to_rna(
+            [self.contig_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
 
 @dataclass(eq=True, frozen=True, order=True)
@@ -168,21 +246,54 @@ class ExonPosition(_Position):
         raise NotImplementedError()  # TODO
 
     def to_cdna(self) -> List[CdnaPosition]:
-        return self._data._exon_to_cdna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._exon_to_cdna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_dna(self) -> List[DnaPosition]:
-        return self._data._exon_to_dna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._exon_to_dna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_exon(self) -> List[ExonPosition]:
-        return self._data._exon_to_exon([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._exon_to_exon(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_protein(self) -> List[ProteinPosition]:
         return self._data._exon_to_protein(
-            [self.transcript_id], self.start, self.end, [self.strand]
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
         )
 
     def to_rna(self) -> List[RnaPosition]:
-        return self._data._exon_to_rna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._exon_to_rna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
 
 @dataclass(eq=True, frozen=True, order=True)
@@ -202,28 +313,62 @@ class ProteinPosition(_Position):
             return f"{self.protein_id}:p.{self.start}_{self.end}"
 
     def sequence(self) -> str:
+        if self.start_offset or self.end_offset:
+            raise ValueError(
+                f"Unable to get peptide sequence of offset position ({self.start_offset}, {self.end_offset})"
+            )
+
         return self._data.peptide_sequence(self.protein_id, self.start, self.end, self.strand)
 
     def to_cdna(self) -> List[CdnaPosition]:
         return self._data._protein_to_cdna(
-            [self.transcript_id], self.start, self.end, [self.strand]
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
         )
 
     def to_dna(self) -> List[DnaPosition]:
-        return self._data._protein_to_dna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._protein_to_dna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_exon(self) -> List[ExonPosition]:
         return self._data._protein_to_exon(
-            [self.transcript_id], self.start, self.end, [self.strand]
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
         )
 
     def to_protein(self) -> List[ProteinPosition]:
         return self._data._protein_to_protein(
-            [self.transcript_id], self.start, self.end, [self.strand]
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
         )
 
     def to_rna(self) -> List[RnaPosition]:
-        return self._data._protein_to_rna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._protein_to_rna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
 
 @dataclass(eq=True, frozen=True, order=True)
@@ -242,22 +387,62 @@ class RnaPosition(_Position):
             return f"{self.transcript_id}:r.{self.start}_{self.end}"
 
     def sequence(self) -> str:
+        if self.start_offset or self.end_offset:
+            raise ValueError(
+                f"Unable to get RNA sequence of offset position ({self.start_offset}, {self.end_offset})"
+            )
+
         return self._data.rna_sequence(self.transcript_id, self.start, self.end, self.strand)
 
     def to_cdna(self) -> List[CdnaPosition]:
-        return self._data._rna_to_cdna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._rna_to_cdna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_dna(self) -> List[DnaPosition]:
-        return self._data._rna_to_dna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._rna_to_dna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_exon(self) -> List[ExonPosition]:
-        return self._data._rna_to_exon([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._rna_to_exon(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_protein(self) -> List[ProteinPosition]:
-        return self._data._rna_to_protein([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._rna_to_protein(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
     def to_rna(self) -> List[RnaPosition]:
-        return self._data._rna_to_rna([self.transcript_id], self.start, self.end, [self.strand])
+        return self._data._rna_to_rna(
+            [self.transcript_id],
+            self.start,
+            self.start_offset,
+            self.end,
+            self.end_offset,
+            [self.strand],
+        )
 
 
 # -------------------------------------------------------------------------------------------------
@@ -826,76 +1011,214 @@ class Core(metaclass=CachedCore):
     # <feature>_to_<feature>
     # ---------------------------------------------------------------------------------------------
     def cdna_to_cdna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[CdnaPosition]:
         """Map a cDNA position to zero or more cDNA positions."""
         return self._map(
-            self.transcript_ids, self._cdna_to_cdna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._cdna_to_cdna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def cdna_to_dna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[DnaPosition]:
         """Map a cDNA position to zero or more DNA positions."""
         return self._map(
-            self.transcript_ids, self._cdna_to_dna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._cdna_to_dna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def cdna_to_exon(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ExonPosition]:
         """Map a cDNA position to an exon positions."""
         return self._map(
-            self.transcript_ids, self._cdna_to_exon, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._cdna_to_exon,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def cdna_to_protein(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ProteinPosition]:
         """Map a cDNA position to zero or more protein positions."""
         return self._map(
-            self.transcript_ids, self._cdna_to_protein, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._cdna_to_protein,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def cdna_to_rna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[RnaPosition]:
         """Map a cDNA position to zero or more RNA positions."""
         return self._map(
-            self.transcript_ids, self._cdna_to_rna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._cdna_to_rna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def dna_to_cdna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[CdnaPosition]:
         """Map a DNA position to zero or more cDNA positions."""
-        return self._map(self.contig_ids, self._dna_to_cdna, feature, start, end=end, strand=strand)
+        return self._map(
+            self.contig_ids,
+            self._dna_to_cdna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def dna_to_dna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[DnaPosition]:
         """Map a DNA position to zero or more DNA positions."""
-        return self._map(self.contig_ids, self._dna_to_dna, feature, start, end=end, strand=strand)
+        return self._map(
+            self.contig_ids,
+            self._dna_to_dna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def dna_to_exon(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ExonPosition]:
         """Map a DNA position to zero or more exon positions."""
-        return self._map(self.contig_ids, self._dna_to_exon, feature, start, end=end, strand=strand)
+        return self._map(
+            self.contig_ids,
+            self._dna_to_exon,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def dna_to_protein(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ProteinPosition]:
         """Map a DNA position to zero or more protein positions."""
         return self._map(
-            self.contig_ids, self._dna_to_protein, feature, start, end=end, strand=strand
+            self.contig_ids,
+            self._dna_to_protein,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def dna_to_rna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[RnaPosition]:
         """Map a DNA position to zero or more RNA positions."""
-        return self._map(self.contig_ids, self._dna_to_rna, feature, start, end=end, strand=strand)
+        return self._map(
+            self.contig_ids,
+            self._dna_to_rna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def exon_to_cdna(
         self,
@@ -903,9 +1226,19 @@ class Core(metaclass=CachedCore):
         start: Optional[int] = None,
         end: Optional[int] = None,
         strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[CdnaPosition]:
         """Map an exon position to zero or more cDNA positions."""
-        return self._map_exon(self._exon_to_cdna, feature, start, end, strand)
+        return self._map_exon(
+            self._exon_to_cdna,
+            feature,
+            start=start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def exon_to_dna(
         self,
@@ -913,9 +1246,19 @@ class Core(metaclass=CachedCore):
         start: Optional[int] = None,
         end: Optional[int] = None,
         strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[DnaPosition]:
         """Map an exon position to zero or more DNA positions."""
-        return self._map_exon(self._exon_to_dna, feature, start, end, strand)
+        return self._map_exon(
+            self._exon_to_dna,
+            feature,
+            start=start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def exon_to_exon(
         self,
@@ -923,9 +1266,19 @@ class Core(metaclass=CachedCore):
         start: Optional[int] = None,
         end: Optional[int] = None,
         strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ExonPosition]:
         """Map an exon position to an exon positions."""
-        return self._map_exon(self._exon_to_exon, feature, start, end, strand)
+        return self._map_exon(
+            self._exon_to_exon,
+            feature,
+            start=start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def exon_to_protein(
         self,
@@ -933,9 +1286,19 @@ class Core(metaclass=CachedCore):
         start: Optional[int] = None,
         end: Optional[int] = None,
         strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ProteinPosition]:
         """Map an exon position to zero or more protein positions."""
-        return self._map_exon(self._exon_to_protein, feature, start, end, strand)
+        return self._map_exon(
+            self._exon_to_protein,
+            feature,
+            start=start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def exon_to_rna(
         self,
@@ -943,102 +1306,263 @@ class Core(metaclass=CachedCore):
         start: Optional[int] = None,
         end: Optional[int] = None,
         strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[RnaPosition]:
         """Map an exon position to zero or more RNA positions."""
-        return self._map_exon(self._exon_to_rna, feature, start, end, strand)
+        return self._map_exon(
+            self._exon_to_rna,
+            feature,
+            start=start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
+        )
 
     def protein_to_cdna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[CdnaPosition]:
         """Map a protein position to zero or more cDNA positions."""
         return self._map(
-            self.transcript_ids, self._protein_to_cdna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._protein_to_cdna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def protein_to_dna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[DnaPosition]:
         """Map a protein position to zero or more DNA positions."""
         return self._map(
-            self.transcript_ids, self._protein_to_dna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._protein_to_dna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def protein_to_exon(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ExonPosition]:
         """Map a protein position to zero or more exon positions."""
         return self._map(
-            self.transcript_ids, self._protein_to_exon, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._protein_to_exon,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def protein_to_protein(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ProteinPosition]:
         """Map a protein position to zero or more protein positions."""
         return self._map(
-            self.transcript_ids, self._protein_to_protein, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._protein_to_protein,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def protein_to_rna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[RnaPosition]:
         """Map a protein position to zero or more RNA positions."""
         return self._map(
-            self.transcript_ids, self._protein_to_rna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._protein_to_rna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def rna_to_cdna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[CdnaPosition]:
         """Map a RNA position to zero or more cDNA positions."""
         return self._map(
-            self.transcript_ids, self._rna_to_cdna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._rna_to_cdna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def rna_to_dna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[DnaPosition]:
         """Map a RNA position to zero or more DNA positions."""
         return self._map(
-            self.transcript_ids, self._rna_to_dna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._rna_to_dna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def rna_to_exon(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ExonPosition]:
         """Map a RNA position to an exon positions."""
         return self._map(
-            self.transcript_ids, self._rna_to_exon, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._rna_to_exon,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def rna_to_protein(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[ProteinPosition]:
         """Map a RNA position to zero or more protein positions."""
         return self._map(
-            self.transcript_ids, self._rna_to_protein, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._rna_to_protein,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def rna_to_rna(
-        self, feature: str, start: int, end: Optional[int] = None, strand: Optional[str] = None
+        self,
+        feature: str,
+        start: int,
+        end: Optional[int] = None,
+        strand: Optional[str] = None,
+        start_offset: Optional[int] = None,
+        end_offset: Optional[int] = None,
     ) -> List[RnaPosition]:
         """Map a RNA position to zero or more RNA positions."""
         return self._map(
-            self.transcript_ids, self._rna_to_rna, feature, start, end=end, strand=strand
+            self.transcript_ids,
+            self._rna_to_rna,
+            feature,
+            start,
+            start_offset=start_offset,
+            end=end,
+            end_offset=end_offset,
+            strand=strand,
         )
 
     def _cdna_to_cdna(
         self,
         transcript_ids: List[str],
         start: int,
+        start_offset: int,
         end: int,
+        end_offset: int,
         strand: List[str],
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        def convert(position: int):
+        def convert(position: int, offset: int) -> List[CdnaPosition]:
             result = []
+
+            # If the offset position can be normalized to a non-offset position, do so. Otherwise
+            # just return an offset position.
+            if offset:
+                for dna in self._cdna_to_dna(
+                    transcript_ids,
+                    position,
+                    offset,
+                    position,
+                    offset,
+                    strand,
+                    include_stop=include_stop,
+                ):
+                    for cdna in dna.to_cdna():
+                        if cdna.transcript_id in transcript_ids:
+                            result.append(cdna)
+
+                if result:
+                    return result
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1053,9 +1577,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=cds.contig_id,
                         start=start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -1067,24 +1591,26 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_dna(
         self,
         transcript_ids: List[str],
         start: int,
+        start_offset: int,
         end: int,
+        end_offset: int,
         strand: List[str],
         include_stop: bool = True,
     ) -> List[DnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
 
             mask = (
@@ -1095,12 +1621,12 @@ class Core(metaclass=CachedCore):
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
-                offset = position - cds.cdna_start
                 if cds.strand == "-":
-                    new_start = new_end = cds.end - offset
+                    new_start = new_end = cds.end - (position - cds.cdna_start) - offset
                 else:
-                    new_start = new_end = cds.start + offset
+                    new_start = new_end = cds.start + (position - cds.cdna_start) + offset
 
+                # TODO: Check that new new_start is actually on the contig
                 result.append(
                     DnaPosition(
                         _data=self,
@@ -1115,25 +1641,46 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _cdna_to_exon(
         self,
         transcript_ids: List[str],
         start: int,
+        start_offset: int,
         end: int,
+        end_offset: int,
         strand: List[str],
         include_stop: bool = True,
     ) -> List[ExonPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
+
+            # For an offset position, we need to calculate then equivalent DNA position then map
+            # that to one or more exons. This is slower, so if there's no offset we can just map
+            # directly to an exon.
+            if offset:
+                for dna in self._cdna_to_dna(
+                    transcript_ids,
+                    position,
+                    offset,
+                    position,
+                    offset,
+                    strand,
+                    include_stop=include_stop,
+                ):
+                    for exon in dna.to_exon():
+                        if exon.transcript_id in transcript_ids:
+                            result.append(exon)
+
+                return result
 
             mask_cds = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1168,22 +1715,35 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
-        result_end = convert(end)
+        result_start = convert(start, start_offset)
+        result_end = convert(end, end_offset)
         assert result_start == result_end  # TODO: mapping across introns?
 
         return sorted(result_start)
 
     def _cdna_to_protein(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ProteinPosition]:
         def convert(x):
             return floor((x - 1) / 3 + 1)
 
         protein = []
-        for cdna in self._cdna_to_cdna(transcript_ids, start, end, strand, include_stop=False):
-            pstart = convert(start)
-            pend = convert(end)
+        for cdna in self._cdna_to_cdna(
+            transcript_ids, start, start_offset, end, end_offset, strand, include_stop=False
+        ):
+            # If the postion wasn't mapped to a non-offset position by `_cdna_to_cdna`, it means
+            # that the position does not map to a protein.
+            if cdna.start_offset or cdna.end_offset:
+                continue
+
+            pstart = convert(cdna.start)
+            pend = convert(cdna.end)
             protein.append(
                 ProteinPosition.copy_from(
                     cdna, start=pstart, start_offset=0, end=pend, end_offset=0
@@ -1196,14 +1756,35 @@ class Core(metaclass=CachedCore):
         self,
         transcript_ids: List[str],
         start: int,
+        start_offset: int,
         end: int,
+        end_offset: int,
         strand: List[str],
         include_stop: bool = True,
     ) -> List[RnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
+
+            # If the offset position can be normalized to a non-offset position, do so. Otherwise
+            # just return an offset position.
+            if offset:
+                for dna in self._cdna_to_dna(
+                    transcript_ids,
+                    position,
+                    offset,
+                    position,
+                    offset,
+                    strand,
+                    include_stop=include_stop,
+                ):
+                    for rna in dna.to_rna():
+                        if rna.transcript_id in transcript_ids:
+                            result.append(rna)
+
+                if result:
+                    return result
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1213,16 +1794,15 @@ class Core(metaclass=CachedCore):
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
-                offset = position - cds.cdna_start
-                new_start = new_end = cds.transcript_start + offset
+                new_start = new_end = cds.transcript_start + (position - cds.cdna_start)
                 result.append(
                     RnaPosition(
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=new_end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -1233,131 +1813,181 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_cdna(
         self,
         contig_ids: List[str],
         start: int,
+        start_offset: int,
         end: int,
+        end_offset: int,
         strand: List[str],
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
 
-            mask = (
-                (self.df[CONTIG_ID].isin(contig_ids))
-                & (self.df["start"] <= position)
-                & (self.df["end"] >= position)
-                & (self.df["strand"].isin(strand))
-                & (self.df["feature"].isin(feature))
-            )
-            for _, cds in self.df[mask].iterrows():
-                if cds.strand == "-":
-                    new_start = new_end = cds.end - position + cds.cdna_start
+            for strand_ in strand:
+                if strand_ == "-":
+                    position_ = position - offset
                 else:
-                    new_start = new_end = position - cds.start + cds.cdna_start
+                    position_ = position + offset
 
-                result.append(
-                    CdnaPosition(
-                        _data=self,
-                        contig_id=cds.contig_id,
-                        start=new_start,
-                        start_offset=0,
-                        end=new_end,
-                        end_offset=0,
-                        strand=cds.strand,
-                        gene_id=cds.gene_id,
-                        gene_name=cds.gene_name,
-                        transcript_id=cds.transcript_id,
-                        transcript_name=cds.transcript_name,
-                        protein_id=cds.protein_id,
-                    )
+                mask = (
+                    (self.df[CONTIG_ID].isin(contig_ids))
+                    & (self.df["start"] <= position_)
+                    & (self.df["end"] >= position_)
+                    & (self.df["strand"] == strand_)
+                    & (self.df["feature"].isin(feature))
                 )
+                for _, cds in self.df[mask].iterrows():
+                    if cds.strand == "-":
+                        new_start = new_end = cds.end - position_ + cds.cdna_start
+                    else:
+                        new_start = new_end = position_ - cds.start + cds.cdna_start
+
+                    result.append(
+                        CdnaPosition(
+                            _data=self,
+                            contig_id=cds.contig_id,
+                            start=new_start,
+                            start_offset=0,
+                            end=new_end,
+                            end_offset=0,
+                            strand=cds.strand,
+                            gene_id=cds.gene_id,
+                            gene_name=cds.gene_name,
+                            transcript_id=cds.transcript_id,
+                            transcript_name=cds.transcript_name,
+                            protein_id=cds.protein_id,
+                        )
+                    )
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_dna(
-        self, contig_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        contig_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[DnaPosition]:
         result = []
-        for c, s in product(contig_ids, strand):
+
+        # Sort the start and end positions after adjusting by offsets
+        start, end = sorted([start, end])
+
+        for contig_id_, strand_ in product(contig_ids, strand):
+            if strand_ == "-":
+                new_start = start - start_offset
+                new_end = end - end_offset
+            else:
+                new_start = start + start_offset
+                new_end = end + end_offset
+
+            # TODO: Check that new new_start is actually on the contig
             result.append(
                 DnaPosition(
                     _data=self,
-                    contig_id=c,
-                    start=start,
+                    contig_id=contig_id_,
+                    start=new_start,
                     start_offset=0,
-                    end=end,
+                    end=new_end,
                     end_offset=0,
-                    strand=s,
+                    strand=strand_,
                 )
             )
 
         return result
 
     def _dna_to_exon(
-        self, contig_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        contig_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ExonPosition]:
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
 
-            mask = (
-                (self.df[CONTIG_ID].isin(contig_ids))
-                & (self.df["start"] <= position)
-                & (self.df["end"] >= position)
-                & (self.df["strand"].isin(strand))
-                & (self.df["feature"].isin(["exon"]))
-            )
-            for _, exon in self.df[mask].iterrows():
-                result.append(
-                    ExonPosition(
-                        _data=self,
-                        contig_id=exon.contig_id,
-                        start=int(exon.exon_number),
-                        start_offset=0,
-                        end=int(exon.exon_number),
-                        end_offset=0,
-                        strand=exon.strand,
-                        gene_id=exon.gene_id,
-                        gene_name=exon.gene_name,
-                        transcript_id=exon.transcript_id,
-                        transcript_name=exon.transcript_name,
-                        exon_id=exon.exon_id,
-                    )
+            for strand_ in strand:
+                if strand_ == "-":
+                    position_ = position - offset
+                else:
+                    position_ = position + offset
+
+                mask = (
+                    (self.df[CONTIG_ID].isin(contig_ids))
+                    & (self.df["start"] <= position_)
+                    & (self.df["end"] >= position_)
+                    & (self.df["strand"] == strand_)
+                    & (self.df["feature"].isin(["exon"]))
                 )
+                for _, exon in self.df[mask].iterrows():
+                    result.append(
+                        ExonPosition(
+                            _data=self,
+                            contig_id=exon.contig_id,
+                            start=int(exon.exon_number),
+                            start_offset=0,
+                            end=int(exon.exon_number),
+                            end_offset=0,
+                            strand=exon.strand,
+                            gene_id=exon.gene_id,
+                            gene_name=exon.gene_name,
+                            transcript_id=exon.transcript_id,
+                            transcript_name=exon.transcript_name,
+                            exon_id=exon.exon_id,
+                        )
+                    )
 
             return result
 
-        result_start = convert(start)
-        result_end = convert(end)
+        result_start = convert(start, start_offset)
+        result_end = convert(end, end_offset)
         assert result_start == result_end  # TODO: mapping across introns?
 
         return sorted(result_start)
 
     def _dna_to_protein(
-        self, contig_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        contig_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ProteinPosition]:
         def convert(x):
             return floor((x - 1) / 3 + 1)
 
         protein = []
-        for cdna in self._dna_to_cdna(contig_ids, start, end, strand, include_stop=False):
+        for cdna in self._dna_to_cdna(
+            contig_ids, start, start_offset, end, end_offset, strand, include_stop=False
+        ):
+            # Offset cDNA position are assumed to not map to a protein
+            if cdna.start_offset or cdna.end_offset:
+                continue
+
             pstart = convert(cdna.start)
             pend = convert(cdna.end)
             protein.append(
@@ -1369,61 +1999,78 @@ class Core(metaclass=CachedCore):
         return protein
 
     def _dna_to_rna(
-        self, contig_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        contig_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[RnaPosition]:
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
 
-            mask = (
-                (self.df[CONTIG_ID].isin(contig_ids))
-                & (self.df["start"] <= position)
-                & (self.df["end"] >= position)
-                & (self.df["strand"].isin(strand))
-                & (self.df["feature"] == "exon")
-            )
-            for _, exon in self.df[mask].iterrows():
-                if exon.strand == "-":
-                    new_start = new_end = exon.end - position + exon.transcript_start
+            for strand_ in strand:
+                if strand_ == "-":
+                    position_ = position - offset
                 else:
-                    new_start = new_end = position - exon.start + exon.transcript_start
+                    position_ = position + offset
 
-                result.append(
-                    RnaPosition(
-                        _data=self,
-                        contig_id=exon.contig_id,
-                        start=new_start,
-                        start_offset=0,
-                        end=new_end,
-                        end_offset=0,
-                        strand=exon.strand,
-                        gene_id=exon.gene_id,
-                        gene_name=exon.gene_name,
-                        transcript_id=exon.transcript_id,
-                        transcript_name=exon.transcript_name,
-                    )
+                mask = (
+                    (self.df[CONTIG_ID].isin(contig_ids))
+                    & (self.df["start"] <= position_)
+                    & (self.df["end"] >= position_)
+                    & (self.df["strand"] == strand_)
+                    & (self.df["feature"] == "exon")
                 )
+                for _, exon in self.df[mask].iterrows():
+                    if exon.strand == "-":
+                        new_start = new_end = exon.end - position_ + exon.transcript_start
+                    else:
+                        new_start = new_end = position_ - exon.start + exon.transcript_start
+
+                    result.append(
+                        RnaPosition(
+                            _data=self,
+                            contig_id=exon.contig_id,
+                            start=new_start,
+                            start_offset=0,
+                            end=new_end,
+                            end_offset=0,
+                            strand=exon.strand,
+                            gene_id=exon.gene_id,
+                            gene_name=exon.gene_name,
+                            transcript_id=exon.transcript_id,
+                            transcript_name=exon.transcript_name,
+                        )
+                    )
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_cdna(
         self,
         transcript_ids: List[str],
         start: int,
+        start_offset: int,
         end: int,
+        end_offset: int,
         strand: List[str],
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
+
+            # TODO: Is there a reasonable case where an exon position would have an offset?
+            assert not offset, offset
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1451,18 +2098,27 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_dna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[DnaPosition]:
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
+
+            # TODO: Is there a reasonable case where an exon position would have an offset?
+            assert not offset, offset
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1486,18 +2142,27 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _exon_to_exon(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ExonPosition]:
-        def convert(position: int):
+        def convert(position: int, offset):
             result = []
+
+            # TODO: Is there a reasonable case where an exon position would have an offset?
+            assert not offset, offset
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1526,27 +2191,44 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_protein(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ProteinPosition]:
         result = []
-        for cdna in self._exon_to_cdna(transcript_ids, start, end, strand, include_stop=False):
+        for cdna in self._exon_to_cdna(
+            transcript_ids, start, start_offset, end, end_offset, strand, include_stop=False
+        ):
             result.extend(cdna.to_protein())
 
         return result
 
     def _exon_to_rna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[RnaPosition]:
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
+
+            # TODO: Is there a reasonable case where an exon position would have an offset?
+            assert not offset, offset
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1573,56 +2255,100 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _protein_to_cdna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[CdnaPosition]:
         def convert(position: int):
             return ((position - 1) * 3) + 1
 
+        # TODO: Is there a reasonable case where an protein position would have an offset?
+        assert not start_offset, start_offset
+        assert not end_offset, end_offset
+
         cdna_start = convert(start)
         cdna_end = convert(end) + 2
 
-        return self._cdna_to_cdna(transcript_ids, cdna_start, cdna_end, strand, include_stop=False)
+        return self._cdna_to_cdna(
+            transcript_ids, cdna_start, 0, cdna_end, 0, strand, include_stop=False
+        )
 
     def _protein_to_dna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[DnaPosition]:
         result = []
-        for cdna in self._protein_to_cdna(transcript_ids, start, end, strand):
+        for cdna in self._protein_to_cdna(
+            transcript_ids, start, start_offset, end, end_offset, strand
+        ):
             result.extend(cdna.to_dna())
 
         return sorted(set(result))
 
     def _protein_to_exon(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ExonPosition]:
         result = []
-        for cdna in self._protein_to_cdna(transcript_ids, start, end, strand):
+        for cdna in self._protein_to_cdna(
+            transcript_ids, start, start_offset, end, end_offset, strand
+        ):
             result.extend(cdna.to_exon())
 
         return sorted(set(result))
 
     def _protein_to_protein(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ProteinPosition]:
         result = []
-        for cdna in self._protein_to_cdna(transcript_ids, start, end, strand):
+        for cdna in self._protein_to_cdna(
+            transcript_ids, start, start_offset, end, end_offset, strand
+        ):
             result.extend(cdna.to_protein())
 
         return sorted(set(result))
 
     def _protein_to_rna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[RnaPosition]:
         result = []
-        for cdna in self._protein_to_cdna(transcript_ids, start, end, strand):
+        for cdna in self._protein_to_cdna(
+            transcript_ids, start, start_offset, end, end_offset, strand
+        ):
             result.extend(cdna.to_rna())
 
         return sorted(set(result))
@@ -1631,14 +2357,29 @@ class Core(metaclass=CachedCore):
         self,
         transcript_ids: List[str],
         start: int,
+        start_offset: int,
         end: int,
+        end_offset: int,
         strand: List[str],
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
+
+            # If the offset position can be normalized to a non-offset position, do so. Otherwise
+            # just return an offset position.
+            if offset:
+                for dna in self._rna_to_dna(
+                    transcript_ids, position, offset, position, offset, strand
+                ):
+                    for cdna in dna.to_cdna():
+                        if cdna.transcript_id in transcript_ids:
+                            result.append(cdna)
+
+                if result:
+                    return result
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1648,16 +2389,15 @@ class Core(metaclass=CachedCore):
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
-                offset = position - cds.transcript_start
-                new_start = new_end = cds.cdna_start + offset
+                new_start = new_end = cds.cdna_start + (position - cds.transcript_start)
                 result.append(
                     CdnaPosition(
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=new_end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -1669,17 +2409,23 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _rna_to_dna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[DnaPosition]:
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
 
             mask = (
@@ -1691,12 +2437,12 @@ class Core(metaclass=CachedCore):
             )
             exon_df = self.df[mask]
             for _, exon in exon_df.iterrows():
-                offset = position - exon.transcript_start
                 if exon.strand == "-":
-                    new_start = new_end = exon.end - offset
+                    new_start = new_end = exon.end - (position - exon.transcript_start) - offset
                 else:
-                    new_start = new_end = exon.start + offset
+                    new_start = new_end = exon.start + (position - exon.transcript_start) + offset
 
+                # TODO: Check that new new_start is actually on the contig
                 result.append(
                     DnaPosition(
                         _data=self,
@@ -1711,18 +2457,37 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, CONTIG_ID)
 
     def _rna_to_exon(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ExonPosition]:
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
+
+            # For an offset position, we need to calculate then equivalent DNA position then map
+            # that to one or more exons. This is slower, so if there's no offset we can just map
+            # directly to an exon.
+            if offset:
+                for dna in self._rna_to_dna(
+                    transcript_ids, position, offset, position, offset, strand
+                ):
+                    for exon in dna.to_exon():
+                        if exon.transcript_id in transcript_ids:
+                            result.append(exon)
+
+                return result
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1751,27 +2516,54 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _rna_to_protein(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[ProteinPosition]:
         result = []
-        for cdna in self._rna_to_cdna(transcript_ids, start, end, strand, include_stop=False):
+        for cdna in self._rna_to_cdna(
+            transcript_ids, start, start_offset, end, end_offset, strand, include_stop=False
+        ):
             result.extend(cdna.to_protein())
 
         return sorted(set(result))
 
     def _rna_to_rna(
-        self, transcript_ids: List[str], start: int, end: int, strand: List[str]
+        self,
+        transcript_ids: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
     ) -> List[RnaPosition]:
-        def convert(position: int):
+        def convert(position: int, offset: int):
             result = []
+
+            # If the offset position can be normalized to a non-offset position, do so. Otherwise
+            # just return an offset position.
+            if offset:
+                for dna in self._rna_to_dna(
+                    transcript_ids, position, offset, position, offset, strand
+                ):
+                    for rna in dna.to_rna():
+                        if rna.transcript_id in transcript_ids:
+                            result.append(rna)
+
+                if result:
+                    return result
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
@@ -1786,9 +2578,9 @@ class Core(metaclass=CachedCore):
                         _data=self,
                         contig_id=exon.contig_id,
                         start=start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
@@ -1799,11 +2591,11 @@ class Core(metaclass=CachedCore):
 
             return result
 
-        result_start = convert(start)
+        result_start = convert(start, start_offset)
         if start == end:
             return sorted(result_start)
         else:
-            result_end = convert(end)
+            result_end = convert(end, end_offset)
             return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _map(
@@ -1812,13 +2604,17 @@ class Core(metaclass=CachedCore):
         mapfunc: Callable,
         feature: str,
         start: int,
+        start_offset: Optional[int] = None,
         end: Optional[int] = None,
+        end_offset: Optional[int] = None,
         strand: Optional[str] = None,
     ) -> List:
         end = end if end is not None else start
+        start_offset = start_offset or 0
+        end_offset = end_offset or 0
         strandl = [strand] if strand is not None else ["+", "-"]
         featurel = idfunc(feature)
-        result = mapfunc(featurel, start, end, strandl)
+        result = mapfunc(featurel, start, start_offset, end, end_offset, strandl)
 
         return sorted(set(result))
 
@@ -1827,7 +2623,9 @@ class Core(metaclass=CachedCore):
         function: Callable,
         feature: str,
         start: Optional[int],
+        start_offset: Optional[int],
         end: Optional[int],
+        end_offset: Optional[int],
         strand: Optional[str],
     ) -> List:
         if start is None and end is not None:
@@ -1845,7 +2643,9 @@ class Core(metaclass=CachedCore):
 
         result = []
         for transcript_id, start2, end2, strand2 in positions:
-            result.extend(function([transcript_id], start2, end2, [strand2]))
+            result.extend(
+                function([transcript_id], start2, start_offset, end2, end_offset, [strand2])
+            )
 
         return sorted(set(result))
 
@@ -1974,14 +2774,22 @@ def merge_positions(
     result = set()
 
     for start_pos, end_pos in product(start_positions, end_positions):
+        if start_pos.start > end_pos.start:
+            start_pos, end_pos = end_pos, start_pos
+
         start_key = getattr(start_pos, key)
         end_key = getattr(end_pos, key)
         if start_key == end_key:
             assert start_pos.__class__ == end_pos.__class__
             kwargs = start_pos.asdict()
-            start = min((start_pos.start, end_pos.start))
-            end = max((start_pos.end, end_pos.end))
-            kwargs.update({"start": start, "end": end})
+            kwargs.update(
+                {
+                    "start": start_pos.start,
+                    "start_offset": start_pos.start_offset,
+                    "end": end_pos.end,
+                    "end_offset": end_pos.end_offset,
+                }
+            )
             new_position = start_pos.__class__(**kwargs)
             result.add(new_position)
 
