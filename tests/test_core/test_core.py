@@ -529,7 +529,9 @@ def test_cdna_to_str(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=3399,
+        start_offset=0,
         end=3399,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -541,7 +543,9 @@ def test_cdna_to_str(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=1,
+        start_offset=0,
         end=3399,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -554,8 +558,18 @@ def test_cdna_to_str(ensembl100):
 
 
 def test_dna_to_str(ensembl100):
-    position1 = DnaPosition(_data=ensembl100, contig_id="5", start=1234, end=1234, strand="-")
-    position2 = DnaPosition(_data=ensembl100, contig_id="5", start=1, end=1234, strand="-")
+    position1 = DnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1234,
+        start_offset=0,
+        end=1234,
+        end_offset=0,
+        strand="-",
+    )
+    position2 = DnaPosition(
+        _data=ensembl100, contig_id="5", start=1, start_offset=0, end=1234, end_offset=0, strand="-"
+    )
     assert str(position1) == "5:g.1234"
     assert str(position2) == "5:g.1_1234"
 
@@ -565,7 +579,9 @@ def test_exon_to_str(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=1,
+        start_offset=0,
         end=1,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -577,7 +593,9 @@ def test_exon_to_str(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=1,
+        start_offset=0,
         end=2,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -594,7 +612,9 @@ def test_protein_to_str(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=524,
+        start_offset=0,
         end=524,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -606,7 +626,9 @@ def test_protein_to_str(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=74,
+        start_offset=0,
         end=524,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -623,7 +645,9 @@ def test_transcript_to_str(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=4039,
+        start_offset=0,
         end=4039,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -634,7 +658,9 @@ def test_transcript_to_str(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=1,
+        start_offset=0,
         end=4039,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -654,7 +680,9 @@ def test_cdna(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=1,
+        start_offset=0,
         end=3399,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -684,7 +712,15 @@ def test_get_cdna(ensembl100, test_cdna, feature, num_results):
 
 @pytest.fixture
 def test_dna(ensembl100):
-    return DnaPosition(_data=ensembl100, contig_id="5", start=1, end=181538259, strand="-")
+    return DnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        start_offset=0,
+        end=181538259,
+        end_offset=0,
+        strand="-",
+    )
 
 
 @pytest.mark.parametrize(
@@ -711,7 +747,9 @@ def test_exon(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=1,
+        start_offset=0,
         end=1,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
@@ -741,7 +779,15 @@ def test_get_exon(ensembl100, test_exon, feature, num_results):
 
 @pytest.fixture
 def test_gene(ensembl100):
-    return DnaPosition(_data=ensembl100, contig_id="5", start=1253147, end=1295068, strand="-")
+    return DnaPosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1253147,
+        start_offset=0,
+        end=1295068,
+        end_offset=0,
+        strand="-",
+    )
 
 
 @pytest.mark.parametrize(
@@ -768,7 +814,9 @@ def test_transcript(ensembl100):
         _data=ensembl100,
         contig_id="5",
         start=1,
+        start_offset=0,
         end=4039,
+        end_offset=0,
         strand="-",
         gene_id="ENSG00000164362",
         gene_name="TERT",
