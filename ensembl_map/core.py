@@ -1542,7 +1542,7 @@ class Core(metaclass=CachedCore):
     ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        def convert(position: int, offset: int) -> List[CdnaPosition]:
+        def convert(position: int, offset: int):
             result = []
 
             # If the offset position can be normalized to a non-offset position, do so. Otherwise
@@ -1695,21 +1695,21 @@ class Core(metaclass=CachedCore):
                     & (self.df["exon_number"] == cds.exon_number)
                     & (self.df["feature"] == "exon")
                 )
-                for _, exon in self.df[mask_exon].iterrows():
+                for _, exon_row in self.df[mask_exon].iterrows():
                     result.append(
                         ExonPosition(
                             _data=self,
-                            contig_id=exon.contig_id,
-                            start=int(exon.exon_number),
+                            contig_id=exon_row.contig_id,
+                            start=int(exon_row.exon_number),
                             start_offset=0,
-                            end=int(exon.exon_number),
+                            end=int(exon_row.exon_number),
                             end_offset=0,
-                            strand=exon.strand,
-                            gene_id=exon.gene_id,
-                            gene_name=exon.gene_name,
-                            transcript_id=exon.transcript_id,
-                            transcript_name=exon.transcript_name,
-                            exon_id=exon.exon_id,
+                            strand=exon_row.strand,
+                            gene_id=exon_row.gene_id,
+                            gene_name=exon_row.gene_name,
+                            transcript_id=exon_row.transcript_id,
+                            transcript_name=exon_row.transcript_name,
+                            exon_id=exon_row.exon_id,
                         )
                     )
 
@@ -2496,21 +2496,21 @@ class Core(metaclass=CachedCore):
                 & (self.df["strand"].isin(strand))
                 & (self.df["feature"].isin(["exon"]))
             )
-            for _, exon in self.df[mask].iterrows():
+            for _, exon_row in self.df[mask].iterrows():
                 result.append(
                     ExonPosition(
                         _data=self,
-                        contig_id=exon.contig_id,
-                        start=int(exon.exon_number),
+                        contig_id=exon_row.contig_id,
+                        start=int(exon_row.exon_number),
                         start_offset=0,
-                        end=int(exon.exon_number),
+                        end=int(exon_row.exon_number),
                         end_offset=0,
-                        strand=exon.strand,
-                        gene_id=exon.gene_id,
-                        gene_name=exon.gene_name,
-                        transcript_id=exon.transcript_id,
-                        transcript_name=exon.transcript_name,
-                        exon_id=exon.exon_id,
+                        strand=exon_row.strand,
+                        gene_id=exon_row.gene_id,
+                        gene_name=exon_row.gene_name,
+                        transcript_id=exon_row.transcript_id,
+                        transcript_name=exon_row.transcript_name,
+                        exon_id=exon_row.exon_id,
                     )
                 )
 
