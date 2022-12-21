@@ -1,8 +1,8 @@
-from ensembl_map.core import DnaPosition, ExonPosition
+from ensembl_map.core import DnaMappablePosition, ExonMappablePosition
 
 
 def test_negative_strand(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1294864,
@@ -11,7 +11,7 @@ def test_negative_strand(ensembl100):
         end_offset=0,
         strand="-",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -29,7 +29,7 @@ def test_negative_strand(ensembl100):
 
 
 def test_negative_strand_cdna_protein_end(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1253728,
@@ -38,7 +38,7 @@ def test_negative_strand_cdna_protein_end(ensembl100):
         end_offset=0,
         strand="-",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=16,
@@ -56,7 +56,7 @@ def test_negative_strand_cdna_protein_end(ensembl100):
 
 
 def test_negative_strand_cdna_protein_start(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1294987,
@@ -65,7 +65,7 @@ def test_negative_strand_cdna_protein_start(ensembl100):
         end_offset=0,
         strand="-",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -83,7 +83,7 @@ def test_negative_strand_cdna_protein_start(ensembl100):
 
 
 def test_negative_strand_overlapping_genes_different_strands(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=31166302,
@@ -93,7 +93,7 @@ def test_negative_strand_overlapping_genes_different_strands(ensembl100):
         strand="-",
     )
     expected = [
-        ExonPosition(
+        ExonMappablePosition(
             _data=ensembl100,
             contig_id="6",
             start=1,
@@ -107,7 +107,7 @@ def test_negative_strand_overlapping_genes_different_strands(ensembl100):
             transcript_name="POU5F1-204",
             exon_id="ENSE00002568331",
         ),
-        ExonPosition(
+        ExonMappablePosition(
             _data=ensembl100,
             contig_id="6",
             start=1,
@@ -126,7 +126,7 @@ def test_negative_strand_overlapping_genes_different_strands(ensembl100):
 
 
 def test_negative_strand_transcript_end(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1253167,
@@ -135,7 +135,7 @@ def test_negative_strand_transcript_end(ensembl100):
         end_offset=0,
         strand="-",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=16,
@@ -153,7 +153,7 @@ def test_negative_strand_transcript_end(ensembl100):
 
 
 def test_negative_strand_transcript_start(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1295066,
@@ -162,7 +162,7 @@ def test_negative_strand_transcript_start(ensembl100):
         end_offset=0,
         strand="-",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -180,7 +180,7 @@ def test_negative_strand_transcript_start(ensembl100):
 
 
 def test_positive_strand(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=32371034,
@@ -189,7 +189,7 @@ def test_positive_strand(ensembl100):
         end_offset=0,
         strand="+",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=20,
@@ -207,7 +207,7 @@ def test_positive_strand(ensembl100):
 
 
 def test_positive_strand_cdna_protein_end(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=32398768,
@@ -216,7 +216,7 @@ def test_positive_strand_cdna_protein_end(ensembl100):
         end_offset=0,
         strand="+",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=27,
@@ -234,7 +234,7 @@ def test_positive_strand_cdna_protein_end(ensembl100):
 
 
 def test_positive_strand_cdna_protein_start(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=32316461,
@@ -243,7 +243,7 @@ def test_positive_strand_cdna_protein_start(ensembl100):
         end_offset=0,
         strand="+",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=2,
@@ -261,7 +261,7 @@ def test_positive_strand_cdna_protein_start(ensembl100):
 
 
 def test_positive_strand_overlapping_genes_different_strands(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=31166302,
@@ -270,7 +270,7 @@ def test_positive_strand_overlapping_genes_different_strands(ensembl100):
         end_offset=0,
         strand="+",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=2,
@@ -288,7 +288,7 @@ def test_positive_strand_overlapping_genes_different_strands(ensembl100):
 
 
 def test_positive_strand_transcript_end(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=32400264,
@@ -297,7 +297,7 @@ def test_positive_strand_transcript_end(ensembl100):
         end_offset=0,
         strand="+",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=27,
@@ -315,7 +315,7 @@ def test_positive_strand_transcript_end(ensembl100):
 
 
 def test_positive_strand_transcript_start(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=32315474,
@@ -324,7 +324,7 @@ def test_positive_strand_transcript_start(ensembl100):
         end_offset=0,
         strand="+",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=1,
@@ -342,7 +342,7 @@ def test_positive_strand_transcript_start(ensembl100):
 
 
 def test_negative_strand_negative_offset(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1294770,
@@ -351,7 +351,7 @@ def test_negative_strand_negative_offset(ensembl100):
         end_offset=-1,
         strand="-",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -369,7 +369,7 @@ def test_negative_strand_negative_offset(ensembl100):
 
 
 def test_negative_strand_positive_offset(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1294667,
@@ -378,7 +378,7 @@ def test_negative_strand_positive_offset(ensembl100):
         end_offset=1,
         strand="-",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=2,
@@ -396,7 +396,7 @@ def test_negative_strand_positive_offset(ensembl100):
 
 
 def test_positive_strand_negative_offset(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=54658082,
@@ -405,7 +405,7 @@ def test_positive_strand_negative_offset(ensembl100):
         end_offset=-1,
         strand="+",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=1,
@@ -423,7 +423,7 @@ def test_positive_strand_negative_offset(ensembl100):
 
 
 def test_positive_strand_positive_offset(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=54695511,
@@ -432,7 +432,7 @@ def test_positive_strand_positive_offset(ensembl100):
         end_offset=1,
         strand="+",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=2,
@@ -450,7 +450,7 @@ def test_positive_strand_positive_offset(ensembl100):
 
 
 def test_positive_strand_positive_offset_into_intron(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=54658081,
@@ -463,7 +463,7 @@ def test_positive_strand_positive_offset_into_intron(ensembl100):
 
 
 def test_positive_strand_negative_offset_into_intron(ensembl100):
-    position = DnaPosition(
+    position = DnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=54695512,

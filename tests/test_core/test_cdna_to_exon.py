@@ -1,8 +1,8 @@
-from ensembl_map.core import CdnaPosition, ExonPosition
+from ensembl_map.core import CdnaMappablePosition, ExonMappablePosition
 
 
 def test_negative_strand(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=124,
@@ -16,7 +16,7 @@ def test_negative_strand(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -34,7 +34,7 @@ def test_negative_strand(ensembl100):
 
 
 def test_negative_strand_cdna_protein_end(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=3397,
@@ -48,7 +48,7 @@ def test_negative_strand_cdna_protein_end(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=16,
@@ -66,7 +66,7 @@ def test_negative_strand_cdna_protein_end(ensembl100):
 
 
 def test_negative_strand_cdna_protein_start(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -80,7 +80,7 @@ def test_negative_strand_cdna_protein_start(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -98,7 +98,7 @@ def test_negative_strand_cdna_protein_start(ensembl100):
 
 
 def test_positive_strand(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=8566,
@@ -112,7 +112,7 @@ def test_positive_strand(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=20,
@@ -130,7 +130,7 @@ def test_positive_strand(ensembl100):
 
 
 def test_positive_strand_cdna_protein_end(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=10255,
@@ -144,7 +144,7 @@ def test_positive_strand_cdna_protein_end(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=27,
@@ -162,7 +162,7 @@ def test_positive_strand_cdna_protein_end(ensembl100):
 
 
 def test_positive_strand_cdna_protein_start(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=1,
@@ -176,7 +176,7 @@ def test_positive_strand_cdna_protein_start(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=2,
@@ -194,7 +194,7 @@ def test_positive_strand_cdna_protein_start(ensembl100):
 
 
 def test_positive_strand_overlapping_genes_different_strands(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=580,
@@ -208,7 +208,7 @@ def test_positive_strand_overlapping_genes_different_strands(ensembl100):
         transcript_name="TCF19-204",
         protein_id="ENSP00000439397",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=2,
@@ -226,7 +226,7 @@ def test_positive_strand_overlapping_genes_different_strands(ensembl100):
 
 
 def test_negative_strand_negative_offset(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=3,
@@ -240,7 +240,7 @@ def test_negative_strand_negative_offset(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -258,7 +258,7 @@ def test_negative_strand_negative_offset(ensembl100):
 
 
 def test_negative_strand_positive_offset(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=3,
@@ -272,7 +272,7 @@ def test_negative_strand_positive_offset(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -290,7 +290,7 @@ def test_negative_strand_positive_offset(ensembl100):
 
 
 def test_positive_strand_positive_offset(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=67,
@@ -304,7 +304,7 @@ def test_positive_strand_positive_offset(ensembl100):
         transcript_name="KIT-201",
         protein_id="ENSP00000288135",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=2,
@@ -322,7 +322,7 @@ def test_positive_strand_positive_offset(ensembl100):
 
 
 def test_positive_strand_negative_offset(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=68,
@@ -336,7 +336,7 @@ def test_positive_strand_negative_offset(ensembl100):
         transcript_name="KIT-201",
         protein_id="ENSP00000288135",
     )
-    expected = ExonPosition(
+    expected = ExonMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=1,
@@ -354,7 +354,7 @@ def test_positive_strand_negative_offset(ensembl100):
 
 
 def test_positive_strand_positive_offset_into_intron(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=67,
@@ -372,7 +372,7 @@ def test_positive_strand_positive_offset_into_intron(ensembl100):
 
 
 def test_positive_strand_negative_offset_into_intron(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=68,

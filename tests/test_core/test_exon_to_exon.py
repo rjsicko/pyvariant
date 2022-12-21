@@ -1,10 +1,10 @@
 import pytest
 
-from ensembl_map.core import ExonPosition
+from ensembl_map.core import ExonMappablePosition
 
 
 def test_negative_strand(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=2,
@@ -22,7 +22,7 @@ def test_negative_strand(ensembl100):
 
 
 def test_negative_strand_cdna_protein_end(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=16,
@@ -40,7 +40,7 @@ def test_negative_strand_cdna_protein_end(ensembl100):
 
 
 def test_negative_strand_cdna_protein_start(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -58,7 +58,7 @@ def test_negative_strand_cdna_protein_start(ensembl100):
 
 
 def test_negative_strand_overlapping_genes_different_strands(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=1,
@@ -76,7 +76,7 @@ def test_negative_strand_overlapping_genes_different_strands(ensembl100):
 
 
 def test_negative_strand_transcript_end(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=16,
@@ -94,7 +94,7 @@ def test_negative_strand_transcript_end(ensembl100):
 
 
 def test_negative_strand_transcript_start(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -112,7 +112,7 @@ def test_negative_strand_transcript_start(ensembl100):
 
 
 def test_positive_strand(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=20,
@@ -130,7 +130,7 @@ def test_positive_strand(ensembl100):
 
 
 def test_positive_strand_cdna_protein_end(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=27,
@@ -148,7 +148,7 @@ def test_positive_strand_cdna_protein_end(ensembl100):
 
 
 def test_positive_strand_cdna_protein_start(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=2,
@@ -166,7 +166,7 @@ def test_positive_strand_cdna_protein_start(ensembl100):
 
 
 def test_positive_strand_overlapping_genes_different_strands(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=2,
@@ -184,7 +184,7 @@ def test_positive_strand_overlapping_genes_different_strands(ensembl100):
 
 
 def test_positive_strand_transcript_end(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=27,
@@ -202,7 +202,7 @@ def test_positive_strand_transcript_end(ensembl100):
 
 
 def test_positive_strand_transcript_start(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=1,
@@ -220,7 +220,7 @@ def test_positive_strand_transcript_start(ensembl100):
 
 
 def test_offset_error(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,

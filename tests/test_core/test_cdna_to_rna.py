@@ -1,8 +1,8 @@
-from ensembl_map.core import CdnaPosition, RnaPosition
+from ensembl_map.core import CdnaMappablePosition, RnaMappablePosition
 
 
 def test_negative_strand(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=124,
@@ -16,7 +16,7 @@ def test_negative_strand(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=203,
@@ -33,7 +33,7 @@ def test_negative_strand(ensembl100):
 
 
 def test_negative_strand_across_exon_boundary(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1573,
@@ -47,7 +47,7 @@ def test_negative_strand_across_exon_boundary(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1652,
@@ -64,7 +64,7 @@ def test_negative_strand_across_exon_boundary(ensembl100):
 
 
 def test_negative_strand_cdna_protein_end(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=3397,
@@ -78,7 +78,7 @@ def test_negative_strand_cdna_protein_end(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=3476,
@@ -95,7 +95,7 @@ def test_negative_strand_cdna_protein_end(ensembl100):
 
 
 def test_negative_strand_cdna_protein_start(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -109,7 +109,7 @@ def test_negative_strand_cdna_protein_start(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=80,
@@ -126,7 +126,7 @@ def test_negative_strand_cdna_protein_start(ensembl100):
 
 
 def test_positive_strand(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=8566,
@@ -140,7 +140,7 @@ def test_positive_strand(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=8799,
@@ -157,7 +157,7 @@ def test_positive_strand(ensembl100):
 
 
 def test_positive_strand_across_exon_boundary(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=67,
@@ -171,7 +171,7 @@ def test_positive_strand_across_exon_boundary(ensembl100):
         transcript_name="KIT-201",
         protein_id="ENSP00000288135",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=125,
@@ -188,7 +188,7 @@ def test_positive_strand_across_exon_boundary(ensembl100):
 
 
 def test_positive_strand_cdna_protein_end(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=10255,
@@ -202,7 +202,7 @@ def test_positive_strand_cdna_protein_end(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=10488,
@@ -219,7 +219,7 @@ def test_positive_strand_cdna_protein_end(ensembl100):
 
 
 def test_positive_strand_cdna_protein_start(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=1,
@@ -233,7 +233,7 @@ def test_positive_strand_cdna_protein_start(ensembl100):
         transcript_name="BRCA2-201",
         protein_id="ENSP00000369497",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=234,
@@ -250,7 +250,7 @@ def test_positive_strand_cdna_protein_start(ensembl100):
 
 
 def test_positive_strand_overlapping_genes_different_strands(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=580,
@@ -264,7 +264,7 @@ def test_positive_strand_overlapping_genes_different_strands(ensembl100):
         transcript_name="TCF19-204",
         protein_id="ENSP00000439397",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=580,
@@ -281,7 +281,7 @@ def test_positive_strand_overlapping_genes_different_strands(ensembl100):
 
 
 def test_offset(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=220,
@@ -295,7 +295,7 @@ def test_offset(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=299,
@@ -312,7 +312,7 @@ def test_offset(ensembl100):
 
 
 def test_offset_normalized(ensembl100):
-    position = CdnaPosition(
+    position = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=219,
@@ -326,7 +326,7 @@ def test_offset_normalized(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    expected = RnaPosition(
+    expected = RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=297,

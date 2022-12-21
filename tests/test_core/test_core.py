@@ -26,13 +26,13 @@ from ensembl_map.constants import (
     TRANSCRIPT_NAME,
 )
 from ensembl_map.core import (
-    CdnaPosition,
+    CdnaMappablePosition,
     Core,
-    DnaPosition,
+    DnaMappablePosition,
     EnsemblRelease,
-    ExonPosition,
-    ProteinPosition,
-    RnaPosition,
+    ExonMappablePosition,
+    ProteinMappablePosition,
+    RnaMappablePosition,
 )
 
 # features are from Ensembl 100
@@ -485,6 +485,26 @@ def test_is_transcript_true_from_name(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
+# <feature>_sequence
+# -------------------------------------------------------------------------------------------------
+def test_cds_sequence(ensembl100):
+    assert ensembl100.cds_sequence("ENST00000288135", 7, 9) == "GGC"
+
+
+def test_dna_sequence(ensembl100):
+    assert ensembl100.dna_sequence("4", 54695512, 54695514, "+") == "GCT"
+    assert ensembl100.dna_sequence("4", 54695512, 54695514, "-") == "AGC"
+
+
+def test_peptide_sequence(ensembl100):
+    assert ensembl100.peptide_sequence("ENSP00000288135", 3, 4) == "GA"
+
+
+def test_rna_sequence(ensembl100):
+    assert ensembl100.rna_sequence("ENST00000288135", 126, 128) == "GCT"
+
+
+# -------------------------------------------------------------------------------------------------
 # normalize_feature(feature, feature_type)
 # -------------------------------------------------------------------------------------------------
 def test_normalize_feature_contig_id(ensembl100):
@@ -525,7 +545,7 @@ def test_normalize_feature_transcript_name(ensembl100):
 # str()
 # -------------------------------------------------------------------------------------------------
 def test_cdna_to_str(ensembl100):
-    position1 = CdnaPosition(
+    position1 = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=3399,
@@ -539,7 +559,7 @@ def test_cdna_to_str(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    position2 = CdnaPosition(
+    position2 = CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -558,7 +578,7 @@ def test_cdna_to_str(ensembl100):
 
 
 def test_dna_to_str(ensembl100):
-    position1 = DnaPosition(
+    position1 = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1234,
@@ -567,7 +587,7 @@ def test_dna_to_str(ensembl100):
         end_offset=0,
         strand="-",
     )
-    position2 = DnaPosition(
+    position2 = DnaMappablePosition(
         _data=ensembl100, contig_id="5", start=1, start_offset=0, end=1234, end_offset=0, strand="-"
     )
     assert str(position1) == "5:g.1234"
@@ -575,7 +595,7 @@ def test_dna_to_str(ensembl100):
 
 
 def test_exon_to_str(ensembl100):
-    position1 = ExonPosition(
+    position1 = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -589,7 +609,7 @@ def test_exon_to_str(ensembl100):
         transcript_name="TERT-201",
         exon_id="ENSE00003896691",
     )
-    position2 = ExonPosition(
+    position2 = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -608,7 +628,7 @@ def test_exon_to_str(ensembl100):
 
 
 def test_protein_to_str(ensembl100):
-    position1 = ProteinPosition(
+    position1 = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=524,
@@ -622,7 +642,7 @@ def test_protein_to_str(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    position2 = ProteinPosition(
+    position2 = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=74,
@@ -641,7 +661,7 @@ def test_protein_to_str(ensembl100):
 
 
 def test_transcript_to_str(ensembl100):
-    position1 = RnaPosition(
+    position1 = RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=4039,
@@ -654,7 +674,7 @@ def test_transcript_to_str(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    position2 = RnaPosition(
+    position2 = RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -676,7 +696,7 @@ def test_transcript_to_str(ensembl100):
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
 def test_cdna(ensembl100):
-    return CdnaPosition(
+    return CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -712,7 +732,7 @@ def test_get_cdna(ensembl100, test_cdna, feature, num_results):
 
 @pytest.fixture
 def test_dna(ensembl100):
-    return DnaPosition(
+    return DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -743,7 +763,7 @@ def test_get_dna(ensembl100, test_dna, feature, num_results):
 
 @pytest.fixture
 def test_exon(ensembl100):
-    return ExonPosition(
+    return ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -779,7 +799,7 @@ def test_get_exon(ensembl100, test_exon, feature, num_results):
 
 @pytest.fixture
 def test_gene(ensembl100):
-    return DnaPosition(
+    return DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1253147,
@@ -810,7 +830,7 @@ def test_get_gene(ensembl100, test_gene, feature, num_results):
 
 @pytest.fixture
 def test_transcript(ensembl100):
-    return RnaPosition(
+    return RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -841,3 +861,15 @@ def test_get_transcript(ensembl100, test_transcript, feature, num_results):
     results = ensembl100.get_transcripts(feature)
     assert len(results) == num_results
     assert test_transcript in results
+
+
+# -------------------------------------------------------------------------------------------------
+# mutate_cds_to_protein
+# -------------------------------------------------------------------------------------------------
+def test_mutate_cds_to_protein(ensembl100):
+    # GTT -> GAT
+    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "A") == ["D"]
+    # GTTCTG -> GAAATG
+    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 40, "AAA") == ["EM"]
+    # GTT -> GAT or GCT
+    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "M") == ["A", "D"]
