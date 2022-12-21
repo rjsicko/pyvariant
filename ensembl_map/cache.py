@@ -124,6 +124,11 @@ class EnsemblCache:
             if clean:
                 self.delete_gtf()
 
+        # DEBUG
+        df = self.load_df()
+        df.to_csv(self.local_gtf_cache_filepath.replace(".pickle", ".csv"), index=False, sep="\t")
+        # /DEBUG
+
     # ---------------------------------------------------------------------------------------------
     # Release cache directory
     # ---------------------------------------------------------------------------------------------

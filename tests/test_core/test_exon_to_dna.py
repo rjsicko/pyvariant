@@ -1,10 +1,10 @@
 import pytest
 
-from ensembl_map.core import DnaPosition, ExonPosition
+from ensembl_map.core import DnaMappablePosition, ExonMappablePosition
 
 
 def test_negative_strand(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=2,
@@ -18,7 +18,7 @@ def test_negative_strand(ensembl100):
         transcript_name="TERT-201",
         exon_id="ENSE00001197112",
     )
-    expected = DnaPosition(
+    expected = DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1293313,
@@ -31,7 +31,7 @@ def test_negative_strand(ensembl100):
 
 
 def test_positive_strand(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=3,
@@ -45,7 +45,7 @@ def test_positive_strand(ensembl100):
         transcript_name="BRCA2-201",
         exon_id="ENSE00003666217",
     )
-    expected = DnaPosition(
+    expected = DnaMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=32319077,
@@ -58,7 +58,7 @@ def test_positive_strand(ensembl100):
 
 
 def test_offset_error(ensembl100):
-    position = ExonPosition(
+    position = ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,

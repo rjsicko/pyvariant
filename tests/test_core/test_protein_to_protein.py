@@ -1,10 +1,10 @@
 import pytest
 
-from ensembl_map.core import ProteinPosition
+from ensembl_map.core import ProteinMappablePosition
 
 
 def test_negative_strand(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=42,
@@ -22,7 +22,7 @@ def test_negative_strand(ensembl100):
 
 
 def test_negative_strand_across_exon_boundary(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=525,
@@ -40,7 +40,7 @@ def test_negative_strand_across_exon_boundary(ensembl100):
 
 
 def test_negative_strand_cdna_protein_end(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1132,
@@ -58,7 +58,7 @@ def test_negative_strand_cdna_protein_end(ensembl100):
 
 
 def test_negative_strand_stop_codon(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1133,
@@ -76,7 +76,7 @@ def test_negative_strand_stop_codon(ensembl100):
 
 
 def test_negative_strand_cdna_protein_start(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -94,7 +94,7 @@ def test_negative_strand_cdna_protein_start(ensembl100):
 
 
 def test_positive_strand(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=2856,
@@ -112,7 +112,7 @@ def test_positive_strand(ensembl100):
 
 
 def test_positive_strand_across_exon_boundary(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=23,
@@ -130,7 +130,7 @@ def test_positive_strand_across_exon_boundary(ensembl100):
 
 
 def test_positive_strand_cdna_protein_end(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=3418,
@@ -148,7 +148,7 @@ def test_positive_strand_cdna_protein_end(ensembl100):
 
 
 def test_positive_strand_stop_codon(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=3419,
@@ -166,7 +166,7 @@ def test_positive_strand_stop_codon(ensembl100):
 
 
 def test_positive_strand_cdna_protein_start(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="13",
         start=1,
@@ -184,7 +184,7 @@ def test_positive_strand_cdna_protein_start(ensembl100):
 
 
 def test_positive_strand_overlapping_genes_different_strands(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="6",
         start=194,
@@ -202,7 +202,7 @@ def test_positive_strand_overlapping_genes_different_strands(ensembl100):
 
 
 def test_offset_error(ensembl100):
-    position = ProteinPosition(
+    position = ProteinMappablePosition(
         _data=ensembl100,
         contig_id="4",
         start=21,
