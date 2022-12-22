@@ -34,20 +34,16 @@ def test_expand_pep():
 
 
 def test_format_hgvs_position():
-    assert format_hgvs_position(start=5) == "5"
-    assert format_hgvs_position(start=5, start_offset=1) == "5+1"
-    assert format_hgvs_position(start=5, start_offset=-1) == "5-1"
-    assert format_hgvs_position(start=1, start_offset=1) == "+1"
-    assert format_hgvs_position(start=1, start_offset=-1) == "-1"
-    assert format_hgvs_position(end=5) == "5"
-    assert format_hgvs_position(end=5, end_offset=1) == "5+1"
-    assert format_hgvs_position(end=5, end_offset=-1) == "5-1"
-    assert format_hgvs_position(end=1, end_offset=1) == "+1"
-    assert format_hgvs_position(end=1, end_offset=-1) == "-1"
-    assert format_hgvs_position(start=5, end=6) == "(5_6)"
-    assert format_hgvs_position(start=5, end=6, start_offset=1) == "(5+1_6)"
-    assert format_hgvs_position(start=5, end=6, end_offset=1) == "(5_6+1)"
-    assert format_hgvs_position(start=5, end=6, start_offset=1, end_offset=1) == "(5+1_6+1)"
+    assert format_hgvs_position(5, 0) == "5"
+    assert format_hgvs_position(5, 1) == "5+1"
+    assert format_hgvs_position(5, -1) == "5-1"
+    assert format_hgvs_position(1, 1) == "+1"
+    assert format_hgvs_position(1, -1) == "-1"
+    assert format_hgvs_position(5, 0, is_3_prime_utr=True) == "*5"
+    assert format_hgvs_position(5, 1, is_3_prime_utr=True) == "*5+1"
+    assert format_hgvs_position(5, -1, is_3_prime_utr=True) == "*5-1"
+    assert format_hgvs_position(1, 1, is_3_prime_utr=True) == "*1+1"
+    assert format_hgvs_position(1, -1, is_3_prime_utr=True) == "*1-1"
 
 
 def test_reverse_complement():

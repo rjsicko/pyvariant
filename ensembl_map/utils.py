@@ -56,43 +56,20 @@ def expand_pep(seq: str) -> Iterator[str]:
     yield from iter("".join(i) for i in product(*("".join(PROTEIN[aa]) for aa in seq)))
 
 
-def format_hgvs_position(
-    start: int = 0,
-    end: int = 0,
-    start_offset: int = 0,
-    end_offset: int = 0,
-    is_3_prime_utr: bool = False,
-) -> str:
+def format_hgvs_position(position: int, offset: int, is_3_prime_utr: bool = False) -> str:
     """Format a position as a string according to HGVS standards."""
-
-    def format_position(position: int, offset: int) -> str:
-        position_str = ""
-        if position:
-            if offset and position == 1:
-                position_str = f"{offset:+}"
-            elif offset:
-                position_str = f"{position}{offset:+}"
-            else:
-                position_str = f"{position}"
-
-        return position_str
-
-    start_str = format_position(start, start_offset)
-    if (start, start_offset) != (end, end_offset):
-        end_str = format_position(end, end_offset)
-    else:
-        end_str = ""
-
     position_str = ""
+
     if is_3_prime_utr:
         position_str = "*"
 
-    if start_str and end_str:
-        position_str += f"({start_str}_{end_str})"
-    elif start_str:
-        position_str += start_str
-    elif end_str:
-        position_str += end_str
+    if position:
+        if offset and position == 1 and not is_3_prime_utr:
+            position_str += f"{offset:+}"
+        elif offset:
+            position_str += f"{position}{offset:+}"
+        else:
+            position_str += f"{position}"
 
     return position_str
 

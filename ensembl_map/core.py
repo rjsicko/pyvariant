@@ -633,12 +633,12 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                 variant = CdnaSubstitution.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) > 1 and len(new_alt) == 0:
+            elif len(new_ref) > 0 and len(new_alt) == 0:
                 # If only the reference sequence is removed it is a deletion
                 variant = CdnaDeletion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) == 0 and len(new_alt) > 1:
+            elif len(new_ref) == 0 and len(new_alt) > 0:
                 # If only new bases are added...
                 # If the bases are a copy of the bases immediately 5', it is an duplication...
                 # Otherwise it is an insertion
@@ -693,12 +693,12 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                 variant = CdnaSubstitution.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) > 1 and len(new_alt) == 0:
+            elif len(new_ref) > 0 and len(new_alt) == 0:
                 # If only the reference sequence is removed it is a deletion
                 variant = CdnaDeletion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) == 0 and len(new_alt) > 1:
+            elif len(new_ref) == 0 and len(new_alt) > 0:
                 # If only new bases are added...
                 # If the bases are a copy of the bases immediately 5', it is an duplication...
                 # Otherwise it is an insertion
@@ -728,16 +728,6 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
             variant_list.append(variant)
 
         return variant_list
-
-    def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.transcript_id}:c.{position}{self.refseq}>{self.altseq}"
 
     def to_cdna(self) -> List[CdnaSmallVariant]:
         return self._data._cdna_to_cdna_variant(
@@ -819,12 +809,12 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
                 variant = DnaSubstitution.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) > 1 and len(new_alt) == 0:
+            elif len(new_ref) > 0 and len(new_alt) == 0:
                 # If only the reference sequence is removed it is a deletion
                 variant = DnaDeletion.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) == 0 and len(new_alt) > 1:
+            elif len(new_ref) == 0 and len(new_alt) > 0:
                 # If only new bases are added...
                 # If the bases are a copy of the bases immediately 5', it is an duplication...
                 # Otherwise it is an insertion
@@ -954,12 +944,12 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
                         variant = ProteinSubstitution.copy_from(
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                         )
-                    elif len(new_ref) > 1 and len(new_alt) == 0:
+                    elif len(new_ref) > 0 and len(new_alt) == 0:
                         # If only the reference sequence is removed it is a deletion
                         variant = ProteinDeletion.copy_from(
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                         )
-                    elif len(new_ref) == 0 and len(new_alt) > 1:
+                    elif len(new_ref) == 0 and len(new_alt) > 0:
                         # If only new bases are added...
                         # If the bases are a copy of the bases immediately 5', it is an duplication...
                         # Otherwise it is an insertion
@@ -1074,12 +1064,12 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
                 variant = RnaSubstitution.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) > 1 and len(new_alt) == 0:
+            elif len(new_ref) > 0 and len(new_alt) == 0:
                 # If only the reference sequence is removed it is a deletion
                 variant = RnaDeletion.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) == 0 and len(new_alt) > 1:
+            elif len(new_ref) == 0 and len(new_alt) > 0:
                 # If only new bases are added...
                 # If the bases are a copy of the bases immediately 5', it is an duplication...
                 # Otherwise it is an insertion
@@ -1171,27 +1161,61 @@ class Deletion(SmallVariant):
 
     @property
     def type(self) -> str:
-        return DELINS
+        return DELETION
 
 
 @dataclass(eq=True, frozen=True)
 class CdnaDeletion(Deletion, CdnaSmallVariant):
     """Stores information on a cDNA deletion variant and converts to other position types."""
 
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:c.{start}del"
+        else:
+            return f"{self.transcript_id}:c.{start}_{end}del"
+
 
 @dataclass(eq=True, frozen=True)
 class DnaDeletion(Deletion, DnaSmallVariant):
     """Stores information on a DNA deletion variant and converts to other position types."""
+
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.contig_id}:g.{start}del"
+        else:
+            return f"{self.contig_id}:g.{start}_{end}del"
 
 
 @dataclass(eq=True, frozen=True)
 class ProteinDeletion(Deletion, ProteinSmallVariant):
     """Stores information on a protein deletion variant and converts to other position types."""
 
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        start_seq = self.refseq[0]
+        end_seq = self.refseq[-1]
+        if start == end:
+            return f"{self.protein_id}:p.{start_seq}{start}del"
+        else:
+            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}del"
+
 
 @dataclass(eq=True, frozen=True)
 class RnaDeletion(Deletion, RnaSmallVariant):
     """Stores information on an RNA deletion variant and converts to other position types."""
+
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:r.{start}del"
+        else:
+            return f"{self.transcript_id}:r.{start}_{end}del"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1211,14 +1235,12 @@ class CdnaDelins(Delins, CdnaSmallVariant):
     """Stores information on a cDNA delins variant and converts to other position types."""
 
     def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.transcript_id}:c.{position}delins{self.altseq}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:c.{start}delins{self.altseq}"
+        else:
+            return f"{self.transcript_id}:c.{start}_{end}delins{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
@@ -1226,14 +1248,12 @@ class DnaDelins(Delins, DnaSmallVariant):
     """Stores information on a DNA delins variant and converts to other position types."""
 
     def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.contig_id}:g.{position}delins{self.altseq}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.contig_id}:g.{start}delins{self.altseq}"
+        else:
+            return f"{self.contig_id}:g.{start}_{end}delins{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
@@ -1241,14 +1261,14 @@ class ProteinDelins(Delins, ProteinSmallVariant):
     """Stores information on a protein delins variant and converts to other position types."""
 
     def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.protein_id}:p.{position}delins{self.altseq}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        start_seq = self.refseq[0]
+        end_seq = self.refseq[-1]
+        if start == end:
+            return f"{self.contig_id}:g.{start_seq}{start}delins{self.altseq}"
+        else:
+            return f"{self.contig_id}:g.{start_seq}{start}_{end_seq}{end}delins{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
@@ -1256,14 +1276,12 @@ class RnaDelins(Delins, RnaSmallVariant):
     """Stores information on an RNA delins variant and converts to other position types."""
 
     def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.transcript_id}:r.{position}delins{self.altseq}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:r.{start}delins{self.altseq}"
+        else:
+            return f"{self.transcript_id}:r.{start}_{end}delins{self.altseq}"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1339,7 +1357,7 @@ class Insertion(SmallVariant):
 
     @property
     def type(self) -> str:
-        return DELINS
+        return INSERTION
 
 
 @dataclass(eq=True, frozen=True)
@@ -1382,14 +1400,8 @@ class CdnaSubstitution(Substitution, CdnaSmallVariant):
     """Stores information on a cDNA substitution variant and converts to other position types."""
 
     def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.transcript_id}:c.{position}{self.refseq}>{self.altseq}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        return f"{self.transcript_id}:c.{start}{self.refseq}>{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
@@ -1397,14 +1409,8 @@ class DnaSubstitution(Substitution, DnaSmallVariant):
     """Stores information on a DNA substitution variant and converts to other position types."""
 
     def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.contig_id}:g.{position}{self.refseq}>{self.altseq}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        return f"{self.contig_id}:g.{start}{self.refseq}>{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
@@ -1412,14 +1418,8 @@ class ProteinSubstitution(Substitution, ProteinSmallVariant):
     """Stores information on a protein substitution variant and converts to other position types."""
 
     def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.protein_id}:p.{self.refseq}{position}{self.altseq}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        return f"{self.protein_id}:p.{self.refseq}{start}{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
@@ -1427,14 +1427,8 @@ class RnaSubstitution(Substitution, RnaSmallVariant):
     """Stores information on an RNA substitution variant and converts to other position types."""
 
     def __str__(self) -> str:
-        position = format_hgvs_position(
-            start=self.start,
-            end=self.end,
-            start_offset=self.start_offset,
-            end_offset=self.end_offset,
-            is_3_prime_utr=False,
-        )
-        return f"{self.transcript_id}:r.{position}{self.refseq}>{self.altseq}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        return f"{self.transcript_id}:r.{start}{self.refseq}>{self.altseq}"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -4090,15 +4084,19 @@ class Core(metaclass=CachedCore):
         rna = self.cdna_to_rna(transcript_id, 1)
         assert len(rna) == 1, f"Ambiguous transcript start for '{transcript_id}'"
         offset = rna[0].start - 1
-        assert offset > 0
+        assert offset >= 0
 
         return offset
 
     def mutate_cds_to_protein(
-        self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_alt: str, cdna_ref: str = ""
+        self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_alt: str
     ) -> List[str]:
         """Return the mutated protein sequence, given a cDNA position and alt allele."""
         pep_altseq_set = set()
+
+        # If no alt, assume we're talking about a deletion variant
+        if not cdna_alt:
+            return [""]
 
         # Assert that the nucleotide change does not result in a frameshift
         assert cdna_end - cdna_start + 1 == len(cdna_alt)
