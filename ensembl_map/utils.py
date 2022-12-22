@@ -74,6 +74,14 @@ def format_hgvs_position(position: int, offset: int, is_3_prime_utr: bool = Fals
     return position_str
 
 
+def is_frameshift(cdna_start: int, cdna_end: int, cdna_altseq: str) -> bool:
+    """Check if a cDNA nucleotide change would result in a frameshift mutation."""
+    reflen = cdna_end - cdna_start + 1
+    altlen = len(cdna_altseq)
+
+    return abs(reflen - altlen) % 3 != 0
+
+
 def reverse_complement(sequence: str) -> str:
     """Return the reverse complement of a given nucleotide sequence."""
     return str(Seq(sequence).reverse_complement())

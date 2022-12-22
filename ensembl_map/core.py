@@ -34,6 +34,7 @@ from .utils import (
     collapse_mutation,
     expand_nt,
     format_hgvs_position,
+    is_frameshift,
     reverse_complement,
     reverse_translate,
     split_by_codon,
@@ -923,13 +924,13 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
         variant_list = []
 
         protein_refseq = protein.sequence()
-        for alt in expand_nt(altseq):
-            if abs(len(refseq) - len(alt)) % 3 != 0:
+        for cdna_alt in expand_nt(altseq):
+            if is_frameshift(cdna.start, cdna.end, cdna_alt):
                 # If the number of nucleotides added/deleted deletion is not divisible by 3, it results in a frame shift
                 raise NotImplementedError()  # TODO
             else:
                 for protein_alt in protein._data.mutate_cds_to_protein(
-                    cdna.transcript_id, cdna.start, cdna.end, alt
+                    cdna.transcript_id, cdna.start, cdna.end, cdna_alt
                 ):
                     # Remove bases that are unchanged between the ref and alt alleles
                     new_ref, new_alt, new_start, new_end = collapse_mutation(
@@ -1266,9 +1267,9 @@ class ProteinDelins(Delins, ProteinSmallVariant):
         start_seq = self.refseq[0]
         end_seq = self.refseq[-1]
         if start == end:
-            return f"{self.contig_id}:g.{start_seq}{start}delins{self.altseq}"
+            return f"{self.protein_id}:p.{start_seq}{start}delins{self.altseq}"
         else:
-            return f"{self.contig_id}:g.{start_seq}{start}_{end_seq}{end}delins{self.altseq}"
+            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}delins{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
@@ -4099,7 +4100,7 @@ class Core(metaclass=CachedCore):
             return [""]
 
         # Assert that the nucleotide change does not result in a frameshift
-        assert cdna_end - cdna_start + 1 == len(cdna_alt)
+        assert not is_frameshift(cdna_start, cdna_end, cdna_alt)
 
         # Get the codon sequence
         codon_start_offset = (cdna_start - 1) % 3

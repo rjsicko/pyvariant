@@ -5,6 +5,7 @@ from ensembl_map.utils import (
     expand_nt,
     expand_pep,
     format_hgvs_position,
+    is_frameshift,
     reverse_complement,
     reverse_translate,
     split_by_codon,
@@ -44,6 +45,12 @@ def test_format_hgvs_position():
     assert format_hgvs_position(5, -1, is_3_prime_utr=True) == "*5-1"
     assert format_hgvs_position(1, 1, is_3_prime_utr=True) == "*1+1"
     assert format_hgvs_position(1, -1, is_3_prime_utr=True) == "*1-1"
+
+
+def test_is_frameshift():
+    assert is_frameshift(1, 3, "A")
+    assert is_frameshift(1, 3, "AA")
+    assert not is_frameshift(1, 3, "AAA")
 
 
 def test_reverse_complement():
