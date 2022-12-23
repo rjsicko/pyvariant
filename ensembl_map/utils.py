@@ -16,14 +16,28 @@ def collapse_mutation(ref: str, alt: str) -> Tuple[str, str, int, int]:
         --------------------------------
         collapsed alt:  101 -  TG - 102
 
-        >>> collapse_mutation('GGT', 'GTG') == ('GT', 'TG', 1, 0)
-        True
+        >>> collapse_mutation("GGT", "GTG")
+        ("GT", "TG", 1, 0)
+        >>> collapse_mutation("GGT", "GTT")
+        ("G", "T", 1, 1)
+        >>> collapse_mutation("GTT", "CTT")
+        ("G", "C", 0, 2)
+        >>> collapse_mutation("TTG", "TTA")
+        ("G", "A", 2, 0)
+        >>> collapse_mutation("ATG", "A")
+        ("ATG", "A", 0, 0)
+        >>> collapse_mutation("ATG", "ATG")
+        ("ATG", "ATG", 0, 0)
+        >>> collapse_mutation("ATG", "ATGATG")
+        ("ATG", "ATGATG", 0, 0)
+        >>> collapse_mutation("ATGATG", "ATG")
+        ("ATGATG", "ATG", 0, 0)
     """
-    # special case when the ref and alt are the same
+    # Special case when the ref and alt are the same
     if ref == alt:
         return ref, alt, 0, 0
 
-    # can't collapse if codons are different lengths
+    # Can't collapse if codons are different lengths
     if len(ref) != len(alt):
         return ref, alt, 0, 0
 

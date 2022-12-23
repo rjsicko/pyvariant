@@ -629,7 +629,12 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
             end = cdna.end - new_end
 
             # Determine the type of variant
-            if len(new_ref) == 1 and len(new_alt) == 1:
+            if new_alt == new_ref * 2:
+                # If the bases are a copy of the bases immediately 5' it is an duplication
+                variant = CdnaDuplication.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif len(new_ref) == 1 and len(new_alt) == 1:
                 # If exactly one base changes it is a substitution
                 variant = CdnaSubstitution.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -640,24 +645,15 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
             elif len(new_ref) == 0 and len(new_alt) > 0:
-                # If only new bases are added...
-                # If the bases are a copy of the bases immediately 5', it is an duplication...
-                # Otherwise it is an insertion
-                five_prime_start = start - len(new_alt)
-                five_prime_end = end - len(new_alt)
-                five_prime_ref = (
-                    cdna._data.cds_sequence(cdna.transcript_id, five_prime_start, five_prime_end)
-                    if (five_prime_start > 0 and five_prime_end > 0)
-                    else ""
+                # If only new bases are added it is an insertion
+                variant = CdnaInsertion.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-                if new_ref == five_prime_ref:
-                    variant = CdnaDuplication.copy_from(
-                        cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                else:
-                    variant = CdnaInsertion.copy_from(
-                        cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
+            elif new_alt == new_ref * 2:
+                # If the bases are a copy of the bases immediately 5' it is an duplication
+                variant = CdnaDuplication.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
             elif len(new_ref) * len(new_alt) > 1:
                 # If more than one ref and alt base is changed it is a delins
                 variant = CdnaDelins.copy_from(
@@ -700,24 +696,15 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
             elif len(new_ref) == 0 and len(new_alt) > 0:
-                # If only new bases are added...
-                # If the bases are a copy of the bases immediately 5', it is an duplication...
-                # Otherwise it is an insertion
-                five_prime_start = start - len(new_alt)
-                five_prime_end = end - len(new_alt)
-                five_prime_ref = (
-                    cdna._data.cds_sequence(cdna.transcript_id, five_prime_start, five_prime_end)
-                    if (five_prime_start > 0 and five_prime_end > 0)
-                    else ""
+                # If only new bases are added it is an insertion
+                variant = CdnaInsertion.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-                if new_ref == five_prime_ref:
-                    variant = CdnaDuplication.copy_from(
-                        cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                else:
-                    variant = CdnaInsertion.copy_from(
-                        cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
+            elif new_alt == new_ref * 2:
+                # If the bases are a copy of the bases immediately 5' it is an duplication
+                variant = CdnaDuplication.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
             elif len(new_ref) * len(new_alt) > 1:
                 # If more than one ref and alt base is changed it is a delins
                 variant = CdnaDelins.copy_from(
@@ -816,26 +803,15 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
             elif len(new_ref) == 0 and len(new_alt) > 0:
-                # If only new bases are added...
-                # If the bases are a copy of the bases immediately 5', it is an duplication...
-                # Otherwise it is an insertion
-                five_prime_start = start - len(new_alt)
-                five_prime_end = end - len(new_alt)
-                five_prime_ref = (
-                    dna._data.dna_sequence(
-                        dna.contig_id, five_prime_start, five_prime_end, strand=dna.strand
-                    )
-                    if (five_prime_start > 0 and five_prime_end > 0)
-                    else ""
+                # If only new bases are added it is an insertion
+                variant = DnaInsertion.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-                if new_ref == five_prime_ref:
-                    variant = DnaDuplication.copy_from(
-                        dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                else:
-                    variant = DnaInsertion.copy_from(
-                        dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
+            elif new_alt == new_ref * 2:
+                # If the bases are a copy of the bases immediately 5' it is an duplication
+                variant = DnaDuplication.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
             elif len(new_ref) * len(new_alt) > 1:
                 # If more than one ref and alt base is changed it is a delins
                 variant = DnaDelins.copy_from(
@@ -951,26 +927,15 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                         )
                     elif len(new_ref) == 0 and len(new_alt) > 0:
-                        # If only new bases are added...
-                        # If the bases are a copy of the bases immediately 5', it is an duplication...
-                        # Otherwise it is an insertion
-                        five_prime_start = start - len(new_alt)
-                        five_prime_end = end - len(new_alt)
-                        five_prime_ref = (
-                            protein._data.peptide_sequence(
-                                protein.transcript_id, five_prime_start, five_prime_end
-                            )
-                            if (five_prime_start > 0 and five_prime_end > 0)
-                            else ""
+                        # If only new bases are added it is an insertion
+                        variant = ProteinInsertion.copy_from(
+                            protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                         )
-                        if new_ref == five_prime_ref:
-                            variant = ProteinDuplication.copy_from(
-                                protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                            )
-                        else:
-                            variant = ProteinInsertion.copy_from(
-                                protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                            )
+                    elif new_alt == new_ref * 2:
+                        # If the bases are a copy of the bases immediately 5' it is an duplication
+                        variant = ProteinDuplication.copy_from(
+                            protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                        )
                     elif len(new_ref) * len(new_alt) > 1:
                         # If more than one ref and alt base is changed it is a delins
                         variant = ProteinDelins.copy_from(
@@ -1071,24 +1036,15 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
             elif len(new_ref) == 0 and len(new_alt) > 0:
-                # If only new bases are added...
-                # If the bases are a copy of the bases immediately 5', it is an duplication...
-                # Otherwise it is an insertion
-                five_prime_start = start - len(new_alt)
-                five_prime_end = end - len(new_alt)
-                five_prime_ref = (
-                    rna._data.rna_sequence(rna.transcript_id, five_prime_start, five_prime_end)
-                    if (five_prime_start > 0 and five_prime_end > 0)
-                    else ""
+                # If only new bases are added it is an insertion
+                variant = RnaInsertion.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-                if new_ref == five_prime_ref:
-                    variant = RnaDuplication.copy_from(
-                        rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                else:
-                    variant = RnaInsertion.copy_from(
-                        rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
+            elif new_alt == new_ref * 2:
+                # If the bases are a copy of the bases immediately 5' it is an duplication
+                variant = RnaDuplication.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
             elif len(new_ref) * len(new_alt) > 1:
                 # If more than one ref and alt base is changed it is a delins
                 variant = RnaDelins.copy_from(
@@ -1301,20 +1257,54 @@ class Duplication(SmallVariant):
 class CdnaDuplication(Duplication, CdnaSmallVariant):
     """Stores information on a cDNA duplication variant and converts to other position types."""
 
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:c.{start}dup"
+        else:
+            return f"{self.transcript_id}:c.{start}_{end}dup"
+
 
 @dataclass(eq=True, frozen=True)
 class DnaDuplication(Duplication, DnaSmallVariant):
     """Stores information on a DNA duplication variant and converts to other position types."""
+
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.contig_id}:g.{start}dup"
+        else:
+            return f"{self.contig_id}:g.{start}_{end}dup"
 
 
 @dataclass(eq=True, frozen=True)
 class ProteinDuplication(Duplication, ProteinSmallVariant):
     """Stores information on a protein duplication variant and converts to other position types."""
 
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        start_seq = self.refseq[0]
+        end_seq = self.refseq[-1]
+        if start == end:
+            return f"{self.protein_id}:p.{start_seq}{start}dup"
+        else:
+            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}dup"
+
 
 @dataclass(eq=True, frozen=True)
 class RnaDuplication(Duplication, RnaSmallVariant):
     """Stores information on an RNA duplication variant and converts to other position types."""
+
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:r.{start}dup"
+        else:
+            return f"{self.transcript_id}:r.{start}_{end}dup"
 
 
 # -------------------------------------------------------------------------------------------------

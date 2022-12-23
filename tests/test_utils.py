@@ -20,6 +20,8 @@ def test_collapse_mutation():
     assert collapse_mutation("TTG", "TTA") == ("G", "A", 2, 0)
     assert collapse_mutation("ATG", "A") == ("ATG", "A", 0, 0)
     assert collapse_mutation("ATG", "ATG") == ("ATG", "ATG", 0, 0)
+    assert collapse_mutation("ATG", "ATGATG") == ("ATG", "ATGATG", 0, 0)
+    assert collapse_mutation("ATGATG", "ATG") == ("ATGATG", "ATG", 0, 0)
 
 
 def test_expand_nt():
