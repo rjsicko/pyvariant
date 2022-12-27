@@ -20,6 +20,7 @@ def test_collapse_mutation():
     assert collapse_mutation("TTG", "TTA") == ("G", "A", 2, 0)
     assert collapse_mutation("ATG", "A") == ("ATG", "A", 0, 0)
     assert collapse_mutation("ATG", "ATG") == ("ATG", "ATG", 0, 0)
+    assert collapse_mutation("AA", "ATTCA") == ("AA", "ATTCA", 0, 0)
     assert collapse_mutation("ATG", "ATGATG") == ("ATG", "ATGATG", 0, 0)
     assert collapse_mutation("ATGATG", "ATG") == ("ATGATG", "ATG", 0, 0)
 
@@ -50,9 +51,9 @@ def test_format_hgvs_position():
 
 
 def test_is_frameshift():
-    assert is_frameshift(1, 3, "A")
-    assert is_frameshift(1, 3, "AA")
-    assert not is_frameshift(1, 3, "AAA")
+    assert is_frameshift("AAA", "A")
+    assert is_frameshift("AAA", "AA")
+    assert not is_frameshift("AAA", "AAA")
 
 
 def test_reverse_complement():

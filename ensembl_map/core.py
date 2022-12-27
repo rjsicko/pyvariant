@@ -36,6 +36,7 @@ from .utils import (
     format_hgvs_position,
     is_frameshift,
     reverse_complement,
+    is_insertion,
     reverse_translate,
     split_by_codon,
     strip_version,
@@ -644,7 +645,7 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                 variant = CdnaDeletion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) == 0 and len(new_alt) > 0:
+            elif is_insertion(new_ref, new_alt):
                 # If only new bases are added it is an insertion
                 variant = CdnaInsertion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -695,10 +696,11 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                 variant = CdnaDeletion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) == 0 and len(new_alt) > 0:
+            elif is_insertion(new_ref, new_alt):
                 # If only new bases are added it is an insertion
+                # For protein -> cDNA, insertion takes place between the codons e.g. GCT|TAT -> TT
                 variant = CdnaInsertion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    cdna, start=start + 2, end=end - 2, refseq=new_ref, altseq=new_alt
                 )
             elif new_alt == new_ref * 2:
                 # If the bases are a copy of the bases immediately 5' it is an duplication
@@ -802,7 +804,7 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
                 variant = DnaDeletion.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) == 0 and len(new_alt) > 0:
+            elif is_insertion(new_ref, new_alt):
                 # If only new bases are added it is an insertion
                 variant = DnaInsertion.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -900,13 +902,13 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
         variant_list = []
 
         protein_refseq = protein.sequence()
-        for cdna_alt in expand_nt(altseq):
-            if is_frameshift(cdna.start, cdna.end, cdna_alt):
+        for cdna_ref, cdna_alt in product(expand_nt(refseq), expand_nt(altseq)):
+            if is_frameshift(cdna_ref, cdna_alt):
                 # If the number of nucleotides added/deleted deletion is not divisible by 3, it results in a frame shift
                 raise NotImplementedError()  # TODO
             else:
                 for protein_alt in protein._data.mutate_cds_to_protein(
-                    cdna.transcript_id, cdna.start, cdna.end, cdna_alt
+                    cdna.transcript_id, cdna.start, cdna.end, cdna_ref, cdna_alt
                 ):
                     # Remove bases that are unchanged between the ref and alt alleles
                     new_ref, new_alt, new_start, new_end = collapse_mutation(
@@ -926,7 +928,7 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
                         variant = ProteinDeletion.copy_from(
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                         )
-                    elif len(new_ref) == 0 and len(new_alt) > 0:
+                    elif is_insertion(new_ref, new_alt):
                         # If only new bases are added it is an insertion
                         variant = ProteinInsertion.copy_from(
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -1035,7 +1037,7 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
                 variant = RnaDeletion.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) == 0 and len(new_alt) > 0:
+            elif is_insertion(new_ref, new_alt):
                 # If only new bases are added it is an insertion
                 variant = RnaInsertion.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -1355,20 +1357,46 @@ class Insertion(SmallVariant):
 class CdnaInsertion(Insertion, CdnaSmallVariant):
     """Stores information on a cDNA insertion variant and converts to other position types."""
 
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        altseq = self.altseq[1:-1]
+        return f"{self.transcript_id}:c.{start}_{end}ins{altseq}"
+
 
 @dataclass(eq=True, frozen=True)
 class DnaInsertion(Insertion, DnaSmallVariant):
     """Stores information on a DNA insertion variant and converts to other position types."""
+
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        altseq = self.altseq[1:-1]
+        return f"{self.contig_id}:g.{start}_{end}ins{altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class ProteinInsertion(Insertion, ProteinSmallVariant):
     """Stores information on a protein insertion variant and converts to other position types."""
 
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        start_seq = self.refseq[0]
+        end_seq = self.refseq[-1]
+        altseq = self.altseq[1:-1]
+        return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}ins{altseq}"
+
 
 @dataclass(eq=True, frozen=True)
 class RnaInsertion(Insertion, RnaSmallVariant):
     """Stores information on an RNA insertion variant and converts to other position types."""
+
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        altseq = self.altseq[1:-1]
+        return f"{self.transcript_id}:r.{start}_{end}ins{altseq}"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -4080,17 +4108,22 @@ class Core(metaclass=CachedCore):
         return offset
 
     def mutate_cds_to_protein(
-        self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_alt: str
+        self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_ref: str, cdna_alt: str
     ) -> List[str]:
         """Return the mutated protein sequence, given a cDNA position and alt allele."""
         pep_altseq_set = set()
 
+        # If no ref, assume we're talking about an insertion variant
+        if not cdna_ref:
+            for i in expand_nt(cdna_alt):
+                pep_altseq = "".join(AMINO_ACID_TABLE[codon] for codon in split_by_codon(i))
+                pep_altseq_set.add(pep_altseq)
+
+            return sorted(pep_altseq_set)
+
         # If no alt, assume we're talking about a deletion variant
         if not cdna_alt:
             return [""]
-
-        # Assert that the nucleotide change does not result in a frameshift
-        assert not is_frameshift(cdna_start, cdna_end, cdna_alt)
 
         # Get the codon sequence
         codon_start_offset = (cdna_start - 1) % 3
@@ -4099,11 +4132,16 @@ class Core(metaclass=CachedCore):
         codon_end = cdna_end + codon_end_offset
         codon_refseq = self.cds_sequence(transcript_id, codon_start, codon_end)
 
+        # Assert that the codon sequence is divisible by 3
+        assert len(codon_refseq) % 3 == 0
+
         # Mutate the codon sequence
         codon_refseq_left = codon_refseq[:codon_start_offset]
         codon_refseq_right = codon_refseq[-codon_end_offset:] if codon_end_offset else ""
         for i in expand_nt(cdna_alt):
             codon_altseq = codon_refseq_left + i + codon_refseq_right
+            # Assert that the altered codon sequence is divisible by 3
+            assert len(codon_altseq) % 3 == 0, codon_altseq
             pep_altseq = "".join(AMINO_ACID_TABLE[codon] for codon in split_by_codon(codon_altseq))
             pep_altseq_set.add(pep_altseq)
 

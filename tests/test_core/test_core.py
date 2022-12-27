@@ -868,8 +868,10 @@ def test_get_transcript(ensembl100, test_transcript, feature, num_results):
 # -------------------------------------------------------------------------------------------------
 def test_mutate_cds_to_protein(ensembl100):
     # GTT -> GAT
-    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "A") == ["D"]
+    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "T", "A") == ["D"]
     # GTTCTG -> GAAATG
-    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 40, "AAA") == ["EM"]
+    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 40, "TTC", "AAA") == ["EM"]
     # GTT -> GAT or GCT
-    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "M") == ["A", "D"]
+    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "T", "M") == ["A", "D"]
+    # AA -> ATTCA
+    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 1672, 1673, "AA", "ATTCA") == ["KFV"]
