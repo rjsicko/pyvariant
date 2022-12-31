@@ -95,8 +95,8 @@ def test_to_protein(ensembl69, variant):
         transcript_id="ENST00000269305",
         transcript_name="TP53-001",
         protein_id="ENSP00000269305",
-        refseq="",
-        altseq="K",
+        refseq="PV",
+        altseq="PKV",
     )
     result = variant.to_protein()
     assert expected in result

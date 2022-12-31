@@ -6,26 +6,25 @@ from ensembl_map.core import CdnaInsertion, DnaInsertion, ProteinInsertion, RnaI
 
 @pytest.fixture()
 def variant(ensembl69):
-    return CdnaInsertion(
+    return RnaInsertion(
         _data=ensembl69,
         contig_id="4",
-        start=1769,
+        start=1771,
         start_offset=0,
-        end=1770,
+        end=1772,
         end_offset=0,
         strand="+",
         gene_id="ENSG00000157404",
         gene_name="KIT",
         transcript_id="ENST00000288135",
         transcript_name="KIT-001",
-        protein_id="ENSP00000288135",
-        refseq="GT",
-        altseq="GCATT",
+        refseq="GG",
+        altseq="GCATG",
     )
 
 
 def test_str(variant):
-    assert str(variant) == "ENST00000288135:r.1769_1770insCAT"
+    assert str(variant) == "ENST00000288135:r.1771_1772insCAT"
 
 
 def test_type(variant):
@@ -52,9 +51,9 @@ def test_to_cdna(ensembl69, variant):
         CdnaInsertion(
             _data=ensembl69,
             contig_id="4",
-            start=1672,
+            start=1674,
             start_offset=0,
-            end=1673,
+            end=1675,
             end_offset=0,
             strand="+",
             gene_id="ENSG00000157404",
@@ -62,8 +61,8 @@ def test_to_cdna(ensembl69, variant):
             transcript_id="ENST00000288135",
             transcript_name="KIT-001",
             protein_id="ENSP00000288135",
-            refseq="GT",
-            altseq="GCATT",
+            refseq="GG",
+            altseq="GCATG",
         )
     ]
     assert variant.to_cdna() == expected
@@ -74,13 +73,13 @@ def test_to_dna(ensembl69, variant):
         DnaInsertion(
             _data=ensembl69,
             contig_id="4",
-            start=55593606,
+            start=55593608,
             start_offset=0,
-            end=55593607,
+            end=55593609,
             end_offset=0,
             strand="+",
-            refseq="GT",
-            altseq="GCATT",
+            refseq="GG",
+            altseq="GCATG",
         )
     ]
     assert variant.to_dna() == expected
@@ -101,8 +100,8 @@ def test_to_protein(ensembl69, variant):
             transcript_id="ENST00000288135",
             transcript_name="KIT-001",
             protein_id="ENSP00000288135",
-            refseq="",
-            altseq="H",
+            refseq="KV",
+            altseq="KHV",
         )
     ]
     assert variant.to_protein() == expected
@@ -113,17 +112,17 @@ def test_to_rna(ensembl69, variant):
         RnaInsertion(
             _data=ensembl69,
             contig_id="4",
-            start=1769,
+            start=1771,
             start_offset=0,
-            end=1770,
+            end=1772,
             end_offset=0,
             strand="+",
             gene_id="ENSG00000157404",
             gene_name="KIT",
             transcript_id="ENST00000288135",
             transcript_name="KIT-001",
-            refseq="GT",
-            altseq="GCATT",
+            refseq="GG",
+            altseq="GCATG",
         )
     ]
     assert variant.to_rna() == expected

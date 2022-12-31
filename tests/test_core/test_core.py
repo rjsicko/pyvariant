@@ -873,5 +873,5 @@ def test_mutate_cds_to_protein(ensembl100):
     assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 40, "TTC", "AAA") == ["EM"]
     # GTT -> GAT or GCT
     assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "T", "M") == ["A", "D"]
-    # AA -> ATTCA
-    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 1672, 1673, "AA", "ATTCA") == ["KFV"]
+    # GG -> GTTCG
+    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 1674, 1675, "GG", "GTTCG") == ["KFV"]

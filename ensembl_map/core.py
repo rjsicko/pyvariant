@@ -34,9 +34,12 @@ from .utils import (
     collapse_mutation,
     expand_nt,
     format_hgvs_position,
+    is_deletion,
+    is_duplication,
     is_frameshift,
-    reverse_complement,
     is_insertion,
+    is_substitution,
+    reverse_complement,
     reverse_translate,
     split_by_codon,
     strip_version,
@@ -630,17 +633,12 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
             end = cdna.end - new_end
 
             # Determine the type of variant
-            if new_alt == new_ref * 2:
-                # If the bases are a copy of the bases immediately 5' it is an duplication
-                variant = CdnaDuplication.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif len(new_ref) == 1 and len(new_alt) == 1:
+            if is_substitution(new_ref, new_alt):
                 # If exactly one base changes it is a substitution
                 variant = CdnaSubstitution.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) > 0 and len(new_alt) == 0:
+            elif is_deletion(new_ref, new_alt):
                 # If only the reference sequence is removed it is a deletion
                 variant = CdnaDeletion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -650,7 +648,7 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                 variant = CdnaInsertion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif new_alt == new_ref * 2:
+            elif is_duplication(new_ref, new_alt):
                 # If the bases are a copy of the bases immediately 5' it is an duplication
                 variant = CdnaDuplication.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -680,18 +678,24 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
             if ref != ref_annotated:
                 continue
 
+            # For insertions, check that the sequence flanking the inserted sequence matches the ref
+            if is_insertion(refseq, altseq) and not is_insertion(ref, alt):
+                continue
+
             # Remove bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_mutation(ref, alt)
             start = cdna.start + new_start
             end = cdna.end - new_end
 
+            print(ref_annotated, ref, alt, cdna.start, cdna.end, "->", new_ref, new_alt, start, end)
+
             # Determine the type of variant
-            if len(new_ref) == 1 and len(new_alt) == 1:
+            if is_substitution(new_ref, new_alt):
                 # If exactly one base changes it is a substitution
                 variant = CdnaSubstitution.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) > 0 and len(new_alt) == 0:
+            elif is_deletion(new_ref, new_alt):
                 # If only the reference sequence is removed it is a deletion
                 variant = CdnaDeletion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -700,9 +704,9 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                 # If only new bases are added it is an insertion
                 # For protein -> cDNA, insertion takes place between the codons e.g. GCT|TAT -> TT
                 variant = CdnaInsertion.copy_from(
-                    cdna, start=start + 2, end=end - 2, refseq=new_ref, altseq=new_alt
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif new_alt == new_ref * 2:
+            elif is_duplication(new_ref, new_alt):
                 # If the bases are a copy of the bases immediately 5' it is an duplication
                 variant = CdnaDuplication.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -780,13 +784,14 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
         """Convert a DNA position plus ref/alt sequences into a DNA variant data object."""
         variant_list = []
 
-        ref_annotated = dna.sequence()
+        # TODO: DNA sequence get is slow
+        # ref_annotated = dna.sequence()
         for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                raise ValueError(
-                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}'"
-                )
+            # # Assert that the given ref matches the annotated one
+            # if ref != ref_annotated:
+            #     raise ValueError(
+            #         f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}'"
+            #     )
 
             # Remove bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_mutation(ref, alt)
@@ -794,12 +799,12 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
             end = dna.end - new_end
 
             # Determine the type of variant
-            if len(new_ref) == 1 and len(new_alt) == 1:
+            if is_substitution(new_ref, new_alt):
                 # If exactly one base changes it is a substitution
                 variant = DnaSubstitution.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) > 0 and len(new_alt) == 0:
+            elif is_deletion(new_ref, new_alt):
                 # If only the reference sequence is removed it is a deletion
                 variant = DnaDeletion.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -809,7 +814,7 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
                 variant = DnaInsertion.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif new_alt == new_ref * 2:
+            elif is_duplication(new_ref, new_alt):
                 # If the bases are a copy of the bases immediately 5' it is an duplication
                 variant = DnaDuplication.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -918,12 +923,12 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
                     end = protein.end - new_end
 
                     # Determine the type of variant
-                    if len(new_ref) == 1 and len(new_alt) == 1:
+                    if is_substitution(new_ref, new_alt):
                         # If exactly one base changes it is a substitution
                         variant = ProteinSubstitution.copy_from(
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                         )
-                    elif len(new_ref) > 0 and len(new_alt) == 0:
+                    elif is_deletion(new_ref, new_alt):
                         # If only the reference sequence is removed it is a deletion
                         variant = ProteinDeletion.copy_from(
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -933,7 +938,7 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
                         variant = ProteinInsertion.copy_from(
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                         )
-                    elif new_alt == new_ref * 2:
+                    elif is_duplication(new_ref, new_alt):
                         # If the bases are a copy of the bases immediately 5' it is an duplication
                         variant = ProteinDuplication.copy_from(
                             protein, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -1018,7 +1023,7 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
             # Assert that the given ref matches the annotated one
             if ref != ref_annotated:
                 raise ValueError(
-                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}'"
+                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {rna}"
                 )
 
             # Remove bases that are unchanged between the ref and alt alleles
@@ -1027,12 +1032,12 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
             end = rna.end - new_end
 
             # Determine the type of variant
-            if len(new_ref) == 1 and len(new_alt) == 1:
+            if is_substitution(new_ref, new_alt):
                 # If exactly one base changes it is a substitution
                 variant = RnaSubstitution.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif len(new_ref) > 0 and len(new_alt) == 0:
+            elif is_deletion(new_ref, new_alt):
                 # If only the reference sequence is removed it is a deletion
                 variant = RnaDeletion.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -1042,7 +1047,7 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
                 variant = RnaInsertion.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif new_alt == new_ref * 2:
+            elif is_duplication(new_ref, new_alt):
                 # If the bases are a copy of the bases immediately 5' it is an duplication
                 variant = RnaDuplication.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
