@@ -51,7 +51,7 @@ def test_to_cdna(ensembl69, variant):
     expected = CdnaDelins(
         _data=ensembl69,
         contig_id="4",
-        start=1249,
+        start=1250,
         start_offset=0,
         end=1257,
         end_offset=0,
@@ -61,8 +61,8 @@ def test_to_cdna(ensembl69, variant):
         transcript_id="ENST00000288135",
         transcript_name="KIT-001",
         protein_id="ENSP00000288135",
-        refseq="ACTTACGAC",
-        altseq="ATA",
+        refseq="CTTACGAC",
+        altseq="TA",
     )
     result = variant.to_cdna()
     assert expected in result
@@ -73,13 +73,13 @@ def test_to_dna(ensembl69, variant):
     expected = DnaDelins(
         _data=ensembl69,
         contig_id="4",
-        start=55589767,
+        start=55589768,
         start_offset=0,
         end=55589775,
         end_offset=0,
         strand="+",
-        refseq="ACTTACGAC",
-        altseq="ATA",
+        refseq="CTTACGAC",
+        altseq="TA",
     )
     result = variant.to_dna()
     assert expected in result
@@ -112,7 +112,7 @@ def test_to_rna(ensembl69, variant):
     expected = RnaDelins(
         _data=ensembl69,
         contig_id="4",
-        start=1346,
+        start=1347,
         start_offset=0,
         end=1354,
         end_offset=0,
@@ -121,8 +121,8 @@ def test_to_rna(ensembl69, variant):
         gene_name="KIT",
         transcript_id="ENST00000288135",
         transcript_name="KIT-001",
-        refseq="ACTTACGAC",
-        altseq="ATA",
+        refseq="CTTACGAC",
+        altseq="TA",
     )
     result = variant.to_rna()
     assert expected in result
