@@ -687,6 +687,8 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
             start = cdna.start + new_start
             end = cdna.end - new_end
 
+            print(ref_annotated, ref, alt, cdna.start, cdna.end, "->", new_ref, new_alt, start, end)
+
             # Determine the type of variant
             if is_substitution(new_ref, new_alt):
                 # If exactly one base changes it is a substitution
