@@ -176,6 +176,7 @@ class ExonPosition(Position):
     gene_name: str
     transcript_id: str
     transcript_name: str
+    # NOTE: If the start and end are different, the exon ID of the start is listed as the `exon_id`
     exon_id: str
 
     def __str__(self) -> str:
@@ -548,17 +549,11 @@ class RnaMappablePosition(RnaPosition, MappablePosition):
 
 
 # -------------------------------------------------------------------------------------------------
-# SmallVariant classes
+# Variant class
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
-class SmallVariant:
-    """Base class for small variant data objects."""
-
-    refseq: str
-    altseq: str
-
-    def __str__(self) -> str:
-        raise NotImplementedError()
+class Variant:
+    """Base class for variant data objects."""
 
     @property
     def is_deletion(self) -> bool:
@@ -606,6 +601,17 @@ class SmallVariant:
 
     def to_rna(self) -> List:
         raise NotImplementedError()
+
+
+# -------------------------------------------------------------------------------------------------
+# SmallVariant classes
+# -------------------------------------------------------------------------------------------------
+@dataclass(eq=True, frozen=True)
+class SmallVariant(Variant):
+    """Base class for small variant data objects."""
+
+    refseq: str
+    altseq: str
 
 
 @dataclass(eq=True, frozen=True)
@@ -686,8 +692,6 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
             new_ref, new_alt, new_start, new_end = collapse_mutation(ref, alt)
             start = cdna.start + new_start
             end = cdna.end - new_end
-
-            print(ref_annotated, ref, alt, cdna.start, cdna.end, "->", new_ref, new_alt, start, end)
 
             # Determine the type of variant
             if is_substitution(new_ref, new_alt):
@@ -1458,8 +1462,8 @@ class RnaSubstitution(Substitution, RnaSmallVariant):
 # -------------------------------------------------------------------------------------------------
 # Type hints
 # -------------------------------------------------------------------------------------------------
-PositionType = TypeVar(
-    "PositionType",
+MappablePositionType = TypeVar(
+    "MappablePositionType",
     bound=Union[
         CdnaMappablePosition,
         DnaMappablePosition,
@@ -1468,6 +1472,180 @@ PositionType = TypeVar(
         RnaMappablePosition,
     ],
 )
+
+
+# -------------------------------------------------------------------------------------------------
+# Fusion classes
+# -------------------------------------------------------------------------------------------------
+@dataclass(eq=True, frozen=True)
+class Fusion(Variant):
+    """Base class for fusion variant data objects."""
+
+    breakpoint1: Union[
+        CdnaMappablePosition,
+        DnaMappablePosition,
+        ExonMappablePosition,
+        ProteinMappablePosition,
+        RnaMappablePosition,
+    ]
+    breakpoint2: Union[
+        CdnaMappablePosition,
+        DnaMappablePosition,
+        ExonMappablePosition,
+        ProteinMappablePosition,
+        RnaMappablePosition,
+    ]
+
+    @classmethod
+    def copy_from(cls, fusion: Fusion, **kwargs):
+        return cls(
+            **{
+                **{k: v for k, v in fusion.asdict().items() if k in [i.name for i in fields(cls)]},
+                **kwargs,
+            }
+        )
+
+    def __getitem__(self, item: Any) -> Any:
+        return getattr(self, item)
+
+    def __lt__(self, other: Position) -> bool:
+        return str(self) < str(other)
+
+    def __str__(self) -> str:
+        return f"{self.breakpoint1}::{self.breakpoint2}"
+
+    @property
+    def is_cdna(self) -> bool:
+        return False
+
+    @property
+    def is_dna(self) -> bool:
+        return False
+
+    @property
+    def is_exon(self) -> bool:
+        return False
+
+    @property
+    def is_protein(self) -> bool:
+        return False
+
+    @property
+    def is_rna(self) -> bool:
+        return False
+
+    @property
+    def on_negative_strand(self) -> bool:
+        return "-" in (self.breakpoint1.strand, self.breakpoint2.strand)
+
+    @property
+    def on_positive_strand(self) -> bool:
+        return "+" in (self.breakpoint1.strand, self.breakpoint2.strand)
+
+    @property
+    def type(self) -> str:
+        return FUSION
+
+    def asdict(self) -> Dict[str, Any]:
+        return {f.name: self[f.name] for f in fields(self)}
+
+    def sequence(self) -> str:
+        raise NotImplementedError()
+
+    def to_cdna(self) -> List[CdnaFusion]:
+        result = []
+
+        breakpoint1 = self.breakpoint1.to_cdna()
+        breakpoint2 = self.breakpoint2.to_cdna()
+        for b1, b2 in product(breakpoint1, breakpoint2):
+            result.append(CdnaFusion(b1, b2))
+
+        return result
+
+    def to_dna(self) -> List[DnaFusion]:
+        result = []
+
+        breakpoint1 = self.breakpoint1.to_dna()
+        breakpoint2 = self.breakpoint2.to_dna()
+        for b1, b2 in product(breakpoint1, breakpoint2):
+            result.append(DnaFusion(b1, b2))
+
+        return result
+
+    def to_exon(self) -> List[ExonFusion]:
+        result = []
+
+        breakpoint1 = self.breakpoint1.to_exon()
+        breakpoint2 = self.breakpoint2.to_exon()
+        for b1, b2 in product(breakpoint1, breakpoint2):
+            result.append(ExonFusion(b1, b2))
+
+        return result
+
+    def to_protein(self) -> List[ProteinFusion]:
+        result = []
+
+        breakpoint1 = self.breakpoint1.to_protein()
+        breakpoint2 = self.breakpoint2.to_protein()
+        for b1, b2 in product(breakpoint1, breakpoint2):
+            result.append(ProteinFusion(b1, b2))
+
+        return result
+
+    def to_rna(self) -> List[RnaFusion]:
+        result = []
+
+        breakpoint1 = self.breakpoint1.to_rna()
+        breakpoint2 = self.breakpoint2.to_rna()
+        for b1, b2 in product(breakpoint1, breakpoint2):
+            result.append(RnaFusion(b1, b2))
+
+        return result
+
+
+@dataclass(eq=True, frozen=True)
+class CdnaFusion(Fusion):
+    """Stores information on a cDNA fusion variant and converts to other position types."""
+
+    @property
+    def is_cdna(self) -> bool:
+        return True
+
+
+@dataclass(eq=True, frozen=True)
+class DnaFusion(Fusion):
+    """Stores information on a DNA fusion variant and converts to other position types."""
+
+    @property
+    def is_dna(self) -> bool:
+        return True
+
+
+@dataclass(eq=True, frozen=True)
+class ExonFusion(Fusion):
+    """Stores information on an exon fusion variant and converts to other position types."""
+
+    @property
+    def is_exon(self) -> bool:
+        return True
+
+
+@dataclass(eq=True, frozen=True)
+class ProteinFusion(Fusion):
+    """Stores information on a protein fusion variant and converts to other position types."""
+
+    @property
+    def is_protein(self) -> bool:
+        return True
+
+
+@dataclass(eq=True, frozen=True)
+class RnaFusion(Fusion):
+    """Stores information on a RNA fusion variant and converts to other position types."""
+
+    @property
+    def is_rna(self) -> bool:
+        return True
 
 
 # -------------------------------------------------------------------------------------------------
@@ -2773,10 +2951,11 @@ class Core(metaclass=CachedCore):
             return result
 
         result_start = convert(start, start_offset)
-        result_end = convert(end, end_offset)
-        assert result_start == result_end  # TODO: mapping across introns?
-
-        return sorted(result_start)
+        if start == end:
+            return sorted(result_start)
+        else:
+            result_end = convert(end, end_offset)
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_exon_variant(
         self,
@@ -3136,10 +3315,11 @@ class Core(metaclass=CachedCore):
             return result
 
         result_start = convert(start, start_offset)
-        result_end = convert(end, end_offset)
-        assert result_start == result_end  # TODO: mapping across introns?
-
-        return sorted(result_start)
+        if start == end:
+            return sorted(result_start)
+        else:
+            result_end = convert(end, end_offset)
+            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_exon_variant(
         self,
@@ -3315,7 +3495,7 @@ class Core(metaclass=CachedCore):
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["exon_number"] == str(position))  # TODO: exon number should be int
+                & (self.df["exon_number"] == float(position))
                 & (self.df["strand"].isin(strand))
                 & (self.df["feature"].isin(feature))
             )
@@ -3363,8 +3543,7 @@ class Core(metaclass=CachedCore):
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                # TODO: exon number should be int
-                & (self.df["exon_number"] == str(position))
+                & (self.df["exon_number"] == float(position))
                 & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == "exon")
             )
@@ -3407,8 +3586,7 @@ class Core(metaclass=CachedCore):
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                # TODO: exon number should be int
-                & (self.df["exon_number"] == str(position))
+                & (self.df["exon_number"] == float(position))
                 & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == "exon")
             )
@@ -3473,7 +3651,7 @@ class Core(metaclass=CachedCore):
 
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["exon_number"] == str(position))  # TODO: exon number should be int
+                & (self.df["exon_number"] == float(position))
                 & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == "exon")
             )
@@ -4214,7 +4392,7 @@ class EnsemblRelease(Core):
 
 
 def merge_positions(
-    start_positions: List[PositionType], end_positions: List[PositionType], key: str
+    start_positions: List[MappablePositionType], end_positions: List[MappablePositionType], key: str
 ) -> List:
     """Merge two list of position objects into one list by the given key (e.g. 'transcript_id')"""
     result = set()

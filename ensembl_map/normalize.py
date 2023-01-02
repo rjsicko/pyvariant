@@ -50,8 +50,8 @@ def df_normalize_cols(df: pd.DataFrame) -> pd.DataFrame:
     df = df[df.feature.isin(GTF_KEEP_FEATURES)]
     # Assert that all the expected columns exist
     assert sorted(df.columns) == sorted(GTF_KEEP_COLUMNS)
-    # Coerce the non-null values in the 'exon_number' to integers
-    df["exon_number"] = df["exon_number"].astype(int, errors="ignore")
+    # Coerce the non-null values in the 'exon_number' to float
+    df["exon_number"] = df["exon_number"].astype(float, errors="raise")
 
     return df
 
