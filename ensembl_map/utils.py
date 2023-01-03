@@ -6,8 +6,9 @@ from Bio.Seq import Seq
 from .tables import DNA, DNA_CODON_TABLE, PROTEIN
 
 
-def collapse_mutation(ref: str, alt: str) -> Tuple[str, str, int, int]:
-    """Collapse a nucleotide change to the shortest change.
+def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
+    """Collapse a sequence change to the shortest possible change, with exceptions depending on the
+    type of change.
 
     Examples:
                   ref:  100 - GGT - 102
@@ -30,7 +31,7 @@ def collapse_mutation(ref: str, alt: str) -> Tuple[str, str, int, int]:
         return ref, alt, 0, 0
 
     # Trim bases from each end that are identical between the ref and alt
-    ref_collapse, alt_collapse, same_5_prime, same_3_prime = collapse_mutation_ends(ref, alt)
+    ref_collapse, alt_collapse, same_5_prime, same_3_prime = split_seq_change(ref, alt)
     start_offset = len(same_5_prime)
     end_offset = len(same_3_prime)
 
@@ -47,59 +48,6 @@ def collapse_mutation(ref: str, alt: str) -> Tuple[str, str, int, int]:
         return ref, alt, 0, 0
 
     return ref_collapse, alt_collapse, start_offset, end_offset
-
-
-def collapse_mutation_ends(refseq: str, altseq: str) -> Tuple[str, str, str, str]:
-    """Compare two strings (ref and alt) and split each at the point where the two sequences are no
-    longer the same when read from one end or the other (determined by `idx` being either 0 or -1).
-
-    For example, 'AATTTC' and 'AAGC' both start with 'AA' and end with 'C'
-
-    Examples:
-        >>> _split_at_common_substring('AATTTC', 'AAGC') == ('TTT', 'G', 'AA', 'C')
-    """
-    common_left: List[str] = list()
-    common_right: List[str] = list()
-    refseq_ = list(refseq)
-    altseq_ = list(altseq)
-
-    def trim_one_side(idx: int, common: List):
-        assert idx in (0, -1)
-
-        while True:
-            try:
-                i = refseq_.pop(idx)
-            except IndexError:
-                i = ""
-
-            try:
-                j = altseq_.pop(idx)
-            except IndexError:
-                j = ""
-
-            if i != j or not i or not j:
-                # Put the 'popped' bases back then stop
-                if i:
-                    if idx == 0:
-                        refseq_.insert(0, i)
-                    elif idx == -1:
-                        refseq_.append(i)
-                if j:
-                    if idx == 0:
-                        altseq_.insert(0, j)
-                    elif idx == -1:
-                        altseq_.append(j)
-                break
-            else:
-                if idx == 0:
-                    common.append(i)
-                elif idx == -1:
-                    common.insert(0, i)
-
-    trim_one_side(0, common_left)  # Trim 5' (left) end
-    trim_one_side(-1, common_right)  # Trim 3' (right) end
-
-    return "".join(refseq_), "".join(altseq_), "".join(common_left), "".join(common_right)
 
 
 def expand_nt(seq: str) -> Iterator[str]:
@@ -131,27 +79,52 @@ def format_hgvs_position(position: int, offset: int, is_3_prime_utr: bool = Fals
 
 
 def is_deletion(refseq: str, altseq: str) -> bool:
-    """Check if an allele change should be classified as a deletion mutation."""
+    """Check if a sequence change should be classified as a deletion variant. A deletion is when
+    one or more bases are removed (deleted).
+    """
     return len(refseq) > 0 and len(altseq) == 0
 
 
+def is_delins(refseq: str, altseq: str) -> bool:
+    """Check if a sequence change should be classified as a delins variant. A 'delins' or
+    'deletion-insertion' is when one or more bases are replaced by one or more other bases and is
+    not a substitution, inversion, or conversion.
+    """
+    if len(refseq) * len(altseq) > 1:
+        if not is_duplication(refseq, altseq) and not is_insertion(refseq, altseq):
+            return True
+
+    return False
+
+
 def is_duplication(refseq: str, altseq: str) -> bool:
-    """Check if an allele change should be classified as a duplication mutation."""
+    """Check if a sequence change should be classified as a duplication variant. An duplication
+    is when one or more bases are inserted and the bases ARE a copy of the bases immediately 5'
+    (if the bases are not a copy, it is an insertion).
+    """
     return altseq == refseq * 2
 
 
 def is_frameshift(cdna_refseq: str, cdna_altseq: str) -> bool:
-    """Check if a cDNA nucleotide change would result in a frameshift mutation."""
+    """Check if a nucleotide change in the cDNA would result in a frameshift variant. A frame shift
+    is when a number of nucleotides, that are not a multiple of 3, (i.e. the length of a codon) are
+    inserted or deleted, which causes a shift in the reading frame.
+    """
     return abs(len(cdna_refseq) - len(cdna_altseq)) % 3 != 0
 
 
 def is_insertion(refseq: str, altseq: str) -> bool:
-    """Check if an allele change should be classified as an insertion mutation."""
-    return bool(split_insertion(refseq, altseq))
+    """Check if a sequence change should be classified as an insertion variant. An insertion
+    is when one or more bases are inserted and the bases are NOT a copy of the bases immediately 5'
+    (i.e. a duplication).
+    """
+    return not is_duplication(refseq, altseq) and bool(split_insertion(refseq, altseq))
 
 
 def is_substitution(refseq: str, altseq: str) -> bool:
-    """Check if an allele change should be classified as a substitution mutation."""
+    """Check if a sequence change should be classified as a substitution variant. A substitution
+    is when exactly one base is replaced by exactly one other base.
+    """
     return len(refseq) == 1 and len(altseq) == 1
 
 
@@ -200,6 +173,59 @@ def split_insertion(refseq: str, altseq: str) -> Optional[Tuple[str, str, str]]:
             return (altseq[:n], altseq[n:-n], altseq[-n:])
 
     return None
+
+
+def split_seq_change(refseq: str, altseq: str) -> Tuple[str, str, str, str]:
+    """Compare two strings (sequences) and split each at the point where the two are no longer the
+    same at either end.
+
+    For example, 'AATTTC' and 'AAGC' both start with 'AA' and end with 'C'
+
+    Examples:
+        >>> _split_at_common_substring('AATTTC', 'AAGC') == ('TTT', 'G', 'AA', 'C')
+    """
+    common_left: List[str] = list()
+    common_right: List[str] = list()
+    refseq_ = list(refseq)
+    altseq_ = list(altseq)
+
+    def trim_one_side(idx: int, common: List):
+        assert idx in (0, -1)
+
+        while True:
+            try:
+                i = refseq_.pop(idx)
+            except IndexError:
+                i = ""
+
+            try:
+                j = altseq_.pop(idx)
+            except IndexError:
+                j = ""
+
+            if i != j or not i or not j:
+                # Put the 'popped' bases back then stop
+                if i:
+                    if idx == 0:
+                        refseq_.insert(0, i)
+                    elif idx == -1:
+                        refseq_.append(i)
+                if j:
+                    if idx == 0:
+                        altseq_.insert(0, j)
+                    elif idx == -1:
+                        altseq_.append(j)
+                break
+            else:
+                if idx == 0:
+                    common.append(i)
+                elif idx == -1:
+                    common.insert(0, i)
+
+    trim_one_side(0, common_left)  # Trim 5' (left) end
+    trim_one_side(-1, common_right)  # Trim 3' (right) end
+
+    return "".join(refseq_), "".join(altseq_), "".join(common_left), "".join(common_right)
 
 
 def strip_version(key: str) -> str:

@@ -31,10 +31,11 @@ from .constants import (
 from .files import read_fasta, tsv_to_dict, txt_to_list
 from .tables import AMINO_ACID_TABLE
 from .utils import (
-    collapse_mutation,
+    collapse_seq_change,
     expand_nt,
     format_hgvs_position,
     is_deletion,
+    is_delins,
     is_duplication,
     is_frameshift,
     is_insertion,
@@ -634,38 +635,35 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                 )
 
             # Remove bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_mutation(ref, alt)
+            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
             start = cdna.start + new_start
             end = cdna.end - new_end
 
             # Determine the type of variant
-            if is_substitution(new_ref, new_alt):
-                # If exactly one base changes it is a substitution
-                variant = CdnaSubstitution.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_deletion(new_ref, new_alt):
-                # If only the reference sequence is removed it is a deletion
+            if is_deletion(new_ref, new_alt):
                 variant = CdnaDeletion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif is_insertion(new_ref, new_alt):
-                # If only new bases are added it is an insertion
-                variant = CdnaInsertion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                # If the bases are a copy of the bases immediately 5' it is an duplication
-                variant = CdnaDuplication.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif len(new_ref) * len(new_alt) > 1:
-                # If more than one ref and alt base is changed it is a delins
+            elif is_delins(new_ref, new_alt):
                 variant = CdnaDelins.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
+            elif is_duplication(new_ref, new_alt):
+                variant = CdnaDuplication.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_insertion(new_ref, new_alt):
+                variant = CdnaInsertion.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_substitution(new_ref, new_alt):
+                variant = CdnaSubstitution.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
             else:
-                raise NotImplementedError(f"Unknown ref/alt '{new_ref}/{new_alt}' for {cdna}")
+                raise NotImplementedError(
+                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {cdna}"
+                )
 
             variant_list.append(variant)
 
@@ -689,39 +687,35 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                 continue
 
             # Remove bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_mutation(ref, alt)
+            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
             start = cdna.start + new_start
             end = cdna.end - new_end
 
             # Determine the type of variant
-            if is_substitution(new_ref, new_alt):
-                # If exactly one base changes it is a substitution
-                variant = CdnaSubstitution.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_deletion(new_ref, new_alt):
-                # If only the reference sequence is removed it is a deletion
+            if is_deletion(new_ref, new_alt):
                 variant = CdnaDeletion.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif is_insertion(new_ref, new_alt):
-                # If only new bases are added it is an insertion
-                # For protein -> cDNA, insertion takes place between the codons e.g. GCT|TAT -> TT
-                variant = CdnaInsertion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                # If the bases are a copy of the bases immediately 5' it is an duplication
-                variant = CdnaDuplication.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif len(new_ref) * len(new_alt) > 1:
-                # If more than one ref and alt base is changed it is a delins
+            elif is_delins(new_ref, new_alt):
                 variant = CdnaDelins.copy_from(
                     cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
+            elif is_duplication(new_ref, new_alt):
+                variant = CdnaDuplication.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_insertion(new_ref, new_alt):
+                variant = CdnaInsertion.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_substitution(new_ref, new_alt):
+                variant = CdnaSubstitution.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
             else:
-                raise NotImplementedError(f"Unknown ref/alt '{new_ref}/{new_alt}' for {cdna}")
+                raise NotImplementedError(
+                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {cdna}"
+                )
 
             variant_list.append(variant)
 
@@ -794,42 +788,39 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
             # # Assert that the given ref matches the annotated one
             # if ref != ref_annotated:
             #     raise ValueError(
-            #         f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}'"
+            #         f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {dna}"
             #     )
 
             # Remove bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_mutation(ref, alt)
+            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
             start = dna.start + new_start
             end = dna.end - new_end
 
             # Determine the type of variant
-            if is_substitution(new_ref, new_alt):
-                # If exactly one base changes it is a substitution
-                variant = DnaSubstitution.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_deletion(new_ref, new_alt):
-                # If only the reference sequence is removed it is a deletion
+            if is_deletion(new_ref, new_alt):
                 variant = DnaDeletion.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif is_insertion(new_ref, new_alt):
-                # If only new bases are added it is an insertion
-                variant = DnaInsertion.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                # If the bases are a copy of the bases immediately 5' it is an duplication
-                variant = DnaDuplication.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif len(new_ref) * len(new_alt) > 1:
-                # If more than one ref and alt base is changed it is a delins
+            elif is_delins(new_ref, new_alt):
                 variant = DnaDelins.copy_from(
                     dna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
+            elif is_duplication(new_ref, new_alt):
+                variant = DnaDuplication.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_insertion(new_ref, new_alt):
+                variant = DnaInsertion.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_substitution(new_ref, new_alt):
+                variant = DnaSubstitution.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
             else:
-                raise NotImplementedError(f"Unknown ref/alt '{new_ref}/{new_alt}' for {dna}")
+                raise NotImplementedError(
+                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {dna}"
+                )
 
             variant_list.append(variant)
 
@@ -912,52 +903,45 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
 
         protein_refseq = protein.sequence()
         for cdna_ref, cdna_alt in product(expand_nt(refseq), expand_nt(altseq)):
-            if is_frameshift(cdna_ref, cdna_alt):
-                # If the number of nucleotides added/deleted deletion is not divisible by 3, it results in a frame shift
-                raise NotImplementedError()  # TODO
-            else:
-                for protein_alt in protein._data.mutate_cds_to_protein(
-                    cdna.transcript_id, cdna.start, cdna.end, cdna_ref, cdna_alt
-                ):
-                    # Remove bases that are unchanged between the ref and alt alleles
-                    new_ref, new_alt, new_start, new_end = collapse_mutation(
-                        protein_refseq, protein_alt
+            for protein_alt in protein._data.mutate_cds_to_protein(
+                cdna.transcript_id, cdna.start, cdna.end, cdna_ref, cdna_alt
+            ):
+                # Remove bases that are unchanged between the ref and alt alleles
+                new_ref, new_alt, new_start, new_end = collapse_seq_change(
+                    protein_refseq, protein_alt
+                )
+                start = protein.start + new_start
+                end = protein.end - new_end
+
+                # Determine the type of variant
+                if is_deletion(new_ref, new_alt):
+                    variant = ProteinDeletion.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                     )
-                    start = protein.start + new_start
-                    end = protein.end - new_end
+                elif is_delins(new_ref, new_alt):
+                    variant = ProteinDelins.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                elif is_duplication(new_ref, new_alt):
+                    variant = ProteinDuplication.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                elif is_frameshift(cdna_ref, cdna_alt):
+                    raise NotImplementedError()  # TODO
+                elif is_insertion(new_ref, new_alt):
+                    variant = ProteinInsertion.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                elif is_substitution(new_ref, new_alt):
+                    variant = ProteinSubstitution.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                else:
+                    raise NotImplementedError(
+                        f"Unrecognized sequence change '{new_ref}/{new_alt}' at {protein}"
+                    )
 
-                    # Determine the type of variant
-                    if is_substitution(new_ref, new_alt):
-                        # If exactly one base changes it is a substitution
-                        variant = ProteinSubstitution.copy_from(
-                            protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                        )
-                    elif is_deletion(new_ref, new_alt):
-                        # If only the reference sequence is removed it is a deletion
-                        variant = ProteinDeletion.copy_from(
-                            protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                        )
-                    elif is_insertion(new_ref, new_alt):
-                        # If only new bases are added it is an insertion
-                        variant = ProteinInsertion.copy_from(
-                            protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                        )
-                    elif is_duplication(new_ref, new_alt):
-                        # If the bases are a copy of the bases immediately 5' it is an duplication
-                        variant = ProteinDuplication.copy_from(
-                            protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                        )
-                    elif len(new_ref) * len(new_alt) > 1:
-                        # If more than one ref and alt base is changed it is a delins
-                        variant = ProteinDelins.copy_from(
-                            protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                        )
-                    else:
-                        raise NotImplementedError(
-                            f"Unknown ref/alt '{new_ref}/{new_alt}' for {protein}"
-                        )
-
-                    variant_list.append(variant)
+                variant_list.append(variant)
 
         return variant_list
 
@@ -1031,38 +1015,35 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
                 )
 
             # Remove bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_mutation(ref, alt)
+            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
             start = rna.start + new_start
             end = rna.end - new_end
 
             # Determine the type of variant
-            if is_substitution(new_ref, new_alt):
-                # If exactly one base changes it is a substitution
-                variant = RnaSubstitution.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_deletion(new_ref, new_alt):
-                # If only the reference sequence is removed it is a deletion
+            if is_deletion(new_ref, new_alt):
                 variant = RnaDeletion.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-            elif is_insertion(new_ref, new_alt):
-                # If only new bases are added it is an insertion
-                variant = RnaInsertion.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                # If the bases are a copy of the bases immediately 5' it is an duplication
-                variant = RnaDuplication.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif len(new_ref) * len(new_alt) > 1:
-                # If more than one ref and alt base is changed it is a delins
+            elif is_delins(new_ref, new_alt):
                 variant = RnaDelins.copy_from(
                     rna, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
+            elif is_duplication(new_ref, new_alt):
+                variant = RnaDuplication.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_insertion(new_ref, new_alt):
+                variant = RnaInsertion.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_substitution(new_ref, new_alt):
+                variant = RnaSubstitution.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
             else:
-                raise NotImplementedError(f"Unknown ref/alt '{new_ref}/{new_alt}' for {rna}")
+                raise NotImplementedError(
+                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {rna}"
+                )
 
             variant_list.append(variant)
 
