@@ -79,6 +79,10 @@ For a complete list of methods, run:
 >>> help(EnsemblRelease)
 ```
 
+## Notes
+
+* This package follows [HGVS nomenclature](https://varnomen.hgvs.org/) recommendations for representing variants.
+
 ## License
 
 This package is distributed with the [MIT](LICENSE) license.
