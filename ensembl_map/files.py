@@ -2,13 +2,15 @@ import gzip
 import os.path
 import shutil
 import sys
+from ftplib import FTP
 from tempfile import TemporaryDirectory
 from typing import Callable, Dict, List
 
+from appdirs import user_data_dir
 from Bio.bgzf import BgzfWriter, _bgzf_magic
 from pyfaidx import Fasta
 
-from .constants import EMPTY_FASTA
+from .constants import CACHE_DIR_ENV, EMPTY_FASTA, NAME
 from .utils import strip_version
 
 
@@ -51,6 +53,34 @@ def bgzip(path: str) -> str:
         os.remove(path)
 
     return output
+
+
+def ftp_download(server: str, subdir: str, remote_file: str, local_file: str):
+    """Download a file from an FTP server."""
+    try:
+        ftp = FTP(server)
+        print(f"Connecting to {server}", file=sys.stderr)
+        ftp.login()
+        url = "ftp://" + server + "/" + subdir + "/" + remote_file
+        print(f"Downloading {url} to {local_file}", file=sys.stderr)
+        ftp.cwd(subdir)
+        with open(local_file, "wb") as fh:
+            ftp.retrbinary(f"RETR {remote_file}", fh.write)
+        print("Download successful", file=sys.stderr)
+        ftp.quit()
+    except Exception as exc:
+        raise RuntimeError(f"Download failed: {exc}")
+
+
+def get_cache_dir() -> str:
+    f"""Get the cache root directory. If the environmental variable '{CACHE_DIR_ENV}' is set, this
+    package will use that as the directory. Otherwise, this package will use the default appdata
+    dir for the user (platform dependant).
+    """
+    try:
+        return os.environ[CACHE_DIR_ENV]
+    except KeyError:
+        return os.path.join(user_data_dir(), NAME)
 
 
 def is_bgzipped(path: str) -> bool:

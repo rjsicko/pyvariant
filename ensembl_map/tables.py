@@ -42,6 +42,7 @@ DNA_CODON_TABLE = {
     "Y": ["TAC", "TAT"],
     "*": ["TAA", "TAG", "TGA"],
 }
+
 # codon to single-letter amino acid
 AMINO_ACID_TABLE = {
     codon: amino_acid

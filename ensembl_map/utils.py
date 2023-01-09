@@ -1,9 +1,13 @@
 from itertools import product, zip_longest
-from typing import Iterator, List, Optional, Tuple
+from string import punctuation
+from typing import Any, Iterator, List, Optional, Tuple, Union
 
 from Bio.Seq import Seq
 
 from .tables import DNA, DNA_CODON_TABLE, PROTEIN
+
+# Dictionary used to replace punctuation in a string
+PUNCTUATION_TO_UNDERSCORE = str.maketrans(punctuation + " ", "_" * len(punctuation + " "))
 
 
 def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
@@ -78,6 +82,24 @@ def format_hgvs_position(position: int, offset: int, is_3_prime_utr: bool = Fals
     return position_str
 
 
+def hash_args(*args, **kwargs):
+    """Generate a hash value for arbitrary args and kwargs."""
+    flattened = []
+
+    def add(value: Any):
+        if isinstance(value, (list, set, tuple)):
+            flattened.extend([i for i in value])
+        elif isinstance(value, dict):
+            flattened.extend([value[i] for i in sorted(value)])
+        else:
+            flattened.append(value)
+
+    [add(i) for i in args]
+    [add(kwargs[i]) for i in sorted(kwargs)]
+
+    return hash(tuple(flattened))
+
+
 def is_deletion(refseq: str, altseq: str) -> bool:
     """Check if a sequence change should be classified as a deletion variant. A deletion is when
     one or more bases are removed (deleted).
@@ -126,6 +148,35 @@ def is_substitution(refseq: str, altseq: str) -> bool:
     is when exactly one base is replaced by exactly one other base.
     """
     return len(refseq) == 1 and len(altseq) == 1
+
+
+def normalize_release(release: Union[float, int, str]) -> int:
+    """Normalize a release number."""
+    return int(release)
+
+
+def normalize_species(species: str) -> str:
+    """Normalize a species name."""
+    return str(species).lower().translate(PUNCTUATION_TO_UNDERSCORE)
+
+
+def reference_by_release(release: int) -> str:
+    """Given the Ensembl release number, return the reference name.
+
+    Examples:
+        >>> reference_by_release(69)
+        'GRCh37'
+        >>> reference_by_release(100)
+        'GRCh38'
+    """
+    if release == 54:
+        return "GRCh36"
+    elif 54 < release <= 75:
+        return "GRCh37"
+    elif 75 < release:
+        return "GRCh38"
+    else:
+        raise ValueError(f"Unknown reference for release '{release}'")
 
 
 def reverse_complement(sequence: str) -> str:
@@ -182,7 +233,7 @@ def split_seq_change(refseq: str, altseq: str) -> Tuple[str, str, str, str]:
     For example, 'AATTTC' and 'AAGC' both start with 'AA' and end with 'C'
 
     Examples:
-        >>> _split_at_common_substring('AATTTC', 'AAGC') == ('TTT', 'G', 'AA', 'C')
+        >>> split_seq_change('AATTTC', 'AAGC') == ('TTT', 'G', 'AA', 'C')
     """
     common_left: List[str] = list()
     common_right: List[str] = list()
@@ -229,12 +280,12 @@ def split_seq_change(refseq: str, altseq: str) -> Tuple[str, str, str, str]:
 
 
 def strip_version(key: str) -> str:
-    """Strip the version number from a transcript symbol.
+    """Strip the version number from a symbol.
 
     Examples:
-        >>> _strip_version('NM_000546.5')
+        >>> strip_version('NM_000546.5')
         'NM_000546'
-        >>> _strip_version('ENST00000357191.1')
+        >>> strip_version('ENST00000357191.1')
         'ENST00000357191'
     """
     return key.rsplit(".", 1)[0]

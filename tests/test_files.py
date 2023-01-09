@@ -1,12 +1,21 @@
 import gzip
+import os
 import os.path
 
 import pytest
 from Bio.bgzf import BgzfWriter
-from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_CDNA_FASTA
+from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_ENS100_CDNA_FASTA
 from pyfaidx import Fasta
 
-from ensembl_map.files import bgzip, is_bgzipped, read_fasta, tsv_to_dict, txt_to_list
+from ensembl_map.constants import CACHE_DIR_ENV, NAME
+from ensembl_map.files import (
+    bgzip,
+    get_cache_dir,
+    is_bgzipped,
+    read_fasta,
+    tsv_to_dict,
+    txt_to_list,
+)
 
 
 @pytest.fixture
@@ -16,6 +25,13 @@ def bgzip_file(tmpdir) -> str:
         fh.write(b"test")
 
     return path.strpath
+
+
+@pytest.fixture
+def cache_env_var():
+    os.environ[CACHE_DIR_ENV] = "TEST"
+    yield
+    del os.environ[CACHE_DIR_ENV]
 
 
 @pytest.fixture
@@ -55,8 +71,16 @@ def test_is_bgzipped_true(bgzip_file):
     assert is_bgzipped(bgzip_file) is True
 
 
+def test_get_cache_dir():
+    assert get_cache_dir().endswith(NAME)
+
+
+def test_get_cache_dir_env_var(cache_env_var):
+    assert get_cache_dir() == "TEST"
+
+
 def test_read_fasta():
-    result = read_fasta(TEST_CDNA_FASTA)
+    result = read_fasta(TEST_ENS100_CDNA_FASTA)
     assert isinstance(result, Fasta)
     assert result["ENST00000643777"]
 

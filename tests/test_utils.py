@@ -1,5 +1,6 @@
 import pytest
 
+from ensembl_map.ensembl_cache import normalize_release, normalize_species, reference_by_release
 from ensembl_map.utils import (
     collapse_seq_change,
     expand_nt,
@@ -118,6 +119,28 @@ def test_is_substitution():
     assert not is_substitution("A", "")
     assert not is_substitution("AGT", "AAA")  # delins
     assert not is_substitution("", "")
+
+
+def test_normalize_release():
+    assert normalize_release(100) == 100
+    assert normalize_release("100") == 100
+
+
+def test_normalize_species():
+    assert normalize_species("homo_sapiens") == "homo_sapiens"
+    assert normalize_species("HOMO_SAPIENS") == "homo_sapiens"
+    assert normalize_species("homo sapiens") == "homo_sapiens"
+    assert normalize_species("homo-sapiens") == "homo_sapiens"
+
+
+def test_reference_by_release():
+    assert reference_by_release(54) == "GRCh36"
+    assert reference_by_release(55) == "GRCh37"
+    assert reference_by_release(75) == "GRCh37"
+    assert reference_by_release(76) == "GRCh38"
+    assert reference_by_release(100) == "GRCh38"
+    with pytest.raises(ValueError):
+        reference_by_release(0)
 
 
 def test_reverse_complement():

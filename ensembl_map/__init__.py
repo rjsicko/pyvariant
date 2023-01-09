@@ -1,2 +1,1 @@
-from .cache import EnsemblCache  # noqa: F401
-from .core import EnsemblRelease  # noqa: F401
+from .ensembl_release import EnsemblRelease  # noqa: F401

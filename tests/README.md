@@ -1,6 +1,6 @@
-# Notes on testing
+# Notes on writing tests
 
-Here are a couple diagrams which can guide you in making test cases. They show how positions on different features relate to each other. Examples are using Ensembl 100. Diagrams are not to scale.
+Here are a couple diagrams which can guide you in making test cases. They show how positions on different features relate to each other. Examples are using human Ensembl 100. Diagrams are not to scale.
 
 ```text
 Legend:

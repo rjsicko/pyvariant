@@ -1,6 +1,5 @@
 import pytest
 from constants import (
-    CACHE_DIR,
     CANONICAL_TRANSCRIPT,
     CONTIG_ALIAS,
     EXON_ALIAS,
@@ -9,7 +8,7 @@ from constants import (
     TRANSCRIPT_ALIAS,
 )
 
-from ensembl_map.core import EnsemblRelease
+from ensembl_map.ensembl_release import EnsemblRelease
 
 
 @pytest.fixture(scope="session")
@@ -17,7 +16,7 @@ def ensembl69():
     return EnsemblRelease(
         species="homo_sapiens",
         release=69,
-        cache_dir=CACHE_DIR,
+        cache_dir="",
         canonical_transcript="",
         contig_alias="",
         exon_alias="",
@@ -32,7 +31,7 @@ def ensembl100():
     return EnsemblRelease(
         species="homo_sapiens",
         release=100,
-        cache_dir=CACHE_DIR,
+        cache_dir="",
         canonical_transcript=CANONICAL_TRANSCRIPT,
         contig_alias=CONTIG_ALIAS,
         exon_alias=EXON_ALIAS,

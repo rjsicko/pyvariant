@@ -1,10 +1,10 @@
 import argparse
 
-from .cache import EnsemblCache, get_cache_dir
+from .ensembl_cache import EnsemblCache, get_cache_dir
 
 
-def parse_args() -> argparse.Namespace:
-    """Parse commmand line arguments."""
+def build_parser() -> argparse.ArgumentParser:
+    """Build the commmand line argument parser instance."""
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(dest="subcommand")
 
@@ -38,13 +38,13 @@ def parse_args() -> argparse.Namespace:
         "-h", "--help", action="help", help="show this help message and exit"
     )
 
-    return parser.parse_args()
+    return parser
 
 
 def main():
     """Entrypoint for `ensembl_map`."""
-    args = parse_args()
-
+    parser = build_parser()
+    args = parser.parse_args()
     if args.subcommand == "install":
         cache = EnsemblCache(species=args.species, release=args.release, cache_dir=args.cache)
         cache.install(clean=args.clean, recache=args.recache, redownload=args.redownload)

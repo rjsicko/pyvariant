@@ -27,10 +27,12 @@ ensembl_map install --species <species-name> --release <Ensembl-release-number>
 For example:
 
 ```shell
-ensembl_map install --species homo_sapiens --release 100
+ensembl_map install --species 'homo sapiens' --release 100
 ```
 
-By default, the data is downloaded to a [platform-specific data directory](https://pypi.org/project/appdirs/) that is generally only accessible by the user. If you want the data to be accessible to other users, you may to specify a custom data directory with the `--cache` option:
+At the time of writing, installing a human dataset takes roughly 30-45 minutes and 1.5G of storage space. However, the actual time and space required to install a dataset will depend entirely on the size of the dataset, your computer, internet speed, etc.
+
+By default, the data is downloaded to a [platform-specific data directory](https://pypi.org/project/appdirs/) that is generally only accessible by the user (e.g. `/home/<you>/.local/share/ensembl_map/`). If you want the data to be accessible to other users, or your home directory does have enough storage space, you may to specify a different directory to download to with the `--cache` option:
 
 ```shell
 ensembl_map install --species homo_sapiens --release 100 --cache /path/to/cache/
@@ -52,7 +54,7 @@ Alternatively, you can run the installation from inside a Python process:
 
 Once the data is installed, the `EnsemblRelease` object provides methods for getting information about different features, getting the DNA/RNA/protein sequence at a position, and converting between positions, etc. Here are some examples:
 
-Convert from a protein position to a cDNA position:
+Convert from a protein position to equivalent cDNA positions:
 
 ```python
 >>> ensembl100.protein_to_cdna("TERT", 525)

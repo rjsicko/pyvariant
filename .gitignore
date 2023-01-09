@@ -11,9 +11,9 @@ pytest.xml
 .stversions/
 build/
 cover/
-dev/
 dist/
+docs/
 htmlcov/
 venv/
 __pycache__/
-tests/cache/
+tests/data/
