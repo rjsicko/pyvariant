@@ -46,6 +46,7 @@ def bgzip(path: str) -> str:
                     outf.write(chunk)
                     chunk = inf.read(chunk_size)
         # move the temporary file to the same directory as the input
+        print(f"Moving compressed output to '{output}'", file=sys.stderr)
         shutil.move(tempfile, output)
 
     # remove the original to save space

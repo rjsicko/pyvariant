@@ -10,6 +10,7 @@ from pyfaidx import Fasta
 
 from .constants import CONTIG_ID
 from .files import bgzip, ftp_download, get_cache_dir, is_bgzipped, read_fasta
+from .gtf import to_dataframe
 from .utils import normalize_release, normalize_species, reference_by_release, strip_version
 
 # Ensembl FTP URL
@@ -127,7 +128,7 @@ class EnsemblCache:
 
         # Process and cache the GTF file
         if cache_missing or recache:
-            df = read_gtf(self.local_gtf_filepath)
+            df = to_dataframe(self.local_gtf_filepath)
             if restrict_genes:
                 df = df[df["gene_name"].isin(restrict_genes)]
 
