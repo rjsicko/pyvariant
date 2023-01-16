@@ -31,7 +31,6 @@ from .utils import (
     collapse_seq_change,
     expand_nt,
     format_hgvs_position,
-    hash_args,
     is_deletion,
     is_delins,
     is_duplication,
@@ -1630,32 +1629,7 @@ class RnaFusion(Fusion):
 # -------------------------------------------------------------------------------------------------
 # Core classes and methods
 # -------------------------------------------------------------------------------------------------
-class CachedCore(type):
-    """Metaclass that allows 'Core' objects, and objects that inherit from 'Core', to be treated as
-    singletons.
-    """
-
-    _instances: Dict[Any, Core] = {}
-    _current: Optional[Core] = None
-
-    def __call__(cls, *args, **kwargs):
-        # convert the given arguments to a hashable tuple
-        key = hash_args(*args, **kwargs)
-        # check if an instance created with the same arguments is already cached
-        if key in cls._instances:
-            instance = cls._instances[key]
-        else:
-            # create a new instance and cache it
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[key] = instance
-
-        # track which instance was called last
-        cls._current = instance
-
-        return cls._instances[key]
-
-
-class Core(metaclass=CachedCore):
+class Core:
     """Core class that handles converting between position types and retrieving information on
     biological features.
     """
@@ -1768,6 +1742,8 @@ class Core(metaclass=CachedCore):
     def _get_feature_attr(self, key: str, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol and a desired ID type, return the corresponding ID(s)."""
         parts = []
+
+        print(self.contig_alias)
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
             if feature_type == CONTIG_ID:

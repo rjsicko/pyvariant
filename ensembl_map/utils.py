@@ -1,6 +1,6 @@
 from itertools import product, zip_longest
 from string import punctuation
-from typing import Any, Iterator, List, Optional, Tuple, Union
+from typing import Iterator, List, Optional, Tuple, Union
 
 from Bio.Seq import Seq
 
@@ -80,24 +80,6 @@ def format_hgvs_position(position: int, offset: int, is_3_prime_utr: bool = Fals
             position_str += f"{position}"
 
     return position_str
-
-
-def hash_args(*args, **kwargs):
-    """Generate a hash value for arbitrary args and kwargs."""
-    flattened = []
-
-    def add(value: Any):
-        if isinstance(value, (list, set, tuple)):
-            flattened.extend([i for i in value])
-        elif isinstance(value, dict):
-            flattened.extend([value[i] for i in sorted(value)])
-        else:
-            flattened.append(value)
-
-    [add(i) for i in args]
-    [add(kwargs[i]) for i in sorted(kwargs)]
-
-    return hash(tuple(flattened))
 
 
 def is_deletion(refseq: str, altseq: str) -> bool:

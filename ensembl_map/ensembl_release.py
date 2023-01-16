@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from .constants import DEFAULT_ENSEMBL_RELEASE, DEFAULT_SPECIES
 from .core import Core
 from .ensembl_cache import EnsemblCache
 from .files import tsv_to_dict, txt_to_list
@@ -15,8 +14,8 @@ class EnsemblRelease(Core):
 
     def __init__(
         self,
-        species: str = DEFAULT_SPECIES,
-        release: int = DEFAULT_ENSEMBL_RELEASE,
+        species: str,
+        release: int,
         cache_dir: str = "",
         canonical_transcript: str = "",
         contig_alias: str = "",

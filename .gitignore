@@ -16,4 +16,4 @@ docs/
 htmlcov/
 venv/
 __pycache__/
-tests/data/
+tests/data/*/
