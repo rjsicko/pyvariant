@@ -1,7 +1,7 @@
 import pytest
 
-from ensembl_map.ensembl_cache import normalize_release, normalize_species, reference_by_release
-from ensembl_map.utils import (
+from variant_map.ensembl_cache import normalize_release, normalize_species, reference_by_release
+from variant_map.utils import (
     collapse_seq_change,
     expand_nt,
     expand_pep,

@@ -1,4 +1,4 @@
-from ensembl_map.core import CdnaMappablePosition, DnaMappablePosition
+from variant_map.core import CdnaMappablePosition, DnaMappablePosition
 
 
 def test_negative_strand(ensembl100):

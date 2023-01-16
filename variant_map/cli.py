@@ -42,7 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main():
-    """Entrypoint for `ensembl_map`."""
+    """Entrypoint for `variant_map`."""
     parser = build_parser()
     args = parser.parse_args()
     if args.subcommand == "install":

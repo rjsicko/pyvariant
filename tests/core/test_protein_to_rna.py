@@ -1,6 +1,6 @@
 import pytest
 
-from ensembl_map.core import ProteinMappablePosition, RnaMappablePosition
+from variant_map.core import ProteinMappablePosition, RnaMappablePosition
 
 
 def test_negative_strand(ensembl100):

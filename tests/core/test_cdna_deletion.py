@@ -1,7 +1,7 @@
 import pytest
 
-from ensembl_map.constants import DELETION
-from ensembl_map.core import CdnaDeletion, DnaDeletion, ProteinDeletion, RnaDeletion
+from variant_map.constants import DELETION
+from variant_map.core import CdnaDeletion, DnaDeletion, ProteinDeletion, RnaDeletion
 
 
 @pytest.fixture()

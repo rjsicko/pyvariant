@@ -1,7 +1,7 @@
 import pytest
 
-from ensembl_map.constants import SUBTITUTION
-from ensembl_map.core import (
+from variant_map.constants import SUBTITUTION
+from variant_map.core import (
     CdnaDelins,
     CdnaSubstitution,
     DnaDelins,

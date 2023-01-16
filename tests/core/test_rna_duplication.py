@@ -1,7 +1,7 @@
 import pytest
 
-from ensembl_map.constants import DUPLICATION
-from ensembl_map.core import CdnaDuplication, DnaDuplication, ProteinDuplication, RnaDuplication
+from variant_map.constants import DUPLICATION
+from variant_map.core import CdnaDuplication, DnaDuplication, ProteinDuplication, RnaDuplication
 
 
 @pytest.fixture()

@@ -1,6 +1,6 @@
 import pytest
 
-from ensembl_map.core import ExonMappablePosition
+from variant_map.core import ExonMappablePosition
 
 
 def test_negative_strand(ensembl100):

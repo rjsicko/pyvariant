@@ -1,14 +1,14 @@
 import os.path
 
 # Package constants
-NAME = "ensembl_map"
+NAME = "variant_map"
 
 # Default species/release
 DEFAULT_SPECIES = "homo_sapiens"
 DEFAULT_ENSEMBL_RELEASE = 100
 
 # Variable set the cache directory
-CACHE_DIR_ENV = "ENSEMBL_MAP_CACHE"
+CACHE_DIR_ENV = "VARIANT_MAP_CACHE"
 
 # Literals used throughout the package
 CONTIG_ID = "contig_id"

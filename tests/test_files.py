@@ -7,8 +7,8 @@ from Bio.bgzf import BgzfWriter
 from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_ENS100_CDNA_FASTA
 from pyfaidx import Fasta
 
-from ensembl_map.constants import CACHE_DIR_ENV, NAME
-from ensembl_map.files import (
+from variant_map.constants import CACHE_DIR_ENV, NAME
+from variant_map.files import (
     bgzip,
     get_cache_dir,
     is_bgzipped,

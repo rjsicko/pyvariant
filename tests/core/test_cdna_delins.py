@@ -1,7 +1,7 @@
 import pytest
 
-from ensembl_map.constants import DELINS
-from ensembl_map.core import CdnaDelins, DnaDelins, ProteinDelins, RnaDelins
+from variant_map.constants import DELINS
+from variant_map.core import CdnaDelins, DnaDelins, ProteinDelins, RnaDelins
 
 
 @pytest.fixture()

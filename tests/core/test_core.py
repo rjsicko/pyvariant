@@ -20,7 +20,7 @@ from constants import (
 )
 from pyfaidx import Fasta
 
-from ensembl_map.constants import (
+from variant_map.constants import (
     CONTIG_ID,
     EXON_ID,
     GENE_ID,
@@ -29,7 +29,7 @@ from ensembl_map.constants import (
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
-from ensembl_map.core import (
+from variant_map.core import (
     CdnaMappablePosition,
     Core,
     DnaMappablePosition,

@@ -1,7 +1,7 @@
 import pytest
 
-from ensembl_map.constants import FUSION
-from ensembl_map.core import (
+from variant_map.constants import FUSION
+from variant_map.core import (
     CdnaFusion,
     CdnaMappablePosition,
     DnaFusion,

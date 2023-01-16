@@ -9,7 +9,7 @@ from constants import (
 )
 from pyfaidx import Fasta
 
-from ensembl_map.ensembl_release import EnsemblRelease
+from variant_map.ensembl_release import EnsemblRelease
 
 
 def test_init():
