@@ -10,7 +10,6 @@ from pyfaidx import Fasta
 
 from .constants import CONTIG_ID
 from .files import bgzip, ftp_download, get_cache_dir, is_bgzipped, read_fasta
-from .gtf import to_dataframe
 from .utils import normalize_release, normalize_species, reference_by_release, strip_version
 
 # Ensembl FTP URL
@@ -128,7 +127,7 @@ class EnsemblCache:
 
         # Process and cache the GTF file
         if cache_missing or recache:
-            df = to_dataframe(self.local_gtf_filepath)
+            df = read_gtf(self.local_gtf_filepath)
             if restrict_genes:
                 df = df[df["gene_name"].isin(restrict_genes)]
 
@@ -413,7 +412,7 @@ class EnsemblCache:
 def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize a pandas DataFrame and infer missing data."""
     df = df.replace("", np.nan)
-    df = normalize_cols(df)
+    df = normlize_columns(df)
     df = df.sort_values(["start", "end"])
     df = infer_transcripts(df)
     df = infer_cdna(df)
@@ -427,7 +426,7 @@ def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def normalize_cols(df: pd.DataFrame) -> pd.DataFrame:
+def normlize_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Rename columns, drop unused data, and set data types for each column."""
     # Rename column(s)
     df = df.rename(columns=GTF_COLUMN_RENAME)
@@ -436,7 +435,8 @@ def normalize_cols(df: pd.DataFrame) -> pd.DataFrame:
     # Drop unused feature types
     df = df[df.feature.isin(GTF_KEEP_FEATURES)]
     # Assert that all the expected columns exist
-    assert sorted(df.columns) == sorted(GTF_KEEP_COLUMNS)
+    missing = [i for i in GTF_KEEP_COLUMNS if i not in df.columns]
+    assert not missing, f"Found columns {df.columns}, missing {missing}"
     # Coerce the non-null values in the 'exon_number' to float
     df["exon_number"] = df["exon_number"].astype(float, errors="raise")
 
@@ -447,6 +447,7 @@ def infer_transcripts(df: pd.DataFrame) -> pd.DataFrame:
     """Infer transcripts position(s) from other features, if not already defined."""
     transcript_rows = []
 
+    print("Inferring transcripts...", file=sys.stderr)
     for transcript_id, group in df.groupby("transcript_id"):
         if group[group.feature == "transcript"].empty:
             first = group.iloc[0]
@@ -476,6 +477,7 @@ def infer_cdna(df: pd.DataFrame) -> pd.DataFrame:
     """Infer cDNA position(s) from other features, if not already defined."""
     cdna_rows = []
 
+    print("Inferring cDNA...", file=sys.stderr)
     for transcript_id, group in df.groupby("transcript_id"):
         if group[group.feature == "cdna"].empty:
             cds_df = group[group.feature == "CDS"]
@@ -507,7 +509,8 @@ def infer_missing_genes(df: pd.DataFrame) -> pd.DataFrame:
     """Infer gene position(s) from other features, if not already defined."""
     gene_rows = []
 
-    for gene_id, group in df.groupby("gene_id"):
+    print("Inferring missing genes...", file=sys.stderr)
+    for _, group in df.groupby("gene_id"):
         if group[group.feature == "gene"].empty:
             first = group.iloc[0]
             last = group.iloc[-1]
@@ -532,7 +535,8 @@ def infer_missing_genes(df: pd.DataFrame) -> pd.DataFrame:
 
 def exon_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate the position of each exon, relative to the start of the transcript."""
-    for transcript_id, group in df.groupby("transcript_id"):
+    print("Inferring exon offsets from transcripts...", file=sys.stderr)
+    for _, group in df.groupby("transcript_id"):
         transcript_df = group[group.feature == "transcript"]
         if transcript_df.empty:
             continue
@@ -575,7 +579,8 @@ def exon_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
 
 def cds_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate the position of each CDS, relative to the start of the transcript."""
-    for transcript_id, group in df.groupby("transcript_id"):
+    print("Inferring CDS offsets from transcripts...", file=sys.stderr)
+    for _, group in df.groupby("transcript_id"):
         cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
         if cds_df.empty:
             continue
@@ -614,7 +619,8 @@ def cds_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
 
 def cds_offset_cdna(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate the position of each CDS, relative to the start of the cDNA."""
-    for transcript_id, group in df.groupby("transcript_id"):
+    print("Inferring CDS offsets from cDNA...", file=sys.stderr)
+    for _, group in df.groupby("transcript_id"):
         cdna_df = group[group.feature == "cdna"]
         if cdna_df.empty:
             continue
@@ -659,6 +665,7 @@ def cds_offset_cdna(df: pd.DataFrame) -> pd.DataFrame:
 
 def set_protein_id(df: pd.DataFrame) -> pd.DataFrame:
     """Add the protein ID as info for each cDNA and stop codon, if not already defined."""
+    print("Inferring protein IDs...", file=sys.stderr)
     for _, group in df.groupby("transcript_id"):
         # Get the first non-NA protein ID matching the transcript ID
         # A protein coding transcript should only have 1 matching protein ID

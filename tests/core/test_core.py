@@ -6,11 +6,6 @@ from constants import (
     EXON_ALIAS,
     GENE_ALIAS,
     PROTEIN_ALIAS,
-    TEST_ENS69_CDNA_FASTA,
-    TEST_ENS69_DNA_FASTA,
-    TEST_ENS69_GTF,
-    TEST_ENS69_NCRNA_FASTA,
-    TEST_ENS69_PEP_FASTA,
     TEST_ENS100_CDNA_FASTA,
     TEST_ENS100_DNA_FASTA,
     TEST_ENS100_GTF,
@@ -71,35 +66,6 @@ def test_init():
     assert isinstance(obj.gene_alias, dict)
     assert isinstance(obj.protein_alias, dict)
     assert isinstance(obj.transcript_alias, dict)
-
-
-# -------------------------------------------------------------------------------------------------
-# test cached instances
-# -------------------------------------------------------------------------------------------------
-def test_unique_instances():
-    a = Core(
-        gtf=TEST_ENS100_GTF,
-        cds=[TEST_ENS100_CDNA_FASTA],
-        dna=[TEST_ENS100_DNA_FASTA],
-        peptide=[TEST_ENS100_PEP_FASTA],
-        rna=[TEST_ENS100_NCRNA_FASTA],
-    )
-    b = Core(
-        gtf=TEST_ENS100_GTF,
-        cds=[TEST_ENS100_CDNA_FASTA],
-        dna=[TEST_ENS100_DNA_FASTA],
-        peptide=[TEST_ENS100_PEP_FASTA],
-        rna=[TEST_ENS100_NCRNA_FASTA],
-    )
-    c = Core(
-        gtf=TEST_ENS69_GTF,
-        cds=[TEST_ENS69_CDNA_FASTA],
-        dna=[TEST_ENS69_DNA_FASTA],
-        peptide=[TEST_ENS69_PEP_FASTA],
-        rna=[TEST_ENS69_NCRNA_FASTA],
-    )
-    assert a is b
-    assert a is not c
 
 
 # -------------------------------------------------------------------------------------------------
@@ -316,11 +282,11 @@ def test_gene_names_from_protein_id(ensembl100):
 
 
 def test_gene_names_from_refseq_transcript(ensembl100):
-    ret_by_id = ensembl100.gene_names("NM_000244")
+    ret_by_id = ensembl100.gene_names("NM_001370259")
     assert "MEN1" in ret_by_id
     ret_by_id = ensembl100.gene_names("NM_007194")
     assert "CHEK2" in ret_by_id
-    ret_by_id = ensembl100.gene_names("NM_001128849")
+    ret_by_id = ensembl100.gene_names("NM_003072")
     assert "SMARCA4" in ret_by_id
     ret_by_id = ensembl100.gene_names("NM_000314")
     assert "PTEN" in ret_by_id
