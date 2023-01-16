@@ -29,9 +29,13 @@ def bgzip_file(tmpdir) -> str:
 
 @pytest.fixture
 def cache_env_var():
+    old_end_var = os.environ.get(CACHE_DIR_ENV, "")
     os.environ[CACHE_DIR_ENV] = "TEST"
     yield
-    del os.environ[CACHE_DIR_ENV]
+    if old_end_var:
+        os.environ[CACHE_DIR_ENV] = old_end_var
+    else:
+        del os.environ[CACHE_DIR_ENV]
 
 
 @pytest.fixture

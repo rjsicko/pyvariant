@@ -14,8 +14,8 @@ from variant_map.ensembl_release import EnsemblRelease
 @pytest.fixture(scope="session")
 def ensembl69():
     return EnsemblRelease(
-        species="homo_sapiens",
-        release=69,
+        "homo_sapiens",
+        69,
         cache_dir="",
         canonical_transcript="",
         contig_alias="",
@@ -29,8 +29,8 @@ def ensembl69():
 @pytest.fixture(scope="session")
 def ensembl100():
     return EnsemblRelease(
-        species="homo_sapiens",
-        release=100,
+        "homo_sapiens",
+        100,
         cache_dir="",
         canonical_transcript=CANONICAL_TRANSCRIPT,
         contig_alias=CONTIG_ALIAS,

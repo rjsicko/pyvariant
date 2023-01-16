@@ -1,5 +1,6 @@
 import pandas as pd
 from constants import (
+    CACHE_DIR,
     CANONICAL_TRANSCRIPT,
     CONTIG_ALIAS,
     EXON_ALIAS,
@@ -16,7 +17,7 @@ def test_init():
     obj = EnsemblRelease(
         species="homo_sapiens",
         release=100,
-        cache_dir="",
+        cache_dir=CACHE_DIR,
         canonical_transcript=CANONICAL_TRANSCRIPT,
         contig_alias=CONTIG_ALIAS,
         exon_alias=EXON_ALIAS,
@@ -39,11 +40,3 @@ def test_init():
     assert isinstance(obj.gene_alias, dict)
     assert isinstance(obj.protein_alias, dict)
     assert isinstance(obj.transcript_alias, dict)
-
-
-def test_unique_instances():
-    a = EnsemblRelease(species="homo_sapiens", release=100)
-    b = EnsemblRelease(species="homo_sapiens", release=100)
-    c = EnsemblRelease(species="homo_sapiens", release=69)
-    assert a is b
-    assert a is not c
