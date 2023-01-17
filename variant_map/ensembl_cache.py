@@ -127,7 +127,8 @@ class EnsemblCache:
 
         # Process and cache the GTF file
         if cache_missing or recache:
-            df = read_gtf(self.local_gtf_filepath)
+            # TODO: switch to 'polars'?
+            df = read_gtf(self.local_gtf_filepath, result_type="pandas")
             if restrict_genes:
                 df = df[df["gene_name"].isin(restrict_genes)]
 

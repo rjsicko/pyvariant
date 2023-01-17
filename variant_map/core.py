@@ -1662,7 +1662,8 @@ class Core:
             protein_alias: path to a TSV file mapping contig IDs to their alias(es)
             transcript_alias: path to a TSV file mapping contig IDs to their alias(es)
         """
-        self.df = read_gtf(gtf)
+        # TODO: switch to 'polars'?
+        self.df = read_gtf(gtf, result_type="pandas")
         self.cds = [read_fasta(i) for i in cds]
         self.dna = [read_fasta(i) for i in dna]
         self.peptide = [read_fasta(i) for i in peptide]
@@ -1742,8 +1743,6 @@ class Core:
     def _get_feature_attr(self, key: str, feature: str, feature_type: str = "") -> List[str]:
         """Given a feature symbol and a desired ID type, return the corresponding ID(s)."""
         parts = []
-
-        print(self.contig_alias)
 
         for feature, feature_type in self.normalize_feature(feature, feature_type):
             if feature_type == CONTIG_ID:
