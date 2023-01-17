@@ -1,8 +1,8 @@
-# Variant Map
+# Variant-Map
 
 ## What is it?
 
-**variant-map** is a Python package for converting between equivalent chromosome, cDNA, gene, exon, protein, and transcript positions.
+**variant-map** is a Python package for mapping biological sequence variants (mutations) to their equivalent chromosome, cDNA, gene, exon, protein, and RNA positions.
 
 ## How to get it
 
