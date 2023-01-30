@@ -108,6 +108,27 @@ def test_to_protein(ensembl69, variant):
     assert variant.to_protein() == expected
 
 
+def test_to_protein_frameshift(ensembl69):
+    variant = CdnaDelins(
+        _data=ensembl69,
+        contig_id="17",
+        start=878,
+        start_offset=0,
+        end=880,
+        end_offset=0,
+        strand="-",
+        gene_id="ENSG00000141510",
+        gene_name="TP53",
+        transcript_id="ENST00000269305",
+        transcript_name="TP53-001",
+        protein_id="ENSP00000269305",
+        refseq="GGG",
+        altseq="TTTA",
+    )
+    with pytest.raises(NotImplementedError):
+        variant.to_protein()
+
+
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaDelins(
