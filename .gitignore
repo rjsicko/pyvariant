@@ -11,6 +11,7 @@ pytest.xml
 .stversions/
 build/
 cover/
+dev/
 dist/
 docs/
 htmlcov/
