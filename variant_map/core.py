@@ -125,10 +125,12 @@ class CdnaPosition(Position):
     protein_id: str
 
     def __str__(self) -> str:
-        if self.start == self.end:
-            return f"{self.transcript_id}:c.{self.start}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:c.{start}"
         else:
-            return f"{self.transcript_id}:c.{self.start}_{self.end}"
+            return f"{self.transcript_id}:c.{start}_{end}"
 
     @property
     def is_cdna(self) -> bool:
@@ -148,10 +150,12 @@ class DnaPosition(Position):
     """Stores information on DNA position objects."""
 
     def __str__(self) -> str:
-        if self.start == self.end:
-            return f"{self.contig_id}:g.{self.start}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.contig_id}:g.{start}"
         else:
-            return f"{self.contig_id}:g.{self.start}_{self.end}"
+            return f"{self.contig_id}:g.{start}_{end}"
 
     @property
     def is_dna(self) -> bool:
@@ -178,10 +182,12 @@ class ExonPosition(Position):
     exon_id: str
 
     def __str__(self) -> str:
-        if self.start == self.end:
-            return f"{self.transcript_id}:e.{self.start}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:e.{start}"
         else:
-            return f"{self.transcript_id}:e.{self.start}_{self.end}"
+            return f"{self.transcript_id}:e.{start}_{end}"
 
     @property
     def is_exon(self) -> bool:
@@ -202,10 +208,12 @@ class ProteinPosition(Position):
     protein_id: str
 
     def __str__(self) -> str:
-        if self.start == self.end:
-            return f"{self.protein_id}:p.{self.start}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.protein_id}:p.{start}"
         else:
-            return f"{self.protein_id}:p.{self.start}_{self.end}"
+            return f"{self.protein_id}:p.{start}_{end}"
 
     @property
     def is_protein(self) -> bool:
@@ -230,10 +238,12 @@ class RnaPosition(Position):
     transcript_name: str
 
     def __str__(self) -> str:
-        if self.start == self.end:
-            return f"{self.transcript_id}:r.{self.start}"
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{self.transcript_id}:r.{start}"
         else:
-            return f"{self.transcript_id}:r.{self.start}_{self.end}"
+            return f"{self.transcript_id}:r.{start}_{end}"
 
     @property
     def is_rna(self) -> bool:
@@ -631,7 +641,7 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
                     f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}'"
                 )
 
-            # Remove bases that are unchanged between the ref and alt alleles
+            # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
             start = cdna.start + new_start
             end = cdna.end - new_end
@@ -683,7 +693,7 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
             if is_insertion(refseq, altseq) and not is_insertion(ref, alt):
                 continue
 
-            # Remove bases that are unchanged between the ref and alt alleles
+            # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
             start = cdna.start + new_start
             end = cdna.end - new_end
@@ -788,7 +798,7 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
             #         f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {dna}"
             #     )
 
-            # Remove bases that are unchanged between the ref and alt alleles
+            # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
             start = dna.start + new_start
             end = dna.end - new_end
@@ -900,10 +910,13 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
 
         protein_refseq = protein.sequence()
         for cdna_ref, cdna_alt in product(expand_nt(refseq), expand_nt(altseq)):
+            if is_frameshift(cdna_ref, cdna_alt):
+                raise NotImplementedError()  # TODO
+
             for protein_alt in protein._data.mutate_cds_to_protein(
-                cdna.transcript_id, cdna.start, cdna.end, cdna_ref, cdna_alt
+                cdna.transcript_id, cdna.start, cdna.end, cdna_alt
             ):
-                # Remove bases that are unchanged between the ref and alt alleles
+                # Trim bases that are unchanged between the ref and alt alleles
                 new_ref, new_alt, new_start, new_end = collapse_seq_change(
                     protein_refseq, protein_alt
                 )
@@ -923,8 +936,6 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
                     variant = ProteinDuplication.copy_from(
                         protein, start=start, end=end, refseq=new_ref, altseq=new_alt
                     )
-                elif is_frameshift(cdna_ref, cdna_alt):
-                    raise NotImplementedError()  # TODO
                 elif is_insertion(new_ref, new_alt):
                     variant = ProteinInsertion.copy_from(
                         protein, start=start, end=end, refseq=new_ref, altseq=new_alt
@@ -1011,7 +1022,7 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
                     f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {rna}"
                 )
 
-            # Remove bases that are unchanged between the ref and alt alleles
+            # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
             start = rna.start + new_start
             end = rna.end - new_end
@@ -1966,10 +1977,10 @@ class Core:
         end = end if end is not None else seqlen
 
         # validate that the given positions fall within the sequence
-        if not (0 <= start < seqlen):
+        if not (0 <= start <= seqlen):
             raise ValueError(f"Start must be from 1 to {seqlen} ({start})")
-        if not (1 < end <= seqlen):
-            raise ValueError(f"End must be from 2 to {seqlen + 1} ({end})")
+        if not (0 < end <= seqlen):
+            raise ValueError(f"End must be from 1 to {seqlen} ({end})")
 
         # sanity check that the end position is after the start
         if end < start:
@@ -2129,6 +2140,10 @@ class Core:
 
         return sorted(set(result))
 
+    def get_proteins(self, feature: str) -> List[ProteinMappablePosition]:
+        """Return the protein position(s) of the given feature."""
+        raise NotImplementedError()  # TODO
+
     def get_transcripts(self, feature: str) -> List[RnaMappablePosition]:
         """Return the transcript position(s) of the given feature."""
         result = []
@@ -2165,18 +2180,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[CdnaMappablePosition]:
         """Map a cDNA position to zero or more cDNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._cdna_to_cdna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._cdna_to_cdna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._cdna_to_cdna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def cdna_to_dna(
         self,
@@ -2186,18 +2217,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[DnaMappablePosition]:
         """Map a cDNA position to zero or more DNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._cdna_to_dna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._cdna_to_dna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._cdna_to_dna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def cdna_to_exon(
         self,
@@ -2207,18 +2254,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[ExonMappablePosition]:
         """Map a cDNA position to an exon positions."""
-        return self._map(
-            self.transcript_ids,
-            self._cdna_to_exon,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._cdna_to_exon_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._cdna_to_exon,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def cdna_to_protein(
         self,
@@ -2228,18 +2291,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[ProteinMappablePosition]:
         """Map a cDNA position to zero or more protein positions."""
-        return self._map(
-            self.transcript_ids,
-            self._cdna_to_protein,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._cdna_to_protein_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._cdna_to_protein,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def cdna_to_rna(
         self,
@@ -2249,18 +2328,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[RnaMappablePosition]:
         """Map a cDNA position to zero or more RNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._cdna_to_rna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._cdna_to_rna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._cdna_to_rna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def dna_to_cdna(
         self,
@@ -2270,18 +2365,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[CdnaMappablePosition]:
         """Map a DNA position to zero or more cDNA positions."""
-        return self._map(
-            self.contig_ids,
-            self._dna_to_cdna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.contig_ids,
+                self._dna_to_cdna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.contig_ids,
+                self._dna_to_cdna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def dna_to_dna(
         self,
@@ -2291,18 +2402,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[DnaMappablePosition]:
         """Map a DNA position to zero or more DNA positions."""
-        return self._map(
-            self.contig_ids,
-            self._dna_to_dna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.contig_ids,
+                self._dna_to_dna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.contig_ids,
+                self._dna_to_dna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def dna_to_exon(
         self,
@@ -2312,18 +2439,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[ExonMappablePosition]:
         """Map a DNA position to zero or more exon positions."""
-        return self._map(
-            self.contig_ids,
-            self._dna_to_exon,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.contig_ids,
+                self._dna_to_exon_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.contig_ids,
+                self._dna_to_exon,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def dna_to_protein(
         self,
@@ -2333,18 +2476,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[ProteinMappablePosition]:
         """Map a DNA position to zero or more protein positions."""
-        return self._map(
-            self.contig_ids,
-            self._dna_to_protein,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.contig_ids,
+                self._dna_to_protein_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.contig_ids,
+                self._dna_to_protein,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def dna_to_rna(
         self,
@@ -2354,18 +2513,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[RnaMappablePosition]:
         """Map a DNA position to zero or more RNA positions."""
-        return self._map(
-            self.contig_ids,
-            self._dna_to_rna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.contig_ids,
+                self._dna_to_rna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.contig_ids,
+                self._dna_to_rna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def exon_to_cdna(
         self,
@@ -2380,7 +2555,7 @@ class Core:
         return self._map_exon(
             self._exon_to_cdna,
             feature,
-            start=start,
+            start,
             start_offset=start_offset,
             end=end,
             end_offset=end_offset,
@@ -2400,7 +2575,7 @@ class Core:
         return self._map_exon(
             self._exon_to_dna,
             feature,
-            start=start,
+            start,
             start_offset=start_offset,
             end=end,
             end_offset=end_offset,
@@ -2420,7 +2595,7 @@ class Core:
         return self._map_exon(
             self._exon_to_exon,
             feature,
-            start=start,
+            start,
             start_offset=start_offset,
             end=end,
             end_offset=end_offset,
@@ -2440,7 +2615,7 @@ class Core:
         return self._map_exon(
             self._exon_to_protein,
             feature,
-            start=start,
+            start,
             start_offset=start_offset,
             end=end,
             end_offset=end_offset,
@@ -2460,7 +2635,7 @@ class Core:
         return self._map_exon(
             self._exon_to_rna,
             feature,
-            start=start,
+            start,
             start_offset=start_offset,
             end=end,
             end_offset=end_offset,
@@ -2475,18 +2650,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[CdnaMappablePosition]:
         """Map a protein position to zero or more cDNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._protein_to_cdna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._protein_to_cdna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._protein_to_cdna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def protein_to_dna(
         self,
@@ -2496,18 +2687,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[DnaMappablePosition]:
         """Map a protein position to zero or more DNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._protein_to_dna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._protein_to_dna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._protein_to_dna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def protein_to_exon(
         self,
@@ -2517,18 +2724,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[ExonMappablePosition]:
         """Map a protein position to zero or more exon positions."""
-        return self._map(
-            self.transcript_ids,
-            self._protein_to_exon,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._protein_to_exon_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._protein_to_exon,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def protein_to_protein(
         self,
@@ -2538,18 +2761,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[ProteinMappablePosition]:
         """Map a protein position to zero or more protein positions."""
-        return self._map(
-            self.transcript_ids,
-            self._protein_to_protein,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._protein_to_protein_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._protein_to_protein,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def protein_to_rna(
         self,
@@ -2559,18 +2798,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[RnaMappablePosition]:
         """Map a protein position to zero or more RNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._protein_to_rna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._protein_to_rna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._protein_to_rna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def rna_to_cdna(
         self,
@@ -2580,18 +2835,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[CdnaMappablePosition]:
         """Map a RNA position to zero or more cDNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._rna_to_cdna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._rna_to_cdna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._rna_to_cdna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def rna_to_dna(
         self,
@@ -2601,18 +2872,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[DnaMappablePosition]:
         """Map a RNA position to zero or more DNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._rna_to_dna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._rna_to_dna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._rna_to_dna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def rna_to_exon(
         self,
@@ -2622,18 +2909,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[ExonMappablePosition]:
         """Map a RNA position to an exon positions."""
-        return self._map(
-            self.transcript_ids,
-            self._rna_to_exon,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._rna_to_exon_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._rna_to_exon,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def rna_to_protein(
         self,
@@ -2643,18 +2946,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[ProteinMappablePosition]:
         """Map a RNA position to zero or more protein positions."""
-        return self._map(
-            self.transcript_ids,
-            self._rna_to_protein,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._rna_to_protein_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._rna_to_protein,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def rna_to_rna(
         self,
@@ -2664,18 +2983,34 @@ class Core:
         strand: Optional[str] = None,
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
+        refseq: str = "",
+        altseq: str = "",
     ) -> List[RnaMappablePosition]:
         """Map a RNA position to zero or more RNA positions."""
-        return self._map(
-            self.transcript_ids,
-            self._rna_to_rna,
-            feature,
-            start,
-            start_offset=start_offset,
-            end=end,
-            end_offset=end_offset,
-            strand=strand,
-        )
+        if refseq or altseq:
+            return self._map_variant(
+                self.transcript_ids,
+                self._rna_to_rna_variant,
+                feature,
+                start,
+                refseq,
+                altseq,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
+        else:
+            return self._map(
+                self.transcript_ids,
+                self._rna_to_rna,
+                feature,
+                start,
+                start_offset=start_offset,
+                end=end,
+                end_offset=end_offset,
+                strand=strand,
+            )
 
     def _cdna_to_cdna(
         self,
@@ -4169,29 +4504,67 @@ class Core:
 
         return result
 
+    def _normalize_map_args(
+        self,
+        start: Optional[int],
+        start_offset: Optional[int],
+        end: Optional[int],
+        end_offset: Optional[int],
+        strand: Optional[str],
+    ) -> Tuple[Optional[int], int, Optional[int], int, List[str]]:
+        start_ = start if start is not None else end
+        end_ = end if end is not None else start
+        start_offset_ = start_offset or 0
+        end_offset_ = end_offset or 0
+        strand_ = [strand] if strand is not None else ["+", "-"]
+
+        return start_, start_offset_, end_, end_offset_, strand_
+
     def _map(
         self,
         idfunc: Callable,
         mapfunc: Callable,
         feature: str,
         start: int,
-        start_offset: Optional[int] = None,
-        end: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        strand: Optional[str] = None,
+        start_offset: Optional[int],
+        end: Optional[int],
+        end_offset: Optional[int],
+        strand: Optional[str],
     ) -> List:
-        end = end if end is not None else start
-        start_offset = start_offset or 0
-        end_offset = end_offset or 0
-        strandl = [strand] if strand is not None else ["+", "-"]
-        featurel = idfunc(feature)
-        result = mapfunc(featurel, start, start_offset, end, end_offset, strandl)
+        start_, start_offset_, end_, end_offset_, strand_ = self._normalize_map_args(
+            start, start_offset, end, end_offset, strand
+        )
+        feature_ = idfunc(feature)
+        result = mapfunc(feature_, start_, start_offset_, end_, end_offset_, strand_)
+
+        return sorted(set(result))
+
+    def _map_variant(
+        self,
+        idfunc: Callable,
+        mapfunc: Callable,
+        feature: str,
+        start: int,
+        refseq: str,
+        altseq: str,
+        start_offset: Optional[int],
+        end: Optional[int],
+        end_offset: Optional[int],
+        strand: Optional[str],
+    ) -> List:
+        start_, start_offset_, end_, end_offset_, strand_ = self._normalize_map_args(
+            start, start_offset, end, end_offset, strand
+        )
+        feature_ = idfunc(feature)
+        result = mapfunc(
+            feature_, start_, start_offset_, end_, end_offset_, strand_, refseq, altseq
+        )
 
         return sorted(set(result))
 
     def _map_exon(
         self,
-        function: Callable,
+        mapfunc: Callable,
         feature: str,
         start: Optional[int],
         start_offset: Optional[int],
@@ -4199,38 +4572,28 @@ class Core:
         end_offset: Optional[int],
         strand: Optional[str],
     ) -> List:
-        if start is None and end is not None:
-            start = end
-        if end is None and start is not None:
-            end = start
+        start_, start_offset_, end_, end_offset_, strand_ = self._normalize_map_args(
+            start, start_offset, end, end_offset, strand
+        )
+        feature_ = self.transcript_ids(feature)
 
-        if start is None:
+        if start_ is not None:
+            positions = list(product(feature_, [start_], [end_], strand_))
+        else:
             positions = []
             for exon_id in self.exon_ids(feature):
-                positions.extend(self._get_exon_number(exon_id))
-        else:
-            strandl = [strand] if strand is not None else ["+", "-"]
-            positions = product(self.transcript_ids(feature), [start], [end], strandl)  # type: ignore
+                positions.extend(self.exon_number(exon_id, transcript_ids=feature_))
 
         result = []
-        for transcript_id, start2, end2, strand2 in positions:
+        for transcript_id, start__, end__, strand__ in positions:
             result.extend(
-                function([transcript_id], start2, start_offset, end2, end_offset, [strand2])
+                mapfunc([transcript_id], start__, start_offset_, end__, end_offset_, [strand__])
             )
 
         return sorted(set(result))
 
-    def _get_exon_number(self, exon_id: str) -> List[Tuple[str, int, int, str]]:
-        result = []
-
-        mask = (self.df[EXON_ID] == exon_id) & (self.df["feature"] == "exon")
-        for _, exon in self.df[mask].iterrows():
-            result.append((exon.transcript_id, exon.exon_number, exon.exon_number, exon.strand))
-
-        return sorted(set(result))
-
     # ---------------------------------------------------------------------------------------------
-    # Functions for converting CDS -> protein
+    # Utility functions
     # ---------------------------------------------------------------------------------------------
     def cds_offset(self, transcript_id: str) -> int:
         """Get the integer offset of the CDS from the start of the spliced RNA."""
@@ -4241,19 +4604,29 @@ class Core:
 
         return offset
 
+    def exon_number(
+        self, exon_id: str, transcript_ids: Union[List[str], str] = []
+    ) -> List[Tuple[str, int, int, str]]:
+        """Get the exon number(s) for an exon ID on each transcript. Optionally, restrict to a
+        specific transcript(s).
+        """
+        result = []
+        restrict = [transcript_ids] if isinstance(transcript_ids, str) else transcript_ids
+
+        mask = (self.df[EXON_ID] == exon_id) & (self.df["feature"] == "exon")
+        for _, exon in self.df[mask].iterrows():
+            if restrict and exon.transcript_id not in restrict:
+                continue
+            else:
+                result.append((exon.transcript_id, exon.exon_number, exon.exon_number, exon.strand))
+
+        return sorted(set(result))
+
     def mutate_cds_to_protein(
-        self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_ref: str, cdna_alt: str
+        self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_alt: str
     ) -> List[str]:
         """Return the mutated protein sequence, given a cDNA position and alt allele."""
         pep_altseq_set = set()
-
-        # If no ref, assume we're talking about an insertion variant
-        if not cdna_ref:
-            for i in expand_nt(cdna_alt):
-                pep_altseq = "".join(AMINO_ACID_TABLE[codon] for codon in split_by_codon(i))
-                pep_altseq_set.add(pep_altseq)
-
-            return sorted(pep_altseq_set)
 
         # If no alt, assume we're talking about a deletion variant
         if not cdna_alt:
