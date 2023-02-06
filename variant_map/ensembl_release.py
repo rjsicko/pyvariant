@@ -30,16 +30,19 @@ class EnsemblRelease(Core):
         self.release = self.ensembl_cache.release
         self.species = self.ensembl_cache.species
         self.df = self.ensembl_cache.load_df()
-        self.cds = []
-        self.dna = [self.ensembl_cache.load_dna_fasta()]
-        self.peptide = [self.ensembl_cache.load_pep_fasta()]
-        self.rna = [self.ensembl_cache.load_cdna_fasta(), self.ensembl_cache.load_ncrna_fasta()]
-        self.canonical_transcript = txt_to_list(canonical_transcript)
-        self.contig_alias = tsv_to_dict(contig_alias)
-        self.exon_alias = tsv_to_dict(exon_alias)
-        self.gene_alias = tsv_to_dict(gene_alias)
-        self.protein_alias = tsv_to_dict(protein_alias)
-        self.transcript_alias = tsv_to_dict(transcript_alias)
+        self.cds_fasta = []
+        self.dna_fasta = [self.ensembl_cache.load_dna_fasta()]
+        self.protein_fasta = [self.ensembl_cache.load_pep_fasta()]
+        self.rna_fasta = [
+            self.ensembl_cache.load_cdna_fasta(),
+            self.ensembl_cache.load_ncrna_fasta(),
+        ]
+        self._canonical_transcript = txt_to_list(canonical_transcript)
+        self._contig_alias = tsv_to_dict(contig_alias)
+        self._exon_alias = tsv_to_dict(exon_alias)
+        self._gene_alias = tsv_to_dict(gene_alias)
+        self._protein_alias = tsv_to_dict(protein_alias)
+        self._transcript_alias = tsv_to_dict(transcript_alias)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
@@ -64,4 +67,4 @@ class EnsemblRelease(Core):
         cds_start = start + offset if start is not None else offset
         cds_end = end + offset if end is not None else offset
 
-        return self._get_sequence(self.rna, transcript_id, start=cds_start, end=cds_end)
+        return self._sequence(self.rna_fasta, transcript_id, start=cds_start, end=cds_end)

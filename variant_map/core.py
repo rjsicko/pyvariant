@@ -48,7 +48,7 @@ from .utils import (
 # Position classes
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
-class Position:
+class _Position:
     """Base class for position objects."""
 
     _data: Core
@@ -60,7 +60,7 @@ class Position:
     strand: str
 
     @classmethod
-    def copy_from(cls, position: Position, **kwargs):
+    def copy_from(cls, position: _Position, **kwargs):
         return cls(
             **{
                 **{
@@ -73,7 +73,7 @@ class Position:
     def __getitem__(self, item: Any) -> Any:
         return getattr(self, item)
 
-    def __lt__(self, other: Position) -> bool:
+    def __lt__(self, other: _Position) -> bool:
         return str(self) < str(other)
 
     def __str__(self) -> str:
@@ -115,7 +115,7 @@ class Position:
 
 
 @dataclass(eq=True, frozen=True)
-class CdnaPosition(Position):
+class CdnaPosition(_Position):
     """Stores information on cDNA position objects."""
 
     gene_id: str
@@ -146,7 +146,7 @@ class CdnaPosition(Position):
 
 
 @dataclass(eq=True, frozen=True)
-class DnaPosition(Position):
+class DnaPosition(_Position):
     """Stores information on DNA position objects."""
 
     def __str__(self) -> str:
@@ -171,7 +171,7 @@ class DnaPosition(Position):
 
 
 @dataclass(eq=True, frozen=True)
-class ExonPosition(Position):
+class ExonPosition(_Position):
     """Stores information on exon position objects."""
 
     gene_id: str
@@ -198,7 +198,7 @@ class ExonPosition(Position):
 
 
 @dataclass(eq=True, frozen=True)
-class ProteinPosition(Position):
+class ProteinPosition(_Position):
     """Stores information on protein position objects."""
 
     gene_id: str
@@ -225,11 +225,11 @@ class ProteinPosition(Position):
                 f"Unable to get peptide sequence of offset position ({self.start_offset}, {self.end_offset})"
             )
 
-        return self._data.peptide_sequence(self.protein_id, self.start, self.end)
+        return self._data.protein_sequence(self.protein_id, self.start, self.end)
 
 
 @dataclass(eq=True, frozen=True)
-class RnaPosition(Position):
+class RnaPosition(_Position):
     """Stores information on RNA position objects."""
 
     gene_id: str
@@ -259,10 +259,10 @@ class RnaPosition(Position):
 
 
 # -------------------------------------------------------------------------------------------------
-# MappablePosition classes
+# _MappablePosition classes
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
-class MappablePosition:
+class _MappablePosition:
     """Base class for mappable position objects."""
 
     def to_cdna(self) -> List[CdnaMappablePosition]:
@@ -282,7 +282,7 @@ class MappablePosition:
 
 
 @dataclass(eq=True, frozen=True)
-class CdnaMappablePosition(CdnaPosition, MappablePosition):
+class CdnaMappablePosition(CdnaPosition, _MappablePosition):
     """Stores information on a cDNA position and converts to other position types."""
 
     def to_cdna(self) -> List[CdnaMappablePosition]:
@@ -337,7 +337,7 @@ class CdnaMappablePosition(CdnaPosition, MappablePosition):
 
 
 @dataclass(eq=True, frozen=True)
-class DnaMappablePosition(DnaPosition, MappablePosition):
+class DnaMappablePosition(DnaPosition, _MappablePosition):
     """Stores information on a DNA position and converts to other position types."""
 
     def to_cdna(self) -> List:
@@ -392,7 +392,7 @@ class DnaMappablePosition(DnaPosition, MappablePosition):
 
 
 @dataclass(eq=True, frozen=True)
-class ExonMappablePosition(ExonPosition, MappablePosition):
+class ExonMappablePosition(ExonPosition, _MappablePosition):
     """Stores information on an exon position and converts to other position types."""
 
     def to_cdna(self) -> List:
@@ -447,7 +447,7 @@ class ExonMappablePosition(ExonPosition, MappablePosition):
 
 
 @dataclass(eq=True, frozen=True)
-class ProteinMappablePosition(ProteinPosition, MappablePosition):
+class ProteinMappablePosition(ProteinPosition, _MappablePosition):
     """Stores information on a protein position and converts to other position types."""
 
     def to_cdna(self) -> List:
@@ -502,7 +502,7 @@ class ProteinMappablePosition(ProteinPosition, MappablePosition):
 
 
 @dataclass(eq=True, frozen=True)
-class RnaMappablePosition(RnaPosition, MappablePosition):
+class RnaMappablePosition(RnaPosition, _MappablePosition):
     """Stores information on an RNA position and converts to other position types."""
 
     def to_cdna(self) -> List:
@@ -913,7 +913,7 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
             if is_frameshift(cdna_ref, cdna_alt):
                 raise NotImplementedError()  # TODO
 
-            for protein_alt in protein._data.mutate_cds_to_protein(
+            for protein_alt in protein._data.translate_cds_variant(
                 cdna.transcript_id, cdna.start, cdna.end, cdna_alt
             ):
                 # Trim bases that are unchanged between the ref and alt alleles
@@ -1497,7 +1497,7 @@ class Fusion(Variant):
     def __getitem__(self, item: Any) -> Any:
         return getattr(self, item)
 
-    def __lt__(self, other: Position) -> bool:
+    def __lt__(self, other: _Position) -> bool:
         return str(self) < str(other)
 
     def __str__(self) -> str:
@@ -1675,16 +1675,16 @@ class Core:
         """
         # TODO: switch to 'polars'?
         self.df = read_gtf(gtf, result_type="pandas")
-        self.cds = [read_fasta(i) for i in cds]
-        self.dna = [read_fasta(i) for i in dna]
-        self.peptide = [read_fasta(i) for i in peptide]
-        self.rna = [read_fasta(i) for i in rna]
-        self.canonical_transcript = txt_to_list(canonical_transcript)
-        self.contig_alias = tsv_to_dict(contig_alias)
-        self.exon_alias = tsv_to_dict(exon_alias)
-        self.gene_alias = tsv_to_dict(gene_alias)
-        self.protein_alias = tsv_to_dict(protein_alias)
-        self.transcript_alias = tsv_to_dict(transcript_alias)
+        self.cds_fasta = [read_fasta(i) for i in cds]
+        self.dna_fasta = [read_fasta(i) for i in dna]
+        self.protein_fasta = [read_fasta(i) for i in peptide]
+        self.rna_fasta = [read_fasta(i) for i in rna]
+        self._canonical_transcript = txt_to_list(canonical_transcript)
+        self._contig_alias = tsv_to_dict(contig_alias)
+        self._exon_alias = tsv_to_dict(exon_alias)
+        self._gene_alias = tsv_to_dict(gene_alias)
+        self._protein_alias = tsv_to_dict(protein_alias)
+        self._transcript_alias = tsv_to_dict(transcript_alias)
 
     # ---------------------------------------------------------------------------------------------
     # all_<feature_symbol>s
@@ -1723,53 +1723,53 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # <feature_symbol>s
     # ---------------------------------------------------------------------------------------------
-    def contig_ids(self, feature: str, feature_type: str = "") -> List[str]:
+    def contig_ids(self, feature: str) -> List[str]:
         """Given a feature symbol, return the corresponding contig ID(s)."""
-        return self._get_feature_attr(CONTIG_ID, feature, feature_type)
+        return self._query_feature(CONTIG_ID, feature)
 
-    def exon_ids(self, feature: str, feature_type: str = "") -> List[str]:
+    def exon_ids(self, feature: str) -> List[str]:
         """Given a feature symbol, return the corresponding exon ID(s)."""
-        return self._get_feature_attr(EXON_ID, feature, feature_type)
+        return self._query_feature(EXON_ID, feature)
 
-    def gene_ids(self, feature: str, feature_type: str = "") -> List[str]:
+    def gene_ids(self, feature: str) -> List[str]:
         """Given a feature symbol, return the corresponding gene ID(s)."""
-        return self._get_feature_attr(GENE_ID, feature, feature_type)
+        return self._query_feature(GENE_ID, feature)
 
-    def gene_names(self, feature: str, feature_type: str = "") -> List[str]:
+    def gene_names(self, feature: str) -> List[str]:
         """Given a feature symbol, return the corresponding gene names(s)."""
-        return self._get_feature_attr(GENE_NAME, feature, feature_type)
+        return self._query_feature(GENE_NAME, feature)
 
-    def protein_ids(self, feature: str, feature_type: str = "") -> List[str]:
+    def protein_ids(self, feature: str) -> List[str]:
         """Given a feature symbol, return the corresponding protein ID(s)."""
-        return self._get_feature_attr(PROTEIN_ID, feature, feature_type)
+        return self._query_feature(PROTEIN_ID, feature)
 
-    def transcript_ids(self, feature: str, feature_type: str = "") -> List[str]:
+    def transcript_ids(self, feature: str) -> List[str]:
         """Given a feature symbol, return the corresponding transcript ID(s)."""
-        return self._get_feature_attr(TRANSCRIPT_ID, feature, feature_type)
+        return self._query_feature(TRANSCRIPT_ID, feature)
 
-    def transcript_names(self, feature: str, feature_type: str = "") -> List[str]:
+    def transcript_names(self, feature: str) -> List[str]:
         """Given a feature symbol, return the corresponding transcript names(s)."""
-        return self._get_feature_attr(TRANSCRIPT_NAME, feature, feature_type)
+        return self._query_feature(TRANSCRIPT_NAME, feature)
 
-    def _get_feature_attr(self, key: str, feature: str, feature_type: str = "") -> List[str]:
+    def _query_feature(self, key: str, feature: str) -> List[str]:
         """Given a feature symbol and a desired ID type, return the corresponding ID(s)."""
         parts = []
 
-        for feature, feature_type in self.normalize_feature(feature, feature_type):
+        for feature, feature_type in self.normalize_id(feature):
             if feature_type == CONTIG_ID:
-                func = self._query_by_contig_id
+                func = self._query_contig_id
             elif feature_type == EXON_ID:
-                func = self._query_by_exon_id
+                func = self._query_exon_id
             elif feature_type == GENE_ID:
-                func = self._query_by_gene_id
+                func = self._query_gene_id
             elif feature_type == GENE_NAME:
-                func = self._query_by_gene_name
+                func = self._query_gene_name
             elif feature_type == PROTEIN_ID:
-                func = self._query_by_protein_id
+                func = self._query_protein_id
             elif feature_type == TRANSCRIPT_ID:
-                func = self._query_by_transcript_id
+                func = self._query_transcript_id
             elif feature_type == TRANSCRIPT_NAME:
-                func = self._query_by_transcript_name
+                func = self._query_transcript_name
             else:
                 raise ValueError(f"Unable to get {key} for {feature} ({feature_type})")
 
@@ -1782,31 +1782,31 @@ class Core:
 
         return self._uniquify_series(result)
 
-    def _query_by_contig_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+    def _query_contig_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
         """Given a contig ID, return a dataframe where all values have the ID."""
         return self._query(feature, CONTIG_ID)
 
-    def _query_by_exon_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+    def _query_exon_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
         """Given an exon ID, return a dataframe where all values have the ID."""
         return self._query(feature, EXON_ID)
 
-    def _query_by_gene_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+    def _query_gene_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
         """Given a gene ID, return a dataframe where all values have the ID."""
         return self._query(feature, GENE_ID)
 
-    def _query_by_gene_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
+    def _query_gene_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
         """Given a gene name, return a dataframe where all values have the ID."""
         return self._query(feature, GENE_NAME)
 
-    def _query_by_protein_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+    def _query_protein_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
         """Given a protein ID, return a dataframe where all values have the ID."""
         return self._query(feature, PROTEIN_ID)
 
-    def _query_by_transcript_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+    def _query_transcript_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
         """Given a transcript ID, return a dataframe where all values have the ID."""
         return self._query(feature, TRANSCRIPT_ID)
 
-    def _query_by_transcript_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
+    def _query_transcript_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
         """Given a transcript name, return a dataframe where all values have the ID."""
         return self._query(feature, TRANSCRIPT_NAME)
 
@@ -1818,20 +1818,21 @@ class Core:
         return sudbf
 
     # ---------------------------------------------------------------------------------------------
-    # normalize_feature
+    # normalize_id
     # ---------------------------------------------------------------------------------------------
-    def normalize_feature(self, feature: str, feature_type: str = "") -> List[Tuple[str, str]]:
+    def normalize_id(self, feature: str) -> List[Tuple[str, str]]:
         """Normalize a feature ID to one or more representations."""
         normalized = []
 
-        feature_type, result = self._normalize_feature(feature, feature_type=feature_type)
+        feature_type, result = self._normalize_id(feature)
         if feature_type:
             normalized = self._uniquify_series(result[feature_type])
 
         return [(i, feature_type) for i in normalized]
 
-    def _normalize_feature(self, feature: str, feature_type: str = "") -> Tuple[str, pd.DataFrame]:
+    def _normalize_id(self, feature: str) -> Tuple[str, pd.DataFrame]:
         """Normalize a feature ID, return its type and a dataframe of matching values."""
+        feature_type = ""
         result = pd.DataFrame()
 
         for key, func in [
@@ -1843,84 +1844,77 @@ class Core:
             (TRANSCRIPT_ID, self._normalize_transcript_id),
             (TRANSCRIPT_NAME, self._normalize_transcript_name),
         ]:
-            if feature_type == key or not feature_type:
-                result = func(feature)
-                if not result.empty:
-                    feature_type = key
-                    break
+            result = func(feature)
+            if not result.empty:
+                feature_type = key
+                break
 
         return feature_type, result
 
     def _normalize_contig_id(self, feature: str) -> pd.DataFrame:
         """Normalize a contig ID, return a dataframe of matching values."""
-        featurel = [feature] + self.get_contig_alias(feature)
+        featurel = [feature] + self.contig_alias(feature)
 
-        return self._query_by_contig_id(featurel)
+        return self._query_contig_id(featurel)
 
     def _normalize_exon_id(self, feature: str) -> pd.DataFrame:
         """Normalize an exon ID, return a dataframe of matching values."""
-        featurel = [feature] + self.get_exon_alias(feature)
+        featurel = [feature] + self.exon_alias(feature)
 
-        return self._query_by_exon_id(featurel)
+        return self._query_exon_id(featurel)
 
     def _normalize_gene_id(self, feature: str) -> pd.DataFrame:
         """Normalize a gene ID, return a dataframe of matching values."""
-        featurel = [feature] + self.get_gene_alias(feature)
+        featurel = [feature] + self.gene_alias(feature)
 
-        return self._query_by_gene_id(featurel)
+        return self._query_gene_id(featurel)
 
     def _normalize_gene_name(self, feature: str) -> pd.DataFrame:
         """Normalize a gene name, return a dataframe of matching values."""
-        featurel = [feature] + self.get_gene_alias(feature)
+        featurel = [feature] + self.gene_alias(feature)
 
-        return self._query_by_gene_name(featurel)
+        return self._query_gene_name(featurel)
 
     def _normalize_protein_id(self, feature: str) -> pd.DataFrame:
         """Normalize a protein ID, return a dataframe of matching values."""
-        featurel = [feature] + self.get_protein_alias(feature)
+        featurel = [feature] + self.protein_alias(feature)
 
-        return self._query_by_protein_id(featurel)
+        return self._query_protein_id(featurel)
 
     def _normalize_transcript_id(self, feature: str) -> pd.DataFrame:
         """Normalize a transcript ID, return a dataframe of matching values."""
-        featurel = [feature] + self.get_transcript_alias(feature)
+        featurel = [feature] + self.transcript_alias(feature)
 
-        return self._query_by_transcript_id(featurel)
+        return self._query_transcript_id(featurel)
 
     def _normalize_transcript_name(self, feature: str) -> pd.DataFrame:
         """Normalize a transcript name, return a dataframe of matching values."""
-        featurel = [feature] + self.get_transcript_alias(feature)
+        featurel = [feature] + self.transcript_alias(feature)
 
-        return self._query_by_transcript_name(featurel)
+        return self._query_transcript_name(featurel)
 
     # ---------------------------------------------------------------------------------------------
     # is_<feature>
     # ---------------------------------------------------------------------------------------------
     def is_contig(self, feature: str) -> bool:
         """Return True if the given feature is a contig ID."""
-        return any((i[1] == CONTIG_ID for i in self.normalize_feature(feature, CONTIG_ID)))
+        return any((i[1] == CONTIG_ID for i in self.normalize_id(feature)))
 
     def is_exon(self, feature: str) -> bool:
         """Return True if the given feature is an exon ID."""
-        return any((i[1] == EXON_ID for i in self.normalize_feature(feature, EXON_ID)))
+        return any((i[1] == EXON_ID for i in self.normalize_id(feature)))
 
     def is_gene(self, feature: str) -> bool:
         """Return True if the given feature is a gene ID or name."""
-        return any((i[1] == GENE_ID for i in self.normalize_feature(feature, GENE_ID))) or any(
-            (i[1] == GENE_NAME for i in self.normalize_feature(feature, GENE_NAME))
-        )
+        return any((i[1] in (GENE_ID, GENE_NAME) for i in self.normalize_id(feature)))
 
     def is_protein(self, feature: str) -> bool:
         """Return True if the given feature is a protein ID."""
-        return any((i[1] == PROTEIN_ID for i in self.normalize_feature(feature, PROTEIN_ID)))
+        return any((i[1] == PROTEIN_ID for i in self.normalize_id(feature)))
 
     def is_transcript(self, feature: str) -> bool:
         """Return True if the given feature is a transcript ID or name."""
-        return any(
-            (i[1] == TRANSCRIPT_ID for i in self.normalize_feature(feature, TRANSCRIPT_ID))
-        ) or any(
-            (i[1] == TRANSCRIPT_NAME for i in self.normalize_feature(feature, TRANSCRIPT_NAME))
-        )
+        return any((i[1] in (TRANSCRIPT_ID, TRANSCRIPT_NAME) for i in self.normalize_id(feature)))
 
     # ---------------------------------------------------------------------------------------------
     # <feature>_sequence
@@ -1929,7 +1923,7 @@ class Core:
         self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
         """Return the nucleotide sequence at the given CDS coordinates."""
-        return self._get_sequence(self.cds, transcript_id, start=start, end=end)
+        return self._sequence(self.cds_fasta, transcript_id, start=start, end=end)
 
     def dna_sequence(
         self,
@@ -1939,21 +1933,21 @@ class Core:
         strand: str = "+",
     ) -> str:
         """Return the nucleotide sequence at the given contig coordinates."""
-        return self._get_sequence(self.dna, contig_id, start=start, end=end, strand=strand)
+        return self._sequence(self.dna_fasta, contig_id, start=start, end=end, strand=strand)
 
-    def peptide_sequence(
+    def protein_sequence(
         self, protein_id: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
         """Return the amino acid sequence at the given peptide coordinates."""
-        return self._get_sequence(self.peptide, protein_id, start=start, end=end)
+        return self._sequence(self.protein_fasta, protein_id, start=start, end=end)
 
     def rna_sequence(
         self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
         """Return the nucleotide sequence at the given cDNA or ncRNA coordinates."""
-        return self._get_sequence(self.rna, transcript_id, start=start, end=end)
+        return self._sequence(self.rna_fasta, transcript_id, start=start, end=end)
 
-    def _get_sequence(
+    def _sequence(
         self,
         fasta: List[Fasta],
         ref: str,
@@ -1993,31 +1987,31 @@ class Core:
         return subseq
 
     # ---------------------------------------------------------------------------------------------
-    # get_<feature>_alias
+    # <feature>_alias
     # ---------------------------------------------------------------------------------------------
-    def get_contig_alias(self, feature: str) -> List[str]:
+    def contig_alias(self, feature: str) -> List[str]:
         """Return the aliases of the given contig (if any)."""
-        return self._get_alias(feature, self.contig_alias)
+        return self._alias(feature, self._contig_alias)
 
-    def get_exon_alias(self, feature: str) -> List[str]:
+    def exon_alias(self, feature: str) -> List[str]:
         """Return the aliases of the given exon (if any)."""
-        return self._get_alias(feature, self.exon_alias)
+        return self._alias(feature, self._exon_alias)
 
-    def get_gene_alias(self, feature: str) -> List[str]:
+    def gene_alias(self, feature: str) -> List[str]:
         """Return the aliases of the given gene (if any)."""
-        return self._get_alias(feature, self.gene_alias)
+        return self._alias(feature, self._gene_alias)
 
-    def get_protein_alias(self, feature: str) -> List[str]:
+    def protein_alias(self, feature: str) -> List[str]:
         """Return the aliases of the given protein (if any)."""
-        return self._get_alias(feature, self.protein_alias)
+        return self._alias(feature, self._protein_alias)
 
-    def get_transcript_alias(self, feature: str) -> List[str]:
+    def transcript_alias(self, feature: str) -> List[str]:
         """Return the aliases of the given transcript (if any)."""
-        return self._get_alias(feature, self.transcript_alias)
+        return self._alias(feature, self._transcript_alias)
 
-    def _get_alias(self, feature: str, source: Dict[str, List[str]]) -> List[str]:
+    def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
         for key in [feature, strip_version(feature)]:
-            if alias := source.get(key, []):
+            if alias := alias_dict.get(key, []):
                 return alias
         else:
             return []
@@ -2027,12 +2021,12 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     def is_canonical_transcript(self, feature: str) -> bool:
         """Return True if the given transcript ID is a canonical transcript."""
-        return feature in self.canonical_transcript
+        return feature in self._canonical_transcript
 
     # ---------------------------------------------------------------------------------------------
-    # get_<feature>
+    # <feature>
     # ---------------------------------------------------------------------------------------------
-    def get_cdna(self, feature: str) -> List[CdnaMappablePosition]:
+    def cdna(self, feature: str) -> List[CdnaMappablePosition]:
         """Return the cDNA position(s) of the given feature."""
         result = []
 
@@ -2058,16 +2052,16 @@ class Core:
 
         return sorted(set(result))
 
-    def get_dna(self, feature: str) -> List[DnaMappablePosition]:
+    def dna(self, feature: str) -> List[DnaMappablePosition]:
         """Return the DNA position(s) of the given feature."""
         result = []
 
         # get the strand of the original feature
-        _, df = self._normalize_feature(feature)
+        _, df = self._normalize_id(feature)
         strand_list = self._uniquify_series(df["strand"])
 
         for contig_id in self.contig_ids(feature):
-            for fasta in self.dna:
+            for fasta in self.dna_fasta:
                 try:
                     contig_seq = fasta[contig_id]
                     break
@@ -2093,7 +2087,7 @@ class Core:
 
         return sorted(set(result))
 
-    def get_exons(self, feature: str) -> List[ExonMappablePosition]:
+    def exon(self, feature: str) -> List[ExonMappablePosition]:
         """Return the exon position(s) of the given feature."""
         result = []
 
@@ -2119,7 +2113,7 @@ class Core:
 
         return sorted(set(result))
 
-    def get_genes(self, feature: str) -> List[DnaMappablePosition]:
+    def gene(self, feature: str) -> List[DnaMappablePosition]:
         """Return the gene position(s) of the given feature."""
         result = []
 
@@ -2140,11 +2134,11 @@ class Core:
 
         return sorted(set(result))
 
-    def get_proteins(self, feature: str) -> List[ProteinMappablePosition]:
+    def protein(self, feature: str) -> List[ProteinMappablePosition]:
         """Return the protein position(s) of the given feature."""
         raise NotImplementedError()  # TODO
 
-    def get_transcripts(self, feature: str) -> List[RnaMappablePosition]:
+    def rna(self, feature: str) -> List[RnaMappablePosition]:
         """Return the transcript position(s) of the given feature."""
         result = []
 
@@ -4582,7 +4576,7 @@ class Core:
         else:
             positions = []
             for exon_id in self.exon_ids(feature):
-                positions.extend(self.exon_number(exon_id, transcript_ids=feature_))
+                positions.extend(self.exon_index(exon_id, transcript_ids=feature_))
 
         result = []
         for transcript_id, start__, end__, strand__ in positions:
@@ -4604,7 +4598,7 @@ class Core:
 
         return offset
 
-    def exon_number(
+    def exon_index(
         self, exon_id: str, transcript_ids: Union[List[str], str] = []
     ) -> List[Tuple[str, int, int, str]]:
         """Get the exon number(s) for an exon ID on each transcript. Optionally, restrict to a
@@ -4622,7 +4616,7 @@ class Core:
 
         return sorted(set(result))
 
-    def mutate_cds_to_protein(
+    def translate_cds_variant(
         self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_alt: str
     ) -> List[str]:
         """Return the mutated protein sequence, given a cDNA position and alt allele."""

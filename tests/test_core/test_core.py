@@ -52,20 +52,20 @@ def test_init():
         transcript_alias=TRANSCRIPT_ALIAS,
     )
     assert isinstance(obj.df, pd.DataFrame)
-    assert isinstance(obj.cds, list)
-    assert isinstance(obj.cds[0], Fasta)
-    assert isinstance(obj.dna, list)
-    assert isinstance(obj.dna[0], Fasta)
-    assert isinstance(obj.peptide, list)
-    assert isinstance(obj.peptide[0], Fasta)
-    assert isinstance(obj.rna, list)
-    assert isinstance(obj.rna[0], Fasta)
-    assert isinstance(obj.canonical_transcript, list)
-    assert isinstance(obj.contig_alias, dict)
-    assert isinstance(obj.exon_alias, dict)
-    assert isinstance(obj.gene_alias, dict)
-    assert isinstance(obj.protein_alias, dict)
-    assert isinstance(obj.transcript_alias, dict)
+    assert isinstance(obj.cds_fasta, list)
+    assert isinstance(obj.cds_fasta[0], Fasta)
+    assert isinstance(obj.dna_fasta, list)
+    assert isinstance(obj.dna_fasta[0], Fasta)
+    assert isinstance(obj.protein_fasta, list)
+    assert isinstance(obj.protein_fasta[0], Fasta)
+    assert isinstance(obj.rna_fasta, list)
+    assert isinstance(obj.rna_fasta[0], Fasta)
+    assert isinstance(obj._canonical_transcript, list)
+    assert isinstance(obj._contig_alias, dict)
+    assert isinstance(obj._exon_alias, dict)
+    assert isinstance(obj._gene_alias, dict)
+    assert isinstance(obj._protein_alias, dict)
+    assert isinstance(obj._transcript_alias, dict)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -477,8 +477,8 @@ def test_dna_sequence(ensembl100):
     assert ensembl100.dna_sequence("4", 54695512, 54695514, "-") == "AGC"
 
 
-def test_peptide_sequence(ensembl100):
-    assert ensembl100.peptide_sequence("ENSP00000288135", 3, 4) == "GA"
+def test_protein_sequence(ensembl100):
+    assert ensembl100.protein_sequence("ENSP00000288135", 3, 4) == "GA"
 
 
 def test_rna_sequence(ensembl100):
@@ -486,38 +486,38 @@ def test_rna_sequence(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
-# test normalize_feature(feature, feature_type)
+# test normalize_id(feature, feature_type)
 # -------------------------------------------------------------------------------------------------
-def test_normalize_feature_contig_id(ensembl100):
-    assert ensembl100.normalize_feature("4") == [("4", CONTIG_ID)]
+def test_normalize_id_contig_id(ensembl100):
+    assert ensembl100.normalize_id("4") == [("4", CONTIG_ID)]
 
 
-def test_normalize_feature_exon_id(ensembl100):
-    assert ensembl100.normalize_feature("ENSE00003826864") == [("ENSE00003826864", EXON_ID)]
+def test_normalize_id_exon_id(ensembl100):
+    assert ensembl100.normalize_id("ENSE00003826864") == [("ENSE00003826864", EXON_ID)]
 
 
-def test_normalize_feature_gene_id(ensembl100):
-    assert ensembl100.normalize_feature("ENSG00000149925") == [("ENSG00000149925", GENE_ID)]
+def test_normalize_id_gene_id(ensembl100):
+    assert ensembl100.normalize_id("ENSG00000149925") == [("ENSG00000149925", GENE_ID)]
 
 
-def test_normalize_feature_gene_name(ensembl100):
-    assert ensembl100.normalize_feature("ALDOA") == [("ALDOA", GENE_NAME)]
+def test_normalize_id_gene_name(ensembl100):
+    assert ensembl100.normalize_id("ALDOA") == [("ALDOA", GENE_NAME)]
 
 
-def test_normalize_feature_protein_id(ensembl100):
-    assert ensembl100.normalize_feature("ENSP00000494188") == [("ENSP00000494188", PROTEIN_ID)]
+def test_normalize_id_protein_id(ensembl100):
+    assert ensembl100.normalize_id("ENSP00000494188") == [("ENSP00000494188", PROTEIN_ID)]
 
 
-def test_normalize_feature_refseq_transcript_id(ensembl100):
-    assert ensembl100.normalize_feature("NM_000314.4") == [("ENST00000371953", TRANSCRIPT_ID)]
+def test_normalize_id_refseq_transcript_id(ensembl100):
+    assert ensembl100.normalize_id("NM_000314.4") == [("ENST00000371953", TRANSCRIPT_ID)]
 
 
-def test_normalize_feature_transcript_id(ensembl100):
-    assert ensembl100.normalize_feature("ENST00000643777") == [("ENST00000643777", TRANSCRIPT_ID)]
+def test_normalize_id_transcript_id(ensembl100):
+    assert ensembl100.normalize_id("ENST00000643777") == [("ENST00000643777", TRANSCRIPT_ID)]
 
 
-def test_normalize_feature_transcript_name(ensembl100):
-    assert ensembl100.normalize_feature("ALDOA-219") == [("ALDOA-219", TRANSCRIPT_NAME)]
+def test_normalize_id_transcript_name(ensembl100):
+    assert ensembl100.normalize_id("ALDOA-219") == [("ALDOA-219", TRANSCRIPT_NAME)]
 
 
 # -------------------------------------------------------------------------------------------------
@@ -704,7 +704,7 @@ def test_cdna(ensembl100):
     ],
 )
 def test_get_cdna(ensembl100, test_cdna, feature, num_results):
-    results = ensembl100.get_cdna(feature)
+    results = ensembl100.cdna(feature)
     assert len(results) == num_results
     assert test_cdna in results
 
@@ -735,7 +735,7 @@ def test_dna(ensembl100):
     ],
 )
 def test_get_dna(ensembl100, test_dna, feature, num_results):
-    results = ensembl100.get_dna(feature)
+    results = ensembl100.dna(feature)
     assert len(results) == num_results
     assert test_dna in results
 
@@ -771,7 +771,7 @@ def test_exon(ensembl100):
     ],
 )
 def test_get_exon(ensembl100, test_exon, feature, num_results):
-    results = ensembl100.get_exons(feature)
+    results = ensembl100.exon(feature)
     assert len(results) == num_results
     assert test_exon in results
 
@@ -802,7 +802,7 @@ def test_gene(ensembl100):
     ],
 )
 def test_get_gene(ensembl100, test_gene, feature, num_results):
-    results = ensembl100.get_genes(feature)
+    results = ensembl100.gene(feature)
     assert len(results) == num_results
     assert test_gene in results
 
@@ -837,7 +837,7 @@ def test_transcript(ensembl100):
     ],
 )
 def test_get_transcript(ensembl100, test_transcript, feature, num_results):
-    results = ensembl100.get_transcripts(feature)
+    results = ensembl100.rna(feature)
     assert len(results) == num_results
     assert test_transcript in results
 
@@ -1447,14 +1447,14 @@ def test_rna_to_rna(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
-# test mutate_cds_to_protein
+# test translate_cds_variant
 # -------------------------------------------------------------------------------------------------
-def test_mutate_cds_to_protein(ensembl100):
+def test_translate_cds_variant(ensembl100):
     # GTT -> GAT
-    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "A") == ["D"]
+    assert ensembl100.translate_cds_variant("ENST00000288135", 38, 38, "A") == ["D"]
     # GTTCTG -> GAAATG
-    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 40, "AAA") == ["EM"]
+    assert ensembl100.translate_cds_variant("ENST00000288135", 38, 40, "AAA") == ["EM"]
     # GTT -> GAT or GCT
-    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 38, 38, "M") == ["A", "D"]
+    assert ensembl100.translate_cds_variant("ENST00000288135", 38, 38, "M") == ["A", "D"]
     # GG -> GTTCG
-    assert ensembl100.mutate_cds_to_protein("ENST00000288135", 1674, 1675, "GTTCG") == ["KFV"]
+    assert ensembl100.translate_cds_variant("ENST00000288135", 1674, 1675, "GTTCG") == ["KFV"]
