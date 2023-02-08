@@ -1,4 +1,5 @@
 from itertools import product, zip_longest
+from math import floor
 from string import punctuation
 from typing import Iterator, List, Optional, Tuple, Union
 
@@ -8,6 +9,11 @@ from .tables import DNA, DNA_CODON_TABLE, PROTEIN
 
 # Dictionary used to replace punctuation in a string
 PUNCTUATION_TO_UNDERSCORE = str.maketrans(punctuation + " ", "_" * len(punctuation + " "))
+
+
+def calc_cdna_to_protein(position: int) -> int:
+    """Convert a cDNA position to a protein position."""
+    return floor((position - 1) / 3 + 1)
 
 
 def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:

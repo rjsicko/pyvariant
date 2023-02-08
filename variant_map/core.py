@@ -28,6 +28,7 @@ from .constants import (
 from .files import read_fasta, tsv_to_dict, txt_to_list
 from .tables import AMINO_ACID_TABLE
 from .utils import (
+    calc_cdna_to_protein,
     collapse_seq_change,
     expand_nt,
     format_hgvs_position,
@@ -2183,15 +2184,11 @@ class Core:
 
     def protein(self, feature: str, canonical: bool = False) -> List[ProteinMappablePosition]:
         """Return the protein position(s) of the given feature."""
-
-        def convert(n: int) -> int:
-            return floor((n - 1) / 3 + 1)
-
         result = []
         for cdna in self.cdna(feature, canonical=canonical):
             # Convert the cDNA position to a protein position
-            protein_start = convert(cdna.start)
-            protein_end = convert(cdna.end)
+            protein_start = calc_cdna_to_protein(cdna.start)
+            protein_end = calc_cdna_to_protein(cdna.end)
             result.append(
                 ProteinMappablePosition.copy_from(
                     cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
@@ -3409,9 +3406,6 @@ class Core:
         strand: List[str],
         canonical: bool,
     ) -> List[ProteinMappablePosition]:
-        def convert(n: int) -> int:
-            return floor((n - 1) / 3 + 1)
-
         result = []
         for cdna in self._cdna_to_cdna(
             transcript_ids,
@@ -3429,8 +3423,8 @@ class Core:
                 continue
 
             # Convert the cDNA position to a protein position
-            protein_start = convert(cdna.start)
-            protein_end = convert(cdna.end)
+            protein_start = calc_cdna_to_protein(cdna.start)
+            protein_end = calc_cdna_to_protein(cdna.end)
             result.append(
                 ProteinMappablePosition.copy_from(
                     cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
@@ -3452,9 +3446,6 @@ class Core:
         canonical: bool,
     ) -> List[ProteinSmallVariant]:
         # TODO: A lot of this function is duplicated from _cdna_to_protein()
-        def convert(n: int) -> int:
-            return floor((n - 1) / 3 + 1)
-
         result: List[ProteinSmallVariant] = []
         for cdna in self._cdna_to_cdna(
             transcript_ids,
@@ -3472,8 +3463,8 @@ class Core:
                 continue
 
             # Convert the cDNA position to a protein position
-            protein_start = convert(cdna.start)
-            protein_end = convert(cdna.end)
+            protein_start = calc_cdna_to_protein(cdna.start)
+            protein_end = calc_cdna_to_protein(cdna.end)
             protein = ProteinMappablePosition.copy_from(
                 cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
             )
@@ -3833,8 +3824,8 @@ class Core:
             if cdna.start_offset or cdna.end_offset:
                 continue
 
-            pstart = convert(cdna.start)
-            pend = convert(cdna.end)
+            pstart = calc_cdna_to_protein(cdna.start)
+            pend = calc_cdna_to_protein(cdna.end)
             protein.append(
                 ProteinMappablePosition.copy_from(
                     cdna, start=pstart, start_offset=0, end=pend, end_offset=0, _data=self
@@ -3867,8 +3858,8 @@ class Core:
             if cdna.start_offset or cdna.end_offset:
                 continue
 
-            pstart = convert(cdna.start)
-            pend = convert(cdna.end)
+            pstart = calc_cdna_to_protein(cdna.start)
+            pend = calc_cdna_to_protein(cdna.end)
             protein = ProteinMappablePosition.copy_from(
                 cdna, start=pstart, start_offset=0, end=pend, end_offset=0, _data=self
             )
