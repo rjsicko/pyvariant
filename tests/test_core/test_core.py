@@ -671,10 +671,10 @@ def test_transcript_to_str(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
-# test get_<feature>
+# test <feature>
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_cdna(ensembl100):
+def expected_cdna(ensembl100):
     return CdnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
@@ -703,14 +703,14 @@ def test_cdna(ensembl100):
         ("TERT-201", 1),
     ],
 )
-def test_get_cdna(ensembl100, test_cdna, feature, num_results):
+def test_cdna(ensembl100, expected_cdna, feature, num_results):
     results = ensembl100.cdna(feature)
     assert len(results) == num_results
-    assert test_cdna in results
+    assert expected_cdna in results
 
 
 @pytest.fixture
-def test_dna(ensembl100):
+def expected_dna(ensembl100):
     return DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
@@ -734,14 +734,14 @@ def test_dna(ensembl100):
         ("TERT-201", 1),
     ],
 )
-def test_get_dna(ensembl100, test_dna, feature, num_results):
+def test_dna(ensembl100, expected_dna, feature, num_results):
     results = ensembl100.dna(feature)
     assert len(results) == num_results
-    assert test_dna in results
+    assert expected_dna in results
 
 
 @pytest.fixture
-def test_exon(ensembl100):
+def expected_exon(ensembl100):
     return ExonMappablePosition(
         _data=ensembl100,
         contig_id="5",
@@ -770,14 +770,14 @@ def test_exon(ensembl100):
         ("TERT-201", 33),
     ],
 )
-def test_get_exon(ensembl100, test_exon, feature, num_results):
+def test_exon(ensembl100, expected_exon, feature, num_results):
     results = ensembl100.exon(feature)
     assert len(results) == num_results
-    assert test_exon in results
+    assert expected_exon in results
 
 
 @pytest.fixture
-def test_gene(ensembl100):
+def expected_gene(ensembl100):
     return DnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
@@ -801,14 +801,14 @@ def test_gene(ensembl100):
         ("TERT-201", 1),
     ],
 )
-def test_get_gene(ensembl100, test_gene, feature, num_results):
+def test_gene(ensembl100, expected_gene, feature, num_results):
     results = ensembl100.gene(feature)
     assert len(results) == num_results
-    assert test_gene in results
+    assert expected_gene in results
 
 
 @pytest.fixture
-def test_transcript(ensembl100):
+def expected_rna(ensembl100):
     return RnaMappablePosition(
         _data=ensembl100,
         contig_id="5",
@@ -836,10 +836,10 @@ def test_transcript(ensembl100):
         ("TERT-201", 1),
     ],
 )
-def test_get_transcript(ensembl100, test_transcript, feature, num_results):
+def test_transcript(ensembl100, expected_rna, feature, num_results):
     results = ensembl100.rna(feature)
     assert len(results) == num_results
-    assert test_transcript in results
+    assert expected_rna in results
 
 
 # -------------------------------------------------------------------------------------------------
