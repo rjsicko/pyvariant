@@ -1447,6 +1447,159 @@ def test_rna_to_rna(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
+# test <feature>_to_<feature> canonical only
+# -------------------------------------------------------------------------------------------------
+def test_cdna_to_cdna_canonical(ensembl100):
+    result = ensembl100.cdna_to_cdna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_cdna_to_dna_canonical(ensembl100):
+    result = ensembl100.cdna_to_dna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert (result[0].start, result[0].end) == (127588499, 127588499)
+
+
+def test_cdna_to_exon_canonical(ensembl100):
+    result = ensembl100.cdna_to_exon("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_cdna_to_protein_canonical(ensembl100):
+    result = ensembl100.cdna_to_protein("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_cdna_to_rna_canonical(ensembl100):
+    result = ensembl100.cdna_to_rna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_dna_to_cdna_canonical(ensembl100):
+    result = ensembl100.dna_to_cdna("7", 127588499, strand="+", canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_dna_to_dna_canonical(ensembl100):
+    result = ensembl100.dna_to_dna("7", 127588499, strand="+", canonical=True)
+    assert len(result) == 1
+    assert (result[0].start, result[0].end) == (127588499, 127588499)
+
+
+def test_dna_to_exon_canonical(ensembl100):
+    result = ensembl100.dna_to_exon("7", 127588499, strand="+", canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_dna_to_protein_canonical(ensembl100):
+    result = ensembl100.dna_to_protein("7", 127588499, strand="+", canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_dna_to_rna_canonical(ensembl100):
+    result = ensembl100.dna_to_rna("7", 127588499, strand="+", canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_exon_to_cdna_canonical(ensembl100):
+    result = ensembl100.exon_to_cdna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_exon_to_dna_canonical(ensembl100):
+    result = ensembl100.exon_to_dna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert (result[0].start, result[0].end) == (127588411, 127588565)
+
+
+def test_exon_to_exon_canonical(ensembl100):
+    result = ensembl100.exon_to_exon("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_exon_to_protein_canonical(ensembl100):
+    result = ensembl100.exon_to_protein("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_exon_to_rna_canonical(ensembl100):
+    result = ensembl100.exon_to_rna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_protein_to_cdna_canonical(ensembl100):
+    result = ensembl100.protein_to_cdna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_protein_to_dna_canonical(ensembl100):
+    result = ensembl100.protein_to_dna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert (result[0].start, result[0].end) == (127588499, 127588501)
+
+
+def test_protein_to_exon_canonical(ensembl100):
+    result = ensembl100.protein_to_exon("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_protein_to_protein_canonical(ensembl100):
+    result = ensembl100.protein_to_protein("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_protein_to_rna_canonical(ensembl100):
+    result = ensembl100.protein_to_rna("ARF5", 1, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_rna_to_cdna_canonical(ensembl100):
+    result = ensembl100.rna_to_cdna("ARF5", 89, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_rna_to_dna_canonical(ensembl100):
+    result = ensembl100.rna_to_dna("ARF5", 89, canonical=True)
+    assert len(result) == 1
+    assert (result[0].start, result[0].end) == (127588499, 127588499)
+
+
+def test_rna_to_exon_canonical(ensembl100):
+    result = ensembl100.rna_to_exon("ARF5", 89, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_rna_to_protein_canonical(ensembl100):
+    result = ensembl100.rna_to_protein("ARF5", 89, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+def test_rna_to_rna_canonical(ensembl100):
+    result = ensembl100.rna_to_rna("ARF5", 89, canonical=True)
+    assert len(result) == 1
+    assert result[0].transcript_id == "ENST00000000233"
+
+
+# -------------------------------------------------------------------------------------------------
 # test translate_cds_variant
 # -------------------------------------------------------------------------------------------------
 def test_translate_cds_variant(ensembl100):
