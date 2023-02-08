@@ -843,6 +843,35 @@ def test_transcript(ensembl100, expected_rna, feature, num_results):
 
 
 # -------------------------------------------------------------------------------------------------
+# test <feature> canonical only
+# -------------------------------------------------------------------------------------------------
+def test_cdna_canonical(ensembl100):
+    results = ensembl100.cdna("ARF5", canonical=True)
+    assert len(results) == 1
+    assert results[0].transcript_id == "ENST00000000233"
+
+
+def test_exon_canonical(ensembl100):
+    results = ensembl100.exon("ARF5", canonical=True)
+    assert len(results) == 6
+    for exon in results:
+        assert exon.transcript_id == "ENST00000000233"
+
+
+@pytest.mark.skip(reason="not implemented yet")  # TODO
+def test_protein_canonical(ensembl100):
+    results = ensembl100.protein("ARF5", canonical=True)
+    assert len(results) == 1
+    assert results[0].transcript_id == "ENST00000000233"
+
+
+def test_rna_canonical(ensembl100):
+    results = ensembl100.rna("ARF5", canonical=True)
+    assert len(results) == 1
+    assert results[0].transcript_id == "ENST00000000233"
+
+
+# -------------------------------------------------------------------------------------------------
 # test <feature>_to_<feature>
 # -------------------------------------------------------------------------------------------------
 def test_cdna_to_cdna(ensembl100):

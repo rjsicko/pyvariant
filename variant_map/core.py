@@ -2096,7 +2096,7 @@ class Core:
 
         return sorted(set(result))
 
-    def dna(self, feature: str, canonical: bool = False) -> List[DnaMappablePosition]:
+    def dna(self, feature: str) -> List[DnaMappablePosition]:
         """Return the DNA position(s) of the given feature."""
         result = []
 
@@ -2160,7 +2160,7 @@ class Core:
 
         return sorted(set(result))
 
-    def gene(self, feature: str, canonical: bool = False) -> List[DnaMappablePosition]:
+    def gene(self, feature: str) -> List[DnaMappablePosition]:
         """Return the gene position(s) of the given feature."""
         result = []
 
