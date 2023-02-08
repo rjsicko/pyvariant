@@ -2183,7 +2183,22 @@ class Core:
 
     def protein(self, feature: str, canonical: bool = False) -> List[ProteinMappablePosition]:
         """Return the protein position(s) of the given feature."""
-        raise NotImplementedError()  # TODO
+
+        def convert(n: int) -> int:
+            return floor((n - 1) / 3 + 1)
+
+        result = []
+        for cdna in self.cdna(feature, canonical=canonical):
+            # Convert the cDNA position to a protein position
+            protein_start = convert(cdna.start)
+            protein_end = convert(cdna.end)
+            result.append(
+                ProteinMappablePosition.copy_from(
+                    cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
+                )
+            )
+
+        return sorted(set(result))
 
     def rna(self, feature: str, canonical: bool = False) -> List[RnaMappablePosition]:
         """Return the transcript position(s) of the given feature."""

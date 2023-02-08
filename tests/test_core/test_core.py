@@ -808,6 +808,42 @@ def test_gene(ensembl100, expected_gene, feature, num_results):
 
 
 @pytest.fixture
+def expected_protein(ensembl100):
+    return ProteinMappablePosition(
+        _data=ensembl100,
+        contig_id="5",
+        start=1,
+        start_offset=0,
+        end=1133,
+        end_offset=0,
+        strand="-",
+        gene_id="ENSG00000164362",
+        gene_name="TERT",
+        transcript_id="ENST00000310581",
+        transcript_name="TERT-201",
+        protein_id="ENSP00000309572",
+    )
+
+
+@pytest.mark.parametrize(
+    "feature,num_results",
+    [
+        ("5", 4289),
+        ("ENSE00003896691", 1),
+        ("ENSG00000164362", 4),
+        ("ENSP00000309572", 1),
+        ("ENST00000310581", 1),
+        ("TERT", 4),
+        ("TERT-201", 1),
+    ],
+)
+def test_protein(ensembl100, expected_protein, feature, num_results):
+    results = ensembl100.protein(feature)
+    assert len(results) == num_results
+    assert expected_protein in results
+
+
+@pytest.fixture
 def expected_rna(ensembl100):
     return RnaMappablePosition(
         _data=ensembl100,
@@ -858,7 +894,6 @@ def test_exon_canonical(ensembl100):
         assert exon.transcript_id == "ENST00000000233"
 
 
-@pytest.mark.skip(reason="not implemented yet")  # TODO
 def test_protein_canonical(ensembl100):
     results = ensembl100.protein("ARF5", canonical=True)
     assert len(results) == 1
