@@ -15,7 +15,14 @@ from .utils import strip_version
 
 
 def bgzip(path: str) -> str:
-    """Compress a file in BGZF format."""
+    """Compress a file in BGZF format.
+
+    Args:
+        path (str): Path to file to compress
+
+    Returns:
+        str: Path to compressed file
+    """
     chunk_size = 4096  # chunk size is set to balance runtime and memory usage
     openfunc: Callable
     openmode: str
@@ -57,7 +64,17 @@ def bgzip(path: str) -> str:
 
 
 def ftp_download(server: str, subdir: str, remote_file: str, local_file: str):
-    """Download a file from an FTP server."""
+    """Download a file from an FTP server.
+
+    Args:
+        server (str): Server URL
+        subdir (str): Remote subdirectory name
+        remote_file (str): Remote file name
+        local_file (str): Local file name
+
+    Raises:
+        RuntimeError: Download failed
+    """
     try:
         ftp = FTP(server)
         print(f"Connecting to {server}", file=sys.stderr)
@@ -77,6 +94,9 @@ def get_cache_dir() -> str:
     f"""Get the cache root directory. If the environmental variable '{CACHE_DIR_ENV}' is set, this
     package will use that as the directory. Otherwise, this package will use the default appdata
     dir for the user (platform dependant).
+
+    Returns:
+        str: Path to user's data directory
     """
     try:
         return os.environ[CACHE_DIR_ENV]
@@ -85,14 +105,28 @@ def get_cache_dir() -> str:
 
 
 def is_bgzipped(path: str) -> bool:
-    """Check if a file is compressed in BGZF format."""
+    """Check if a file is compressed in BGZF format.
+
+    Args:
+        path (str): Path to the file
+
+    Returns:
+        bool: True if the file has been compressed with bgzip else False
+    """
     with open(path, "rb") as f:
         file_start = f.read(len(_bgzf_magic))
         return file_start == _bgzf_magic
 
 
 def read_fasta(path: str) -> Fasta:
-    """Parse a FASTA/FASTQ file into a 'pyfaidx.Fasta' object."""
+    """Parse a FASTA/FASTQ file into a 'pyfaidx.Fasta' object.
+
+    Args:
+        path (str): Path to FASTA or FASTQ file
+
+    Returns:
+        Fasta: 'pyfaidx.Fasta' object
+    """
     if not path:
         path = EMPTY_FASTA
 
@@ -107,7 +141,14 @@ def read_fasta(path: str) -> Fasta:
 
 
 def tsv_to_dict(path: str) -> Dict[str, List[str]]:
-    """Parse a TSV of one-to-one mappings."""
+    """Parse a TSV of one-to-one mappings.
+
+    Args:
+        path (str): Path to TSV file
+
+    Returns:
+        Dict[str, List[str]]: Mapping of alias to annotated name
+    """
     result: Dict = {}
 
     if path:
@@ -127,7 +168,14 @@ def tsv_to_dict(path: str) -> Dict[str, List[str]]:
 
 
 def txt_to_list(path: str) -> List[str]:
-    """Parse a text file into a list of unique strings."""
+    """Parse a text file into a list of unique strings.
+
+    Args:
+        path (str): Path to the text file
+
+    Returns:
+        List[str]: Values from the file
+    """
     result = set()
 
     if path:

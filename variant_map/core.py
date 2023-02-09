@@ -2598,6 +2598,10 @@ class Core:
     def all_contig_ids(self) -> List[str]:
         """List all contig (chromosome) IDs.
 
+        Examples:
+            >>> ensembl100.all_contig_ids()[:3]
+            ['1', '10', '11']
+
         Returns:
             List[str]: Contig IDs
         """
@@ -2605,6 +2609,10 @@ class Core:
 
     def all_exon_ids(self) -> List[str]:
         """List all exon IDs.
+
+        Examples:
+            >>> ensembl100.all_exon_ids()[:3]
+            ['ENSE00000000001', 'ENSE00000000002', 'ENSE00000000003']
 
         Returns:
             List[str]: Exon IDs
@@ -2614,6 +2622,10 @@ class Core:
     def all_gene_ids(self) -> List[str]:
         """List all gene IDs.
 
+        Examples:
+            >>> ensembl100.all_gene_ids()[:3]
+            ['ENSG00000000003', 'ENSG00000000005', 'ENSG00000000419']
+
         Returns:
             List[str]: Gene IDs
         """
@@ -2621,6 +2633,10 @@ class Core:
 
     def all_gene_names(self) -> List[str]:
         """List all gene names.
+
+        Examples:
+            >>> ensembl100.all_gene_names()[:3]
+            ['A1BG', 'A1BG-AS1', 'A1CF']
 
         Returns:
             List[str]: Gene names
@@ -2630,6 +2646,10 @@ class Core:
     def all_protein_ids(self) -> List[str]:
         """List all protein IDs.
 
+        Examples:
+            >>> ensembl100.all_protein_ids()[:3]
+            ['ENSP00000000233', 'ENSP00000000412', 'ENSP00000000442']
+
         Returns:
             List[str]: Protein IDs
         """
@@ -2638,6 +2658,10 @@ class Core:
     def all_transcript_ids(self) -> List[str]:
         """List all transcript IDs.
 
+        Examples:
+            >>> ensembl100.all_transcript_ids()[:3]
+            ['ENST00000000233', 'ENST00000000412', 'ENST00000000442']
+
         Returns:
             List[str]: Transcript IDs
         """
@@ -2645,6 +2669,10 @@ class Core:
 
     def all_transcript_names(self) -> List[str]:
         """List all transcript names.
+
+        Examples:
+            >>> ensembl100.all_transcript_names()[:3]
+            ['A1BG-201', 'A1BG-202', 'A1BG-203']
 
         Returns:
             List[str]: Transcript names
@@ -2660,6 +2688,10 @@ class Core:
     def contig_ids(self, feature: str) -> List[str]:
         """Given an ID or name, return the corresponding contig IDs.
 
+        Examples:
+            >>> ensembl100.contig_ids("BRCA2")
+            ['13']
+
         Args:
             feature (str): Feature ID or name
 
@@ -2670,6 +2702,10 @@ class Core:
 
     def exon_ids(self, feature: str) -> List[str]:
         """Given an ID or name, return the corresponding exon IDs.
+
+        Examples:
+            >>> ensembl100.exon_ids("BRCA2")[:3]
+            ['ENSE00000939167', 'ENSE00000939168', 'ENSE00000939169']
 
         Args:
             feature (str): Feature ID or name
@@ -2682,6 +2718,10 @@ class Core:
     def gene_ids(self, feature: str) -> List[str]:
         """Given an ID or name, return the corresponding gene IDs.
 
+        Examples:
+            >>> ensembl100.gene_ids("BRCA2")
+            ['ENSG00000139618']
+
         Args:
             feature (str): Feature ID or name
 
@@ -2692,6 +2732,10 @@ class Core:
 
     def gene_names(self, feature: str) -> List[str]:
         """Given an ID or name, return the corresponding gene names.
+
+        Examples:
+            >>> ensembl100.gene_names("ENSG00000139618")
+            ['BRCA2']
 
         Args:
             feature (str): Feature ID or name
@@ -2704,6 +2748,10 @@ class Core:
     def protein_ids(self, feature: str) -> List[str]:
         """Given an ID or name, return the corresponding protein IDs.
 
+        Examples:
+            >>> ensembl100.protein_ids("BRCA2")[:3]
+            ['ENSP00000369497', 'ENSP00000433168', 'ENSP00000434898']
+
         Args:
             feature (str): Feature ID or name
 
@@ -2715,6 +2763,10 @@ class Core:
     def transcript_ids(self, feature: str) -> List[str]:
         """Given an ID or name, return the corresponding transcript IDs.
 
+        Examples:
+            >>> ensembl100.transcript_ids("BRCA2")[:3]
+            ['ENST00000380152', 'ENST00000470094', 'ENST00000528762']
+
         Args:
             feature (str): Feature ID or name
 
@@ -2725,6 +2777,10 @@ class Core:
 
     def transcript_names(self, feature: str) -> List[str]:
         """Given an ID or name, return the corresponding transcript names.
+
+        Examples:
+            >>> ensembl100.transcript_names("BRCA2")[:3]
+            ['BRCA2-201', 'BRCA2-202', 'BRCA2-203']
 
         Args:
             feature (str): Feature ID or name
@@ -2796,6 +2852,10 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     def normalize_id(self, feature: str) -> List[Tuple[str, str]]:
         """Normalize an ID or name to the annotated equivalent(s).
+
+        Examples:
+            >>> ensembl100.normalize_id("BRCA2-201")
+            [('BRCA2-201', 'transcript_name')]
 
         Args:
             feature (str): Feature ID or name
@@ -2933,6 +2993,10 @@ class Core:
     ) -> str:
         """Return the CDS sequence between the given position(s), inclusive.
 
+        Examples:
+            >>> ensembl100.cds_sequence("ENST00000380152", 10, end=20)
+            'GGATCCAAAGA'
+
         Args:
             transcript_id (str): transcript ID
             start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
@@ -2952,6 +3016,10 @@ class Core:
     ) -> str:
         """Return the DNA sequence between the given position(s), inclusive.
 
+        Examples:
+            >>> ensembl100.dna_sequence("13", 32315086, end=32315096)
+            'AAGCTTTTGTA'
+
         Args:
             contig_id (str): contig ID
             start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
@@ -2967,6 +3035,10 @@ class Core:
     ) -> str:
         """Return the protein sequence between the given position(s), inclusive.
 
+        Examples:
+            >>> ensembl100.protein_sequence("ENSP00000369497", 1, end=3)
+            'MPI'
+
         Args:
             protein_id (str): protein ID
             start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
@@ -2981,6 +3053,10 @@ class Core:
         self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
         """Return the RNA sequence between the given position(s), inclusive.
+
+        Examples:
+            >>> ensembl100.rna_sequence("ENST00000380152", 1, end=10)
+            'GGGCTTGTGG'
 
         Args:
             transcript_id (str): transcript ID
@@ -3040,7 +3116,7 @@ class Core:
             contig_id (str): contig ID
 
         Returns:
-            List[str]: Any aliases of the given contig ID
+            List[str]: All aliases of the given contig ID
         """
         return self._alias(contig_id, self._contig_alias)
 
@@ -3051,7 +3127,7 @@ class Core:
             exon_id (str): exon ID
 
         Returns:
-            List[str]: Any aliases of the given exon ID
+            List[str]: All aliases of the given exon ID
         """
         return self._alias(exon_id, self._exon_alias)
 
@@ -3062,7 +3138,7 @@ class Core:
             gene_id (str): gene ID
 
         Returns:
-            List[str]: Any aliases of the given gene ID
+            List[str]: All aliases of the given gene ID
         """
         return self._alias(gene_id, self._gene_alias)
 
@@ -3073,7 +3149,7 @@ class Core:
             protein_id (str): protein ID
 
         Returns:
-            List[str]: Any aliases of the given protein ID
+            List[str]: All aliases of the given protein ID
         """
         return self._alias(protein_id, self._protein_alias)
 
@@ -3084,7 +3160,7 @@ class Core:
             transcript_id (str): transcript ID
 
         Returns:
-            List[str]: Any aliases of the given transcript ID
+            List[str]: All aliases of the given transcript ID
         """
         return self._alias(transcript_id, self._transcript_alias)
 

@@ -24,6 +24,18 @@ class EnsemblRelease(Core):
         protein_alias: str = "",
         transcript_alias: str = "",
     ):
+        """
+        Args:
+            species (str): Species name
+            release (int): Ensembl release number
+            cache_dir (str, optional): Path to the cache directory. Defaults to platform-specific user cache
+            canonical_transcript (str, optional): Path to a list of canonical transcripts
+            contig_alias (str, optional): Path to a tab-separated file of contig aliases
+            exon_alias (str, optional): Path to a tab-separated file of exon aliases
+            gene_alias (str, optional): Path to a tab-separated file of gene aliases
+            protein_alias (str, optional): Path to a tab-separated file of protein aliases
+            transcript_alias (str, optional): Path to a tab-separated file of transcript aliases
+        """
         self.ensembl_cache = EnsemblCache(species, release, cache_dir=cache_dir)
         self.cache_dir = self.ensembl_cache.release_cache_dir
         self.reference = self.ensembl_cache.reference
@@ -54,7 +66,14 @@ class EnsemblRelease(Core):
         redownload: bool = False,
         restrict_genes: List[str] = [],
     ):
-        """Download missing data, process, and cache."""
+        """Download missing data, process, and cache.
+
+        Args:
+            clean (bool, optional): Delete temporary files. Defaults to True.
+            recache (bool, optional): Overwrite any existing cache. Defaults to False.
+            redownload (bool, optional): Redownload files from Ensembl. Defaults to False.
+            restrict_genes (List[str], optional): Restrict cache to the specified genes. Defaults to [].
+        """
         self.ensembl_cache.install(
             clean=clean, recache=recache, redownload=redownload, restrict_genes=restrict_genes
         )
@@ -62,7 +81,16 @@ class EnsemblRelease(Core):
     def cds_sequence(
         self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
-        """Return the nucleotide sequence at the given CDS coordinates."""
+        """Return the CDS sequence between the given position(s), inclusive.
+
+        Args:
+            transcript_id (str): transcript ID
+            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
+            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+
+        Returns:
+            str: The CDS sequence
+        """
         offset = self.cds_offset(transcript_id)
         cds_start = start + offset if start is not None else offset
         cds_end = end + offset if end is not None else offset

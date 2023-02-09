@@ -78,8 +78,14 @@ class EnsemblCache:
         redownload: bool = False,
         restrict_genes: List[str] = [],
     ):
-        """Download missing data, process, and cache."""
+        """Download missing data, process, and cache.
 
+        Args:
+            clean (bool, optional): Delete temporary files. Defaults to True.
+            recache (bool, optional): Overwrite any existing cache. Defaults to False.
+            redownload (bool, optional): Redownload files from Ensembl. Defaults to False.
+            restrict_genes (List[str], optional): Restrict cache to the specified genes. Defaults to [].
+        """
         # Create the cache directory structure
         self.make_release_cache_dir()
 

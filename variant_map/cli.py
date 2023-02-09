@@ -4,7 +4,11 @@ from .ensembl_cache import EnsemblCache, get_cache_dir
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the commmand line argument parser instance."""
+    """Build the commmand line argument parser instance.
+
+    Returns:
+        argparse.ArgumentParser
+    """
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(dest="subcommand")
 
