@@ -62,6 +62,16 @@ class _Position:
 
     @classmethod
     def copy_from(cls, position: _Position, **kwargs):
+        """Initialize a new position object by copying values from another position object.
+
+        Args:
+            position (_Position): Position object to copy attributes from
+            **kwargs: Keyword arguments with keys that match the attribute names of this position
+                class will override attributes from `position`
+
+        Returns:
+            a new position object of the same class as the class that calls this method
+        """
         return cls(
             **{
                 **{
@@ -78,41 +88,86 @@ class _Position:
         return str(self) < str(other)
 
     def __str__(self) -> str:
-        raise NotImplementedError()
+        raise NotImplementedError()  # Defined be inheriting classes
 
     @property
     def is_cdna(self) -> bool:
+        """Check if this fusion is between cDNA.
+
+        Returns:
+            bool: True if the fusion is between cDNA else False
+        """
         return False
 
     @property
     def is_dna(self) -> bool:
+        """Check if this position is on DNA.
+
+        Returns:
+            bool: True if the position is on DNA else False
+        """
         return False
 
     @property
     def is_exon(self) -> bool:
+        """Check if this fusion is between exon.
+
+        Returns:
+            bool: True if the fusion is between exon else False
+        """
         return False
 
     @property
     def is_protein(self) -> bool:
+        """Check if this fusion is between protein.
+
+        Returns:
+            bool: True if the fusion is between protein else False
+        """
         return False
 
     @property
     def is_rna(self) -> bool:
+        """Check if this fusion is between RNA.
+
+        Returns:
+            bool: True if the fusion is between RNA else False
+        """
         return False
 
     @property
     def on_negative_strand(self) -> bool:
+        """Check if this position originates from the negative strand of the genome.
+
+        Returns:
+            bool: True if the position originates from the negative strand of the genome else False
+        """
         return self.strand == "-"
 
     @property
     def on_positive_strand(self) -> bool:
+        """Check if this position originates from the positive strand of the genome.
+
+        Returns:
+            bool: True if the position originates from the positive strand of the genome else False
+        """
         return self.strand == "+"
 
     def asdict(self) -> Dict[str, Any]:
+        """Convert this position's attributes to a dictionary.
+
+        Returns:
+            Dict[str, Any]: Dictionary of attribute names and corresponding values
+        """
         return {f.name: self[f.name] for f in fields(self)}
 
     def sequence(self) -> str:
-        raise NotImplementedError()
+        """Return the reference sequence from this position's start to it's end, inclusive.
+
+        Returns:
+            str: The reference sequence
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
 
 @dataclass(eq=True, frozen=True)
@@ -135,9 +190,19 @@ class CdnaPosition(_Position):
 
     @property
     def is_cdna(self) -> bool:
+        """Check if this position is on a cDNA.
+
+        Returns:
+            bool: True if the position is on a cDNA else False
+        """
         return True
 
     def sequence(self) -> str:
+        """Return the reference sequence from this position's start to it's end, inclusive.
+
+        Returns:
+            str: The reference sequence
+        """
         if self.start_offset or self.end_offset:
             raise ValueError(
                 f"Unable to get cDNA sequence of offset position ({self.start_offset}, {self.end_offset})"
@@ -160,9 +225,19 @@ class DnaPosition(_Position):
 
     @property
     def is_dna(self) -> bool:
+        """Check if this position is on DNA.
+
+        Returns:
+            bool: True if the position is on DNA else False
+        """
         return True
 
     def sequence(self) -> str:
+        """Return the reference sequence from this position's start to it's end, inclusive.
+
+        Returns:
+            str: The reference sequence
+        """
         if self.start_offset or self.end_offset:
             raise ValueError(
                 f"Unable to get DNA sequence of offset position ({self.start_offset}, {self.end_offset})"
@@ -192,9 +267,19 @@ class ExonPosition(_Position):
 
     @property
     def is_exon(self) -> bool:
+        """Check if this position is on an exon.
+
+        Returns:
+            bool: True if the position is on an exon else False
+        """
         return True
 
     def sequence(self) -> str:
+        """Return the reference sequence from this position's start to it's end, inclusive.
+
+        Returns:
+            str: The reference sequence
+        """
         raise NotImplementedError()  # TODO
 
 
@@ -218,9 +303,19 @@ class ProteinPosition(_Position):
 
     @property
     def is_protein(self) -> bool:
+        """Check if this position is on a protein.
+
+        Returns:
+            bool: True if the position is on a protein else False
+        """
         return True
 
     def sequence(self) -> str:
+        """Return the reference sequence from this position's start to it's end, inclusive.
+
+        Returns:
+            str: The reference sequence
+        """
         if self.start_offset or self.end_offset:
             raise ValueError(
                 f"Unable to get peptide sequence of offset position ({self.start_offset}, {self.end_offset})"
@@ -248,9 +343,19 @@ class RnaPosition(_Position):
 
     @property
     def is_rna(self) -> bool:
+        """Check if this position is on an RNA.
+
+        Returns:
+            bool: True if the position is on an RNA else False
+        """
         return True
 
     def sequence(self) -> str:
+        """Return the reference sequence from this position's start to it's end, inclusive.
+
+        Returns:
+            str: The reference sequence
+        """
         if self.start_offset or self.end_offset:
             raise ValueError(
                 f"Unable to get RNA sequence of offset position ({self.start_offset}, {self.end_offset})"
@@ -267,19 +372,59 @@ class _MappablePosition:
     """Base class for mappable position objects."""
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
-        raise NotImplementedError()
+        """Map this position to one more cDNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaMappablePosition]: One or more cDNA positions.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
-        raise NotImplementedError()
+        """Map this position to one more DNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: One or more DNA positions.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
-        raise NotImplementedError()
+        """Map this position to one more exon positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonMappablePosition]: One or more exon positions.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
-        raise NotImplementedError()
+        """Map this position to one more protein positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinMappablePosition]: One or more protein positions.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
-        raise NotImplementedError()
+        """Map this position to one more RNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaMappablePosition]: One or more RNA positions.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
 
 @dataclass(eq=True, frozen=True)
@@ -287,6 +432,14 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
     """Stores information on a cDNA position and converts to other position types."""
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+        """Map this position to one more cDNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaMappablePosition]: One or more cDNA positions.
+        """
         return self._data._cdna_to_cdna(
             [self.transcript_id],
             self.start,
@@ -298,6 +451,14 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
         )
 
     def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+        """Map this position to one more DNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: One or more DNA positions.
+        """
         return self._data._cdna_to_dna(
             [self.transcript_id],
             self.start,
@@ -309,6 +470,14 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
         )
 
     def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+        """Map this position to one more exon positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonMappablePosition]: One or more exon positions.
+        """
         return self._data._cdna_to_exon(
             [self.transcript_id],
             self.start,
@@ -319,8 +488,16 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
-        return self._data._cdna_to_rna(
+    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+        """Map this position to one more protein positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinMappablePosition]: One or more protein positions.
+        """
+        return self._data._cdna_to_protein(
             [self.transcript_id],
             self.start,
             self.start_offset,
@@ -330,8 +507,16 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
-        return self._data._cdna_to_protein(
+    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+        """Map this position to one more RNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaMappablePosition]: One or more RNA positions.
+        """
+        return self._data._cdna_to_rna(
             [self.transcript_id],
             self.start,
             self.start_offset,
@@ -346,7 +531,15 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
 class DnaMappablePosition(DnaPosition, _MappablePosition):
     """Stores information on a DNA position and converts to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+        """Map this position to one more cDNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaMappablePosition]: One or more cDNA positions.
+        """
         return self._data._dna_to_cdna(
             [self.contig_id],
             self.start,
@@ -357,7 +550,15 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List:
+    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+        """Map this position to one more DNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: One or more DNA positions.
+        """
         return self._data._dna_to_dna(
             [self.contig_id],
             self.start,
@@ -368,7 +569,15 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List:
+    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+        """Map this position to one more exon positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonMappablePosition]: One or more exon positions.
+        """
         return self._data._dna_to_exon(
             [self.contig_id],
             self.start,
@@ -379,7 +588,15 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List:
+    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+        """Map this position to one more protein positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinMappablePosition]: One or more protein positions.
+        """
         return self._data._dna_to_protein(
             [self.contig_id],
             self.start,
@@ -390,7 +607,15 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List:
+    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+        """Map this position to one more RNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaMappablePosition]: One or more RNA positions.
+        """
         return self._data._dna_to_rna(
             [self.contig_id],
             self.start,
@@ -406,7 +631,15 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
 class ExonMappablePosition(ExonPosition, _MappablePosition):
     """Stores information on an exon position and converts to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+        """Map this position to one more cDNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaMappablePosition]: One or more cDNA positions.
+        """
         return self._data._exon_to_cdna(
             [self.transcript_id],
             self.start,
@@ -417,7 +650,15 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List:
+    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+        """Map this position to one more DNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: One or more DNA positions.
+        """
         return self._data._exon_to_dna(
             [self.transcript_id],
             self.start,
@@ -428,7 +669,15 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List:
+    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+        """Map this position to one more exon positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonMappablePosition]: One or more exon positions.
+        """
         return self._data._exon_to_exon(
             [self.transcript_id],
             self.start,
@@ -439,7 +688,15 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List:
+    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+        """Map this position to one more protein positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinMappablePosition]: One or more protein positions.
+        """
         return self._data._exon_to_protein(
             [self.transcript_id],
             self.start,
@@ -450,7 +707,15 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List:
+    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+        """Map this position to one more RNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaMappablePosition]: One or more RNA positions.
+        """
         return self._data._exon_to_rna(
             [self.transcript_id],
             self.start,
@@ -466,7 +731,15 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
 class ProteinMappablePosition(ProteinPosition, _MappablePosition):
     """Stores information on a protein position and converts to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+        """Map this position to one more cDNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaMappablePosition]: One or more cDNA positions.
+        """
         return self._data._protein_to_cdna(
             [self.transcript_id],
             self.start,
@@ -477,7 +750,15 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List:
+    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+        """Map this position to one more DNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: One or more DNA positions.
+        """
         return self._data._protein_to_dna(
             [self.transcript_id],
             self.start,
@@ -488,7 +769,15 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List:
+    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+        """Map this position to one more exon positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonMappablePosition]: One or more exon positions.
+        """
         return self._data._protein_to_exon(
             [self.transcript_id],
             self.start,
@@ -499,7 +788,15 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List:
+    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+        """Map this position to one more protein positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinMappablePosition]: One or more protein positions.
+        """
         return self._data._protein_to_protein(
             [self.transcript_id],
             self.start,
@@ -510,7 +807,15 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List:
+    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+        """Map this position to one more RNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaMappablePosition]: One or more RNA positions.
+        """
         return self._data._protein_to_rna(
             [self.transcript_id],
             self.start,
@@ -526,7 +831,15 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
 class RnaMappablePosition(RnaPosition, _MappablePosition):
     """Stores information on an RNA position and converts to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+        """Map this position to one more cDNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaMappablePosition]: One or more cDNA positions.
+        """
         return self._data._rna_to_cdna(
             [self.transcript_id],
             self.start,
@@ -537,7 +850,15 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List:
+    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+        """Map this position to one more DNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: One or more DNA positions.
+        """
         return self._data._rna_to_dna(
             [self.transcript_id],
             self.start,
@@ -548,7 +869,15 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List:
+    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+        """Map this position to one more exon positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonMappablePosition]: One or more exon positions.
+        """
         return self._data._rna_to_exon(
             [self.transcript_id],
             self.start,
@@ -559,7 +888,15 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List:
+    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+        """Map this position to one more protein positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinMappablePosition]: One or more protein positions.
+        """
         return self._data._rna_to_protein(
             [self.transcript_id],
             self.start,
@@ -570,7 +907,15 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List:
+    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+        """Map this position to one more RNA positions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaMappablePosition]: One or more RNA positions.
+        """
         return self._data._rna_to_rna(
             [self.transcript_id],
             self.start,
@@ -591,50 +936,130 @@ class Variant:
 
     @property
     def is_deletion(self) -> bool:
+        """Check if this variant is a deletion.
+
+        Returns:
+            bool: True if the position is a deletion else False
+        """
         return self.type == DELETION
 
     @property
     def is_delins(self) -> bool:
+        """Check if this variant is a delins (indel).
+
+        Returns:
+            bool: True if the position is a delins else False
+        """
         return self.type == DELINS
 
     @property
     def is_duplication(self) -> bool:
+        """Check if this variant is a duplication.
+
+        Returns:
+            bool: True if the position is a duplication else False
+        """
         return self.type == DUPLICATION
 
     @property
     def is_frameshift(self) -> bool:
+        """Check if this variant is a frameshift.
+
+        Returns:
+            bool: True if the position is a frameshift else False
+        """
         return self.type == FRAMESHIFT
 
     @property
     def is_fusion(self) -> bool:
+        """Check if this variant is a fusion.
+
+        Returns:
+            bool: True if the position is a fusion else False
+        """
         return self.type == FUSION
 
     @property
     def is_insertion(self) -> bool:
+        """Check if this variant is an insertion.
+
+        Returns:
+            bool: True if the position is an insertion else False
+        """
         return self.type == INSERTION
 
     @property
     def is_substitution(self) -> bool:
+        """Check if this variant is a substitution.
+
+        Returns:
+            bool: True if the position is a substitution else False
+        """
         return self.type == SUBTITUTION
 
     @property
     def type(self) -> str:
-        raise NotImplementedError()
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_cdna(self) -> List:
-        raise NotImplementedError()
+        """Map this variant to one more cDNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List: One or more cDNA variants.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_dna(self) -> List:
-        raise NotImplementedError()
+        """Map this variant to one more DNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List: One or more DNA variants.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_exon(self) -> List:
-        raise NotImplementedError()
+        """Map this variant to one more exon variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List: One or more exon variants.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_protein(self) -> List:
-        raise NotImplementedError()
+        """Map this variant to one more protein variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List: One or more protein variants.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_rna(self) -> List:
-        raise NotImplementedError()
+        """Map this variant to one more RNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List: One or more RNA variants.
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
 
 # -------------------------------------------------------------------------------------------------
@@ -656,7 +1081,20 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
     def from_cdna(
         cls, cdna: CdnaMappablePosition, refseq: str, altseq: str
     ) -> List[CdnaSmallVariant]:
-        """Convert a cDNA position plus ref/alt sequences into a cDNA variant object."""
+        """Convert a cDNA position plus ref/alt nucleotides into a cDNA variant object.
+
+        Args:
+            cdna (CdnaMappablePosition): Variant position
+            refseq (str): reference allele
+            altseq (str): alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+            ValueError: The given reference allele does not match the annotated reference allele
+
+        Returns:
+            List[CdnaSmallVariant]: One or more cDNA variants
+        """
         variant_list = []
 
         ref_annotated = cdna.sequence()
@@ -706,7 +1144,19 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
     def from_protein(
         cls, cdna: CdnaMappablePosition, refseq: str, altseq: str
     ) -> List[CdnaSmallVariant]:
-        """Convert a cDNA position plus ref/alt amino acids into a cDNA variant object."""
+        """Convert a cDNA position plus ref/alt amino acids into a cDNA variant object.
+
+        Args:
+            cdna (CdnaMappablePosition): cDNA position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+
+        Returns:
+            List[CdnaSmallVariant]: One or more cDNA variants
+        """
         variant_list = []
 
         ref_annotated = cdna.sequence()
@@ -755,6 +1205,14 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
         return variant_list
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
+        """Map this variants to one more cDNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaSmallVariant]: One or more cDNA variants.
+        """
         return self._data._cdna_to_cdna_variant(
             [self.transcript_id],
             self.start,
@@ -768,6 +1226,14 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
         )
 
     def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
+        """Map this variants to one more DNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaSmallVariant]: One or more DNA variants.
+        """
         return self._data._cdna_to_dna_variant(
             [self.transcript_id],
             self.start,
@@ -781,9 +1247,25 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
         )
 
     def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        raise NotImplementedError()
+        """Map this variants to one more exon variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonSmallVariant]: One or more exon variants.
+        """
+        raise NotImplementedError()  # TODO
 
     def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
+        """Map this variants to one more protein variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinSmallVariant]: One or more protein variants.
+        """
         return self._data._cdna_to_protein_variant(
             [self.transcript_id],
             self.start,
@@ -797,6 +1279,14 @@ class CdnaSmallVariant(CdnaPosition, SmallVariant):
         )
 
     def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
+        """Map this variants to one more RNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaSmallVariant]: One or more RNA variants.
+        """
         return self._data._cdna_to_rna_variant(
             [self.transcript_id],
             self.start,
@@ -816,7 +1306,19 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
 
     @classmethod
     def from_dna(cls, dna: DnaMappablePosition, refseq: str, altseq: str) -> List[DnaSmallVariant]:
-        """Convert a DNA position plus ref/alt sequences into a DNA variant object."""
+        """Convert a DNA position plus ref/alt nucleotides into a DNA variant object.
+
+        Args:
+            dna (DnaMappablePosition): DNA position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+
+        Returns:
+            List[DnaSmallVariant]: One or more DNA variants
+        """
         variant_list = []
 
         # TODO: DNA sequence get is slow
@@ -864,6 +1366,14 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
         return variant_list
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
+        """Map this variants to one more cDNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaSmallVariant]: One or more cDNA variants.
+        """
         return self._data._dna_to_cdna_variant(
             [self.contig_id],
             self.start,
@@ -877,6 +1387,14 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
         )
 
     def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
+        """Map this variants to one more DNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaSmallVariant]: One or more DNA variants.
+        """
         return self._data._dna_to_dna_variant(
             [self.contig_id],
             self.start,
@@ -890,9 +1408,25 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
         )
 
     def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        raise NotImplementedError()
+        """Map this variants to one more exon variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonSmallVariant]: One or more exon variants.
+        """
+        raise NotImplementedError()  # TODO
 
     def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
+        """Map this variants to one more protein variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinSmallVariant]: One or more protein variants.
+        """
         return self._data._dna_to_protein_variant(
             [self.contig_id],
             self.start,
@@ -906,6 +1440,14 @@ class DnaSmallVariant(DnaPosition, SmallVariant):
         )
 
     def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
+        """Map this variants to one more RNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaSmallVariant]: One or more RNA variants.
+        """
         return self._data._dna_to_rna_variant(
             [self.contig_id],
             self.start,
@@ -927,8 +1469,20 @@ class ExonSmallVariant(ExonPosition, SmallVariant):
     def from_exon(
         cls, exon: ExonMappablePosition, refseq: str, altseq: str
     ) -> List[ExonSmallVariant]:
-        """Convert an exon position plus ref/alt sequences into an exon variant object."""
-        raise NotImplementedError()
+        """Convert an exon position plus ref/alt nucleotides into an exon variant object.
+
+        Args:
+            exon (ExonMappablePosition): exon position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+
+        Returns:
+            List[ExonSmallVariant]: One or more exon variants
+        """
+        raise NotImplementedError()  # TODO
 
 
 @dataclass(eq=True, frozen=True)
@@ -939,7 +1493,19 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
     def from_cdna(
         cls, cdna: CdnaMappablePosition, protein: ProteinMappablePosition, refseq: str, altseq: str
     ) -> List[ProteinSmallVariant]:
-        """Convert a cDNA position plus ref/alt sequences into a protein variant object."""
+        """Convert a cDNA position plus ref/alt amino acids into a protein variant object.
+
+        Args:
+            cdna (CdnaMappablePosition): cDNA position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+
+        Returns:
+            List[ProteinSmallVariant]: One or more protein variants
+        """
         variant_list = []
 
         protein_refseq = protein.sequence()
@@ -988,6 +1554,14 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
         return variant_list
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
+        """Map this variants to one more cDNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaSmallVariant]: One or more cDNA variants.
+        """
         return self._data._protein_to_cdna_variant(
             [self.transcript_id],
             self.start,
@@ -1001,6 +1575,14 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
         )
 
     def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
+        """Map this variants to one more DNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaSmallVariant]: One or more DNA variants.
+        """
         return self._data._protein_to_dna_variant(
             [self.transcript_id],
             self.start,
@@ -1014,9 +1596,25 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
         )
 
     def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        raise NotImplementedError()
+        """Map this variants to one more exon variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonSmallVariant]: One or more exon variants.
+        """
+        raise NotImplementedError()  # TODO
 
     def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
+        """Map this variants to one more protein variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinSmallVariant]: One or more protein variants.
+        """
         return self._data._protein_to_protein_variant(
             [self.transcript_id],
             self.start,
@@ -1030,6 +1628,14 @@ class ProteinSmallVariant(ProteinPosition, SmallVariant):
         )
 
     def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
+        """Map this variants to one more RNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaSmallVariant]: One or more RNA variants.
+        """
         return self._data._protein_to_rna_variant(
             [self.transcript_id],
             self.start,
@@ -1049,7 +1655,20 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
 
     @classmethod
     def from_rna(cls, rna: RnaMappablePosition, refseq: str, altseq: str) -> List[RnaSmallVariant]:
-        """Convert an RNA position plus ref/alt sequences into an RNA variant object."""
+        """Convert an RNA position plus ref/alt nucleotides into an RNA variant object.
+
+        Args:
+            rna (RnaMappablePosition): RNA position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+            ValueError: The given reference allele does not match the annotated reference allele
+
+        Returns:
+            List[RnaSmallVariant]: One or more RNA variants
+        """
         variant_list = []
 
         ref_annotated = rna.sequence()
@@ -1096,6 +1715,14 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
         return variant_list
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
+        """Map this variants to one more cDNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaSmallVariant]: One or more cDNA variants.
+        """
         return self._data._rna_to_cdna_variant(
             [self.transcript_id],
             self.start,
@@ -1109,6 +1736,14 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
         )
 
     def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
+        """Map this variants to one more DNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaSmallVariant]: One or more DNA variants.
+        """
         return self._data._rna_to_dna_variant(
             [self.transcript_id],
             self.start,
@@ -1122,9 +1757,25 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
         )
 
     def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        raise NotImplementedError()
+        """Map this variants to one more exon variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonSmallVariant]: One or more exon variants.
+        """
+        raise NotImplementedError()  # TODO
 
     def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
+        """Map this variants to one more protein variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinSmallVariant]: One or more protein variants.
+        """
         return self._data._rna_to_protein_variant(
             [self.transcript_id],
             self.start,
@@ -1138,6 +1789,14 @@ class RnaSmallVariant(RnaPosition, SmallVariant):
         )
 
     def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
+        """Map this variants to one more RNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaSmallVariant]: One or more RNA variants.
+        """
         return self._data._rna_to_rna_variant(
             [self.transcript_id],
             self.start,
@@ -1160,6 +1819,11 @@ class Deletion(SmallVariant):
 
     @property
     def type(self) -> str:
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
         return DELETION
 
 
@@ -1226,6 +1890,11 @@ class Delins(SmallVariant):
 
     @property
     def type(self) -> str:
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
         return DELINS
 
 
@@ -1292,6 +1961,11 @@ class Duplication(SmallVariant):
 
     @property
     def type(self) -> str:
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
         return DUPLICATION
 
 
@@ -1358,6 +2032,11 @@ class Frameshift(SmallVariant):
 
     @property
     def type(self) -> str:
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
         return FRAMESHIFT
 
 
@@ -1366,18 +2045,58 @@ class ProteinFrameshift(Frameshift, ProteinSmallVariant):
     """Stores information on a protein frameshift variant and converts to other position types."""
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
+        """Map this variants to one more cDNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaSmallVariant]: One or more cDNA variants.
+        """
         raise NotImplementedError()  # TODO
 
     def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
+        """Map this variants to one more DNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaSmallVariant]: One or more DNA variants.
+        """
         raise NotImplementedError()  # TODO
 
     def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
+        """Map this variants to one more exon variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonSmallVariant]: One or more exon variants.
+        """
         raise NotImplementedError()  # TODO
 
     def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
+        """Map this variants to one more protein variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinSmallVariant]: One or more protein variants.
+        """
         raise NotImplementedError()  # TODO
 
     def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
+        """Map this variants to one more RNA variants.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaSmallVariant]: One or more RNA variants.
+        """
         raise NotImplementedError()  # TODO
 
 
@@ -1390,6 +2109,11 @@ class Insertion(SmallVariant):
 
     @property
     def type(self) -> str:
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
         return INSERTION
 
 
@@ -1451,6 +2175,11 @@ class Substitution:
 
     @property
     def type(self) -> str:
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
         return SUBTITUTION
 
 
@@ -1529,6 +2258,16 @@ class Fusion(Variant):
 
     @classmethod
     def copy_from(cls, fusion: Fusion, **kwargs):
+        """Initialize a new fusion object by copying values from another fusion object.
+
+        Args:
+            fusion (Fusion): Fusion object to copy attributes from
+            **kwargs: Keyword arguments with keys that match the attribute names of this fusion
+                class will override attributes from `fusion`
+
+        Returns:
+            a new fusion object of the same class as the class that calls this method
+        """
         return cls(
             **{
                 **{k: v for k, v in fusion.asdict().items() if k in [i.name for i in fields(cls)]},
@@ -1547,43 +2286,101 @@ class Fusion(Variant):
 
     @property
     def is_cdna(self) -> bool:
+        """Check if this fusion is between cDNA.
+
+        Returns:
+            bool: True if the fusion is between cDNA else False
+        """
         return False
 
     @property
     def is_dna(self) -> bool:
+        """Check if this position is on DNA.
+
+        Returns:
+            bool: True if the position is on DNA else False
+        """
         return False
 
     @property
     def is_exon(self) -> bool:
+        """Check if this fusion is between exon.
+
+        Returns:
+            bool: True if the fusion is between exon else False
+        """
         return False
 
     @property
     def is_protein(self) -> bool:
+        """Check if this fusion is between protein.
+
+        Returns:
+            bool: True if the fusion is between protein else False
+        """
         return False
 
     @property
     def is_rna(self) -> bool:
+        """Check if this fusion is between RNA.
+
+        Returns:
+            bool: True if the fusion is between RNA else False
+        """
         return False
 
     @property
     def on_negative_strand(self) -> bool:
+        """Check if one or both breakpoints originate from the negative strand of the genome.
+
+        Returns:
+            bool: True if if one or both breakpoints are on the negative strand else False
+        """
         return "-" in (self.breakpoint1.strand, self.breakpoint2.strand)
 
     @property
     def on_positive_strand(self) -> bool:
+        """Check if one or both breakpoints originate from the positive strand of the genome.
+
+        Returns:
+            bool: True if if one or both breakpoints are on the positive strand else False
+        """
         return "+" in (self.breakpoint1.strand, self.breakpoint2.strand)
 
     @property
     def type(self) -> str:
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
         return FUSION
 
     def asdict(self) -> Dict[str, Any]:
+        """Convert this position's attributes to a dictionary.
+
+        Returns:
+            Dict[str, Any]: Dictionary of attribute names and corresponding values
+        """
         return {f.name: self[f.name] for f in fields(self)}
 
     def sequence(self) -> str:
-        raise NotImplementedError()
+        """Return the reference sequence from this position's start to it's end, inclusive.
+
+        Returns:
+            str: The reference sequence
+        """
+        raise NotImplementedError()  # Defined be inheriting classes
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaFusion]:
+        """Map this fusion to one more cDNA fusions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaFusion]: One or more cDNA fusions.
+        """
         result = []
 
         breakpoint1 = self.breakpoint1.to_cdna(canonical=canonical)
@@ -1594,6 +2391,14 @@ class Fusion(Variant):
         return result
 
     def to_dna(self, canonical: bool = False) -> List[DnaFusion]:
+        """Map this fusion to one more DNA fusions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaFusion]: One or more DNA fusions.
+        """
         result = []
 
         breakpoint1 = self.breakpoint1.to_dna(canonical=canonical)
@@ -1604,6 +2409,14 @@ class Fusion(Variant):
         return result
 
     def to_exon(self, canonical: bool = False) -> List[ExonFusion]:
+        """Map this fusion to one more exon fusions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonFusion]: One or more exon fusions.
+        """
         result = []
 
         breakpoint1 = self.breakpoint1.to_exon(canonical=canonical)
@@ -1614,6 +2427,14 @@ class Fusion(Variant):
         return result
 
     def to_protein(self, canonical: bool = False) -> List[ProteinFusion]:
+        """Map this fusion to one more protein fusions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinFusion]: One or more protein fusions.
+        """
         result = []
 
         breakpoint1 = self.breakpoint1.to_protein(canonical=canonical)
@@ -1624,6 +2445,14 @@ class Fusion(Variant):
         return result
 
     def to_rna(self, canonical: bool = False) -> List[RnaFusion]:
+        """Map this fusion to one more RNA fusions.
+
+        Args:
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaFusion]: One or more RNA fusions.
+        """
         result = []
 
         breakpoint1 = self.breakpoint1.to_rna(canonical=canonical)
@@ -1640,6 +2469,11 @@ class CdnaFusion(Fusion):
 
     @property
     def is_cdna(self) -> bool:
+        """Check if this fusion is between cDNA.
+
+        Returns:
+            bool: True if the fusion is between cDNA else False
+        """
         return True
 
 
@@ -1649,6 +2483,11 @@ class DnaFusion(Fusion):
 
     @property
     def is_dna(self) -> bool:
+        """Check if this position is on DNA.
+
+        Returns:
+            bool: True if the position is on DNA else False
+        """
         return True
 
 
@@ -1658,6 +2497,11 @@ class ExonFusion(Fusion):
 
     @property
     def is_exon(self) -> bool:
+        """Check if this fusion is between exon.
+
+        Returns:
+            bool: True if the fusion is between exon else False
+        """
         return True
 
 
@@ -1667,6 +2511,11 @@ class ProteinFusion(Fusion):
 
     @property
     def is_protein(self) -> bool:
+        """Check if this fusion is between protein.
+
+        Returns:
+            bool: True if the fusion is between protein else False
+        """
         return True
 
 
@@ -1676,6 +2525,11 @@ class RnaFusion(Fusion):
 
     @property
     def is_rna(self) -> bool:
+        """Check if this fusion is between RNA.
+
+        Returns:
+            bool: True if the fusion is between RNA else False
+        """
         return True
 
 
@@ -1703,20 +2557,25 @@ class Core:
     ):
         """
         Args:
-            gtf: path to a GTF files with feature annotations
-            cds: list of paths to a FASTA files of CDS sequences
-            dna: list of paths to a FASTA files of DNA sequences
-            peptide: list of paths to a FASTA files of peptide sequences
-            rna: list of paths to a FASTA files of RNA sequences
-            canonical_transcript: path to a text file of canonical transcript IDs
-            contig_alias: path to a TSV file mapping contig IDs to their alias(es)
-            exon_alias: path to a TSV file mapping contig IDs to their alias(es)
-            gene_alias: path to a TSV file mapping contig IDs to their alias(es)
-            protein_alias: path to a TSV file mapping contig IDs to their alias(es)
-            transcript_alias: path to a TSV file mapping contig IDs to their alias(es)
+            gtf (str): Path to a GTF files with feature annotations
+            cds (List[str]): List of paths to a FASTA files of CDS sequences
+            dna (List[str]): List of paths to a FASTA files of DNA sequences
+            peptide (List[str]): List of paths to a FASTA files of peptide sequences
+            rna (List[str]): List of paths to a FASTA files of RNA sequences
+            canonical_transcript (str, optional): Path to a text file of canonical transcript IDs.
+                Defaults to "".
+            contig_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
+                Defaults to "".
+            exon_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
+                Defaults to "".
+            gene_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
+                Defaults to "".
+            protein_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
+                Defaults to "".
+            transcript_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
+                Defaults to "".
         """
-        # TODO: switch to 'polars'?
-        self.df = read_gtf(gtf, result_type="pandas")
+        self.df = read_gtf(gtf, result_type="pandas")  # TODO: switch to 'polars'?
         self.cds_fasta = [read_fasta(i) for i in cds]
         self.dna_fasta = [read_fasta(i) for i in dna]
         self.protein_fasta = [read_fasta(i) for i in peptide]
@@ -1732,31 +2591,59 @@ class Core:
     # all_<feature_symbol>s
     # ---------------------------------------------------------------------------------------------
     def all_contig_ids(self) -> List[str]:
-        """Return a list of all contig (chromosome) IDs."""
+        """List all contig (chromosome) IDs.
+
+        Returns:
+            List[str]: Contig IDs
+        """
         return self._uniquify_series(self.df[CONTIG_ID])
 
     def all_exon_ids(self) -> List[str]:
-        """Return a list of all exon IDs."""
+        """List all exon IDs.
+
+        Returns:
+            List[str]: Exon IDs
+        """
         return self._uniquify_series(self.df[EXON_ID])
 
     def all_gene_ids(self) -> List[str]:
-        """Return a list of all gene IDs."""
+        """List all gene IDs.
+
+        Returns:
+            List[str]: Gene IDs
+        """
         return self._uniquify_series(self.df[GENE_ID])
 
     def all_gene_names(self) -> List[str]:
-        """Return a list of all gene names."""
+        """List all gene names.
+
+        Returns:
+            List[str]: Gene names
+        """
         return self._uniquify_series(self.df[GENE_NAME])
 
     def all_protein_ids(self) -> List[str]:
-        """Return a list of all protein IDs."""
+        """List all protein IDs.
+
+        Returns:
+            List[str]: Protein IDs
+        """
         return self._uniquify_series(self.df[PROTEIN_ID])
 
     def all_transcript_ids(self) -> List[str]:
-        """Return a list of all transcript IDs."""
+        """List all transcript IDs.
+
+        Returns:
+            List[str]: Transcript IDs
+        """
         return self._uniquify_series(self.df[TRANSCRIPT_ID])
 
     def all_transcript_names(self) -> List[str]:
-        """Return a list of all transcript names."""
+        """List all transcript names.
+
+        Returns:
+            List[str]: Transcript names
+        """
         return self._uniquify_series(self.df[TRANSCRIPT_NAME])
 
     def _uniquify_series(self, series: pd.Series) -> List:
@@ -1766,35 +2653,83 @@ class Core:
     # <feature_symbol>s
     # ---------------------------------------------------------------------------------------------
     def contig_ids(self, feature: str) -> List[str]:
-        """Given a feature symbol, return the corresponding contig ID(s)."""
+        """Given an ID or name, return the corresponding contig IDs.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[str]: Contig IDs
+        """
         return self._query_feature(CONTIG_ID, feature)
 
     def exon_ids(self, feature: str) -> List[str]:
-        """Given a feature symbol, return the corresponding exon ID(s)."""
+        """Given an ID or name, return the corresponding exon IDs.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[str]: Exon IDs
+        """
         return self._query_feature(EXON_ID, feature)
 
     def gene_ids(self, feature: str) -> List[str]:
-        """Given a feature symbol, return the corresponding gene ID(s)."""
+        """Given an ID or name, return the corresponding gene IDs.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[str]: Gene IDs
+        """
         return self._query_feature(GENE_ID, feature)
 
     def gene_names(self, feature: str) -> List[str]:
-        """Given a feature symbol, return the corresponding gene names(s)."""
+        """Given an ID or name, return the corresponding gene names.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[str]: Gene names
+        """
         return self._query_feature(GENE_NAME, feature)
 
     def protein_ids(self, feature: str) -> List[str]:
-        """Given a feature symbol, return the corresponding protein ID(s)."""
+        """Given an ID or name, return the corresponding protein IDs.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[str]: Protein IDs
+        """
         return self._query_feature(PROTEIN_ID, feature)
 
     def transcript_ids(self, feature: str) -> List[str]:
-        """Given a feature symbol, return the corresponding transcript ID(s)."""
+        """Given an ID or name, return the corresponding transcript IDs.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[str]: Transcript IDs
+        """
         return self._query_feature(TRANSCRIPT_ID, feature)
 
     def transcript_names(self, feature: str) -> List[str]:
-        """Given a feature symbol, return the corresponding transcript names(s)."""
+        """Given an ID or name, return the corresponding transcript names.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[str]: Transcript names
+        """
         return self._query_feature(TRANSCRIPT_NAME, feature)
 
     def _query_feature(self, key: str, feature: str) -> List[str]:
-        """Given a feature symbol and a desired ID type, return the corresponding ID(s)."""
         parts = []
 
         for feature, feature_type in self.normalize_id(feature):
@@ -1825,35 +2760,27 @@ class Core:
         return self._uniquify_series(result)
 
     def _query_contig_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        """Given a contig ID, return a dataframe where all values have the ID."""
         return self._query(feature, CONTIG_ID)
 
     def _query_exon_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        """Given an exon ID, return a dataframe where all values have the ID."""
         return self._query(feature, EXON_ID)
 
     def _query_gene_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        """Given a gene ID, return a dataframe where all values have the ID."""
         return self._query(feature, GENE_ID)
 
     def _query_gene_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        """Given a gene name, return a dataframe where all values have the ID."""
         return self._query(feature, GENE_NAME)
 
     def _query_protein_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        """Given a protein ID, return a dataframe where all values have the ID."""
         return self._query(feature, PROTEIN_ID)
 
     def _query_transcript_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        """Given a transcript ID, return a dataframe where all values have the ID."""
         return self._query(feature, TRANSCRIPT_ID)
 
     def _query_transcript_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        """Given a transcript name, return a dataframe where all values have the ID."""
         return self._query(feature, TRANSCRIPT_NAME)
 
     def _query(self, feature: Union[List[str], str], col: str) -> pd.DataFrame:
-        """Generic function for filtering the dataframe."""
         feature = [feature] if isinstance(feature, str) else feature
         sudbf = self.df.loc[self.df[col].isin(feature)]
 
@@ -1863,7 +2790,15 @@ class Core:
     # normalize_id
     # ---------------------------------------------------------------------------------------------
     def normalize_id(self, feature: str) -> List[Tuple[str, str]]:
-        """Normalize a feature ID to one or more representations."""
+        """Normalize an ID or name to the annotated equivalent(s).
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[Tuple[str, str]]: List of (normalized ID/name, normalized type (e.g. 'gene',
+                'transcript', etc.))
+        """
         normalized = []
 
         feature_type, result = self._normalize_id(feature)
@@ -1873,7 +2808,6 @@ class Core:
         return [(i, feature_type) for i in normalized]
 
     def _normalize_id(self, feature: str) -> Tuple[str, pd.DataFrame]:
-        """Normalize a feature ID, return its type and a dataframe of matching values."""
         feature_type = ""
         result = pd.DataFrame()
 
@@ -1894,43 +2828,36 @@ class Core:
         return feature_type, result
 
     def _normalize_contig_id(self, feature: str) -> pd.DataFrame:
-        """Normalize a contig ID, return a dataframe of matching values."""
         featurel = [feature] + self.contig_alias(feature)
 
         return self._query_contig_id(featurel)
 
     def _normalize_exon_id(self, feature: str) -> pd.DataFrame:
-        """Normalize an exon ID, return a dataframe of matching values."""
         featurel = [feature] + self.exon_alias(feature)
 
         return self._query_exon_id(featurel)
 
     def _normalize_gene_id(self, feature: str) -> pd.DataFrame:
-        """Normalize a gene ID, return a dataframe of matching values."""
         featurel = [feature] + self.gene_alias(feature)
 
         return self._query_gene_id(featurel)
 
     def _normalize_gene_name(self, feature: str) -> pd.DataFrame:
-        """Normalize a gene name, return a dataframe of matching values."""
         featurel = [feature] + self.gene_alias(feature)
 
         return self._query_gene_name(featurel)
 
     def _normalize_protein_id(self, feature: str) -> pd.DataFrame:
-        """Normalize a protein ID, return a dataframe of matching values."""
         featurel = [feature] + self.protein_alias(feature)
 
         return self._query_protein_id(featurel)
 
     def _normalize_transcript_id(self, feature: str) -> pd.DataFrame:
-        """Normalize a transcript ID, return a dataframe of matching values."""
         featurel = [feature] + self.transcript_alias(feature)
 
         return self._query_transcript_id(featurel)
 
     def _normalize_transcript_name(self, feature: str) -> pd.DataFrame:
-        """Normalize a transcript name, return a dataframe of matching values."""
         featurel = [feature] + self.transcript_alias(feature)
 
         return self._query_transcript_name(featurel)
@@ -1939,23 +2866,58 @@ class Core:
     # is_<feature>
     # ---------------------------------------------------------------------------------------------
     def is_contig(self, feature: str) -> bool:
-        """Return True if the given feature is a contig ID."""
+        """Check if the given ID or name is a contig.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is a contig else False
+        """
         return any((i[1] == CONTIG_ID for i in self.normalize_id(feature)))
 
     def is_exon(self, feature: str) -> bool:
-        """Return True if the given feature is an exon ID."""
+        """Check if the given ID or name is an exon.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is an exon else False
+        """
         return any((i[1] == EXON_ID for i in self.normalize_id(feature)))
 
     def is_gene(self, feature: str) -> bool:
-        """Return True if the given feature is a gene ID or name."""
+        """Check if the given ID or name is a gene.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is an gene else False
+        """
         return any((i[1] in (GENE_ID, GENE_NAME) for i in self.normalize_id(feature)))
 
     def is_protein(self, feature: str) -> bool:
-        """Return True if the given feature is a protein ID."""
+        """Check if the given ID or name is a protein.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is an protein else False
+        """
         return any((i[1] == PROTEIN_ID for i in self.normalize_id(feature)))
 
     def is_transcript(self, feature: str) -> bool:
-        """Return True if the given feature is a transcript ID or name."""
+        """Check if the given ID or name is a transcript.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is an transcript else False
+        """
         return any((i[1] in (TRANSCRIPT_ID, TRANSCRIPT_NAME) for i in self.normalize_id(feature)))
 
     # ---------------------------------------------------------------------------------------------
@@ -1964,7 +2926,16 @@ class Core:
     def cds_sequence(
         self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
-        """Return the nucleotide sequence at the given CDS coordinates."""
+        """Return the CDS sequence between the given position(s), inclusive.
+
+        Args:
+            transcript_id (str): transcript ID
+            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
+            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+
+        Returns:
+            str: The CDS sequence
+        """
         return self._sequence(self.cds_fasta, transcript_id, start=start, end=end)
 
     def dna_sequence(
@@ -1974,19 +2945,46 @@ class Core:
         end: Optional[int] = None,
         strand: str = "+",
     ) -> str:
-        """Return the nucleotide sequence at the given contig coordinates."""
+        """Return the DNA sequence between the given position(s), inclusive.
+
+        Args:
+            contig_id (str): contig ID
+            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
+            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+
+        Returns:
+            str: The DNA sequence
+        """
         return self._sequence(self.dna_fasta, contig_id, start=start, end=end, strand=strand)
 
     def protein_sequence(
         self, protein_id: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
-        """Return the amino acid sequence at the given peptide coordinates."""
+        """Return the protein sequence between the given position(s), inclusive.
+
+        Args:
+            protein_id (str): protein ID
+            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
+            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+
+        Returns:
+            str: The protein sequence
+        """
         return self._sequence(self.protein_fasta, protein_id, start=start, end=end)
 
     def rna_sequence(
         self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
     ) -> str:
-        """Return the nucleotide sequence at the given cDNA or ncRNA coordinates."""
+        """Return the RNA sequence between the given position(s), inclusive.
+
+        Args:
+            transcript_id (str): transcript ID
+            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
+            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+
+        Returns:
+            str: The RNA sequence
+        """
         return self._sequence(self.rna_fasta, transcript_id, start=start, end=end)
 
     def _sequence(
@@ -1997,7 +2995,6 @@ class Core:
         end: Optional[int] = None,
         strand: Optional[str] = None,
     ):
-        """Return the sequence between the given positions (inclusive)."""
         for f in fasta:
             try:
                 seq = f[ref]
@@ -2031,25 +3028,60 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # <feature>_alias
     # ---------------------------------------------------------------------------------------------
-    def contig_alias(self, feature: str) -> List[str]:
-        """Return the aliases of the given contig (if any)."""
-        return self._alias(feature, self._contig_alias)
+    def contig_alias(self, contig_id: str) -> List[str]:
+        """List all aliases of the given contig ID.
 
-    def exon_alias(self, feature: str) -> List[str]:
-        """Return the aliases of the given exon (if any)."""
-        return self._alias(feature, self._exon_alias)
+        Args:
+            contig_id (str): contig ID
 
-    def gene_alias(self, feature: str) -> List[str]:
-        """Return the aliases of the given gene (if any)."""
-        return self._alias(feature, self._gene_alias)
+        Returns:
+            List[str]: Any aliases of the given contig ID
+        """
+        return self._alias(contig_id, self._contig_alias)
 
-    def protein_alias(self, feature: str) -> List[str]:
-        """Return the aliases of the given protein (if any)."""
-        return self._alias(feature, self._protein_alias)
+    def exon_alias(self, exon_id: str) -> List[str]:
+        """List all aliases of the given exon ID.
 
-    def transcript_alias(self, feature: str) -> List[str]:
-        """Return the aliases of the given transcript (if any)."""
-        return self._alias(feature, self._transcript_alias)
+        Args:
+            exon_id (str): exon ID
+
+        Returns:
+            List[str]: Any aliases of the given exon ID
+        """
+        return self._alias(exon_id, self._exon_alias)
+
+    def gene_alias(self, gene_id: str) -> List[str]:
+        """List all aliases of the given gene ID.
+
+        Args:
+            gene_id (str): gene ID
+
+        Returns:
+            List[str]: Any aliases of the given gene ID
+        """
+        return self._alias(gene_id, self._gene_alias)
+
+    def protein_alias(self, protein_id: str) -> List[str]:
+        """List all aliases of the given protein ID.
+
+        Args:
+            protein_id (str): protein ID
+
+        Returns:
+            List[str]: Any aliases of the given protein ID
+        """
+        return self._alias(protein_id, self._protein_alias)
+
+    def transcript_alias(self, transcript_id: str) -> List[str]:
+        """List all aliases of the given transcript ID.
+
+        Args:
+            transcript_id (str): transcript ID
+
+        Returns:
+            List[str]: Any aliases of the given transcript ID
+        """
+        return self._alias(transcript_id, self._transcript_alias)
 
     def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
         for key in [feature, strip_version(feature)]:
@@ -2061,15 +3093,30 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # is_canonical_transcript
     # ---------------------------------------------------------------------------------------------
-    def is_canonical_transcript(self, feature: str) -> bool:
-        """Return True if the given transcript ID is a canonical transcript."""
-        return feature in self._canonical_transcript
+    def is_canonical_transcript(self, transcript_id: str) -> bool:
+        """Check if the given transcript ID is the canonical transcript for its gene.
+
+        Args:
+            transcript_id (str): transcript ID
+
+        Returns:
+            bool: True if the transcript is the canonical transcript else False
+        """
+        return transcript_id in self._canonical_transcript
 
     # ---------------------------------------------------------------------------------------------
     # <feature>
     # ---------------------------------------------------------------------------------------------
     def cdna(self, feature: str, canonical: bool = False) -> List[CdnaMappablePosition]:
-        """Return the cDNA position(s) of the given feature."""
+        """Return the cDNA position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaMappablePosition]: One or more cDNA positions.
+        """
         result = []
 
         transcript_ids = self.transcript_ids(feature)
@@ -2098,7 +3145,15 @@ class Core:
         return sorted(set(result))
 
     def dna(self, feature: str) -> List[DnaMappablePosition]:
-        """Return the DNA position(s) of the given feature."""
+        """Return the DNA position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: One or more DNA positions.
+        """
         result = []
 
         # get the strand of the original feature
@@ -2133,7 +3188,15 @@ class Core:
         return sorted(set(result))
 
     def exon(self, feature: str, canonical: bool = False) -> List[ExonMappablePosition]:
-        """Return the exon position(s) of the given feature."""
+        """Return the exon position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonMappablePosition]: One or more exon positions.
+        """
         result = []
 
         exon_ids = self.exon_ids(feature)
@@ -2162,7 +3225,15 @@ class Core:
         return sorted(set(result))
 
     def gene(self, feature: str) -> List[DnaMappablePosition]:
-        """Return the gene position(s) of the given feature."""
+        """Return the gene position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: One or more DNA positions.
+        """
         result = []
 
         gene_ids = self.gene_ids(feature)
@@ -2183,7 +3254,15 @@ class Core:
         return sorted(set(result))
 
     def protein(self, feature: str, canonical: bool = False) -> List[ProteinMappablePosition]:
-        """Return the protein position(s) of the given feature."""
+        """Return the protein position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinMappablePosition]: One or more protein positions.
+        """
         result = []
         for cdna in self.cdna(feature, canonical=canonical):
             # Convert the cDNA position to a protein position
@@ -2198,7 +3277,15 @@ class Core:
         return sorted(set(result))
 
     def rna(self, feature: str, canonical: bool = False) -> List[RnaMappablePosition]:
-        """Return the transcript position(s) of the given feature."""
+        """Return the RNA position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaMappablePosition]: One or more RNA positions.
+        """
         result = []
 
         transcript_ids = self.transcript_ids(feature)
@@ -2239,8 +3326,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[CdnaMappablePosition]:
-        """Map a cDNA position to zero or more cDNA positions."""
+    ) -> Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+        """Map a cDNA position to zero or more cDNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2279,8 +3382,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[DnaMappablePosition]:
-        """Map a cDNA position to zero or more DNA positions."""
+    ) -> Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+        """Map a cDNA position to zero or more DNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2319,8 +3438,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[ExonMappablePosition]:
-        """Map a cDNA position to an exon positions."""
+    ) -> Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+        """Map a cDNA position to zero or more exon positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2359,8 +3494,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[ProteinMappablePosition]:
-        """Map a cDNA position to zero or more protein positions."""
+    ) -> Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+        """Map a cDNA position to zero or more protein positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2399,8 +3550,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[RnaMappablePosition]:
-        """Map a cDNA position to zero or more RNA positions."""
+    ) -> Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+        """Map a cDNA position to zero or more RNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2439,8 +3606,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[CdnaMappablePosition]:
-        """Map a DNA position to zero or more cDNA positions."""
+    ) -> Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+        """Map a DNA position to zero or more cDNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.contig_ids,
@@ -2479,8 +3662,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[DnaMappablePosition]:
-        """Map a DNA position to zero or more DNA positions."""
+    ) -> Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+        """Map a DNA position to zero or more DNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.contig_ids,
@@ -2519,8 +3718,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[ExonMappablePosition]:
-        """Map a DNA position to zero or more exon positions."""
+    ) -> Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+        """Map a DNA position to zero or more exon positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.contig_ids,
@@ -2559,8 +3774,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[ProteinMappablePosition]:
-        """Map a DNA position to zero or more protein positions."""
+    ) -> Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+        """Map a DNA position to zero or more protein positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.contig_ids,
@@ -2599,8 +3830,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[RnaMappablePosition]:
-        """Map a DNA position to zero or more RNA positions."""
+    ) -> Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+        """Map a DNA position to zero or more RNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.contig_ids,
@@ -2638,7 +3885,20 @@ class Core:
         end_offset: Optional[int] = None,
         canonical: bool = False,
     ) -> List[CdnaMappablePosition]:
-        """Map an exon position to zero or more cDNA positions."""
+        """Map an exon position to zero or more cDNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[CdnaMappablePosition]: Zero or more cDNA positions
+        """
         return self._map_exon(
             self._exon_to_cdna, feature, start, start_offset, end, end_offset, strand, canonical
         )
@@ -2653,7 +3913,20 @@ class Core:
         end_offset: Optional[int] = None,
         canonical: bool = False,
     ) -> List[DnaMappablePosition]:
-        """Map an exon position to zero or more DNA positions."""
+        """Map an exon position to zero or more DNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[DnaMappablePosition]: Zero or more DNA positions
+        """
         return self._map_exon(
             self._exon_to_dna, feature, start, start_offset, end, end_offset, strand, canonical
         )
@@ -2668,7 +3941,20 @@ class Core:
         end_offset: Optional[int] = None,
         canonical: bool = False,
     ) -> List[ExonMappablePosition]:
-        """Map an exon position to an exon positions."""
+        """Map an exon position to zero or more exon positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ExonMappablePosition]: Zero or more exon positions
+        """
         return self._map_exon(
             self._exon_to_exon, feature, start, start_offset, end, end_offset, strand, canonical
         )
@@ -2683,7 +3969,20 @@ class Core:
         end_offset: Optional[int] = None,
         canonical: bool = False,
     ) -> List[ProteinMappablePosition]:
-        """Map an exon position to zero or more protein positions."""
+        """Map an exon position to zero or more protein positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[ProteinMappablePosition]: Zero or more protein positions
+        """
         return self._map_exon(
             self._exon_to_protein, feature, start, start_offset, end, end_offset, strand, canonical
         )
@@ -2698,7 +3997,20 @@ class Core:
         end_offset: Optional[int] = None,
         canonical: bool = False,
     ) -> List[RnaMappablePosition]:
-        """Map an exon position to zero or more RNA positions."""
+        """Map an exon position to zero or more RNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            List[RnaMappablePosition]: Zero or more RNA positions
+        """
         return self._map_exon(
             self._exon_to_rna, feature, start, start_offset, end, end_offset, strand, canonical
         )
@@ -2714,8 +4026,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[CdnaMappablePosition]:
-        """Map a protein position to zero or more cDNA positions."""
+    ) -> Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+        """Map a protein position to zero or more cDNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2754,8 +4082,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[DnaMappablePosition]:
-        """Map a protein position to zero or more DNA positions."""
+    ) -> Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+        """Map a protein position to zero or more DNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2794,8 +4138,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[ExonMappablePosition]:
-        """Map a protein position to zero or more exon positions."""
+    ) -> Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+        """Map a protein position to zero or more exon positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2834,8 +4194,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[ProteinMappablePosition]:
-        """Map a protein position to zero or more protein positions."""
+    ) -> Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+        """Map a protein position to zero or more protein positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2874,8 +4250,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[RnaMappablePosition]:
-        """Map a protein position to zero or more RNA positions."""
+    ) -> Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+        """Map a protein position to zero or more RNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2914,8 +4306,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[CdnaMappablePosition]:
-        """Map a RNA position to zero or more cDNA positions."""
+    ) -> Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+        """Map an RNA position to zero or more cDNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2954,8 +4362,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[DnaMappablePosition]:
-        """Map a RNA position to zero or more DNA positions."""
+    ) -> Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+        """Map an RNA position to zero or more DNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -2994,8 +4418,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[ExonMappablePosition]:
-        """Map a RNA position to an exon positions."""
+    ) -> Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+        """Map an RNA position to zero or more exon positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -3034,8 +4474,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[ProteinMappablePosition]:
-        """Map a RNA position to zero or more protein positions."""
+    ) -> Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+        """Map an RNA position to zero or more protein positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -3074,8 +4530,24 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> List[RnaMappablePosition]:
-        """Map a RNA position to zero or more RNA positions."""
+    ) -> Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+        """Map an RNA position to zero or more RNA positions.
+
+        Args:
+            feature (str): Feature ID or name
+            start (int): Start position
+            end (Optional[int], optional): End position. Defaults to the same as `start`.
+            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
+            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
+            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
+            refseq (str, optional): Reference allele. Defaults to "".
+            altseq (str, optional): Alternate allele. Defaults to "".
+            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+
+        Returns:
+            Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+        """
         if refseq or altseq:
             return self._map_variant(
                 self.transcript_ids,
@@ -4868,7 +6340,14 @@ class Core:
     # Utility functions
     # ---------------------------------------------------------------------------------------------
     def cds_offset(self, transcript_id: str) -> int:
-        """Get the integer offset of the CDS from the start of the spliced RNA."""
+        """Get the integer offset of the CDS from the start of the spliced RNA.
+
+        Args:
+            transcript_id (str): transcript ID
+
+        Returns:
+            int: Nucleotide offset of the cDNA start from the start of the transcript
+        """
         rna = self.cdna_to_rna(transcript_id, 1)
         assert len(rna) == 1, f"Ambiguous transcript start for '{transcript_id}'"
         offset = rna[0].start - 1
@@ -4881,6 +6360,14 @@ class Core:
     ) -> List[Tuple[str, int, int, str]]:
         """Get the exon number(s) for an exon ID on each transcript. Optionally, restrict to a
         specific transcript(s).
+
+        Args:
+            exon_id (str): exon ID
+            transcript_ids (Union[List[str], str], optional): Restrict the search to the given
+                transcript IDs. Defaults to [].
+
+        Returns:
+            List[Tuple[str, int, int, str]]: List of (exon ID, exon index, exon index, exon strand)
         """
         result = []
         restrict = [transcript_ids] if isinstance(transcript_ids, str) else transcript_ids
@@ -4897,7 +6384,17 @@ class Core:
     def translate_cds_variant(
         self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_alt: str
     ) -> List[str]:
-        """Return the mutated protein sequence, given a cDNA position and alt allele."""
+        """Return the mutated protein sequence, given a cDNA position and alt allele.
+
+        Args:
+            transcript_id (str): transcript ID
+            cdna_start (int): cDNA start position
+            cdna_end (int): cDNA end position
+            cdna_alt (str): cDNA alternate allele
+
+        Returns:
+            List[str]: protein alternate allele(s)
+        """
         pep_altseq_set = set()
 
         # If no alt, assume we're talking about a deletion variant
@@ -4930,7 +6427,16 @@ class Core:
 def merge_positions(
     start_positions: List[MappablePositionType], end_positions: List[MappablePositionType], key: str
 ) -> List:
-    """Merge two list of position objects into one list by the given key (e.g. 'transcript_id')"""
+    """Merge two list of position objects into one list by the given key (e.g. 'transcript_id')
+
+    Args:
+        start_positions (List[MappablePositionType]): First list of position objects
+        end_positions (List[MappablePositionType]): Second list of position objects
+        key (str): Position attribute to merge on (e.g. 'transcript_id')
+
+    Returns:
+        List: New position objects resulting from the merge of the two lists
+    """
     result = set()
 
     for start_pos, end_pos in product(start_positions, end_positions):
