@@ -2222,14 +2222,19 @@ class RnaSubstitution(Substitution, RnaSmallVariant):
 # -------------------------------------------------------------------------------------------------
 # Type hint variables
 # -------------------------------------------------------------------------------------------------
-MappablePositionType = TypeVar(
-    "MappablePositionType",
+MappablePositionOrSmallVariant = TypeVar(
+    "MappablePositionOrSmallVariant",
     bound=Union[
         CdnaMappablePosition,
         DnaMappablePosition,
         ExonMappablePosition,
         ProteinMappablePosition,
         RnaMappablePosition,
+        CdnaSmallVariant,
+        DnaSmallVariant,
+        ExonSmallVariant,
+        ProteinSmallVariant,
+        RnaSmallVariant,
     ],
 )
 
@@ -4646,7 +4651,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_cdna_variant(
         self,
@@ -4729,7 +4734,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, CONTIG_ID)
+            return join_positions(result_start, result_end, CONTIG_ID)
 
     def _cdna_to_dna_variant(
         self,
@@ -4837,7 +4842,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_exon_variant(
         self,
@@ -5015,7 +5020,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_rna_variant(
         self,
@@ -5108,7 +5113,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_cdna_variant(
         self,
@@ -5252,7 +5257,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_exon_variant(
         self,
@@ -5397,7 +5402,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _dna_to_rna_variant(
         self,
@@ -5473,7 +5478,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_dna(
         self,
@@ -5520,7 +5525,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, CONTIG_ID)
+            return join_positions(result_start, result_end, CONTIG_ID)
 
     def _exon_to_exon(
         self,
@@ -5572,7 +5577,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _exon_to_protein(
         self,
@@ -5648,7 +5653,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _protein_to_cdna(
         self,
@@ -5912,7 +5917,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _rna_to_cdna_variant(
         self,
@@ -5993,7 +5998,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, CONTIG_ID)
+            return join_positions(result_start, result_end, CONTIG_ID)
 
     def _rna_to_dna_variant(
         self,
@@ -6077,7 +6082,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _rna_to_exon_variant(
         self,
@@ -6214,7 +6219,7 @@ class Core:
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
-            return merge_positions(result_start, result_end, TRANSCRIPT_ID)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _rna_to_rna_variant(
         self,
@@ -6424,39 +6429,36 @@ class Core:
         return sorted(pep_altseq_set)
 
 
-def merge_positions(
-    start_positions: List[MappablePositionType], end_positions: List[MappablePositionType], key: str
-) -> List:
-    """Merge two list of position objects into one list by the given key (e.g. 'transcript_id')
+def join_positions(
+    start: List[MappablePositionOrSmallVariant],
+    end: List[MappablePositionOrSmallVariant],
+    merge_on: str,
+) -> List[MappablePositionOrSmallVariant]:
+    """Return the combination of two list of position or variant objects - one of start positions
+    and one of end positions - into one list by the given key (e.g. 'transcript_id').
+
+    All positions must be of the same class.
 
     Args:
-        start_positions (List[MappablePositionType]): First list of position objects
-        end_positions (List[MappablePositionType]): Second list of position objects
-        key (str): Position attribute to merge on (e.g. 'transcript_id')
+        start (List[MappablePositionOrSmallVariant]): Start positions
+        end (List[MappablePositionOrSmallVariant]): End positions
+        merge_on (str): Attribute to merge on (e.g. 'transcript_id')
 
     Returns:
-        List: New position objects resulting from the merge of the two lists
+        List[MappablePositionOrSmallVariant]: New position or variant objects
     """
     result = set()
 
-    for start_pos, end_pos in product(start_positions, end_positions):
+    for start_pos, end_pos in product(start, end):
+        # Make sure that the positions are sorted by position
         if start_pos.start > end_pos.start:
             start_pos, end_pos = end_pos, start_pos
-
-        start_key = getattr(start_pos, key)
-        end_key = getattr(end_pos, key)
+        # Make a new position from the start of the 1st position and end of the 2nd
+        start_key = getattr(start_pos, merge_on)
+        end_key = getattr(end_pos, merge_on)
         if start_key == end_key:
             assert start_pos.__class__ == end_pos.__class__
-            kwargs = start_pos.asdict()
-            kwargs.update(
-                {
-                    "start": start_pos.start,
-                    "start_offset": start_pos.start_offset,
-                    "end": end_pos.end,
-                    "end_offset": end_pos.end_offset,
-                }
-            )
-            new_position = start_pos.__class__(**kwargs)
-            result.add(new_position)
+            new = start_pos.copy_from(start_pos, end=end_pos.end, end_offset=end_pos.end_offset)
+            result.add(new)
 
-    return sorted(result)
+    return sorted(result)  # type: ignore
