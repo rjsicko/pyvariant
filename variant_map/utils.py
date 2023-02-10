@@ -59,7 +59,7 @@ def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
         return ref, alt, 0, 0
 
     # Trim bases from each end that are identical between the ref and alt
-    ref_collapse, alt_collapse, same_5_prime, same_3_prime = split_seq_change(ref, alt)
+    ref_collapse, alt_collapse, same_5_prime, same_3_prime = split_common_sequence(ref, alt)
     start_offset = len(same_5_prime)
     end_offset = len(same_3_prime)
 
@@ -357,14 +357,14 @@ def split_insertion(refseq: str, altseq: str) -> Optional[Tuple[str, str, str]]:
     return None
 
 
-def split_seq_change(refseq: str, altseq: str) -> Tuple[str, str, str, str]:
+def split_common_sequence(refseq: str, altseq: str) -> Tuple[str, str, str, str]:
     """Compare two strings (sequences) and split each at the point where the two are no longer the
     same at either end.
 
     For example, 'AATTTC' and 'AAGC' both start with 'AA' and end with 'C'
 
     Examples:
-        >>> split_seq_change('AATTTC', 'AAGC') == ('TTT', 'G', 'AA', 'C')
+        >>> split_common_sequence('AATTTC', 'AAGC') == ('TTT', 'G', 'AA', 'C')
 
     Args:
         refseq (str): Reference allele

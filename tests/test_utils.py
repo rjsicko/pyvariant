@@ -15,8 +15,8 @@ from variant_map.utils import (
     reverse_complement,
     reverse_translate,
     split_by_codon,
+    split_common_sequence,
     split_insertion,
-    split_seq_change,
     strip_version,
 )
 
@@ -41,13 +41,13 @@ def test_collapse_seq_change():
     assert collapse_seq_change("ATG", "ATG") == ("ATG", "ATG", 0, 0)  # synonymous
 
 
-def test_split_seq_change():
-    assert split_seq_change("AATTTC", "AAGC") == ("TTT", "G", "AA", "C")
-    assert split_seq_change("ATTTC", "AC") == ("TTT", "", "A", "C")
-    assert split_seq_change("CGAA", "CTTTAA") == ("G", "TTT", "C", "AA")
-    assert split_seq_change("ATTTC", "AC") == ("TTT", "", "A", "C")
-    assert split_seq_change("ATG", "GTA") == ("ATG", "GTA", "", "")
-    assert split_seq_change("GCTGGT", "GCTACTGGT") == ("", "ACT", "GCT", "GGT")
+def test_split_common_sequence():
+    assert split_common_sequence("AATTTC", "AAGC") == ("TTT", "G", "AA", "C")
+    assert split_common_sequence("ATTTC", "AC") == ("TTT", "", "A", "C")
+    assert split_common_sequence("CGAA", "CTTTAA") == ("G", "TTT", "C", "AA")
+    assert split_common_sequence("ATTTC", "AC") == ("TTT", "", "A", "C")
+    assert split_common_sequence("ATG", "GTA") == ("ATG", "GTA", "", "")
+    assert split_common_sequence("GCTGGT", "GCTACTGGT") == ("", "ACT", "GCT", "GGT")
 
 
 def test_expand_nt():
