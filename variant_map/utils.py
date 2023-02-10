@@ -326,6 +326,10 @@ def split_insertion(refseq: str, altseq: str) -> Optional[Tuple[str, str, str]]:
     """Find an insertion (if any). This is done by finding a substring such that if the substring
     was removed from the alt, the alt would be the same as the ref.
 
+    Examples:
+        >>> split_insertion("GT", "GAT")
+        ("G", "A", "T")
+
     Args:
         refseq (str): Reference allele
         altseq (str): Alternate allele
