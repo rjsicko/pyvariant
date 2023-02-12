@@ -19,7 +19,7 @@ PROTEIN_ID = "protein_id"
 TRANSCRIPT_ID = "transcript_id"
 TRANSCRIPT_NAME = "transcript_name"
 
-# Variant type literals
+# _Variant type literals
 DELETION = "deletion"
 DELINS = "delins"
 DUPLICATION = "duplication"

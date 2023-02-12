@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, fields
 from itertools import product
-from math import floor
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from gtfparse import read_gtf
@@ -11,2536 +9,37 @@ from pyfaidx import Fasta
 
 from .constants import (
     CONTIG_ID,
-    DELETION,
-    DELINS,
-    DUPLICATION,
     EXON_ID,
-    FRAMESHIFT,
-    FUSION,
     GENE_ID,
     GENE_NAME,
-    INSERTION,
     PROTEIN_ID,
-    SUBTITUTION,
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
 from .files import read_fasta, tsv_to_dict, txt_to_list
+from .positions import (
+    CdnaMappablePosition,
+    DnaMappablePosition,
+    ExonMappablePosition,
+    MappablePositionOrSmallVariant,
+    ProteinMappablePosition,
+    RnaMappablePosition,
+    _CdnaSmallVariant,
+    _DnaSmallVariant,
+    _ExonSmallVariant,
+    _ProteinSmallVariant,
+    _RnaSmallVariant,
+)
 from .tables import AMINO_ACID_TABLE
 from .utils import (
     calc_cdna_to_protein,
-    collapse_seq_change,
     expand_nt,
-    format_hgvs_position,
-    is_deletion,
-    is_delins,
-    is_duplication,
-    is_frameshift,
-    is_insertion,
-    is_substitution,
     reverse_complement,
-    reverse_translate,
     split_by_codon,
     strip_version,
 )
 
 
-# -------------------------------------------------------------------------------------------------
-# Position classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class _Position:
-    """Base class for position objects."""
-
-    _data: Core
-    contig_id: str
-    start: int
-    start_offset: int
-    end: int
-    end_offset: int
-    strand: str
-
-    @classmethod
-    def copy_from(cls, position: _Position, **kwargs):
-        """Initialize a new position object by copying values from another position object.
-
-        Args:
-            position (_Position): Position object to copy attributes from
-            **kwargs: Keyword arguments with keys that match the attribute names of this position
-                class will override attributes from `position`
-
-        Returns:
-            a new position object of the same class as the class that calls this method
-        """
-        return cls(
-            **{
-                **{
-                    k: v for k, v in position.asdict().items() if k in [i.name for i in fields(cls)]
-                },
-                **kwargs,
-            }
-        )
-
-    def __getitem__(self, item: Any) -> Any:
-        return getattr(self, item)
-
-    def __lt__(self, other: _Position) -> bool:
-        return str(self) < str(other)
-
-    def __str__(self) -> str:
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    @property
-    def is_cdna(self) -> bool:
-        """Check if this fusion is between cDNA.
-
-        Returns:
-            bool: True if the fusion is between cDNA else False
-        """
-        return False
-
-    @property
-    def is_dna(self) -> bool:
-        """Check if this position is on DNA.
-
-        Returns:
-            bool: True if the position is on DNA else False
-        """
-        return False
-
-    @property
-    def is_exon(self) -> bool:
-        """Check if this fusion is between exon.
-
-        Returns:
-            bool: True if the fusion is between exon else False
-        """
-        return False
-
-    @property
-    def is_protein(self) -> bool:
-        """Check if this fusion is between protein.
-
-        Returns:
-            bool: True if the fusion is between protein else False
-        """
-        return False
-
-    @property
-    def is_rna(self) -> bool:
-        """Check if this fusion is between RNA.
-
-        Returns:
-            bool: True if the fusion is between RNA else False
-        """
-        return False
-
-    @property
-    def on_negative_strand(self) -> bool:
-        """Check if this position originates from the negative strand of the genome.
-
-        Returns:
-            bool: True if the position originates from the negative strand of the genome else False
-        """
-        return self.strand == "-"
-
-    @property
-    def on_positive_strand(self) -> bool:
-        """Check if this position originates from the positive strand of the genome.
-
-        Returns:
-            bool: True if the position originates from the positive strand of the genome else False
-        """
-        return self.strand == "+"
-
-    def asdict(self) -> Dict[str, Any]:
-        """Convert this position's attributes to a dictionary.
-
-        Returns:
-            Dict[str, Any]: Dictionary of attribute names and corresponding values
-        """
-        return {f.name: self[f.name] for f in fields(self)}
-
-    def sequence(self) -> str:
-        """Return the reference sequence from this position's start to it's end, inclusive.
-
-        Returns:
-            str: The reference sequence
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaPosition(_Position):
-    """Stores information on cDNA position objects."""
-
-    gene_id: str
-    gene_name: str
-    transcript_id: str
-    transcript_name: str
-    protein_id: str
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:c.{start}"
-        else:
-            return f"{self.transcript_id}:c.{start}_{end}"
-
-    @property
-    def is_cdna(self) -> bool:
-        """Check if this position is on a cDNA.
-
-        Returns:
-            bool: True if the position is on a cDNA else False
-        """
-        return True
-
-    def sequence(self) -> str:
-        """Return the reference sequence from this position's start to it's end, inclusive.
-
-        Returns:
-            str: The reference sequence
-        """
-        if self.start_offset or self.end_offset:
-            raise ValueError(
-                f"Unable to get cDNA sequence of offset position ({self.start_offset}, {self.end_offset})"
-            )
-
-        return self._data.cds_sequence(self.transcript_id, self.start, self.end)
-
-
-@dataclass(eq=True, frozen=True)
-class DnaPosition(_Position):
-    """Stores information on DNA position objects."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.contig_id}:g.{start}"
-        else:
-            return f"{self.contig_id}:g.{start}_{end}"
-
-    @property
-    def is_dna(self) -> bool:
-        """Check if this position is on DNA.
-
-        Returns:
-            bool: True if the position is on DNA else False
-        """
-        return True
-
-    def sequence(self) -> str:
-        """Return the reference sequence from this position's start to it's end, inclusive.
-
-        Returns:
-            str: The reference sequence
-        """
-        if self.start_offset or self.end_offset:
-            raise ValueError(
-                f"Unable to get DNA sequence of offset position ({self.start_offset}, {self.end_offset})"
-            )
-
-        return self._data.dna_sequence(self.contig_id, self.start, self.end, self.strand)
-
-
-@dataclass(eq=True, frozen=True)
-class ExonPosition(_Position):
-    """Stores information on exon position objects."""
-
-    gene_id: str
-    gene_name: str
-    transcript_id: str
-    transcript_name: str
-    # NOTE: If the start and end are different, the exon ID of the start is listed as the `exon_id`
-    exon_id: str
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:e.{start}"
-        else:
-            return f"{self.transcript_id}:e.{start}_{end}"
-
-    @property
-    def is_exon(self) -> bool:
-        """Check if this position is on an exon.
-
-        Returns:
-            bool: True if the position is on an exon else False
-        """
-        return True
-
-    def sequence(self) -> str:
-        """Return the reference sequence from this position's start to it's end, inclusive.
-
-        Returns:
-            str: The reference sequence
-        """
-        raise NotImplementedError()  # TODO
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinPosition(_Position):
-    """Stores information on protein position objects."""
-
-    gene_id: str
-    gene_name: str
-    transcript_id: str
-    transcript_name: str
-    protein_id: str
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.protein_id}:p.{start}"
-        else:
-            return f"{self.protein_id}:p.{start}_{end}"
-
-    @property
-    def is_protein(self) -> bool:
-        """Check if this position is on a protein.
-
-        Returns:
-            bool: True if the position is on a protein else False
-        """
-        return True
-
-    def sequence(self) -> str:
-        """Return the reference sequence from this position's start to it's end, inclusive.
-
-        Returns:
-            str: The reference sequence
-        """
-        if self.start_offset or self.end_offset:
-            raise ValueError(
-                f"Unable to get peptide sequence of offset position ({self.start_offset}, {self.end_offset})"
-            )
-
-        return self._data.protein_sequence(self.protein_id, self.start, self.end)
-
-
-@dataclass(eq=True, frozen=True)
-class RnaPosition(_Position):
-    """Stores information on RNA position objects."""
-
-    gene_id: str
-    gene_name: str
-    transcript_id: str
-    transcript_name: str
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:r.{start}"
-        else:
-            return f"{self.transcript_id}:r.{start}_{end}"
-
-    @property
-    def is_rna(self) -> bool:
-        """Check if this position is on an RNA.
-
-        Returns:
-            bool: True if the position is on an RNA else False
-        """
-        return True
-
-    def sequence(self) -> str:
-        """Return the reference sequence from this position's start to it's end, inclusive.
-
-        Returns:
-            str: The reference sequence
-        """
-        if self.start_offset or self.end_offset:
-            raise ValueError(
-                f"Unable to get RNA sequence of offset position ({self.start_offset}, {self.end_offset})"
-            )
-
-        return self._data.rna_sequence(self.transcript_id, self.start, self.end)
-
-
-# -------------------------------------------------------------------------------------------------
-# _MappablePosition classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class _MappablePosition:
-    """Base class for mappable position objects."""
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
-        """Map this position to one more cDNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
-        """Map this position to one more DNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
-        """Map this position to one more exon positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonMappablePosition]: One or more exon positions.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
-        """Map this position to one more protein positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
-        """Map this position to one more RNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaMappablePosition(CdnaPosition, _MappablePosition):
-    """Stores information on a cDNA position and converts to other position types."""
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
-        """Map this position to one more cDNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
-        """
-        return self._data._cdna_to_cdna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
-        """Map this position to one more DNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
-        """
-        return self._data._cdna_to_dna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
-        """Map this position to one more exon positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonMappablePosition]: One or more exon positions.
-        """
-        return self._data._cdna_to_exon(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
-        """Map this position to one more protein positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
-        """
-        return self._data._cdna_to_protein(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
-        """Map this position to one more RNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
-        """
-        return self._data._cdna_to_rna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-
-@dataclass(eq=True, frozen=True)
-class DnaMappablePosition(DnaPosition, _MappablePosition):
-    """Stores information on a DNA position and converts to other position types."""
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
-        """Map this position to one more cDNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
-        """
-        return self._data._dna_to_cdna(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
-        """Map this position to one more DNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
-        """
-        return self._data._dna_to_dna(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
-        """Map this position to one more exon positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonMappablePosition]: One or more exon positions.
-        """
-        return self._data._dna_to_exon(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
-        """Map this position to one more protein positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
-        """
-        return self._data._dna_to_protein(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
-        """Map this position to one more RNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
-        """
-        return self._data._dna_to_rna(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-
-@dataclass(eq=True, frozen=True)
-class ExonMappablePosition(ExonPosition, _MappablePosition):
-    """Stores information on an exon position and converts to other position types."""
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
-        """Map this position to one more cDNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
-        """
-        return self._data._exon_to_cdna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
-        """Map this position to one more DNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
-        """
-        return self._data._exon_to_dna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
-        """Map this position to one more exon positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonMappablePosition]: One or more exon positions.
-        """
-        return self._data._exon_to_exon(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
-        """Map this position to one more protein positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
-        """
-        return self._data._exon_to_protein(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
-        """Map this position to one more RNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
-        """
-        return self._data._exon_to_rna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinMappablePosition(ProteinPosition, _MappablePosition):
-    """Stores information on a protein position and converts to other position types."""
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
-        """Map this position to one more cDNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
-        """
-        return self._data._protein_to_cdna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
-        """Map this position to one more DNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
-        """
-        return self._data._protein_to_dna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
-        """Map this position to one more exon positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonMappablePosition]: One or more exon positions.
-        """
-        return self._data._protein_to_exon(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
-        """Map this position to one more protein positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
-        """
-        return self._data._protein_to_protein(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
-        """Map this position to one more RNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
-        """
-        return self._data._protein_to_rna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-
-@dataclass(eq=True, frozen=True)
-class RnaMappablePosition(RnaPosition, _MappablePosition):
-    """Stores information on an RNA position and converts to other position types."""
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
-        """Map this position to one more cDNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
-        """
-        return self._data._rna_to_cdna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
-        """Map this position to one more DNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
-        """
-        return self._data._rna_to_dna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
-        """Map this position to one more exon positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonMappablePosition]: One or more exon positions.
-        """
-        return self._data._rna_to_exon(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
-        """Map this position to one more protein positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
-        """
-        return self._data._rna_to_protein(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
-        """Map this position to one more RNA positions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
-        """
-        return self._data._rna_to_rna(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            canonical,
-        )
-
-
-# -------------------------------------------------------------------------------------------------
-# Variant classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class Variant:
-    """Base class for variant objects."""
-
-    @property
-    def is_deletion(self) -> bool:
-        """Check if this variant is a deletion.
-
-        Returns:
-            bool: True if the position is a deletion else False
-        """
-        return self.type == DELETION
-
-    @property
-    def is_delins(self) -> bool:
-        """Check if this variant is a delins (indel).
-
-        Returns:
-            bool: True if the position is a delins else False
-        """
-        return self.type == DELINS
-
-    @property
-    def is_duplication(self) -> bool:
-        """Check if this variant is a duplication.
-
-        Returns:
-            bool: True if the position is a duplication else False
-        """
-        return self.type == DUPLICATION
-
-    @property
-    def is_frameshift(self) -> bool:
-        """Check if this variant is a frameshift.
-
-        Returns:
-            bool: True if the position is a frameshift else False
-        """
-        return self.type == FRAMESHIFT
-
-    @property
-    def is_fusion(self) -> bool:
-        """Check if this variant is a fusion.
-
-        Returns:
-            bool: True if the position is a fusion else False
-        """
-        return self.type == FUSION
-
-    @property
-    def is_insertion(self) -> bool:
-        """Check if this variant is an insertion.
-
-        Returns:
-            bool: True if the position is an insertion else False
-        """
-        return self.type == INSERTION
-
-    @property
-    def is_substitution(self) -> bool:
-        """Check if this variant is a substitution.
-
-        Returns:
-            bool: True if the position is a substitution else False
-        """
-        return self.type == SUBTITUTION
-
-    @property
-    def type(self) -> str:
-        """Get the variant type.
-
-        Returns:
-            str: Type of variant
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_cdna(self) -> List:
-        """Map this variant to one more cDNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List: One or more cDNA variants.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_dna(self) -> List:
-        """Map this variant to one more DNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List: One or more DNA variants.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_exon(self) -> List:
-        """Map this variant to one more exon variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List: One or more exon variants.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_protein(self) -> List:
-        """Map this variant to one more protein variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List: One or more protein variants.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_rna(self) -> List:
-        """Map this variant to one more RNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List: One or more RNA variants.
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-
-# -------------------------------------------------------------------------------------------------
-# SmallVariant classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class SmallVariant(Variant):
-    """Base class for small variant objects."""
-
-    refseq: str
-    altseq: str
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaSmallVariant(CdnaPosition, SmallVariant):
-    """Base class for cDNA variant objects."""
-
-    @classmethod
-    def from_cdna(
-        cls, cdna: CdnaMappablePosition, refseq: str, altseq: str
-    ) -> List[CdnaSmallVariant]:
-        """Convert a cDNA position plus ref/alt nucleotides into a cDNA variant object.
-
-        Args:
-            cdna (CdnaMappablePosition): Variant position
-            refseq (str): reference allele
-            altseq (str): alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of reference/alternate alleles was given
-            ValueError: The given reference allele does not match the annotated reference allele
-
-        Returns:
-            List[CdnaSmallVariant]: One or more cDNA variants
-        """
-        variant_list = []
-
-        ref_annotated = cdna.sequence()
-        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                raise ValueError(
-                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}'"
-                )
-
-            # Trim bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
-            start = cdna.start + new_start
-            end = cdna.end - new_end
-
-            # Determine the type of variant
-            if is_deletion(new_ref, new_alt):
-                variant = CdnaDeletion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_delins(new_ref, new_alt):
-                variant = CdnaDelins.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                variant = CdnaDuplication.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_insertion(new_ref, new_alt):
-                variant = CdnaInsertion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_substitution(new_ref, new_alt):
-                variant = CdnaSubstitution.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            else:
-                raise NotImplementedError(
-                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {cdna}"
-                )
-
-            variant_list.append(variant)
-
-        return variant_list
-
-    @classmethod
-    def from_protein(
-        cls, cdna: CdnaMappablePosition, refseq: str, altseq: str
-    ) -> List[CdnaSmallVariant]:
-        """Convert a cDNA position plus ref/alt amino acids into a cDNA variant object.
-
-        Args:
-            cdna (CdnaMappablePosition): cDNA position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of reference/alternate alleles was given
-
-        Returns:
-            List[CdnaSmallVariant]: One or more cDNA variants
-        """
-        variant_list = []
-
-        ref_annotated = cdna.sequence()
-        for ref, alt in product(reverse_translate(refseq), reverse_translate(altseq)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                continue
-
-            # For insertions, check that the sequence flanking the inserted sequence matches the ref
-            if is_insertion(refseq, altseq) and not is_insertion(ref, alt):
-                continue
-
-            # Trim bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
-            start = cdna.start + new_start
-            end = cdna.end - new_end
-
-            # Determine the type of variant
-            if is_deletion(new_ref, new_alt):
-                variant = CdnaDeletion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_delins(new_ref, new_alt):
-                variant = CdnaDelins.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                variant = CdnaDuplication.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_insertion(new_ref, new_alt):
-                variant = CdnaInsertion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_substitution(new_ref, new_alt):
-                variant = CdnaSubstitution.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            else:
-                raise NotImplementedError(
-                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {cdna}"
-                )
-
-            variant_list.append(variant)
-
-        return variant_list
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
-        """Map this variants to one more cDNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaSmallVariant]: One or more cDNA variants.
-        """
-        return self._data._cdna_to_cdna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
-        """Map this variants to one more DNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaSmallVariant]: One or more DNA variants.
-        """
-        return self._data._cdna_to_dna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        """Map this variants to one more exon variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonSmallVariant]: One or more exon variants.
-        """
-        raise NotImplementedError()  # TODO
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
-        """Map this variants to one more protein variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinSmallVariant]: One or more protein variants.
-        """
-        return self._data._cdna_to_protein_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
-        """Map this variants to one more RNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaSmallVariant]: One or more RNA variants.
-        """
-        return self._data._cdna_to_rna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-
-@dataclass(eq=True, frozen=True)
-class DnaSmallVariant(DnaPosition, SmallVariant):
-    """Base class for DNA variant objects."""
-
-    @classmethod
-    def from_dna(cls, dna: DnaMappablePosition, refseq: str, altseq: str) -> List[DnaSmallVariant]:
-        """Convert a DNA position plus ref/alt nucleotides into a DNA variant object.
-
-        Args:
-            dna (DnaMappablePosition): DNA position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of reference/alternate alleles was given
-
-        Returns:
-            List[DnaSmallVariant]: One or more DNA variants
-        """
-        variant_list = []
-
-        # TODO: DNA sequence get is slow
-        # ref_annotated = dna.sequence()
-        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # # Assert that the given ref matches the annotated one
-            # if ref != ref_annotated:
-            #     raise ValueError(
-            #         f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {dna}"
-            #     )
-
-            # Trim bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
-            start = dna.start + new_start
-            end = dna.end - new_end
-
-            # Determine the type of variant
-            if is_deletion(new_ref, new_alt):
-                variant = DnaDeletion.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_delins(new_ref, new_alt):
-                variant = DnaDelins.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                variant = DnaDuplication.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_insertion(new_ref, new_alt):
-                variant = DnaInsertion.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_substitution(new_ref, new_alt):
-                variant = DnaSubstitution.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            else:
-                raise NotImplementedError(
-                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {dna}"
-                )
-
-            variant_list.append(variant)
-
-        return variant_list
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
-        """Map this variants to one more cDNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaSmallVariant]: One or more cDNA variants.
-        """
-        return self._data._dna_to_cdna_variant(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
-        """Map this variants to one more DNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaSmallVariant]: One or more DNA variants.
-        """
-        return self._data._dna_to_dna_variant(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        """Map this variants to one more exon variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonSmallVariant]: One or more exon variants.
-        """
-        raise NotImplementedError()  # TODO
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
-        """Map this variants to one more protein variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinSmallVariant]: One or more protein variants.
-        """
-        return self._data._dna_to_protein_variant(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
-        """Map this variants to one more RNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaSmallVariant]: One or more RNA variants.
-        """
-        return self._data._dna_to_rna_variant(
-            [self.contig_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-
-@dataclass(eq=True, frozen=True)
-class ExonSmallVariant(ExonPosition, SmallVariant):
-    """Base class for exon variant objects."""
-
-    @classmethod
-    def from_exon(
-        cls, exon: ExonMappablePosition, refseq: str, altseq: str
-    ) -> List[ExonSmallVariant]:
-        """Convert an exon position plus ref/alt nucleotides into an exon variant object.
-
-        Args:
-            exon (ExonMappablePosition): exon position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of reference/alternate alleles was given
-
-        Returns:
-            List[ExonSmallVariant]: One or more exon variants
-        """
-        raise NotImplementedError()  # TODO
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinSmallVariant(ProteinPosition, SmallVariant):
-    """Base class for protein variant objects."""
-
-    @classmethod
-    def from_cdna(
-        cls, cdna: CdnaMappablePosition, protein: ProteinMappablePosition, refseq: str, altseq: str
-    ) -> List[ProteinSmallVariant]:
-        """Convert a cDNA position plus ref/alt amino acids into a protein variant object.
-
-        Args:
-            cdna (CdnaMappablePosition): cDNA position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of reference/alternate alleles was given
-
-        Returns:
-            List[ProteinSmallVariant]: One or more protein variants
-        """
-        variant_list = []
-
-        protein_refseq = protein.sequence()
-        for cdna_ref, cdna_alt in product(expand_nt(refseq), expand_nt(altseq)):
-            if is_frameshift(cdna_ref, cdna_alt):
-                raise NotImplementedError()  # TODO
-
-            for protein_alt in protein._data.translate_cds_variant(
-                cdna.transcript_id, cdna.start, cdna.end, cdna_alt
-            ):
-                # Trim bases that are unchanged between the ref and alt alleles
-                new_ref, new_alt, new_start, new_end = collapse_seq_change(
-                    protein_refseq, protein_alt
-                )
-                start = protein.start + new_start
-                end = protein.end - new_end
-
-                # Determine the type of variant
-                if is_deletion(new_ref, new_alt):
-                    variant = ProteinDeletion.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                elif is_delins(new_ref, new_alt):
-                    variant = ProteinDelins.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                elif is_duplication(new_ref, new_alt):
-                    variant = ProteinDuplication.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                elif is_insertion(new_ref, new_alt):
-                    variant = ProteinInsertion.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                elif is_substitution(new_ref, new_alt):
-                    variant = ProteinSubstitution.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                else:
-                    raise NotImplementedError(
-                        f"Unrecognized sequence change '{new_ref}/{new_alt}' at {protein}"
-                    )
-
-                variant_list.append(variant)
-
-        return variant_list
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
-        """Map this variants to one more cDNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaSmallVariant]: One or more cDNA variants.
-        """
-        return self._data._protein_to_cdna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
-        """Map this variants to one more DNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaSmallVariant]: One or more DNA variants.
-        """
-        return self._data._protein_to_dna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        """Map this variants to one more exon variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonSmallVariant]: One or more exon variants.
-        """
-        raise NotImplementedError()  # TODO
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
-        """Map this variants to one more protein variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinSmallVariant]: One or more protein variants.
-        """
-        return self._data._protein_to_protein_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
-        """Map this variants to one more RNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaSmallVariant]: One or more RNA variants.
-        """
-        return self._data._protein_to_rna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-
-@dataclass(eq=True, frozen=True)
-class RnaSmallVariant(RnaPosition, SmallVariant):
-    """Base class for RNA variant objects."""
-
-    @classmethod
-    def from_rna(cls, rna: RnaMappablePosition, refseq: str, altseq: str) -> List[RnaSmallVariant]:
-        """Convert an RNA position plus ref/alt nucleotides into an RNA variant object.
-
-        Args:
-            rna (RnaMappablePosition): RNA position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of reference/alternate alleles was given
-            ValueError: The given reference allele does not match the annotated reference allele
-
-        Returns:
-            List[RnaSmallVariant]: One or more RNA variants
-        """
-        variant_list = []
-
-        ref_annotated = rna.sequence()
-        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                raise ValueError(
-                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {rna}"
-                )
-
-            # Trim bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
-            start = rna.start + new_start
-            end = rna.end - new_end
-
-            # Determine the type of variant
-            if is_deletion(new_ref, new_alt):
-                variant = RnaDeletion.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_delins(new_ref, new_alt):
-                variant = RnaDelins.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                variant = RnaDuplication.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_insertion(new_ref, new_alt):
-                variant = RnaInsertion.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_substitution(new_ref, new_alt):
-                variant = RnaSubstitution.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            else:
-                raise NotImplementedError(
-                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {rna}"
-                )
-
-            variant_list.append(variant)
-
-        return variant_list
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
-        """Map this variants to one more cDNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaSmallVariant]: One or more cDNA variants.
-        """
-        return self._data._rna_to_cdna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
-        """Map this variants to one more DNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaSmallVariant]: One or more DNA variants.
-        """
-        return self._data._rna_to_dna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        """Map this variants to one more exon variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonSmallVariant]: One or more exon variants.
-        """
-        raise NotImplementedError()  # TODO
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
-        """Map this variants to one more protein variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinSmallVariant]: One or more protein variants.
-        """
-        return self._data._rna_to_protein_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-    def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
-        """Map this variants to one more RNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaSmallVariant]: One or more RNA variants.
-        """
-        return self._data._rna_to_rna_variant(
-            [self.transcript_id],
-            self.start,
-            self.start_offset,
-            self.end,
-            self.end_offset,
-            [self.strand],
-            self.refseq,
-            self.altseq,
-            canonical,
-        )
-
-
-# -------------------------------------------------------------------------------------------------
-# Deletion classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class Deletion(SmallVariant):
-    """Base class for deletion variant objects."""
-
-    @property
-    def type(self) -> str:
-        """Get the variant type.
-
-        Returns:
-            str: Type of variant
-        """
-        return DELETION
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaDeletion(Deletion, CdnaSmallVariant):
-    """Stores information on a cDNA deletion variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:c.{start}del"
-        else:
-            return f"{self.transcript_id}:c.{start}_{end}del"
-
-
-@dataclass(eq=True, frozen=True)
-class DnaDeletion(Deletion, DnaSmallVariant):
-    """Stores information on a DNA deletion variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.contig_id}:g.{start}del"
-        else:
-            return f"{self.contig_id}:g.{start}_{end}del"
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinDeletion(Deletion, ProteinSmallVariant):
-    """Stores information on a protein deletion variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        start_seq = self.refseq[0]
-        end_seq = self.refseq[-1]
-        if start == end:
-            return f"{self.protein_id}:p.{start_seq}{start}del"
-        else:
-            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}del"
-
-
-@dataclass(eq=True, frozen=True)
-class RnaDeletion(Deletion, RnaSmallVariant):
-    """Stores information on an RNA deletion variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:r.{start}del"
-        else:
-            return f"{self.transcript_id}:r.{start}_{end}del"
-
-
-# -------------------------------------------------------------------------------------------------
-# Delins classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class Delins(SmallVariant):
-    """Base class for delins variant objects."""
-
-    @property
-    def type(self) -> str:
-        """Get the variant type.
-
-        Returns:
-            str: Type of variant
-        """
-        return DELINS
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaDelins(Delins, CdnaSmallVariant):
-    """Stores information on a cDNA delins variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:c.{start}delins{self.altseq}"
-        else:
-            return f"{self.transcript_id}:c.{start}_{end}delins{self.altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class DnaDelins(Delins, DnaSmallVariant):
-    """Stores information on a DNA delins variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.contig_id}:g.{start}delins{self.altseq}"
-        else:
-            return f"{self.contig_id}:g.{start}_{end}delins{self.altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinDelins(Delins, ProteinSmallVariant):
-    """Stores information on a protein delins variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        start_seq = self.refseq[0]
-        end_seq = self.refseq[-1]
-        if start == end:
-            return f"{self.protein_id}:p.{start_seq}{start}delins{self.altseq}"
-        else:
-            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}delins{self.altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class RnaDelins(Delins, RnaSmallVariant):
-    """Stores information on an RNA delins variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:r.{start}delins{self.altseq}"
-        else:
-            return f"{self.transcript_id}:r.{start}_{end}delins{self.altseq}"
-
-
-# -------------------------------------------------------------------------------------------------
-# Duplication classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class Duplication(SmallVariant):
-    """Base class for duplication variant objects."""
-
-    @property
-    def type(self) -> str:
-        """Get the variant type.
-
-        Returns:
-            str: Type of variant
-        """
-        return DUPLICATION
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaDuplication(Duplication, CdnaSmallVariant):
-    """Stores information on a cDNA duplication variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:c.{start}dup"
-        else:
-            return f"{self.transcript_id}:c.{start}_{end}dup"
-
-
-@dataclass(eq=True, frozen=True)
-class DnaDuplication(Duplication, DnaSmallVariant):
-    """Stores information on a DNA duplication variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.contig_id}:g.{start}dup"
-        else:
-            return f"{self.contig_id}:g.{start}_{end}dup"
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinDuplication(Duplication, ProteinSmallVariant):
-    """Stores information on a protein duplication variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        start_seq = self.refseq[0]
-        end_seq = self.refseq[-1]
-        if start == end:
-            return f"{self.protein_id}:p.{start_seq}{start}dup"
-        else:
-            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}dup"
-
-
-@dataclass(eq=True, frozen=True)
-class RnaDuplication(Duplication, RnaSmallVariant):
-    """Stores information on an RNA duplication variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:r.{start}dup"
-        else:
-            return f"{self.transcript_id}:r.{start}_{end}dup"
-
-
-# -------------------------------------------------------------------------------------------------
-# Frameshift classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class Frameshift(SmallVariant):
-    """Base class for insertion variant objects."""
-
-    @property
-    def type(self) -> str:
-        """Get the variant type.
-
-        Returns:
-            str: Type of variant
-        """
-        return FRAMESHIFT
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinFrameshift(Frameshift, ProteinSmallVariant):
-    """Stores information on a protein frameshift variant and converts to other position types."""
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaSmallVariant]:
-        """Map this variants to one more cDNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaSmallVariant]: One or more cDNA variants.
-        """
-        raise NotImplementedError()  # TODO
-
-    def to_dna(self, canonical: bool = False) -> List[DnaSmallVariant]:
-        """Map this variants to one more DNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaSmallVariant]: One or more DNA variants.
-        """
-        raise NotImplementedError()  # TODO
-
-    def to_exon(self, canonical: bool = False) -> List[ExonSmallVariant]:
-        """Map this variants to one more exon variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonSmallVariant]: One or more exon variants.
-        """
-        raise NotImplementedError()  # TODO
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinSmallVariant]:
-        """Map this variants to one more protein variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinSmallVariant]: One or more protein variants.
-        """
-        raise NotImplementedError()  # TODO
-
-    def to_rna(self, canonical: bool = False) -> List[RnaSmallVariant]:
-        """Map this variants to one more RNA variants.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaSmallVariant]: One or more RNA variants.
-        """
-        raise NotImplementedError()  # TODO
-
-
-# -------------------------------------------------------------------------------------------------
-# Insertion classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class Insertion(SmallVariant):
-    """Base class for insertion variant objects."""
-
-    @property
-    def type(self) -> str:
-        """Get the variant type.
-
-        Returns:
-            str: Type of variant
-        """
-        return INSERTION
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaInsertion(Insertion, CdnaSmallVariant):
-    """Stores information on a cDNA insertion variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        altseq = self.altseq[1:-1]
-        return f"{self.transcript_id}:c.{start}_{end}ins{altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class DnaInsertion(Insertion, DnaSmallVariant):
-    """Stores information on a DNA insertion variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        altseq = self.altseq[1:-1]
-        return f"{self.contig_id}:g.{start}_{end}ins{altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinInsertion(Insertion, ProteinSmallVariant):
-    """Stores information on a protein insertion variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        start_seq = self.refseq[0]
-        end_seq = self.refseq[-1]
-        altseq = self.altseq[1:-1]
-        return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}ins{altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class RnaInsertion(Insertion, RnaSmallVariant):
-    """Stores information on an RNA insertion variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        altseq = self.altseq[1:-1]
-        return f"{self.transcript_id}:r.{start}_{end}ins{altseq}"
-
-
-# -------------------------------------------------------------------------------------------------
-# Substitution classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class Substitution:
-    """Base class for substitution variant objects."""
-
-    refseq: str
-    altseq: str
-
-    @property
-    def type(self) -> str:
-        """Get the variant type.
-
-        Returns:
-            str: Type of variant
-        """
-        return SUBTITUTION
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaSubstitution(Substitution, CdnaSmallVariant):
-    """Stores information on a cDNA substitution variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        return f"{self.transcript_id}:c.{start}{self.refseq}>{self.altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class DnaSubstitution(Substitution, DnaSmallVariant):
-    """Stores information on a DNA substitution variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        return f"{self.contig_id}:g.{start}{self.refseq}>{self.altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinSubstitution(Substitution, ProteinSmallVariant):
-    """Stores information on a protein substitution variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        return f"{self.protein_id}:p.{self.refseq}{start}{self.altseq}"
-
-
-@dataclass(eq=True, frozen=True)
-class RnaSubstitution(Substitution, RnaSmallVariant):
-    """Stores information on an RNA substitution variant and converts to other position types."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        return f"{self.transcript_id}:r.{start}{self.refseq}>{self.altseq}"
-
-
-# -------------------------------------------------------------------------------------------------
-# Type hint variables
-# -------------------------------------------------------------------------------------------------
-MappablePositionOrSmallVariant = TypeVar(
-    "MappablePositionOrSmallVariant",
-    bound=Union[
-        CdnaMappablePosition,
-        DnaMappablePosition,
-        ExonMappablePosition,
-        ProteinMappablePosition,
-        RnaMappablePosition,
-        CdnaSmallVariant,
-        DnaSmallVariant,
-        ExonSmallVariant,
-        ProteinSmallVariant,
-        RnaSmallVariant,
-    ],
-)
-
-
-# -------------------------------------------------------------------------------------------------
-# Fusion classes
-# -------------------------------------------------------------------------------------------------
-@dataclass(eq=True, frozen=True)
-class Fusion(Variant):
-    """Base class for fusion variant objects."""
-
-    breakpoint1: Union[
-        CdnaMappablePosition,
-        DnaMappablePosition,
-        ExonMappablePosition,
-        ProteinMappablePosition,
-        RnaMappablePosition,
-    ]
-    breakpoint2: Union[
-        CdnaMappablePosition,
-        DnaMappablePosition,
-        ExonMappablePosition,
-        ProteinMappablePosition,
-        RnaMappablePosition,
-    ]
-
-    @classmethod
-    def copy_from(cls, fusion: Fusion, **kwargs):
-        """Initialize a new fusion object by copying values from another fusion object.
-
-        Args:
-            fusion (Fusion): Fusion object to copy attributes from
-            **kwargs: Keyword arguments with keys that match the attribute names of this fusion
-                class will override attributes from `fusion`
-
-        Returns:
-            a new fusion object of the same class as the class that calls this method
-        """
-        return cls(
-            **{
-                **{k: v for k, v in fusion.asdict().items() if k in [i.name for i in fields(cls)]},
-                **kwargs,
-            }
-        )
-
-    def __getitem__(self, item: Any) -> Any:
-        return getattr(self, item)
-
-    def __lt__(self, other: _Position) -> bool:
-        return str(self) < str(other)
-
-    def __str__(self) -> str:
-        return f"{self.breakpoint1}::{self.breakpoint2}"
-
-    @property
-    def is_cdna(self) -> bool:
-        """Check if this fusion is between cDNA.
-
-        Returns:
-            bool: True if the fusion is between cDNA else False
-        """
-        return False
-
-    @property
-    def is_dna(self) -> bool:
-        """Check if this position is on DNA.
-
-        Returns:
-            bool: True if the position is on DNA else False
-        """
-        return False
-
-    @property
-    def is_exon(self) -> bool:
-        """Check if this fusion is between exon.
-
-        Returns:
-            bool: True if the fusion is between exon else False
-        """
-        return False
-
-    @property
-    def is_protein(self) -> bool:
-        """Check if this fusion is between protein.
-
-        Returns:
-            bool: True if the fusion is between protein else False
-        """
-        return False
-
-    @property
-    def is_rna(self) -> bool:
-        """Check if this fusion is between RNA.
-
-        Returns:
-            bool: True if the fusion is between RNA else False
-        """
-        return False
-
-    @property
-    def on_negative_strand(self) -> bool:
-        """Check if one or both breakpoints originate from the negative strand of the genome.
-
-        Returns:
-            bool: True if if one or both breakpoints are on the negative strand else False
-        """
-        return "-" in (self.breakpoint1.strand, self.breakpoint2.strand)
-
-    @property
-    def on_positive_strand(self) -> bool:
-        """Check if one or both breakpoints originate from the positive strand of the genome.
-
-        Returns:
-            bool: True if if one or both breakpoints are on the positive strand else False
-        """
-        return "+" in (self.breakpoint1.strand, self.breakpoint2.strand)
-
-    @property
-    def type(self) -> str:
-        """Get the variant type.
-
-        Returns:
-            str: Type of variant
-        """
-        return FUSION
-
-    def asdict(self) -> Dict[str, Any]:
-        """Convert this position's attributes to a dictionary.
-
-        Returns:
-            Dict[str, Any]: Dictionary of attribute names and corresponding values
-        """
-        return {f.name: self[f.name] for f in fields(self)}
-
-    def sequence(self) -> str:
-        """Return the reference sequence from this position's start to it's end, inclusive.
-
-        Returns:
-            str: The reference sequence
-        """
-        raise NotImplementedError()  # Defined be inheriting classes
-
-    def to_cdna(self, canonical: bool = False) -> List[CdnaFusion]:
-        """Map this fusion to one more cDNA fusions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaFusion]: One or more cDNA fusions.
-        """
-        result = []
-
-        breakpoint1 = self.breakpoint1.to_cdna(canonical=canonical)
-        breakpoint2 = self.breakpoint2.to_cdna(canonical=canonical)
-        for b1, b2 in product(breakpoint1, breakpoint2):
-            result.append(CdnaFusion(b1, b2))
-
-        return result
-
-    def to_dna(self, canonical: bool = False) -> List[DnaFusion]:
-        """Map this fusion to one more DNA fusions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaFusion]: One or more DNA fusions.
-        """
-        result = []
-
-        breakpoint1 = self.breakpoint1.to_dna(canonical=canonical)
-        breakpoint2 = self.breakpoint2.to_dna(canonical=canonical)
-        for b1, b2 in product(breakpoint1, breakpoint2):
-            result.append(DnaFusion(b1, b2))
-
-        return result
-
-    def to_exon(self, canonical: bool = False) -> List[ExonFusion]:
-        """Map this fusion to one more exon fusions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonFusion]: One or more exon fusions.
-        """
-        result = []
-
-        breakpoint1 = self.breakpoint1.to_exon(canonical=canonical)
-        breakpoint2 = self.breakpoint2.to_exon(canonical=canonical)
-        for b1, b2 in product(breakpoint1, breakpoint2):
-            result.append(ExonFusion(b1, b2))
-
-        return result
-
-    def to_protein(self, canonical: bool = False) -> List[ProteinFusion]:
-        """Map this fusion to one more protein fusions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinFusion]: One or more protein fusions.
-        """
-        result = []
-
-        breakpoint1 = self.breakpoint1.to_protein(canonical=canonical)
-        breakpoint2 = self.breakpoint2.to_protein(canonical=canonical)
-        for b1, b2 in product(breakpoint1, breakpoint2):
-            result.append(ProteinFusion(b1, b2))
-
-        return result
-
-    def to_rna(self, canonical: bool = False) -> List[RnaFusion]:
-        """Map this fusion to one more RNA fusions.
-
-        Args:
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaFusion]: One or more RNA fusions.
-        """
-        result = []
-
-        breakpoint1 = self.breakpoint1.to_rna(canonical=canonical)
-        breakpoint2 = self.breakpoint2.to_rna(canonical=canonical)
-        for b1, b2 in product(breakpoint1, breakpoint2):
-            result.append(RnaFusion(b1, b2))
-
-        return result
-
-
-@dataclass(eq=True, frozen=True)
-class CdnaFusion(Fusion):
-    """Stores information on a cDNA fusion variant and converts to other position types."""
-
-    @property
-    def is_cdna(self) -> bool:
-        """Check if this fusion is between cDNA.
-
-        Returns:
-            bool: True if the fusion is between cDNA else False
-        """
-        return True
-
-
-@dataclass(eq=True, frozen=True)
-class DnaFusion(Fusion):
-    """Stores information on a DNA fusion variant and converts to other position types."""
-
-    @property
-    def is_dna(self) -> bool:
-        """Check if this position is on DNA.
-
-        Returns:
-            bool: True if the position is on DNA else False
-        """
-        return True
-
-
-@dataclass(eq=True, frozen=True)
-class ExonFusion(Fusion):
-    """Stores information on an exon fusion variant and converts to other position types."""
-
-    @property
-    def is_exon(self) -> bool:
-        """Check if this fusion is between exon.
-
-        Returns:
-            bool: True if the fusion is between exon else False
-        """
-        return True
-
-
-@dataclass(eq=True, frozen=True)
-class ProteinFusion(Fusion):
-    """Stores information on a protein fusion variant and converts to other position types."""
-
-    @property
-    def is_protein(self) -> bool:
-        """Check if this fusion is between protein.
-
-        Returns:
-            bool: True if the fusion is between protein else False
-        """
-        return True
-
-
-@dataclass(eq=True, frozen=True)
-class RnaFusion(Fusion):
-    """Stores information on a RNA fusion variant and converts to other position types."""
-
-    @property
-    def is_rna(self) -> bool:
-        """Check if this fusion is between RNA.
-
-        Returns:
-            bool: True if the fusion is between RNA else False
-        """
-        return True
-
-
-# -------------------------------------------------------------------------------------------------
-# Core classes and methods
-# -------------------------------------------------------------------------------------------------
 class Core:
     """Core class that handles converting between position types and retrieving information on
     biological features.
@@ -3407,7 +906,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+    ) -> Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
         """Map a cDNA position to zero or more cDNA positions.
 
         Args:
@@ -3422,7 +921,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+            Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3463,7 +962,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+    ) -> Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
         """Map a cDNA position to zero or more DNA positions.
 
         Args:
@@ -3478,7 +977,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+            Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3519,7 +1018,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+    ) -> Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
         """Map a cDNA position to zero or more exon positions.
 
         Args:
@@ -3534,7 +1033,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+            Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3575,7 +1074,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+    ) -> Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
         """Map a cDNA position to zero or more protein positions.
 
         Args:
@@ -3590,7 +1089,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+            Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3631,7 +1130,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+    ) -> Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
         """Map a cDNA position to zero or more RNA positions.
 
         Args:
@@ -3646,7 +1145,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+            Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3687,7 +1186,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+    ) -> Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
         """Map a DNA position to zero or more cDNA positions.
 
         Args:
@@ -3702,7 +1201,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+            Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3743,7 +1242,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+    ) -> Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
         """Map a DNA position to zero or more DNA positions.
 
         Args:
@@ -3758,7 +1257,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+            Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3799,7 +1298,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+    ) -> Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
         """Map a DNA position to zero or more exon positions.
 
         Args:
@@ -3814,7 +1313,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+            Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3855,7 +1354,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+    ) -> Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
         """Map a DNA position to zero or more protein positions.
 
         Args:
@@ -3870,7 +1369,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+            Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -3911,7 +1410,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+    ) -> Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
         """Map a DNA position to zero or more RNA positions.
 
         Args:
@@ -3926,7 +1425,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+            Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4107,7 +1606,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+    ) -> Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
         """Map a protein position to zero or more cDNA positions.
 
         Args:
@@ -4122,7 +1621,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+            Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4163,7 +1662,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+    ) -> Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
         """Map a protein position to zero or more DNA positions.
 
         Args:
@@ -4178,7 +1677,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+            Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4219,7 +1718,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+    ) -> Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
         """Map a protein position to zero or more exon positions.
 
         Args:
@@ -4234,7 +1733,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+            Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4275,7 +1774,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+    ) -> Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
         """Map a protein position to zero or more protein positions.
 
         Args:
@@ -4290,7 +1789,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+            Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4331,7 +1830,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+    ) -> Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
         """Map a protein position to zero or more RNA positions.
 
         Args:
@@ -4346,7 +1845,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+            Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4387,7 +1886,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+    ) -> Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
         """Map an RNA position to zero or more cDNA positions.
 
         Args:
@@ -4402,7 +1901,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[CdnaMappablePosition], List[CdnaSmallVariant]]:
+            Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4443,7 +1942,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+    ) -> Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
         """Map an RNA position to zero or more DNA positions.
 
         Args:
@@ -4458,7 +1957,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[DnaMappablePosition], List[DnaSmallVariant]]:
+            Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4499,7 +1998,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+    ) -> Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
         """Map an RNA position to zero or more exon positions.
 
         Args:
@@ -4514,7 +2013,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ExonMappablePosition], List[ExonSmallVariant]]:
+            Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4555,7 +2054,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+    ) -> Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
         """Map an RNA position to zero or more protein positions.
 
         Args:
@@ -4570,7 +2069,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ProteinMappablePosition], List[ProteinSmallVariant]]:
+            Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4611,7 +2110,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+    ) -> Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
         """Map an RNA position to zero or more RNA positions.
 
         Args:
@@ -4626,7 +2125,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[RnaMappablePosition], List[RnaSmallVariant]]:
+            Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -4741,8 +2240,8 @@ class Core:
         altseq: str,
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[CdnaSmallVariant]:
-        result: List[CdnaSmallVariant] = []
+    ) -> List[_CdnaSmallVariant]:
+        result: List[_CdnaSmallVariant] = []
 
         for cdna in self._cdna_to_cdna(
             transcript_ids,
@@ -4754,7 +2253,7 @@ class Core:
             canonical,
             include_stop=include_stop,
         ):
-            result.extend(CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
+            result.extend(_CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
 
         return result
 
@@ -4824,8 +2323,8 @@ class Core:
         altseq: str,
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[DnaSmallVariant]:
-        result: List[DnaSmallVariant] = []
+    ) -> List[_DnaSmallVariant]:
+        result: List[_DnaSmallVariant] = []
 
         for dna in self._cdna_to_dna(
             transcript_ids,
@@ -4837,7 +2336,7 @@ class Core:
             canonical,
             include_stop=include_stop,
         ):
-            result.extend(DnaSmallVariant.from_dna(dna, refseq, altseq))
+            result.extend(_DnaSmallVariant.from_dna(dna, refseq, altseq))
 
         return result
 
@@ -4932,8 +2431,8 @@ class Core:
         altseq: str,
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[ExonSmallVariant]:
-        result: List[ExonSmallVariant] = []
+    ) -> List[_ExonSmallVariant]:
+        result: List[_ExonSmallVariant] = []
 
         for exon in self._cdna_to_exon(
             transcript_ids,
@@ -4945,7 +2444,7 @@ class Core:
             canonical,
             include_stop=include_stop,
         ):
-            result.extend(ExonSmallVariant.from_exon(exon, refseq, altseq))
+            result.extend(_ExonSmallVariant.from_exon(exon, refseq, altseq))
 
         return result
 
@@ -4997,9 +2496,9 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[ProteinSmallVariant]:
+    ) -> List[_ProteinSmallVariant]:
         # TODO: A lot of this function is duplicated from _cdna_to_protein()
-        result: List[ProteinSmallVariant] = []
+        result: List[_ProteinSmallVariant] = []
         for cdna in self._cdna_to_cdna(
             transcript_ids,
             start,
@@ -5021,7 +2520,7 @@ class Core:
             protein = ProteinMappablePosition.copy_from(
                 cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
             )
-            result.extend(ProteinSmallVariant.from_cdna(cdna, protein, refseq, altseq))
+            result.extend(_ProteinSmallVariant.from_cdna(cdna, protein, refseq, altseq))
 
         return result
 
@@ -5110,8 +2609,8 @@ class Core:
         altseq: str,
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[RnaSmallVariant]:
-        result: List[RnaSmallVariant] = []
+    ) -> List[_RnaSmallVariant]:
+        result: List[_RnaSmallVariant] = []
 
         for rna in self._cdna_to_rna(
             transcript_ids,
@@ -5123,7 +2622,7 @@ class Core:
             canonical,
             include_stop=include_stop,
         ):
-            result.extend(RnaSmallVariant.from_rna(rna, refseq, altseq))
+            result.extend(_RnaSmallVariant.from_rna(rna, refseq, altseq))
 
         return result
 
@@ -5203,8 +2702,8 @@ class Core:
         altseq: str,
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[CdnaSmallVariant]:
-        result: List[CdnaSmallVariant] = []
+    ) -> List[_CdnaSmallVariant]:
+        result: List[_CdnaSmallVariant] = []
 
         for cdna in self._dna_to_cdna(
             contig_ids,
@@ -5216,7 +2715,7 @@ class Core:
             canonical,
             include_stop=include_stop,
         ):
-            result.extend(CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
+            result.extend(_CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
 
         return result
 
@@ -5269,13 +2768,13 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[DnaSmallVariant]:
-        result: List[DnaSmallVariant] = []
+    ) -> List[_DnaSmallVariant]:
+        result: List[_DnaSmallVariant] = []
 
         for dna in self._dna_to_dna(
             contig_ids, start, start_offset, end, end_offset, strand, canonical
         ):
-            result.extend(DnaSmallVariant.from_dna(dna, refseq, altseq))
+            result.extend(_DnaSmallVariant.from_dna(dna, refseq, altseq))
 
         return result
 
@@ -5346,13 +2845,13 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[ExonSmallVariant]:
-        result: List[ExonSmallVariant] = []
+    ) -> List[_ExonSmallVariant]:
+        result: List[_ExonSmallVariant] = []
 
         for exon in self._dna_to_exon(
             contig_ids, start, start_offset, end, end_offset, strand, canonical
         ):
-            result.extend(ExonSmallVariant.from_exon(exon, refseq, altseq))
+            result.extend(_ExonSmallVariant.from_exon(exon, refseq, altseq))
 
         return result
 
@@ -5366,9 +2865,6 @@ class Core:
         strand: List[str],
         canonical: bool,
     ) -> List[ProteinMappablePosition]:
-        def convert(x):
-            return floor((x - 1) / 3 + 1)
-
         protein = []
         for cdna in self._dna_to_cdna(
             contig_ids, start, start_offset, end, end_offset, strand, canonical, include_stop=False
@@ -5398,12 +2894,9 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[ProteinSmallVariant]:
+    ) -> List[_ProteinSmallVariant]:
         # TODO: A lot of this function is duplicated from _dna_to_protein()
-        def convert(x):
-            return floor((x - 1) / 3 + 1)
-
-        result: List[ProteinSmallVariant] = []
+        result: List[_ProteinSmallVariant] = []
         for cdna in self._dna_to_cdna(
             contig_ids, start, start_offset, end, end_offset, strand, canonical, include_stop=False
         ):
@@ -5416,7 +2909,7 @@ class Core:
             protein = ProteinMappablePosition.copy_from(
                 cdna, start=pstart, start_offset=0, end=pend, end_offset=0, _data=self
             )
-            result.extend(ProteinSmallVariant.from_cdna(cdna, protein, refseq, altseq))
+            result.extend(_ProteinSmallVariant.from_cdna(cdna, protein, refseq, altseq))
 
         return result
 
@@ -5491,13 +2984,13 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[RnaSmallVariant]:
-        result: List[RnaSmallVariant] = []
+    ) -> List[_RnaSmallVariant]:
+        result: List[_RnaSmallVariant] = []
 
         for rna in self._dna_to_rna(
             contig_ids, start, start_offset, end, end_offset, strand, canonical
         ):
-            result.extend(RnaSmallVariant.from_rna(rna, refseq, altseq))
+            result.extend(_RnaSmallVariant.from_rna(rna, refseq, altseq))
 
         return result
 
@@ -5766,13 +3259,13 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[CdnaSmallVariant]:
-        result: List[CdnaSmallVariant] = []
+    ) -> List[_CdnaSmallVariant]:
+        result: List[_CdnaSmallVariant] = []
 
         for cdna in self._protein_to_cdna(
             transcript_ids, start, start_offset, end, end_offset, strand, canonical
         ):
-            result.extend(CdnaSmallVariant.from_protein(cdna, refseq, altseq))
+            result.extend(_CdnaSmallVariant.from_protein(cdna, refseq, altseq))
 
         return result
 
@@ -5805,7 +3298,7 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[DnaSmallVariant]:
+    ) -> List[_DnaSmallVariant]:
         result = []
         for cdna in self._protein_to_cdna_variant(
             transcript_ids, start, start_offset, end, end_offset, strand, refseq, altseq, canonical
@@ -5843,7 +3336,7 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[ExonSmallVariant]:
+    ) -> List[_ExonSmallVariant]:
         result = []
         for cdna in self._protein_to_cdna_variant(
             transcript_ids, start, start_offset, end, end_offset, strand, refseq, altseq, canonical
@@ -5881,7 +3374,7 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[ProteinSmallVariant]:
+    ) -> List[_ProteinSmallVariant]:
         result = []
         for cdna in self._protein_to_cdna_variant(
             transcript_ids, start, start_offset, end, end_offset, strand, refseq, altseq, canonical
@@ -5919,7 +3412,7 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[RnaSmallVariant]:
+    ) -> List[_RnaSmallVariant]:
         result = []
         for cdna in self._protein_to_cdna_variant(
             transcript_ids, start, start_offset, end, end_offset, strand, refseq, altseq, canonical
@@ -6007,8 +3500,8 @@ class Core:
         altseq: str,
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[CdnaSmallVariant]:
-        result: List[CdnaSmallVariant] = []
+    ) -> List[_CdnaSmallVariant]:
+        result: List[_CdnaSmallVariant] = []
 
         for cdna in self._rna_to_cdna(
             transcript_ids,
@@ -6020,7 +3513,7 @@ class Core:
             canonical,
             include_stop=include_stop,
         ):
-            result.extend(CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
+            result.extend(_CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
 
         return result
 
@@ -6087,13 +3580,13 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[DnaSmallVariant]:
-        result: List[DnaSmallVariant] = []
+    ) -> List[_DnaSmallVariant]:
+        result: List[_DnaSmallVariant] = []
 
         for dna in self._rna_to_dna(
             transcript_ids, start, start_offset, end, end_offset, strand, canonical
         ):
-            result.extend(DnaSmallVariant.from_dna(dna, refseq, altseq))
+            result.extend(_DnaSmallVariant.from_dna(dna, refseq, altseq))
 
         return result
 
@@ -6171,13 +3664,13 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[ExonSmallVariant]:
-        result: List[ExonSmallVariant] = []
+    ) -> List[_ExonSmallVariant]:
+        result: List[_ExonSmallVariant] = []
 
         for exon in self._rna_to_exon(
             transcript_ids, start, start_offset, end, end_offset, strand, canonical
         ):
-            result.extend(ExonSmallVariant.from_exon(exon, refseq, altseq))
+            result.extend(_ExonSmallVariant.from_exon(exon, refseq, altseq))
 
         return result
 
@@ -6217,7 +3710,7 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[ProteinSmallVariant]:
+    ) -> List[_ProteinSmallVariant]:
         result = []
         for cdna in self._rna_to_cdna_variant(
             transcript_ids,
@@ -6308,13 +3801,13 @@ class Core:
         refseq: str,
         altseq: str,
         canonical: bool,
-    ) -> List[RnaSmallVariant]:
-        result: List[RnaSmallVariant] = []
+    ) -> List[_RnaSmallVariant]:
+        result: List[_RnaSmallVariant] = []
 
         for rna in self._rna_to_rna(
             transcript_ids, start, start_offset, end, end_offset, strand, canonical
         ):
-            result.extend(RnaSmallVariant.from_rna(rna, refseq, altseq))
+            result.extend(_RnaSmallVariant.from_rna(rna, refseq, altseq))
 
         return result
 
