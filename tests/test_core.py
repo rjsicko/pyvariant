@@ -25,12 +25,12 @@ from variant_map.constants import (
     TRANSCRIPT_NAME,
 )
 from variant_map.core import (
-    CdnaMappablePosition,
+    CdnaPosition,
     Core,
-    DnaMappablePosition,
-    ExonMappablePosition,
-    ProteinMappablePosition,
-    RnaMappablePosition,
+    DnaPosition,
+    ExonPosition,
+    ProteinPosition,
+    RnaPosition,
 )
 
 
@@ -524,7 +524,7 @@ def test_normalize_id_transcript_name(ensembl100):
 # test str
 # -------------------------------------------------------------------------------------------------
 def test_cdna_to_str(ensembl100):
-    position1 = CdnaMappablePosition(
+    position1 = CdnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=3399,
@@ -538,7 +538,7 @@ def test_cdna_to_str(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    position2 = CdnaMappablePosition(
+    position2 = CdnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -557,7 +557,7 @@ def test_cdna_to_str(ensembl100):
 
 
 def test_dna_to_str(ensembl100):
-    position1 = DnaMappablePosition(
+    position1 = DnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=1234,
@@ -566,7 +566,7 @@ def test_dna_to_str(ensembl100):
         end_offset=0,
         strand="-",
     )
-    position2 = DnaMappablePosition(
+    position2 = DnaPosition(
         _data=ensembl100, contig_id="5", start=1, start_offset=0, end=1234, end_offset=0, strand="-"
     )
     assert str(position1) == "5:g.1234"
@@ -574,7 +574,7 @@ def test_dna_to_str(ensembl100):
 
 
 def test_exon_to_str(ensembl100):
-    position1 = ExonMappablePosition(
+    position1 = ExonPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -588,7 +588,7 @@ def test_exon_to_str(ensembl100):
         transcript_name="TERT-201",
         exon_id="ENSE00003896691",
     )
-    position2 = ExonMappablePosition(
+    position2 = ExonPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -607,7 +607,7 @@ def test_exon_to_str(ensembl100):
 
 
 def test_protein_to_str(ensembl100):
-    position1 = ProteinMappablePosition(
+    position1 = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
         start=524,
@@ -621,7 +621,7 @@ def test_protein_to_str(ensembl100):
         transcript_name="TERT-201",
         protein_id="ENSP00000309572",
     )
-    position2 = ProteinMappablePosition(
+    position2 = ProteinPosition(
         _data=ensembl100,
         contig_id="5",
         start=74,
@@ -640,7 +640,7 @@ def test_protein_to_str(ensembl100):
 
 
 def test_transcript_to_str(ensembl100):
-    position1 = RnaMappablePosition(
+    position1 = RnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=4039,
@@ -653,7 +653,7 @@ def test_transcript_to_str(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    position2 = RnaMappablePosition(
+    position2 = RnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -675,7 +675,7 @@ def test_transcript_to_str(ensembl100):
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
 def expected_cdna(ensembl100):
-    return CdnaMappablePosition(
+    return CdnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -711,7 +711,7 @@ def test_cdna(ensembl100, expected_cdna, feature, num_results):
 
 @pytest.fixture
 def expected_dna(ensembl100):
-    return DnaMappablePosition(
+    return DnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -742,7 +742,7 @@ def test_dna(ensembl100, expected_dna, feature, num_results):
 
 @pytest.fixture
 def expected_exon(ensembl100):
-    return ExonMappablePosition(
+    return ExonPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -778,7 +778,7 @@ def test_exon(ensembl100, expected_exon, feature, num_results):
 
 @pytest.fixture
 def expected_gene(ensembl100):
-    return DnaMappablePosition(
+    return DnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=1253147,
@@ -809,7 +809,7 @@ def test_gene(ensembl100, expected_gene, feature, num_results):
 
 @pytest.fixture
 def expected_protein(ensembl100):
-    return ProteinMappablePosition(
+    return ProteinPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -845,7 +845,7 @@ def test_protein(ensembl100, expected_protein, feature, num_results):
 
 @pytest.fixture
 def expected_rna(ensembl100):
-    return RnaMappablePosition(
+    return RnaPosition(
         _data=ensembl100,
         contig_id="5",
         start=1,
@@ -914,7 +914,7 @@ def test_cdna_to_cdna(ensembl100):
         "ENST00000310581", 100, end=100, start_offset=-1, end_offset=-1, strand="-"
     )
     expected = [
-        CdnaMappablePosition(
+        CdnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=99,
@@ -937,7 +937,7 @@ def test_cdna_to_dna(ensembl100):
         "ENST00000288135", 68, end=68, start_offset=-1, end_offset=-1, strand="+"
     )
     expected = [
-        DnaMappablePosition(
+        DnaPosition(
             _data=ensembl100,
             contig_id="4",
             start=54695511,
@@ -955,7 +955,7 @@ def test_cdna_to_exon(ensembl100):
         "ENST00000380152", 10252, end=10254, start_offset=0, end_offset=0, strand="+"
     )
     expected = [
-        ExonMappablePosition(
+        ExonPosition(
             _data=ensembl100,
             contig_id="13",
             start=27,
@@ -978,7 +978,7 @@ def test_cdna_to_protein(ensembl100):
         "ENST00000310581", 100, end=100, start_offset=-1, end_offset=-1, strand="-"
     )
     expected = [
-        ProteinMappablePosition(
+        ProteinPosition(
             _data=ensembl100,
             contig_id="5",
             start=33,
@@ -1001,7 +1001,7 @@ def test_cdna_to_rna(ensembl100):
         "ENST00000288135", 68, end=68, start_offset=-1, end_offset=-1, strand="+"
     )
     expected = [
-        RnaMappablePosition(
+        RnaPosition(
             _data=ensembl100,
             contig_id="4",
             start=126,
@@ -1023,7 +1023,7 @@ def test_dna_to_cdna(ensembl100):
         "13", 32316526, end=32319077, start_offset=1, end_offset=1, strand="+"
     )
     expected = [
-        CdnaMappablePosition(
+        CdnaPosition(
             _data=ensembl100,
             contig_id="13",
             start=67,
@@ -1037,7 +1037,7 @@ def test_dna_to_cdna(ensembl100):
             transcript_name="BRCA2-201",
             protein_id="ENSP00000369497",
         ),
-        CdnaMappablePosition(
+        CdnaPosition(
             _data=ensembl100,
             contig_id="13",
             start=67,
@@ -1060,7 +1060,7 @@ def test_dna_to_dna(ensembl100):
         "5", 1282624, end=1293314, start_offset=1, end_offset=1, strand="-"
     )
     expected = [
-        DnaMappablePosition(
+        DnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=1282623,
@@ -1078,7 +1078,7 @@ def test_dna_to_exon(ensembl100):
         "6", 31166302, end=31166304, start_offset=0, end_offset=0, strand="-"
     )
     expected = [
-        ExonMappablePosition(
+        ExonPosition(
             _data=ensembl100,
             contig_id="6",
             start=1,
@@ -1092,7 +1092,7 @@ def test_dna_to_exon(ensembl100):
             transcript_name="POU5F1-204",
             exon_id="ENSE00002568331",
         ),
-        ExonMappablePosition(
+        ExonPosition(
             _data=ensembl100,
             contig_id="6",
             start=1,
@@ -1115,7 +1115,7 @@ def test_dna_to_protein(ensembl100):
         "13", 32316526, end=32319077, start_offset=1, end_offset=1, strand="+"
     )
     expected = [
-        ProteinMappablePosition(
+        ProteinPosition(
             _data=ensembl100,
             contig_id="13",
             start=23,
@@ -1129,7 +1129,7 @@ def test_dna_to_protein(ensembl100):
             transcript_name="BRCA2-201",
             protein_id="ENSP00000369497",
         ),
-        ProteinMappablePosition(
+        ProteinPosition(
             _data=ensembl100,
             contig_id="13",
             start=23,
@@ -1152,7 +1152,7 @@ def test_dna_to_rna(ensembl100):
         "5", 1253148, end=1253150, start_offset=1, end_offset=1, strand="-"
     )
     expected = [
-        RnaMappablePosition(
+        RnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=2420,
@@ -1174,7 +1174,7 @@ def test_exon_to_cdna(ensembl100):
         "ENST00000380152", 27, end=27, start_offset=0, end_offset=0, strand="+"
     )
     expected = [
-        CdnaMappablePosition(
+        CdnaPosition(
             _data=ensembl100,
             contig_id="13",
             start=10255,
@@ -1188,7 +1188,7 @@ def test_exon_to_cdna(ensembl100):
             transcript_name="BRCA2-201",
             protein_id="ENSP00000369497",
         ),
-        CdnaMappablePosition(
+        CdnaPosition(
             _data=ensembl100,
             contig_id="13",
             start=9649,
@@ -1211,7 +1211,7 @@ def test_exon_to_dna(ensembl100):
         "ENST00000310581", 16, end=16, start_offset=0, end_offset=0, strand="-"
     )
     expected = [
-        DnaMappablePosition(
+        DnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=1253167,
@@ -1229,7 +1229,7 @@ def test_exon_to_exon(ensembl100):
         "ENST00000380152", 27, end=27, start_offset=0, end_offset=0, strand="+"
     )
     expected = [
-        ExonMappablePosition(
+        ExonPosition(
             _data=ensembl100,
             contig_id="13",
             start=27,
@@ -1252,7 +1252,7 @@ def test_exon_to_protein(ensembl100):
         "ENST00000310581", 16, end=16, start_offset=0, end_offset=0, strand="-"
     )
     expected = [
-        ProteinMappablePosition(
+        ProteinPosition(
             _data=ensembl100,
             contig_id="5",
             start=1099,
@@ -1275,7 +1275,7 @@ def test_exon_to_rna(ensembl100):
         "ENST00000380152", 27, end=27, start_offset=0, end_offset=0, strand="+"
     )
     expected = [
-        RnaMappablePosition(
+        RnaPosition(
             _data=ensembl100,
             contig_id="13",
             start=9882,
@@ -1297,7 +1297,7 @@ def test_protein_to_cdna(ensembl100):
         "ENST00000310581", 525, end=525, start_offset=0, end_offset=0, strand="-"
     )
     expected = [
-        CdnaMappablePosition(
+        CdnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=1573,
@@ -1320,7 +1320,7 @@ def test_protein_to_dna(ensembl100):
         "ENST00000310581", 1132, end=1132, start_offset=0, end_offset=0, strand="-"
     )
     expected = [
-        DnaMappablePosition(
+        DnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=1253731,
@@ -1338,7 +1338,7 @@ def test_protein_to_exon(ensembl100):
         "ENST00000380152", 3418, end=3418, start_offset=0, end_offset=0, strand="+"
     )
     to_positions = [
-        ExonMappablePosition(
+        ExonPosition(
             _data=ensembl100,
             contig_id="13",
             start=27,
@@ -1361,7 +1361,7 @@ def test_protein_to_protein(ensembl100):
         "ENSP00000309572", 525, end=525, start_offset=0, end_offset=0, strand="-"
     )
     to_positions = [
-        ProteinMappablePosition(
+        ProteinPosition(
             _data=ensembl100,
             contig_id="5",
             start=525,
@@ -1384,7 +1384,7 @@ def test_protein_to_rna(ensembl100):
         "ENSP00000369497", 3418, end=3418, start_offset=0, end_offset=0, strand="+"
     )
     to_positions = [
-        RnaMappablePosition(
+        RnaPosition(
             _data=ensembl100,
             contig_id="13",
             start=10485,
@@ -1406,7 +1406,7 @@ def test_rna_to_cdna(ensembl100):
         "ENST00000310581", 1652, end=1654, start_offset=0, end_offset=0, strand="-"
     )
     to_positions = [
-        CdnaMappablePosition(
+        CdnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=1573,
@@ -1429,7 +1429,7 @@ def test_rna_to_dna(ensembl100):
         "ENST00000310581", 1652, end=1654, start_offset=0, end_offset=0, strand="-"
     )
     to_positions = [
-        DnaMappablePosition(
+        DnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=1282623,
@@ -1447,7 +1447,7 @@ def test_rna_to_exon(ensembl100):
         "ENST00000310581", 4037, end=4039, start_offset=0, end_offset=0, strand="-"
     )
     to_positions = [
-        ExonMappablePosition(
+        ExonPosition(
             _data=ensembl100,
             contig_id="5",
             start=16,
@@ -1470,7 +1470,7 @@ def test_rna_to_protein(ensembl100):
         "ENST00000310581", 1652, end=1654, start_offset=0, end_offset=0, strand="-"
     )
     to_positions = [
-        ProteinMappablePosition(
+        ProteinPosition(
             _data=ensembl100,
             contig_id="5",
             start=525,
@@ -1493,7 +1493,7 @@ def test_rna_to_rna(ensembl100):
         "ENST00000310581", 4037, end=4039, start_offset=0, end_offset=0, strand="-"
     )
     to_positions = [
-        RnaMappablePosition(
+        RnaPosition(
             _data=ensembl100,
             contig_id="5",
             start=4037,

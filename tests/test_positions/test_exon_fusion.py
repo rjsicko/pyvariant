@@ -3,21 +3,21 @@ import pytest
 from variant_map.constants import FUSION
 from variant_map.positions import (
     CdnaFusion,
-    CdnaMappablePosition,
+    CdnaPosition,
     DnaFusion,
-    DnaMappablePosition,
+    DnaPosition,
     ExonFusion,
-    ExonMappablePosition,
+    ExonPosition,
     ProteinFusion,
-    ProteinMappablePosition,
+    ProteinPosition,
     RnaFusion,
-    RnaMappablePosition,
+    RnaPosition,
 )
 
 
 @pytest.fixture()
 def variant(ensembl69):
-    breakpoint1 = ExonMappablePosition(
+    breakpoint1 = ExonPosition(
         _data=ensembl69,
         contig_id="X",
         start=3,
@@ -31,7 +31,7 @@ def variant(ensembl69):
         transcript_name="TFE3-001",
         exon_id="ENSE00002939607",
     )
-    breakpoint2 = ExonMappablePosition(
+    breakpoint2 = ExonPosition(
         _data=ensembl69,
         contig_id="1",
         start=2,
@@ -72,7 +72,7 @@ def test_variant_type(variant):
 
 
 def test_to_cdna(ensembl69, variant):
-    breakpoint1 = CdnaMappablePosition(
+    breakpoint1 = CdnaPosition(
         _data=ensembl69,
         contig_id="X",
         start=231,
@@ -86,7 +86,7 @@ def test_to_cdna(ensembl69, variant):
         transcript_name="TFE3-001",
         protein_id="ENSP00000314129",
     )
-    breakpoint2 = CdnaMappablePosition(
+    breakpoint2 = CdnaPosition(
         _data=ensembl69,
         contig_id="1",
         start=469,
@@ -105,7 +105,7 @@ def test_to_cdna(ensembl69, variant):
 
 
 def test_to_dna(ensembl69, variant):
-    breakpoint1 = DnaMappablePosition(
+    breakpoint1 = DnaPosition(
         _data=ensembl69,
         contig_id="X",
         start=48895722,
@@ -114,7 +114,7 @@ def test_to_dna(ensembl69, variant):
         end_offset=0,
         strand="-",
     )
-    breakpoint2 = DnaMappablePosition(
+    breakpoint2 = DnaPosition(
         _data=ensembl69,
         contig_id="1",
         start=156752074,
@@ -128,7 +128,7 @@ def test_to_dna(ensembl69, variant):
 
 
 def test_to_exon(ensembl69, variant):
-    breakpoint1 = ExonMappablePosition(
+    breakpoint1 = ExonPosition(
         _data=ensembl69,
         contig_id="X",
         start=3,
@@ -142,7 +142,7 @@ def test_to_exon(ensembl69, variant):
         transcript_name="TFE3-001",
         exon_id="ENSE00002939607",
     )
-    breakpoint2 = ExonMappablePosition(
+    breakpoint2 = ExonPosition(
         _data=ensembl69,
         contig_id="1",
         start=2,
@@ -161,7 +161,7 @@ def test_to_exon(ensembl69, variant):
 
 
 def test_to_protein(ensembl69, variant):
-    breakpoint1 = ProteinMappablePosition(
+    breakpoint1 = ProteinPosition(
         _data=ensembl69,
         contig_id="X",
         start=77,
@@ -175,7 +175,7 @@ def test_to_protein(ensembl69, variant):
         transcript_name="TFE3-001",
         protein_id="ENSP00000314129",
     )
-    breakpoint2 = ProteinMappablePosition(
+    breakpoint2 = ProteinPosition(
         _data=ensembl69,
         contig_id="1",
         start=157,
@@ -194,7 +194,7 @@ def test_to_protein(ensembl69, variant):
 
 
 def test_to_rna(ensembl69, variant):
-    breakpoint1 = RnaMappablePosition(
+    breakpoint1 = RnaPosition(
         _data=ensembl69,
         contig_id="X",
         start=491,
@@ -207,7 +207,7 @@ def test_to_rna(ensembl69, variant):
         transcript_id="ENST00000315869",
         transcript_name="TFE3-001",
     )
-    breakpoint2 = RnaMappablePosition(
+    breakpoint2 = RnaPosition(
         _data=ensembl69,
         contig_id="1",
         start=741,

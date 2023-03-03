@@ -18,12 +18,12 @@ from .constants import (
 )
 from .files import read_fasta, tsv_to_dict, txt_to_list
 from .positions import (
-    CdnaMappablePosition,
-    DnaMappablePosition,
-    ExonMappablePosition,
+    CdnaPosition,
+    DnaPosition,
+    ExonPosition,
     MappablePositionOrSmallVariant,
-    ProteinMappablePosition,
-    RnaMappablePosition,
+    ProteinPosition,
+    RnaPosition,
     _CdnaSmallVariant,
     _DnaSmallVariant,
     _ExonSmallVariant,
@@ -687,7 +687,7 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # <feature>
     # ---------------------------------------------------------------------------------------------
-    def cdna(self, feature: str, canonical: bool = False) -> List[CdnaMappablePosition]:
+    def cdna(self, feature: str, canonical: bool = False) -> List[CdnaPosition]:
         """Return the cDNA position(s) matching the given feature ID or name.
 
         Args:
@@ -695,7 +695,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
+            List[CdnaPosition]: One or more cDNA positions.
         """
         result = []
 
@@ -706,7 +706,7 @@ class Core:
                 continue
 
             result.append(
-                CdnaMappablePosition(
+                CdnaPosition(
                     _data=self,
                     contig_id=cdna.contig_id,
                     start=cdna.cdna_start,
@@ -724,7 +724,7 @@ class Core:
 
         return sorted(set(result))
 
-    def dna(self, feature: str) -> List[DnaMappablePosition]:
+    def dna(self, feature: str) -> List[DnaPosition]:
         """Return the DNA position(s) matching the given feature ID or name.
 
         Args:
@@ -732,7 +732,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
+            List[DnaPosition]: One or more DNA positions.
         """
         result = []
 
@@ -754,7 +754,7 @@ class Core:
             end = len(contig_seq)
             for strand in strand_list:
                 result.append(
-                    DnaMappablePosition(
+                    DnaPosition(
                         _data=self,
                         contig_id=contig_id,
                         start=start,
@@ -767,7 +767,7 @@ class Core:
 
         return sorted(set(result))
 
-    def exon(self, feature: str, canonical: bool = False) -> List[ExonMappablePosition]:
+    def exon(self, feature: str, canonical: bool = False) -> List[ExonPosition]:
         """Return the exon position(s) matching the given feature ID or name.
 
         Args:
@@ -775,7 +775,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ExonMappablePosition]: One or more exon positions.
+            List[ExonPosition]: One or more exon positions.
         """
         result = []
 
@@ -786,7 +786,7 @@ class Core:
                 continue
 
             result.append(
-                ExonMappablePosition(
+                ExonPosition(
                     _data=self,
                     contig_id=exon.contig_id,
                     start=int(exon.exon_number),
@@ -804,7 +804,7 @@ class Core:
 
         return sorted(set(result))
 
-    def gene(self, feature: str) -> List[DnaMappablePosition]:
+    def gene(self, feature: str) -> List[DnaPosition]:
         """Return the gene position(s) matching the given feature ID or name.
 
         Args:
@@ -812,7 +812,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
+            List[DnaPosition]: One or more DNA positions.
         """
         result = []
 
@@ -820,7 +820,7 @@ class Core:
         mask = (self.df[GENE_ID].isin(gene_ids)) & (self.df["feature"] == "gene")
         for _, gene in self.df[mask].iterrows():
             result.append(
-                DnaMappablePosition(
+                DnaPosition(
                     _data=self,
                     contig_id=gene.contig_id,
                     start=gene.start,
@@ -833,7 +833,7 @@ class Core:
 
         return sorted(set(result))
 
-    def protein(self, feature: str, canonical: bool = False) -> List[ProteinMappablePosition]:
+    def protein(self, feature: str, canonical: bool = False) -> List[ProteinPosition]:
         """Return the protein position(s) matching the given feature ID or name.
 
         Args:
@@ -841,7 +841,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
+            List[ProteinPosition]: One or more protein positions.
         """
         result = []
         for cdna in self.cdna(feature, canonical=canonical):
@@ -849,14 +849,14 @@ class Core:
             protein_start = calc_cdna_to_protein(cdna.start)
             protein_end = calc_cdna_to_protein(cdna.end)
             result.append(
-                ProteinMappablePosition.copy_from(
+                ProteinPosition.copy_from(
                     cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
                 )
             )
 
         return sorted(set(result))
 
-    def rna(self, feature: str, canonical: bool = False) -> List[RnaMappablePosition]:
+    def rna(self, feature: str, canonical: bool = False) -> List[RnaPosition]:
         """Return the RNA position(s) matching the given feature ID or name.
 
         Args:
@@ -864,7 +864,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
+            List[RnaPosition]: One or more RNA positions.
         """
         result = []
 
@@ -875,7 +875,7 @@ class Core:
                 continue
 
             result.append(
-                RnaMappablePosition(
+                RnaPosition(
                     _data=self,
                     contig_id=transcript.contig_id,
                     start=transcript.transcript_start,
@@ -906,7 +906,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
+    ) -> Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
         """Map a cDNA position to zero or more cDNA positions.
 
         Args:
@@ -921,7 +921,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
+            Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -962,7 +962,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
+    ) -> Union[List[DnaPosition], List[_DnaSmallVariant]]:
         """Map a cDNA position to zero or more DNA positions.
 
         Args:
@@ -977,7 +977,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
+            Union[List[DnaPosition], List[_DnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1018,7 +1018,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
+    ) -> Union[List[ExonPosition], List[_ExonSmallVariant]]:
         """Map a cDNA position to zero or more exon positions.
 
         Args:
@@ -1033,7 +1033,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
+            Union[List[ExonPosition], List[_ExonSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1074,7 +1074,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
+    ) -> Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
         """Map a cDNA position to zero or more protein positions.
 
         Args:
@@ -1089,7 +1089,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
+            Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1130,7 +1130,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
+    ) -> Union[List[RnaPosition], List[_RnaSmallVariant]]:
         """Map a cDNA position to zero or more RNA positions.
 
         Args:
@@ -1145,7 +1145,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
+            Union[List[RnaPosition], List[_RnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1186,7 +1186,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
+    ) -> Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
         """Map a DNA position to zero or more cDNA positions.
 
         Args:
@@ -1201,7 +1201,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
+            Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1242,7 +1242,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
+    ) -> Union[List[DnaPosition], List[_DnaSmallVariant]]:
         """Map a DNA position to zero or more DNA positions.
 
         Args:
@@ -1257,7 +1257,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
+            Union[List[DnaPosition], List[_DnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1298,7 +1298,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
+    ) -> Union[List[ExonPosition], List[_ExonSmallVariant]]:
         """Map a DNA position to zero or more exon positions.
 
         Args:
@@ -1313,7 +1313,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
+            Union[List[ExonPosition], List[_ExonSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1354,7 +1354,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
+    ) -> Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
         """Map a DNA position to zero or more protein positions.
 
         Args:
@@ -1369,7 +1369,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
+            Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1410,7 +1410,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
+    ) -> Union[List[RnaPosition], List[_RnaSmallVariant]]:
         """Map a DNA position to zero or more RNA positions.
 
         Args:
@@ -1425,7 +1425,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
+            Union[List[RnaPosition], List[_RnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1464,7 +1464,7 @@ class Core:
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
         canonical: bool = False,
-    ) -> List[CdnaMappablePosition]:
+    ) -> List[CdnaPosition]:
         """Map an exon position to zero or more cDNA positions.
 
         Args:
@@ -1477,7 +1477,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[CdnaMappablePosition]: Zero or more cDNA positions
+            List[CdnaPosition]: Zero or more cDNA positions
         """
         return self._map_exon(
             self._exon_to_cdna, feature, start, start_offset, end, end_offset, strand, canonical
@@ -1492,7 +1492,7 @@ class Core:
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
         canonical: bool = False,
-    ) -> List[DnaMappablePosition]:
+    ) -> List[DnaPosition]:
         """Map an exon position to zero or more DNA positions.
 
         Args:
@@ -1505,7 +1505,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: Zero or more DNA positions
+            List[DnaPosition]: Zero or more DNA positions
         """
         return self._map_exon(
             self._exon_to_dna, feature, start, start_offset, end, end_offset, strand, canonical
@@ -1520,7 +1520,7 @@ class Core:
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
         canonical: bool = False,
-    ) -> List[ExonMappablePosition]:
+    ) -> List[ExonPosition]:
         """Map an exon position to zero or more exon positions.
 
         Args:
@@ -1533,7 +1533,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ExonMappablePosition]: Zero or more exon positions
+            List[ExonPosition]: Zero or more exon positions
         """
         return self._map_exon(
             self._exon_to_exon, feature, start, start_offset, end, end_offset, strand, canonical
@@ -1548,7 +1548,7 @@ class Core:
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
         canonical: bool = False,
-    ) -> List[ProteinMappablePosition]:
+    ) -> List[ProteinPosition]:
         """Map an exon position to zero or more protein positions.
 
         Args:
@@ -1561,7 +1561,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ProteinMappablePosition]: Zero or more protein positions
+            List[ProteinPosition]: Zero or more protein positions
         """
         return self._map_exon(
             self._exon_to_protein, feature, start, start_offset, end, end_offset, strand, canonical
@@ -1576,7 +1576,7 @@ class Core:
         start_offset: Optional[int] = None,
         end_offset: Optional[int] = None,
         canonical: bool = False,
-    ) -> List[RnaMappablePosition]:
+    ) -> List[RnaPosition]:
         """Map an exon position to zero or more RNA positions.
 
         Args:
@@ -1589,7 +1589,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[RnaMappablePosition]: Zero or more RNA positions
+            List[RnaPosition]: Zero or more RNA positions
         """
         return self._map_exon(
             self._exon_to_rna, feature, start, start_offset, end, end_offset, strand, canonical
@@ -1606,7 +1606,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
+    ) -> Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
         """Map a protein position to zero or more cDNA positions.
 
         Args:
@@ -1621,7 +1621,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
+            Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1662,7 +1662,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
+    ) -> Union[List[DnaPosition], List[_DnaSmallVariant]]:
         """Map a protein position to zero or more DNA positions.
 
         Args:
@@ -1677,7 +1677,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
+            Union[List[DnaPosition], List[_DnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1718,7 +1718,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
+    ) -> Union[List[ExonPosition], List[_ExonSmallVariant]]:
         """Map a protein position to zero or more exon positions.
 
         Args:
@@ -1733,7 +1733,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
+            Union[List[ExonPosition], List[_ExonSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1774,7 +1774,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
+    ) -> Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
         """Map a protein position to zero or more protein positions.
 
         Args:
@@ -1789,7 +1789,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
+            Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1830,7 +1830,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
+    ) -> Union[List[RnaPosition], List[_RnaSmallVariant]]:
         """Map a protein position to zero or more RNA positions.
 
         Args:
@@ -1845,7 +1845,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
+            Union[List[RnaPosition], List[_RnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1886,7 +1886,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
+    ) -> Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
         """Map an RNA position to zero or more cDNA positions.
 
         Args:
@@ -1901,7 +1901,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[CdnaMappablePosition], List[_CdnaSmallVariant]]:
+            Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1942,7 +1942,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
+    ) -> Union[List[DnaPosition], List[_DnaSmallVariant]]:
         """Map an RNA position to zero or more DNA positions.
 
         Args:
@@ -1957,7 +1957,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[DnaMappablePosition], List[_DnaSmallVariant]]:
+            Union[List[DnaPosition], List[_DnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -1998,7 +1998,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
+    ) -> Union[List[ExonPosition], List[_ExonSmallVariant]]:
         """Map an RNA position to zero or more exon positions.
 
         Args:
@@ -2013,7 +2013,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ExonMappablePosition], List[_ExonSmallVariant]]:
+            Union[List[ExonPosition], List[_ExonSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -2054,7 +2054,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
+    ) -> Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
         """Map an RNA position to zero or more protein positions.
 
         Args:
@@ -2069,7 +2069,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[ProteinMappablePosition], List[_ProteinSmallVariant]]:
+            Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -2110,7 +2110,7 @@ class Core:
         refseq: str = "",
         altseq: str = "",
         canonical: bool = False,
-    ) -> Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
+    ) -> Union[List[RnaPosition], List[_RnaSmallVariant]]:
         """Map an RNA position to zero or more RNA positions.
 
         Args:
@@ -2125,7 +2125,7 @@ class Core:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            Union[List[RnaMappablePosition], List[_RnaSmallVariant]]:
+            Union[List[RnaPosition], List[_RnaSmallVariant]]:
                 If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
         """
         if refseq or altseq:
@@ -2165,7 +2165,7 @@ class Core:
         strand: List[str],
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[CdnaMappablePosition]:
+    ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
         if canonical:
@@ -2203,7 +2203,7 @@ class Core:
             )
             for _, cds in self.df[mask].iterrows():
                 result.append(
-                    CdnaMappablePosition(
+                    CdnaPosition(
                         _data=self,
                         contig_id=cds.contig_id,
                         start=start,
@@ -2267,7 +2267,7 @@ class Core:
         strand: List[str],
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[DnaMappablePosition]:
+    ) -> List[DnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
         if canonical:
@@ -2291,7 +2291,7 @@ class Core:
 
                 # TODO: Check that new new_start is actually on the contig
                 result.append(
-                    DnaMappablePosition(
+                    DnaPosition(
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
@@ -2350,7 +2350,7 @@ class Core:
         strand: List[str],
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[ExonMappablePosition]:
+    ) -> List[ExonPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
         if canonical:
@@ -2394,7 +2394,7 @@ class Core:
                 )
                 for _, exon_row in self.df[mask_exon].iterrows():
                     result.append(
-                        ExonMappablePosition(
+                        ExonPosition(
                             _data=self,
                             contig_id=exon_row.contig_id,
                             start=int(exon_row.exon_number),
@@ -2457,7 +2457,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ProteinMappablePosition]:
+    ) -> List[ProteinPosition]:
         result = []
         for cdna in self._cdna_to_cdna(
             transcript_ids,
@@ -2478,7 +2478,7 @@ class Core:
             protein_start = calc_cdna_to_protein(cdna.start)
             protein_end = calc_cdna_to_protein(cdna.end)
             result.append(
-                ProteinMappablePosition.copy_from(
+                ProteinPosition.copy_from(
                     cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
                 )
             )
@@ -2517,7 +2517,7 @@ class Core:
             # Convert the cDNA position to a protein position
             protein_start = calc_cdna_to_protein(cdna.start)
             protein_end = calc_cdna_to_protein(cdna.end)
-            protein = ProteinMappablePosition.copy_from(
+            protein = ProteinPosition.copy_from(
                 cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
             )
             result.extend(_ProteinSmallVariant.from_cdna(cdna, protein, refseq, altseq))
@@ -2534,7 +2534,7 @@ class Core:
         strand: List[str],
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[RnaMappablePosition]:
+    ) -> List[RnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
         if canonical:
@@ -2573,7 +2573,7 @@ class Core:
             for _, cds in self.df[mask].iterrows():
                 new_start = new_end = cds.transcript_start + (position - cds.cdna_start)
                 result.append(
-                    RnaMappablePosition(
+                    RnaPosition(
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
@@ -2636,7 +2636,7 @@ class Core:
         strand: List[str],
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[CdnaMappablePosition]:
+    ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
         def convert(position: int, offset: int):
@@ -2665,7 +2665,7 @@ class Core:
                         new_start = new_end = position_ - cds.start + cds.cdna_start
 
                     result.append(
-                        CdnaMappablePosition(
+                        CdnaPosition(
                             _data=self,
                             contig_id=cds.contig_id,
                             start=new_start,
@@ -2728,7 +2728,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[DnaMappablePosition]:
+    ) -> List[DnaPosition]:
         result = []
 
         # Sort the start and end positions after adjusting by offsets
@@ -2744,7 +2744,7 @@ class Core:
 
             # TODO: Check that new new_start is actually on the contig
             result.append(
-                DnaMappablePosition(
+                DnaPosition(
                     _data=self,
                     contig_id=contig_id_,
                     start=new_start,
@@ -2787,7 +2787,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ExonMappablePosition]:
+    ) -> List[ExonPosition]:
         def convert(position: int, offset: int):
             result = []
 
@@ -2809,7 +2809,7 @@ class Core:
                         continue
 
                     result.append(
-                        ExonMappablePosition(
+                        ExonPosition(
                             _data=self,
                             contig_id=exon.contig_id,
                             start=int(exon.exon_number),
@@ -2864,7 +2864,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ProteinMappablePosition]:
+    ) -> List[ProteinPosition]:
         protein = []
         for cdna in self._dna_to_cdna(
             contig_ids, start, start_offset, end, end_offset, strand, canonical, include_stop=False
@@ -2876,7 +2876,7 @@ class Core:
             pstart = calc_cdna_to_protein(cdna.start)
             pend = calc_cdna_to_protein(cdna.end)
             protein.append(
-                ProteinMappablePosition.copy_from(
+                ProteinPosition.copy_from(
                     cdna, start=pstart, start_offset=0, end=pend, end_offset=0, _data=self
                 )
             )
@@ -2906,7 +2906,7 @@ class Core:
 
             pstart = calc_cdna_to_protein(cdna.start)
             pend = calc_cdna_to_protein(cdna.end)
-            protein = ProteinMappablePosition.copy_from(
+            protein = ProteinPosition.copy_from(
                 cdna, start=pstart, start_offset=0, end=pend, end_offset=0, _data=self
             )
             result.extend(_ProteinSmallVariant.from_cdna(cdna, protein, refseq, altseq))
@@ -2922,7 +2922,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[RnaMappablePosition]:
+    ) -> List[RnaPosition]:
         def convert(position: int, offset: int):
             result = []
 
@@ -2949,7 +2949,7 @@ class Core:
                         new_start = new_end = position_ - exon.start + exon.transcript_start
 
                     result.append(
-                        RnaMappablePosition(
+                        RnaPosition(
                             _data=self,
                             contig_id=exon.contig_id,
                             start=new_start,
@@ -3004,7 +3004,7 @@ class Core:
         strand: List[str],
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[CdnaMappablePosition]:
+    ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
         if canonical:
@@ -3024,7 +3024,7 @@ class Core:
             )
             for _, cds in self.df[mask].iterrows():
                 result.append(
-                    CdnaMappablePosition(
+                    CdnaPosition(
                         _data=self,
                         contig_id=cds.contig_id,
                         start=cds.cdna_start,
@@ -3058,7 +3058,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[DnaMappablePosition]:
+    ) -> List[DnaPosition]:
         if canonical:
             transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
 
@@ -3076,7 +3076,7 @@ class Core:
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
-                    DnaMappablePosition(
+                    DnaPosition(
                         _data=self,
                         contig_id=exon.contig_id,
                         start=exon.start,
@@ -3105,7 +3105,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ExonMappablePosition]:
+    ) -> List[ExonPosition]:
         if canonical:
             transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
 
@@ -3123,7 +3123,7 @@ class Core:
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
-                    ExonMappablePosition(
+                    ExonPosition(
                         _data=self,
                         contig_id=exon.contig_id,
                         start=int(exon.exon_number),
@@ -3157,7 +3157,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ProteinMappablePosition]:
+    ) -> List[ProteinPosition]:
         result = []
         for cdna in self._exon_to_cdna(
             transcript_ids,
@@ -3182,7 +3182,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[RnaMappablePosition]:
+    ) -> List[RnaPosition]:
         if canonical:
             transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
 
@@ -3200,7 +3200,7 @@ class Core:
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
-                    RnaMappablePosition(
+                    RnaPosition(
                         _data=self,
                         contig_id=exon.contig_id,
                         start=exon.transcript_start,
@@ -3233,7 +3233,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[CdnaMappablePosition]:
+    ) -> List[CdnaPosition]:
         def convert(position: int):
             return ((position - 1) * 3) + 1
 
@@ -3278,7 +3278,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[DnaMappablePosition]:
+    ) -> List[DnaPosition]:
         result = []
         for cdna in self._protein_to_cdna(
             transcript_ids, start, start_offset, end, end_offset, strand, canonical
@@ -3316,7 +3316,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ExonMappablePosition]:
+    ) -> List[ExonPosition]:
         result = []
         for cdna in self._protein_to_cdna(
             transcript_ids, start, start_offset, end, end_offset, strand, canonical
@@ -3354,7 +3354,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ProteinMappablePosition]:
+    ) -> List[ProteinPosition]:
         result = []
         for cdna in self._protein_to_cdna(
             transcript_ids, start, start_offset, end, end_offset, strand, canonical
@@ -3392,7 +3392,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[RnaMappablePosition]:
+    ) -> List[RnaPosition]:
         result = []
         for cdna in self._protein_to_cdna(
             transcript_ids, start, start_offset, end, end_offset, strand, canonical
@@ -3431,7 +3431,7 @@ class Core:
         strand: List[str],
         canonical: bool,
         include_stop: bool = True,
-    ) -> List[CdnaMappablePosition]:
+    ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
         if canonical:
@@ -3463,7 +3463,7 @@ class Core:
             for _, cds in self.df[mask].iterrows():
                 new_start = new_end = cds.cdna_start + (position - cds.transcript_start)
                 result.append(
-                    CdnaMappablePosition(
+                    CdnaPosition(
                         _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
@@ -3526,7 +3526,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[DnaMappablePosition]:
+    ) -> List[DnaPosition]:
         if canonical:
             transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
 
@@ -3549,7 +3549,7 @@ class Core:
 
                 # TODO: Check that new new_start is actually on the contig
                 result.append(
-                    DnaMappablePosition(
+                    DnaPosition(
                         _data=self,
                         contig_id=exon.contig_id,
                         start=new_start,
@@ -3599,7 +3599,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ExonMappablePosition]:
+    ) -> List[ExonPosition]:
         if canonical:
             transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
 
@@ -3628,7 +3628,7 @@ class Core:
             )
             for _, exon_row in self.df[mask].iterrows():
                 result.append(
-                    ExonMappablePosition(
+                    ExonPosition(
                         _data=self,
                         contig_id=exon_row.contig_id,
                         start=int(exon_row.exon_number),
@@ -3683,7 +3683,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[ProteinMappablePosition]:
+    ) -> List[ProteinPosition]:
         result = []
         for cdna in self._rna_to_cdna(
             transcript_ids,
@@ -3737,7 +3737,7 @@ class Core:
         end_offset: int,
         strand: List[str],
         canonical: bool,
-    ) -> List[RnaMappablePosition]:
+    ) -> List[RnaPosition]:
         if canonical:
             transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
 
@@ -3766,7 +3766,7 @@ class Core:
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
-                    RnaMappablePosition(
+                    RnaPosition(
                         _data=self,
                         contig_id=exon.contig_id,
                         start=start,

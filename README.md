@@ -47,7 +47,7 @@ variant-map install --help
 Alternatively, you can run the installation from inside a Python process:
 
 ```python
->>> from variant-map import EnsemblRelease
+>>> from variant_map import EnsemblRelease
 >>> ensembl100 = EnsemblRelease(species='homo_sapiens', release=100, cache_dir="/path/to/cache/")
 >>> ensembl100.install()
 ```
@@ -103,15 +103,59 @@ ENSP00000288135.6             |                  |
 Map DNA to RNA:
 
 ```python
->>> ensembl100.dna_to_rna("4", 54658081)
-[RnaMappablePosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='4', start=125, start_offset=0, end=125, end_offset=0, strand='+', gene_id='ENSG00000157404', gene_name='KIT', transcript_id='ENST00000288135', transcript_name='KIT-201'), RnaMappablePosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='4', start=164, start_offset=0, end=164, end_offset=0, strand='+', gene_id='ENSG00000157404', gene_name='KIT', transcript_id='ENST00000412167', transcript_name='KIT-202'), RnaMappablePosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='4', start=143, start_offset=0, end=143, end_offset=0, strand='+', gene_id='ENSG00000157404', gene_name='KIT', transcript_id='ENST00000514582', transcript_name='KIT-204')]
+>>> from pprint import pprint
+>>> pprint(ensembl100.dna_to_rna("4", 54658081))
+[RnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100),
+             contig_id='4',
+             start=125,
+             start_offset=0,
+             end=125,
+             end_offset=0,
+             strand='+',
+             gene_id='ENSG00000157404',
+             gene_name='KIT',
+             transcript_id='ENST00000288135',
+             transcript_name='KIT-201'),
+ RnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100),
+             contig_id='4',
+             start=164,
+             start_offset=0,
+             end=164,
+             end_offset=0,
+             strand='+',
+             gene_id='ENSG00000157404',
+             gene_name='KIT',
+             transcript_id='ENST00000412167',
+             transcript_name='KIT-202'),
+ RnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100),
+             contig_id='4',
+             start=143,
+             start_offset=0,
+             end=143,
+             end_offset=0,
+             strand='+',
+             gene_id='ENSG00000157404',
+             gene_name='KIT',
+             transcript_id='ENST00000514582',
+             transcript_name='KIT-204')]
 ```
 
 Map protein to cDNA:
 
 ```python
->>> ensembl100.protein_to_cdna("ENSP00000288135", 23)
-[CdnaMappablePosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='4', start=67, start_offset=0, end=69, end_offset=0, strand='+', gene_id='ENSG00000157404', gene_name='KIT', transcript_id='ENST00000288135', transcript_name='KIT-201', protein_id='ENSP00000288135')]
+>>> pprint(ensembl100.protein_to_cdna("ENSP00000288135", 23))
+[CdnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100),
+              contig_id='4',
+              start=67,
+              start_offset=0,
+              end=69,
+              end_offset=0,
+              strand='+',
+              gene_id='ENSG00000157404',
+              gene_name='KIT',
+              transcript_id='ENST00000288135',
+              transcript_name='KIT-201',
+              protein_id='ENSP00000288135')]
 ```
 
 #### Example 2: TERT (ENSG00000164362.21, - strand)
@@ -150,15 +194,36 @@ ENSP00000309572.5                           |   |
 Map cDNA to RNA:
 
 ```python
->>> ensembl100.cdna_to_rna("ENST00000310581", 219, 220)
-[RnaMappablePosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=298, start_offset=0, end=299, end_offset=0, strand='-', gene_id='ENSG00000164362', gene_name='TERT', transcript_id='ENST00000310581', transcript_name='TERT-201')]
+>>> pprint(ensembl100.cdna_to_rna("ENST00000310581", 219, 220))
+[RnaPosition(_data=EnsemblRelease(species=homo_sapiens, release=100),
+             contig_id='5',
+             start=298,
+             start_offset=0,
+             end=299,
+             end_offset=0,
+             strand='-',
+             gene_id='ENSG00000164362',
+             gene_name='TERT',
+             transcript_id='ENST00000310581',
+             transcript_name='TERT-201')]
 ```
 
 Map RNA to exon:
 
 ```python
->>> ensembl100.rna_to_exon("ENST00000310581", 299)
-[ExonMappablePosition(_data=EnsemblRelease(species=homo_sapiens, release=100), contig_id='5', start=2, start_offset=0, end=2, end_offset=0, strand='-', gene_id='ENSG00000164362', gene_name='TERT', transcript_id='ENST00000310581', transcript_name='TERT-201', exon_id='ENSE00001197112')]
+>>> pprint(ensembl100.rna_to_exon("TERT-201", 299))
+[ExonPosition(_data=EnsemblRelease(species=homo_sapiens, release=100),
+              contig_id='5',
+              start=2,
+              start_offset=0,
+              end=2,
+              end_offset=0,
+              strand='-',
+              gene_id='ENSG00000164362',
+              gene_name='TERT',
+              transcript_id='ENST00000310581',
+              transcript_name='TERT-201',
+              exon_id='ENSE00001197112')]
 ```
 
 ### Retrieve feature information

@@ -27,7 +27,7 @@ from .utils import (
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Position:
-    """Base class for position objects."""
+    """Base class for positions."""
 
     _data: Core
     contig_id: str
@@ -65,7 +65,7 @@ class _Position:
         return str(self) < str(other)
 
     def __str__(self) -> str:
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
     @property
     def is_cdna(self) -> bool:
@@ -144,12 +144,12 @@ class _Position:
         Returns:
             str: The reference sequence
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
 
 @dataclass(eq=True, frozen=True)
-class CdnaPosition(_Position):
-    """Stores information on cDNA position objects."""
+class _CdnaPosition(_Position):
+    """Base class for cDNA positions."""
 
     gene_id: str
     gene_name: str
@@ -189,8 +189,8 @@ class CdnaPosition(_Position):
 
 
 @dataclass(eq=True, frozen=True)
-class DnaPosition(_Position):
-    """Stores information on DNA position objects."""
+class _DnaPosition(_Position):
+    """Base class for DNA positions."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -224,8 +224,8 @@ class DnaPosition(_Position):
 
 
 @dataclass(eq=True, frozen=True)
-class ExonPosition(_Position):
-    """Stores information on exon position objects."""
+class _ExonPosition(_Position):
+    """Base class for exon positions."""
 
     gene_id: str
     gene_name: str
@@ -261,8 +261,8 @@ class ExonPosition(_Position):
 
 
 @dataclass(eq=True, frozen=True)
-class ProteinPosition(_Position):
-    """Stores information on protein position objects."""
+class _ProteinPosition(_Position):
+    """Base class for protein positions."""
 
     gene_id: str
     gene_name: str
@@ -302,8 +302,8 @@ class ProteinPosition(_Position):
 
 
 @dataclass(eq=True, frozen=True)
-class RnaPosition(_Position):
-    """Stores information on RNA position objects."""
+class _RnaPosition(_Position):
+    """Base class for RNA positions."""
 
     gene_id: str
     gene_name: str
@@ -346,76 +346,76 @@ class RnaPosition(_Position):
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _MappablePosition:
-    """Base class for mappable position objects."""
+    """Base class for mappable positions."""
 
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaPosition]:
         """Map this position to one more cDNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
+            List[CdnaPosition]: One or more cDNA positions.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+    def to_dna(self, canonical: bool = False) -> List[DnaPosition]:
         """Map this position to one more DNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
+            List[DnaPosition]: One or more DNA positions.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+    def to_exon(self, canonical: bool = False) -> List[ExonPosition]:
         """Map this position to one more exon positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ExonMappablePosition]: One or more exon positions.
+            List[ExonPosition]: One or more exon positions.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+    def to_protein(self, canonical: bool = False) -> List[ProteinPosition]:
         """Map this position to one more protein positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
+            List[ProteinPosition]: One or more protein positions.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+    def to_rna(self, canonical: bool = False) -> List[RnaPosition]:
         """Map this position to one more RNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
+            List[RnaPosition]: One or more RNA positions.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
 
 @dataclass(eq=True, frozen=True)
-class CdnaMappablePosition(CdnaPosition, _MappablePosition):
-    """Stores information on a cDNA position and converts to other position types."""
+class CdnaPosition(_CdnaPosition, _MappablePosition):
+    """Stores information on a cDNA position and maps to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaPosition]:
         """Map this position to one more cDNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
+            List[CdnaPosition]: One or more cDNA positions.
         """
         return self._data._cdna_to_cdna(
             [self.transcript_id],
@@ -427,14 +427,14 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+    def to_dna(self, canonical: bool = False) -> List[DnaPosition]:
         """Map this position to one more DNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
+            List[DnaPosition]: One or more DNA positions.
         """
         return self._data._cdna_to_dna(
             [self.transcript_id],
@@ -446,14 +446,14 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+    def to_exon(self, canonical: bool = False) -> List[ExonPosition]:
         """Map this position to one more exon positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ExonMappablePosition]: One or more exon positions.
+            List[ExonPosition]: One or more exon positions.
         """
         return self._data._cdna_to_exon(
             [self.transcript_id],
@@ -465,14 +465,14 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+    def to_protein(self, canonical: bool = False) -> List[ProteinPosition]:
         """Map this position to one more protein positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
+            List[ProteinPosition]: One or more protein positions.
         """
         return self._data._cdna_to_protein(
             [self.transcript_id],
@@ -484,14 +484,14 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+    def to_rna(self, canonical: bool = False) -> List[RnaPosition]:
         """Map this position to one more RNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
+            List[RnaPosition]: One or more RNA positions.
         """
         return self._data._cdna_to_rna(
             [self.transcript_id],
@@ -505,17 +505,17 @@ class CdnaMappablePosition(CdnaPosition, _MappablePosition):
 
 
 @dataclass(eq=True, frozen=True)
-class DnaMappablePosition(DnaPosition, _MappablePosition):
-    """Stores information on a DNA position and converts to other position types."""
+class DnaPosition(_DnaPosition, _MappablePosition):
+    """Stores information on a DNA position and maps to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaPosition]:
         """Map this position to one more cDNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
+            List[CdnaPosition]: One or more cDNA positions.
         """
         return self._data._dna_to_cdna(
             [self.contig_id],
@@ -527,14 +527,14 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+    def to_dna(self, canonical: bool = False) -> List[DnaPosition]:
         """Map this position to one more DNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
+            List[DnaPosition]: One or more DNA positions.
         """
         return self._data._dna_to_dna(
             [self.contig_id],
@@ -546,14 +546,14 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+    def to_exon(self, canonical: bool = False) -> List[ExonPosition]:
         """Map this position to one more exon positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ExonMappablePosition]: One or more exon positions.
+            List[ExonPosition]: One or more exon positions.
         """
         return self._data._dna_to_exon(
             [self.contig_id],
@@ -565,14 +565,14 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+    def to_protein(self, canonical: bool = False) -> List[ProteinPosition]:
         """Map this position to one more protein positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
+            List[ProteinPosition]: One or more protein positions.
         """
         return self._data._dna_to_protein(
             [self.contig_id],
@@ -584,14 +584,14 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+    def to_rna(self, canonical: bool = False) -> List[RnaPosition]:
         """Map this position to one more RNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
+            List[RnaPosition]: One or more RNA positions.
         """
         return self._data._dna_to_rna(
             [self.contig_id],
@@ -605,17 +605,17 @@ class DnaMappablePosition(DnaPosition, _MappablePosition):
 
 
 @dataclass(eq=True, frozen=True)
-class ExonMappablePosition(ExonPosition, _MappablePosition):
-    """Stores information on an exon position and converts to other position types."""
+class ExonPosition(_ExonPosition, _MappablePosition):
+    """Stores information on an exon position and maps to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaPosition]:
         """Map this position to one more cDNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
+            List[CdnaPosition]: One or more cDNA positions.
         """
         return self._data._exon_to_cdna(
             [self.transcript_id],
@@ -627,14 +627,14 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+    def to_dna(self, canonical: bool = False) -> List[DnaPosition]:
         """Map this position to one more DNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
+            List[DnaPosition]: One or more DNA positions.
         """
         return self._data._exon_to_dna(
             [self.transcript_id],
@@ -646,14 +646,14 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+    def to_exon(self, canonical: bool = False) -> List[ExonPosition]:
         """Map this position to one more exon positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ExonMappablePosition]: One or more exon positions.
+            List[ExonPosition]: One or more exon positions.
         """
         return self._data._exon_to_exon(
             [self.transcript_id],
@@ -665,14 +665,14 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+    def to_protein(self, canonical: bool = False) -> List[ProteinPosition]:
         """Map this position to one more protein positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
+            List[ProteinPosition]: One or more protein positions.
         """
         return self._data._exon_to_protein(
             [self.transcript_id],
@@ -684,14 +684,14 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+    def to_rna(self, canonical: bool = False) -> List[RnaPosition]:
         """Map this position to one more RNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
+            List[RnaPosition]: One or more RNA positions.
         """
         return self._data._exon_to_rna(
             [self.transcript_id],
@@ -705,17 +705,17 @@ class ExonMappablePosition(ExonPosition, _MappablePosition):
 
 
 @dataclass(eq=True, frozen=True)
-class ProteinMappablePosition(ProteinPosition, _MappablePosition):
-    """Stores information on a protein position and converts to other position types."""
+class ProteinPosition(_ProteinPosition, _MappablePosition):
+    """Stores information on a protein position and maps to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaPosition]:
         """Map this position to one more cDNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
+            List[CdnaPosition]: One or more cDNA positions.
         """
         return self._data._protein_to_cdna(
             [self.transcript_id],
@@ -727,14 +727,14 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+    def to_dna(self, canonical: bool = False) -> List[DnaPosition]:
         """Map this position to one more DNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
+            List[DnaPosition]: One or more DNA positions.
         """
         return self._data._protein_to_dna(
             [self.transcript_id],
@@ -746,14 +746,14 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+    def to_exon(self, canonical: bool = False) -> List[ExonPosition]:
         """Map this position to one more exon positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ExonMappablePosition]: One or more exon positions.
+            List[ExonPosition]: One or more exon positions.
         """
         return self._data._protein_to_exon(
             [self.transcript_id],
@@ -765,14 +765,14 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+    def to_protein(self, canonical: bool = False) -> List[ProteinPosition]:
         """Map this position to one more protein positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
+            List[ProteinPosition]: One or more protein positions.
         """
         return self._data._protein_to_protein(
             [self.transcript_id],
@@ -784,14 +784,14 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+    def to_rna(self, canonical: bool = False) -> List[RnaPosition]:
         """Map this position to one more RNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
+            List[RnaPosition]: One or more RNA positions.
         """
         return self._data._protein_to_rna(
             [self.transcript_id],
@@ -805,17 +805,17 @@ class ProteinMappablePosition(ProteinPosition, _MappablePosition):
 
 
 @dataclass(eq=True, frozen=True)
-class RnaMappablePosition(RnaPosition, _MappablePosition):
-    """Stores information on an RNA position and converts to other position types."""
+class RnaPosition(_RnaPosition, _MappablePosition):
+    """Stores information on an RNA position and maps to other position types."""
 
-    def to_cdna(self, canonical: bool = False) -> List[CdnaMappablePosition]:
+    def to_cdna(self, canonical: bool = False) -> List[CdnaPosition]:
         """Map this position to one more cDNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[CdnaMappablePosition]: One or more cDNA positions.
+            List[CdnaPosition]: One or more cDNA positions.
         """
         return self._data._rna_to_cdna(
             [self.transcript_id],
@@ -827,14 +827,14 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_dna(self, canonical: bool = False) -> List[DnaMappablePosition]:
+    def to_dna(self, canonical: bool = False) -> List[DnaPosition]:
         """Map this position to one more DNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[DnaMappablePosition]: One or more DNA positions.
+            List[DnaPosition]: One or more DNA positions.
         """
         return self._data._rna_to_dna(
             [self.transcript_id],
@@ -846,14 +846,14 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_exon(self, canonical: bool = False) -> List[ExonMappablePosition]:
+    def to_exon(self, canonical: bool = False) -> List[ExonPosition]:
         """Map this position to one more exon positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ExonMappablePosition]: One or more exon positions.
+            List[ExonPosition]: One or more exon positions.
         """
         return self._data._rna_to_exon(
             [self.transcript_id],
@@ -865,14 +865,14 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_protein(self, canonical: bool = False) -> List[ProteinMappablePosition]:
+    def to_protein(self, canonical: bool = False) -> List[ProteinPosition]:
         """Map this position to one more protein positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[ProteinMappablePosition]: One or more protein positions.
+            List[ProteinPosition]: One or more protein positions.
         """
         return self._data._rna_to_protein(
             [self.transcript_id],
@@ -884,14 +884,14 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
             canonical,
         )
 
-    def to_rna(self, canonical: bool = False) -> List[RnaMappablePosition]:
+    def to_rna(self, canonical: bool = False) -> List[RnaPosition]:
         """Map this position to one more RNA positions.
 
         Args:
             canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
 
         Returns:
-            List[RnaMappablePosition]: One or more RNA positions.
+            List[RnaPosition]: One or more RNA positions.
         """
         return self._data._rna_to_rna(
             [self.transcript_id],
@@ -909,7 +909,7 @@ class RnaMappablePosition(RnaPosition, _MappablePosition):
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Variant:
-    """Base class for variant objects."""
+    """Base class for variants."""
 
     @property
     def is_deletion(self) -> bool:
@@ -981,7 +981,7 @@ class _Variant:
         Returns:
             str: Type of variant
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
     def to_cdna(self) -> List:
         """Map this variant to one more cDNA variants.
@@ -992,7 +992,7 @@ class _Variant:
         Returns:
             List: One or more cDNA variants.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
     def to_dna(self) -> List:
         """Map this variant to one more DNA variants.
@@ -1003,7 +1003,7 @@ class _Variant:
         Returns:
             List: One or more DNA variants.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
     def to_exon(self) -> List:
         """Map this variant to one more exon variants.
@@ -1014,7 +1014,7 @@ class _Variant:
         Returns:
             List: One or more exon variants.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
     def to_protein(self) -> List:
         """Map this variant to one more protein variants.
@@ -1025,7 +1025,7 @@ class _Variant:
         Returns:
             List: One or more protein variants.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
     def to_rna(self) -> List:
         """Map this variant to one more RNA variants.
@@ -1036,7 +1036,7 @@ class _Variant:
         Returns:
             List: One or more RNA variants.
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1044,24 +1044,22 @@ class _Variant:
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _SmallVariant(_Variant):
-    """Base class for small variant objects."""
+    """Base class for small variants."""
 
     refseq: str
     altseq: str
 
 
 @dataclass(eq=True, frozen=True)
-class _CdnaSmallVariant(CdnaPosition, _SmallVariant):
-    """Base class for cDNA variant objects."""
+class _CdnaSmallVariant(_CdnaPosition, _SmallVariant):
+    """Base class for cDNA small variants."""
 
     @classmethod
-    def from_cdna(
-        cls, cdna: CdnaMappablePosition, refseq: str, altseq: str
-    ) -> List[_CdnaSmallVariant]:
-        """Convert a cDNA position plus ref/alt nucleotides into a cDNA variant object.
+    def from_cdna(cls, cdna: CdnaPosition, refseq: str, altseq: str) -> List[_CdnaSmallVariant]:
+        """Convert a cDNA position plus ref/alt nucleotides into a cDNA variant.
 
         Args:
-            cdna (CdnaMappablePosition): _Variant position
+            cdna (CdnaPosition): _Variant position
             refseq (str): reference allele
             altseq (str): alternate allele
 
@@ -1118,13 +1116,11 @@ class _CdnaSmallVariant(CdnaPosition, _SmallVariant):
         return variant_list
 
     @classmethod
-    def from_protein(
-        cls, cdna: CdnaMappablePosition, refseq: str, altseq: str
-    ) -> List[_CdnaSmallVariant]:
-        """Convert a cDNA position plus ref/alt amino acids into a cDNA variant object.
+    def from_protein(cls, cdna: CdnaPosition, refseq: str, altseq: str) -> List[_CdnaSmallVariant]:
+        """Convert a cDNA position plus ref/alt amino acids into a cDNA variant.
 
         Args:
-            cdna (CdnaMappablePosition): cDNA position
+            cdna (CdnaPosition): cDNA position
             refseq (str): Reference allele
             altseq (str): Alternate allele
 
@@ -1278,15 +1274,15 @@ class _CdnaSmallVariant(CdnaPosition, _SmallVariant):
 
 
 @dataclass(eq=True, frozen=True)
-class _DnaSmallVariant(DnaPosition, _SmallVariant):
-    """Base class for DNA variant objects."""
+class _DnaSmallVariant(_DnaPosition, _SmallVariant):
+    """Base class for DNA small variants."""
 
     @classmethod
-    def from_dna(cls, dna: DnaMappablePosition, refseq: str, altseq: str) -> List[_DnaSmallVariant]:
-        """Convert a DNA position plus ref/alt nucleotides into a DNA variant object.
+    def from_dna(cls, dna: DnaPosition, refseq: str, altseq: str) -> List[_DnaSmallVariant]:
+        """Convert a DNA position plus ref/alt nucleotides into a DNA variant.
 
         Args:
-            dna (DnaMappablePosition): DNA position
+            dna (DnaPosition): DNA position
             refseq (str): Reference allele
             altseq (str): Alternate allele
 
@@ -1439,17 +1435,15 @@ class _DnaSmallVariant(DnaPosition, _SmallVariant):
 
 
 @dataclass(eq=True, frozen=True)
-class _ExonSmallVariant(ExonPosition, _SmallVariant):
-    """Base class for exon variant objects."""
+class _ExonSmallVariant(_ExonPosition, _SmallVariant):
+    """Base class for exon small variants."""
 
     @classmethod
-    def from_exon(
-        cls, exon: ExonMappablePosition, refseq: str, altseq: str
-    ) -> List[_ExonSmallVariant]:
-        """Convert an exon position plus ref/alt nucleotides into an exon variant object.
+    def from_exon(cls, exon: ExonPosition, refseq: str, altseq: str) -> List[_ExonSmallVariant]:
+        """Convert an exon position plus ref/alt nucleotides into an exon variant.
 
         Args:
-            exon (ExonMappablePosition): exon position
+            exon (ExonPosition): exon position
             refseq (str): Reference allele
             altseq (str): Alternate allele
 
@@ -1463,17 +1457,17 @@ class _ExonSmallVariant(ExonPosition, _SmallVariant):
 
 
 @dataclass(eq=True, frozen=True)
-class _ProteinSmallVariant(ProteinPosition, _SmallVariant):
-    """Base class for protein variant objects."""
+class _ProteinSmallVariant(_ProteinPosition, _SmallVariant):
+    """Base class for protein small variants."""
 
     @classmethod
     def from_cdna(
-        cls, cdna: CdnaMappablePosition, protein: ProteinMappablePosition, refseq: str, altseq: str
+        cls, cdna: CdnaPosition, protein: ProteinPosition, refseq: str, altseq: str
     ) -> List[_ProteinSmallVariant]:
-        """Convert a cDNA position plus ref/alt amino acids into a protein variant object.
+        """Convert a cDNA position plus ref/alt amino acids into a protein variant.
 
         Args:
-            cdna (CdnaMappablePosition): cDNA position
+            cdna (CdnaPosition): cDNA position
             refseq (str): Reference allele
             altseq (str): Alternate allele
 
@@ -1627,15 +1621,15 @@ class _ProteinSmallVariant(ProteinPosition, _SmallVariant):
 
 
 @dataclass(eq=True, frozen=True)
-class _RnaSmallVariant(RnaPosition, _SmallVariant):
-    """Base class for RNA variant objects."""
+class _RnaSmallVariant(_RnaPosition, _SmallVariant):
+    """Base class for RNA small variants."""
 
     @classmethod
-    def from_rna(cls, rna: RnaMappablePosition, refseq: str, altseq: str) -> List[_RnaSmallVariant]:
-        """Convert an RNA position plus ref/alt nucleotides into an RNA variant object.
+    def from_rna(cls, rna: RnaPosition, refseq: str, altseq: str) -> List[_RnaSmallVariant]:
+        """Convert an RNA position plus ref/alt nucleotides into an RNA variant.
 
         Args:
-            rna (RnaMappablePosition): RNA position
+            rna (RnaPosition): RNA position
             refseq (str): Reference allele
             altseq (str): Alternate allele
 
@@ -1792,7 +1786,7 @@ class _RnaSmallVariant(RnaPosition, _SmallVariant):
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Deletion(_SmallVariant):
-    """Base class for deletion variant objects."""
+    """Base class for deletion variants."""
 
     @property
     def type(self) -> str:
@@ -1806,7 +1800,7 @@ class _Deletion(_SmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class CdnaDeletion(_Deletion, _CdnaSmallVariant):
-    """Stores information on a cDNA deletion variant and converts to other position types."""
+    """Stores information on a cDNA deletion variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1819,7 +1813,7 @@ class CdnaDeletion(_Deletion, _CdnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class DnaDeletion(_Deletion, _DnaSmallVariant):
-    """Stores information on a DNA deletion variant and converts to other position types."""
+    """Stores information on a DNA deletion variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1832,7 +1826,7 @@ class DnaDeletion(_Deletion, _DnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class ProteinDeletion(_Deletion, _ProteinSmallVariant):
-    """Stores information on a protein deletion variant and converts to other position types."""
+    """Stores information on a protein deletion variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1847,7 +1841,7 @@ class ProteinDeletion(_Deletion, _ProteinSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class RnaDeletion(_Deletion, _RnaSmallVariant):
-    """Stores information on an RNA deletion variant and converts to other position types."""
+    """Stores information on an RNA deletion variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1863,7 +1857,7 @@ class RnaDeletion(_Deletion, _RnaSmallVariant):
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Delins(_SmallVariant):
-    """Base class for delins variant objects."""
+    """Base class for delins variants."""
 
     @property
     def type(self) -> str:
@@ -1877,7 +1871,7 @@ class _Delins(_SmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class CdnaDelins(_Delins, _CdnaSmallVariant):
-    """Stores information on a cDNA delins variant and converts to other position types."""
+    """Stores information on a cDNA delins variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1890,7 +1884,7 @@ class CdnaDelins(_Delins, _CdnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class DnaDelins(_Delins, _DnaSmallVariant):
-    """Stores information on a DNA delins variant and converts to other position types."""
+    """Stores information on a DNA delins variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1903,7 +1897,7 @@ class DnaDelins(_Delins, _DnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class ProteinDelins(_Delins, _ProteinSmallVariant):
-    """Stores information on a protein delins variant and converts to other position types."""
+    """Stores information on a protein delins variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1918,7 +1912,7 @@ class ProteinDelins(_Delins, _ProteinSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class RnaDelins(_Delins, _RnaSmallVariant):
-    """Stores information on an RNA delins variant and converts to other position types."""
+    """Stores information on an RNA delins variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1934,7 +1928,7 @@ class RnaDelins(_Delins, _RnaSmallVariant):
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Duplication(_SmallVariant):
-    """Base class for duplication variant objects."""
+    """Base class for duplication variants."""
 
     @property
     def type(self) -> str:
@@ -1948,7 +1942,7 @@ class _Duplication(_SmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class CdnaDuplication(_Duplication, _CdnaSmallVariant):
-    """Stores information on a cDNA duplication variant and converts to other position types."""
+    """Stores information on a cDNA duplication variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1961,7 +1955,7 @@ class CdnaDuplication(_Duplication, _CdnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class DnaDuplication(_Duplication, _DnaSmallVariant):
-    """Stores information on a DNA duplication variant and converts to other position types."""
+    """Stores information on a DNA duplication variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1974,7 +1968,7 @@ class DnaDuplication(_Duplication, _DnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class ProteinDuplication(_Duplication, _ProteinSmallVariant):
-    """Stores information on a protein duplication variant and converts to other position types."""
+    """Stores information on a protein duplication variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -1989,7 +1983,7 @@ class ProteinDuplication(_Duplication, _ProteinSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class RnaDuplication(_Duplication, _RnaSmallVariant):
-    """Stores information on an RNA duplication variant and converts to other position types."""
+    """Stores information on an RNA duplication variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2005,7 +1999,7 @@ class RnaDuplication(_Duplication, _RnaSmallVariant):
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Frameshift(_SmallVariant):
-    """Base class for insertion variant objects."""
+    """Base class for insertion variants."""
 
     @property
     def type(self) -> str:
@@ -2019,7 +2013,7 @@ class _Frameshift(_SmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class ProteinFrameshift(_Frameshift, _ProteinSmallVariant):
-    """Stores information on a protein frameshift variant and converts to other position types."""
+    """Stores information on a protein frameshift variant and maps to other position types."""
 
     def to_cdna(self, canonical: bool = False) -> List[_CdnaSmallVariant]:
         """Map this variants to one more cDNA variants.
@@ -2082,7 +2076,7 @@ class ProteinFrameshift(_Frameshift, _ProteinSmallVariant):
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Insertion(_SmallVariant):
-    """Base class for insertion variant objects."""
+    """Base class for insertion variants."""
 
     @property
     def type(self) -> str:
@@ -2096,7 +2090,7 @@ class _Insertion(_SmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class CdnaInsertion(_Insertion, _CdnaSmallVariant):
-    """Stores information on a cDNA insertion variant and converts to other position types."""
+    """Stores information on a cDNA insertion variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2107,7 +2101,7 @@ class CdnaInsertion(_Insertion, _CdnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class DnaInsertion(_Insertion, _DnaSmallVariant):
-    """Stores information on a DNA insertion variant and converts to other position types."""
+    """Stores information on a DNA insertion variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2118,7 +2112,7 @@ class DnaInsertion(_Insertion, _DnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class ProteinInsertion(_Insertion, _ProteinSmallVariant):
-    """Stores information on a protein insertion variant and converts to other position types."""
+    """Stores information on a protein insertion variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2131,7 +2125,7 @@ class ProteinInsertion(_Insertion, _ProteinSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class RnaInsertion(_Insertion, _RnaSmallVariant):
-    """Stores information on an RNA insertion variant and converts to other position types."""
+    """Stores information on an RNA insertion variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2145,7 +2139,7 @@ class RnaInsertion(_Insertion, _RnaSmallVariant):
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Substitution:
-    """Base class for substitution variant objects."""
+    """Base class for substitution variants."""
 
     refseq: str
     altseq: str
@@ -2162,7 +2156,7 @@ class _Substitution:
 
 @dataclass(eq=True, frozen=True)
 class CdnaSubstitution(_Substitution, _CdnaSmallVariant):
-    """Stores information on a cDNA substitution variant and converts to other position types."""
+    """Stores information on a cDNA substitution variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2171,7 +2165,7 @@ class CdnaSubstitution(_Substitution, _CdnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class DnaSubstitution(_Substitution, _DnaSmallVariant):
-    """Stores information on a DNA substitution variant and converts to other position types."""
+    """Stores information on a DNA substitution variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2180,7 +2174,7 @@ class DnaSubstitution(_Substitution, _DnaSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class ProteinSubstitution(_Substitution, _ProteinSmallVariant):
-    """Stores information on a protein substitution variant and converts to other position types."""
+    """Stores information on a protein substitution variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2189,7 +2183,7 @@ class ProteinSubstitution(_Substitution, _ProteinSmallVariant):
 
 @dataclass(eq=True, frozen=True)
 class RnaSubstitution(_Substitution, _RnaSmallVariant):
-    """Stores information on an RNA substitution variant and converts to other position types."""
+    """Stores information on an RNA substitution variant and maps to other position types."""
 
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
@@ -2202,11 +2196,11 @@ class RnaSubstitution(_Substitution, _RnaSmallVariant):
 MappablePositionOrSmallVariant = TypeVar(
     "MappablePositionOrSmallVariant",
     bound=Union[
-        CdnaMappablePosition,
-        DnaMappablePosition,
-        ExonMappablePosition,
-        ProteinMappablePosition,
-        RnaMappablePosition,
+        CdnaPosition,
+        DnaPosition,
+        ExonPosition,
+        ProteinPosition,
+        RnaPosition,
         _CdnaSmallVariant,
         _DnaSmallVariant,
         _ExonSmallVariant,
@@ -2221,22 +2215,10 @@ MappablePositionOrSmallVariant = TypeVar(
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
 class _Fusion(_Variant):
-    """Base class for fusion variant objects."""
+    """Base class for fusion variants."""
 
-    breakpoint1: Union[
-        CdnaMappablePosition,
-        DnaMappablePosition,
-        ExonMappablePosition,
-        ProteinMappablePosition,
-        RnaMappablePosition,
-    ]
-    breakpoint2: Union[
-        CdnaMappablePosition,
-        DnaMappablePosition,
-        ExonMappablePosition,
-        ProteinMappablePosition,
-        RnaMappablePosition,
-    ]
+    breakpoint1: Union[CdnaPosition, DnaPosition, ExonPosition, ProteinPosition, RnaPosition]
+    breakpoint2: Union[CdnaPosition, DnaPosition, ExonPosition, ProteinPosition, RnaPosition]
 
     @classmethod
     def copy_from(cls, fusion: _Fusion, **kwargs):
@@ -2352,7 +2334,7 @@ class _Fusion(_Variant):
         Returns:
             str: The reference sequence
         """
-        raise NotImplementedError()  # Defined be inheriting classes
+        raise NotImplementedError()  # Defined by inheriting class
 
     def to_cdna(self, canonical: bool = False) -> List[CdnaFusion]:
         """Map this fusion to one more cDNA fusions.
@@ -2447,7 +2429,7 @@ class _Fusion(_Variant):
 
 @dataclass(eq=True, frozen=True)
 class CdnaFusion(_Fusion):
-    """Stores information on a cDNA fusion variant and converts to other position types."""
+    """Stores information on a cDNA fusion variant and maps to other position types."""
 
     @property
     def is_cdna(self) -> bool:
@@ -2461,7 +2443,7 @@ class CdnaFusion(_Fusion):
 
 @dataclass(eq=True, frozen=True)
 class DnaFusion(_Fusion):
-    """Stores information on a DNA fusion variant and converts to other position types."""
+    """Stores information on a DNA fusion variant and maps to other position types."""
 
     @property
     def is_dna(self) -> bool:
@@ -2475,7 +2457,7 @@ class DnaFusion(_Fusion):
 
 @dataclass(eq=True, frozen=True)
 class ExonFusion(_Fusion):
-    """Stores information on an exon fusion variant and converts to other position types."""
+    """Stores information on an exon fusion variant and maps to other position types."""
 
     @property
     def is_exon(self) -> bool:
@@ -2489,7 +2471,7 @@ class ExonFusion(_Fusion):
 
 @dataclass(eq=True, frozen=True)
 class ProteinFusion(_Fusion):
-    """Stores information on a protein fusion variant and converts to other position types."""
+    """Stores information on a protein fusion variant and maps to other position types."""
 
     @property
     def is_protein(self) -> bool:
@@ -2503,7 +2485,7 @@ class ProteinFusion(_Fusion):
 
 @dataclass(eq=True, frozen=True)
 class RnaFusion(_Fusion):
-    """Stores information on a RNA fusion variant and converts to other position types."""
+    """Stores information on a RNA fusion variant and maps to other position types."""
 
     @property
     def is_rna(self) -> bool:
