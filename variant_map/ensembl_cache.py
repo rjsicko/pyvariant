@@ -1,3 +1,4 @@
+"""Definitions for the `EnsemblCache` class."""
 import os.path
 import sys
 from pathlib import Path

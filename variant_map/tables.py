@@ -1,3 +1,4 @@
+"""Nucleotide and amino acid codon tables."""
 # IUPAC nucleotide codes
 DNA = {
     "A": ["A"],

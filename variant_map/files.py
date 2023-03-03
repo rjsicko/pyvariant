@@ -1,3 +1,4 @@
+"""Collection of methods for handling files."""
 import gzip
 import os.path
 import shutil

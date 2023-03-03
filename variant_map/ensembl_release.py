@@ -1,3 +1,4 @@
+"""Definitions for the `EnsemblRelease` class."""
 from __future__ import annotations
 
 from typing import List, Optional

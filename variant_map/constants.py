@@ -1,3 +1,4 @@
+"""Collection of constants used throughout the package."""
 import os.path
 
 # Package constants

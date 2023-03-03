@@ -1,3 +1,4 @@
+"""Methods implementing a command line interface for installing package data."""
 import argparse
 
 from .ensembl_cache import EnsemblCache, get_cache_dir

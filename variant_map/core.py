@@ -1,3 +1,4 @@
+"""Core logic for handling annotations and mapping positions/variants between different types."""
 from __future__ import annotations
 
 from itertools import product
@@ -21,7 +22,6 @@ from .positions import (
     CdnaPosition,
     DnaPosition,
     ExonPosition,
-    MappablePositionOrSmallVariant,
     ProteinPosition,
     RnaPosition,
     _CdnaSmallVariant,
@@ -31,6 +31,7 @@ from .positions import (
     _RnaSmallVariant,
 )
 from .tables import AMINO_ACID_TABLE
+from .types import PositionOrSmallVariantType
 from .utils import (
     calc_cdna_to_protein,
     expand_nt,
@@ -3999,22 +4000,20 @@ class Core:
 
 
 def join_positions(
-    start: List[MappablePositionOrSmallVariant],
-    end: List[MappablePositionOrSmallVariant],
-    merge_on: str,
-) -> List[MappablePositionOrSmallVariant]:
+    start: List[PositionOrSmallVariantType], end: List[PositionOrSmallVariantType], merge_on: str
+) -> List[PositionOrSmallVariantType]:
     """Return the combination of two list of position or variant objects - one of start positions
     and one of end positions - into one list by the given key (e.g. 'transcript_id').
 
     All positions must be of the same class.
 
     Args:
-        start (List[MappablePositionOrSmallVariant]): Start positions
-        end (List[MappablePositionOrSmallVariant]): End positions
+        start (List[PositionOrSmallVariantType]): Start positions
+        end (List[PositionOrSmallVariantType]): End positions
         merge_on (str): Attribute to merge on (e.g. 'transcript_id')
 
     Returns:
-        List[MappablePositionOrSmallVariant]: New position or variant objects
+        List[PositionOrSmallVariantType]: New position or variant objects
     """
     result = set()
 

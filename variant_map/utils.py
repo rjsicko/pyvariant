@@ -1,3 +1,4 @@
+"""Collection of utility methods used throughout the package."""
 from itertools import product, zip_longest
 from math import floor
 from string import punctuation

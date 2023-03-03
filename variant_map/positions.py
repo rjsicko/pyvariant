@@ -1,8 +1,9 @@
+"""Class definitions for position/variant objects."""
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
 from itertools import product
-from typing import TYPE_CHECKING, Any, Dict, List, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 if TYPE_CHECKING:
     from .core import Core
@@ -2188,26 +2189,6 @@ class RnaSubstitution(_Substitution, _RnaSmallVariant):
     def __str__(self) -> str:
         start = format_hgvs_position(self.start, self.start_offset)
         return f"{self.transcript_id}:r.{start}{self.refseq}>{self.altseq}"
-
-
-# -------------------------------------------------------------------------------------------------
-# Type hint variables
-# -------------------------------------------------------------------------------------------------
-MappablePositionOrSmallVariant = TypeVar(
-    "MappablePositionOrSmallVariant",
-    bound=Union[
-        CdnaPosition,
-        DnaPosition,
-        ExonPosition,
-        ProteinPosition,
-        RnaPosition,
-        _CdnaSmallVariant,
-        _DnaSmallVariant,
-        _ExonSmallVariant,
-        _ProteinSmallVariant,
-        _RnaSmallVariant,
-    ],
-)
 
 
 # -------------------------------------------------------------------------------------------------
