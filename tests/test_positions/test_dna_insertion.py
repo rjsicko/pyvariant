@@ -5,9 +5,8 @@ from variant_map.positions import CdnaInsertion, DnaInsertion, ProteinInsertion,
 
 
 @pytest.fixture()
-def variant(ensembl69):
+def variant():
     return DnaInsertion(
-        _data=ensembl69,
         contig_id="17",
         start=7579470,
         start_offset=0,
@@ -44,7 +43,6 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     expected = CdnaInsertion(
-        _data=ensembl69,
         contig_id="17",
         start=216,
         start_offset=0,
@@ -59,7 +57,7 @@ def test_to_cdna(ensembl69, variant):
         refseq="CG",
         altseq="CAAAG",
     )
-    result = variant.to_cdna()
+    result = ensembl69.to_cdna(variant)
     assert expected in result
     assert len(result) == 8
 
@@ -67,7 +65,6 @@ def test_to_cdna(ensembl69, variant):
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaInsertion(
-            _data=ensembl69,
             contig_id="17",
             start=7579470,
             start_offset=0,
@@ -78,12 +75,11 @@ def test_to_dna(ensembl69, variant):
             altseq="CAAAG",
         )
     ]
-    assert variant.to_dna() == expected
+    assert ensembl69.to_dna(variant) == expected
 
 
 def test_to_protein(ensembl69, variant):
     expected = ProteinInsertion(
-        _data=ensembl69,
         contig_id="17",
         start=72,
         start_offset=0,
@@ -98,14 +94,13 @@ def test_to_protein(ensembl69, variant):
         refseq="PV",
         altseq="PKV",
     )
-    result = variant.to_protein()
+    result = ensembl69.to_protein(variant)
     assert expected in result
     assert len(result) == 8
 
 
 def test_to_rna(ensembl69, variant):
     expected = RnaInsertion(
-        _data=ensembl69,
         contig_id="17",
         start=406,
         start_offset=0,
@@ -119,6 +114,6 @@ def test_to_rna(ensembl69, variant):
         refseq="CG",
         altseq="CAAAG",
     )
-    result = variant.to_rna()
+    result = ensembl69.to_rna(variant)
     assert expected in result
     assert len(result) == 9

@@ -76,7 +76,7 @@ def test_is_bgzipped_true(bgzip_file):
 
 
 def test_get_cache_dir():
-    assert get_cache_dir().endswith(NAME)
+    assert get_cache_dir().rstrip("/").endswith(NAME)
 
 
 def test_get_cache_dir_env_var(cache_env_var):

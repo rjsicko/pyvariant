@@ -10,9 +10,8 @@ from variant_map.positions import (
 
 
 @pytest.fixture()
-def variant(ensembl69):
+def variant():
     return ProteinDuplication(
-        _data=ensembl69,
         contig_id="4",
         start=501,
         start_offset=0,
@@ -54,7 +53,6 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     expected = CdnaDuplication(
-        _data=ensembl69,
         contig_id="4",
         start=1501,
         start_offset=0,
@@ -69,14 +67,13 @@ def test_to_cdna(ensembl69, variant):
         refseq="TCT",
         altseq="TCTTCT",
     )
-    result = variant.to_cdna()
+    result = ensembl69.to_cdna(variant)
     assert expected in result
     assert len(result) == 36
 
 
 def test_to_dna(ensembl69, variant):
     expected = DnaDuplication(
-        _data=ensembl69,
         contig_id="4",
         start=55592177,
         start_offset=0,
@@ -86,7 +83,7 @@ def test_to_dna(ensembl69, variant):
         refseq="TCT",
         altseq="TCTTCT",
     )
-    result = variant.to_dna()
+    result = ensembl69.to_dna(variant)
     assert expected in result
     assert len(result) == 36
 
@@ -94,7 +91,6 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinDuplication(
-            _data=ensembl69,
             contig_id="4",
             start=501,
             start_offset=0,
@@ -110,12 +106,11 @@ def test_to_protein(ensembl69, variant):
             altseq="SS",
         )
     ]
-    assert variant.to_protein() == expected
+    assert ensembl69.to_protein(variant) == expected
 
 
 def test_to_rna(ensembl69, variant):
     expected = RnaDuplication(
-        _data=ensembl69,
         contig_id="4",
         start=1598,
         start_offset=0,
@@ -129,6 +124,6 @@ def test_to_rna(ensembl69, variant):
         refseq="TCT",
         altseq="TCTTCT",
     )
-    result = variant.to_rna()
+    result = ensembl69.to_rna(variant)
     assert expected in result
     assert len(result) == 36

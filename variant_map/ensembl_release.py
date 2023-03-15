@@ -1,11 +1,12 @@
 """Definitions for the `EnsemblRelease` class."""
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, cast
 
 from .core import Core
 from .ensembl_cache import EnsemblCache
 from .files import tsv_to_dict, txt_to_list
+from .positions import CdnaPosition, DnaPosition, ProteinPosition, RnaPosition
 
 
 class EnsemblRelease(Core):
@@ -79,21 +80,44 @@ class EnsemblRelease(Core):
             clean=clean, recache=recache, redownload=redownload, restrict_genes=restrict_genes
         )
 
-    def cds_sequence(
-        self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
-    ) -> str:
-        """Return the CDS sequence between the given position(s), inclusive.
+    # TODO: add type hints
+    def sequence(self, position) -> str:
+        """Return the sequence for the given position, inclusive.
 
         Args:
-            transcript_id (str): transcript ID
-            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
-            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+            position (Position): Position to retrieve sequence for
 
         Returns:
-            str: The CDS sequence
-        """
-        offset = self.cds_offset(transcript_id)
-        cds_start = start + offset if start is not None else offset
-        cds_end = end + offset if end is not None else offset
+            str: Sequence
 
-        return self._sequence(self.rna_fasta, transcript_id, start=cds_start, end=cds_end)
+        Raises:
+            ValueError: No method exists for getting a sequence for the given position type
+        """
+        # TODO: Get sequence for offset variants?
+        if position.start_offset or position.end_offset:
+            raise ValueError(f"Unable to get sequence for offset position {position}")
+
+        # Ensembl does not provide a CDS FASTA so we need to get the sequence from the RNA FASTA
+        if position.is_cdna:
+            if self.cds_fasta:
+                return self._cds_sequence(position.transcript_id, position.start, position.end)
+            else:
+                position = cast(CdnaPosition, position)
+                if rna := self.to_rna(position):
+                    position = rna[0]
+
+        if position.is_dna:
+            position = cast(DnaPosition, position)
+            return self._dna_sequence(
+                position.contig_id, position.start, position.end, position.strand
+            )
+        elif position.is_exon:
+            raise NotImplementedError(f"Unable to get sequence for {position}")
+        elif position.is_protein:
+            position = cast(ProteinPosition, position)
+            return self._protein_sequence(position.protein_id, position.start, position.end)
+        elif position.is_rna:
+            position = cast(RnaPosition, position)
+            return self._rna_sequence(position.transcript_id, position.start, position.end)
+        else:
+            raise ValueError(f"Unable to get sequence for {position}")

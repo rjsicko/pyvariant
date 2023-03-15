@@ -9,192 +9,107 @@ from variant_map.positions import (
 )
 
 
-def test_is_cdna(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+def test_is_cdna():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    assert position.is_cdna is False
+    assert from_position.is_cdna is False
 
 
-def test_is_dna(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+def test_is_dna():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    assert position.is_dna is True
+    assert from_position.is_dna is True
 
 
-def test_is_exon(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+def test_is_exon():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    assert position.is_exon is False
+    assert from_position.is_exon is False
 
 
-def test_is_protein(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+def test_is_protein():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    assert position.is_protein is False
+    assert from_position.is_protein is False
 
 
-def test_is_rna(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+def test_is_rna():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    assert position.is_rna is False
+    assert from_position.is_rna is False
 
 
-def test_is_on_negative_strand(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+def test_is_on_negative_strand():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    assert position.on_negative_strand is True
+    assert from_position.on_negative_strand is True
 
 
-def test_is_on_positive_strand(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+def test_is_on_positive_strand():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    assert position.on_positive_strand is False
+    assert from_position.on_positive_strand is False
 
 
 def test_sequence(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    sequence = position.sequence()
+    sequence = ensembl100.sequence(from_position)
     assert (sequence[:3], sequence[-3:]) == ("GGT", "GGG")
 
 
 def test_sequence_offset(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=1,
-        end=1293313,
-        end_offset=1,
-        strand="-",
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=1, end=1293313, end_offset=1, strand="-"
     )
     with pytest.raises(ValueError):
-        position.sequence()
+        ensembl100.sequence(from_position)
 
 
-def test_str_mutli_position(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+def test_str_mutli_position():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
-    assert str(position) == "5:g.1282623_1293313"
+    assert str(from_position) == "5:g.1282623_1293313"
 
 
-def test_str_one_position(ensembl100):
-    position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1282623,
-        end_offset=0,
-        strand="-",
+def test_str_one_position():
+    from_position = DnaPosition(
+        contig_id="5", start=1282623, start_offset=0, end=1282623, end_offset=0, strand="-"
     )
-    assert str(position) == "5:g.1282623"
+    assert str(from_position) == "5:g.1282623"
 
 
 def test_to_cdna_dna_end_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1253147,
-        start_offset=0,
-        end=1253149,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1253147, start_offset=0, end=1253149, end_offset=0, strand="-"
     )
     to_positions = []
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_end_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32400266,
-        start_offset=0,
-        end=32400268,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32400266, start_offset=0, end=32400268, end_offset=0, strand="+"
     )
     to_positions = []
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_exon_boundary_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
     to_positions = [
         CdnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1573,
             start_offset=0,
@@ -208,7 +123,6 @@ def test_to_cdna_dna_exon_boundary_minus_strand(ensembl100):
             protein_id="ENSP00000309572",
         ),
         CdnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1573,
             start_offset=0,
@@ -222,7 +136,6 @@ def test_to_cdna_dna_exon_boundary_minus_strand(ensembl100):
             protein_id="ENSP00000334346",
         ),
         CdnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1573,
             start_offset=0,
@@ -236,22 +149,15 @@ def test_to_cdna_dna_exon_boundary_minus_strand(ensembl100):
             protein_id="ENSP00000425003",
         ),
     ]
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_exon_boundary_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32316527,
-        start_offset=0,
-        end=32319078,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32316527, start_offset=0, end=32319078, end_offset=0, strand="+"
     )
     to_positions = [
         CdnaPosition(
-            _data=ensembl100,
             contig_id="13",
             start=67,
             start_offset=0,
@@ -265,7 +171,6 @@ def test_to_cdna_dna_exon_boundary_plus_strand(ensembl100):
             protein_id="ENSP00000369497",
         ),
         CdnaPosition(
-            _data=ensembl100,
             contig_id="13",
             start=67,
             start_offset=0,
@@ -279,50 +184,31 @@ def test_to_cdna_dna_exon_boundary_plus_strand(ensembl100):
             protein_id="ENSP00000439902",
         ),
     ]
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_negative_offset_into_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294666,
-        start_offset=-1,
-        end=1294666,
-        end_offset=-1,
-        strand="-",
+        contig_id="5", start=1294666, start_offset=-1, end=1294666, end_offset=-1, strand="-"
     )
     to_positions = []
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_overlapping_genes_different_strands_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="-",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="-"
     )
     to_positions = []
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_overlapping_genes_different_strands_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="+",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="+"
     )
     to_positions = [
         CdnaPosition(
-            _data=ensembl100,
             contig_id="6",
             start=580,
             start_offset=0,
@@ -336,36 +222,23 @@ def test_to_cdna_dna_overlapping_genes_different_strands_plus_strand(ensembl100)
             protein_id="ENSP00000439397",
         )
     ]
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_positive_offset_normalized_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294771,
-        start_offset=1,
-        end=1294771,
-        end_offset=2,
-        strand="+",
+        contig_id="5", start=1294771, start_offset=1, end=1294771, end_offset=2, strand="+"
     )
     to_positions = []
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294667,
-        start_offset=1,
-        end=1294667,
-        end_offset=1,
-        strand="-",
+        contig_id="5", start=1294667, start_offset=1, end=1294667, end_offset=1, strand="-"
     )
     to_positions = [
         CdnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=220,
             start_offset=0,
@@ -379,7 +252,6 @@ def test_to_cdna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             protein_id="ENSP00000309572",
         ),
         CdnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=220,
             start_offset=0,
@@ -393,7 +265,6 @@ def test_to_cdna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             protein_id="ENSP00000334346",
         ),
         CdnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=220,
             start_offset=0,
@@ -407,7 +278,6 @@ def test_to_cdna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             protein_id="ENSP00000425003",
         ),
         CdnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=220,
             start_offset=0,
@@ -421,314 +291,163 @@ def test_to_cdna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             protein_id="ENSP00000499759",
         ),
     ]
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_start_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1295066,
-        start_offset=0,
-        end=1295068,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1295066, start_offset=0, end=1295068, end_offset=0, strand="-"
     )
     to_positions = []
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_cdna_dna_start_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32315508,
-        start_offset=0,
-        end=32315510,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32315508, start_offset=0, end=32315510, end_offset=0, strand="+"
     )
     to_positions = []
-    assert from_position.to_cdna() == to_positions
+    assert ensembl100.to_cdna(from_position) == to_positions
 
 
 def test_to_dna_dna_end_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1253147,
-        start_offset=0,
-        end=1253149,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1253147, start_offset=0, end=1253149, end_offset=0, strand="-"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1253147,
-            start_offset=0,
-            end=1253149,
-            end_offset=0,
-            strand="-",
+            contig_id="5", start=1253147, start_offset=0, end=1253149, end_offset=0, strand="-"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_end_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32400266,
-        start_offset=0,
-        end=32400268,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32400266, start_offset=0, end=32400268, end_offset=0, strand="+"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=32400266,
-            start_offset=0,
-            end=32400268,
-            end_offset=0,
-            strand="+",
+            contig_id="13", start=32400266, start_offset=0, end=32400268, end_offset=0, strand="+"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_exon_boundary_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1282623,
-            start_offset=0,
-            end=1293313,
-            end_offset=0,
-            strand="-",
+            contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_exon_boundary_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32316527,
-        start_offset=0,
-        end=32319078,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32316527, start_offset=0, end=32319078, end_offset=0, strand="+"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=32316527,
-            start_offset=0,
-            end=32319078,
-            end_offset=0,
-            strand="+",
+            contig_id="13", start=32316527, start_offset=0, end=32319078, end_offset=0, strand="+"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_negative_offset_into_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294666,
-        start_offset=-1,
-        end=1294666,
-        end_offset=-1,
-        strand="-",
+        contig_id="5", start=1294666, start_offset=-1, end=1294666, end_offset=-1, strand="-"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1294667,
-            start_offset=0,
-            end=1294667,
-            end_offset=0,
-            strand="-",
+            contig_id="5", start=1294667, start_offset=0, end=1294667, end_offset=0, strand="-"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_overlapping_genes_different_strands_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="-",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="-"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="6",
-            start=31166302,
-            start_offset=0,
-            end=31166304,
-            end_offset=0,
-            strand="-",
+            contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="-"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_overlapping_genes_different_strands_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="+",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="+"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="6",
-            start=31166302,
-            start_offset=0,
-            end=31166304,
-            end_offset=0,
-            strand="+",
+            contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="+"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_positive_offset_normalized_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294771,
-        start_offset=1,
-        end=1294771,
-        end_offset=2,
-        strand="+",
+        contig_id="5", start=1294771, start_offset=1, end=1294771, end_offset=2, strand="+"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1294772,
-            start_offset=0,
-            end=1294773,
-            end_offset=0,
-            strand="+",
+            contig_id="5", start=1294772, start_offset=0, end=1294773, end_offset=0, strand="+"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294667,
-        start_offset=1,
-        end=1294667,
-        end_offset=1,
-        strand="-",
+        contig_id="5", start=1294667, start_offset=1, end=1294667, end_offset=1, strand="-"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1294666,
-            start_offset=0,
-            end=1294666,
-            end_offset=0,
-            strand="-",
+            contig_id="5", start=1294666, start_offset=0, end=1294666, end_offset=0, strand="-"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_start_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1295066,
-        start_offset=0,
-        end=1295068,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1295066, start_offset=0, end=1295068, end_offset=0, strand="-"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1295066,
-            start_offset=0,
-            end=1295068,
-            end_offset=0,
-            strand="-",
+            contig_id="5", start=1295066, start_offset=0, end=1295068, end_offset=0, strand="-"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_dna_dna_start_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32315508,
-        start_offset=0,
-        end=32315510,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32315508, start_offset=0, end=32315510, end_offset=0, strand="+"
     )
     to_positions = [
         DnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=32315508,
-            start_offset=0,
-            end=32315510,
-            end_offset=0,
-            strand="+",
+            contig_id="13", start=32315508, start_offset=0, end=32315510, end_offset=0, strand="+"
         )
     ]
-    assert from_position.to_dna() == to_positions
+    assert ensembl100.to_dna(from_position) == to_positions
 
 
 def test_to_exon_dna_end_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1253147,
-        start_offset=0,
-        end=1253149,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1253147, start_offset=0, end=1253149, end_offset=0, strand="-"
     )
     to_positions = [
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=11,
             start_offset=0,
@@ -742,36 +461,23 @@ def test_to_exon_dna_end_minus_strand(ensembl100):
             exon_id="ENSE00001871170",
         )
     ]
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_end_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32400266,
-        start_offset=0,
-        end=32400268,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32400266, start_offset=0, end=32400268, end_offset=0, strand="+"
     )
     to_positions = []
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_exon_boundary_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
     to_positions = [
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -785,7 +491,6 @@ def test_to_exon_dna_exon_boundary_minus_strand(ensembl100):
             exon_id="ENSE00001197112",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -799,7 +504,6 @@ def test_to_exon_dna_exon_boundary_minus_strand(ensembl100):
             exon_id="ENSE00001197112",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -813,7 +517,6 @@ def test_to_exon_dna_exon_boundary_minus_strand(ensembl100):
             exon_id="ENSE00001197112",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -827,22 +530,15 @@ def test_to_exon_dna_exon_boundary_minus_strand(ensembl100):
             exon_id="ENSE00003863765",
         ),
     ]
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_exon_boundary_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32316527,
-        start_offset=0,
-        end=32319078,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32316527, start_offset=0, end=32319078, end_offset=0, strand="+"
     )
     to_positions = [
         ExonPosition(
-            _data=ensembl100,
             contig_id="13",
             start=2,
             start_offset=0,
@@ -856,7 +552,6 @@ def test_to_exon_dna_exon_boundary_plus_strand(ensembl100):
             exon_id="ENSE00001484009",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="13",
             start=2,
             start_offset=0,
@@ -870,7 +565,6 @@ def test_to_exon_dna_exon_boundary_plus_strand(ensembl100):
             exon_id="ENSE00001484009",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="13",
             start=1,
             start_offset=0,
@@ -884,36 +578,23 @@ def test_to_exon_dna_exon_boundary_plus_strand(ensembl100):
             exon_id="ENSE00003728983",
         ),
     ]
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_negative_offset_into_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294666,
-        start_offset=-1,
-        end=1294666,
-        end_offset=-1,
-        strand="-",
+        contig_id="5", start=1294666, start_offset=-1, end=1294666, end_offset=-1, strand="-"
     )
     to_positions = []
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_overlapping_genes_different_strands_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="-",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="-"
     )
     to_positions = [
         ExonPosition(
-            _data=ensembl100,
             contig_id="6",
             start=1,
             start_offset=0,
@@ -927,7 +608,6 @@ def test_to_exon_dna_overlapping_genes_different_strands_minus_strand(ensembl100
             exon_id="ENSE00002568331",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="6",
             start=1,
             start_offset=0,
@@ -941,22 +621,15 @@ def test_to_exon_dna_overlapping_genes_different_strands_minus_strand(ensembl100
             exon_id="ENSE00002033137",
         ),
     ]
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_overlapping_genes_different_strands_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="+",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="+"
     )
     to_positions = [
         ExonPosition(
-            _data=ensembl100,
             contig_id="6",
             start=2,
             start_offset=0,
@@ -970,36 +643,23 @@ def test_to_exon_dna_overlapping_genes_different_strands_plus_strand(ensembl100)
             exon_id="ENSE00002283659",
         )
     ]
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_positive_offset_normalized_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294771,
-        start_offset=1,
-        end=1294771,
-        end_offset=2,
-        strand="+",
+        contig_id="5", start=1294771, start_offset=1, end=1294771, end_offset=2, strand="+"
     )
     to_positions = []
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294667,
-        start_offset=1,
-        end=1294667,
-        end_offset=1,
-        strand="-",
+        contig_id="5", start=1294667, start_offset=1, end=1294667, end_offset=1, strand="-"
     )
     to_positions = [
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -1013,7 +673,6 @@ def test_to_exon_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             exon_id="ENSE00001197112",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -1027,7 +686,6 @@ def test_to_exon_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             exon_id="ENSE00001197112",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -1041,7 +699,6 @@ def test_to_exon_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             exon_id="ENSE00001197112",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -1055,22 +712,15 @@ def test_to_exon_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             exon_id="ENSE00003863765",
         ),
     ]
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_start_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1295066,
-        start_offset=0,
-        end=1295068,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1295066, start_offset=0, end=1295068, end_offset=0, strand="-"
     )
     to_positions = [
         ExonPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1,
             start_offset=0,
@@ -1084,22 +734,15 @@ def test_to_exon_dna_start_minus_strand(ensembl100):
             exon_id="ENSE00003896691",
         )
     ]
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_exon_dna_start_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32315508,
-        start_offset=0,
-        end=32315510,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32315508, start_offset=0, end=32315510, end_offset=0, strand="+"
     )
     to_positions = [
         ExonPosition(
-            _data=ensembl100,
             contig_id="13",
             start=1,
             start_offset=0,
@@ -1113,7 +756,6 @@ def test_to_exon_dna_start_plus_strand(ensembl100):
             exon_id="ENSE00001184784",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="13",
             start=1,
             start_offset=0,
@@ -1127,7 +769,6 @@ def test_to_exon_dna_start_plus_strand(ensembl100):
             exon_id="ENSE00002143308",
         ),
         ExonPosition(
-            _data=ensembl100,
             contig_id="13",
             start=1,
             start_offset=0,
@@ -1141,50 +782,31 @@ def test_to_exon_dna_start_plus_strand(ensembl100):
             exon_id="ENSE00002209788",
         ),
     ]
-    assert from_position.to_exon() == to_positions
+    assert ensembl100.to_exon(from_position) == to_positions
 
 
 def test_to_protein_dna_end_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1253147,
-        start_offset=0,
-        end=1253149,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1253147, start_offset=0, end=1253149, end_offset=0, strand="-"
     )
     to_positions = []
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_end_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32400266,
-        start_offset=0,
-        end=32400268,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32400266, start_offset=0, end=32400268, end_offset=0, strand="+"
     )
     to_positions = []
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_exon_boundary_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
     to_positions = [
         ProteinPosition(
-            _data=ensembl100,
             contig_id="5",
             start=525,
             start_offset=0,
@@ -1198,7 +820,6 @@ def test_to_protein_dna_exon_boundary_minus_strand(ensembl100):
             protein_id="ENSP00000309572",
         ),
         ProteinPosition(
-            _data=ensembl100,
             contig_id="5",
             start=525,
             start_offset=0,
@@ -1212,7 +833,6 @@ def test_to_protein_dna_exon_boundary_minus_strand(ensembl100):
             protein_id="ENSP00000334346",
         ),
         ProteinPosition(
-            _data=ensembl100,
             contig_id="5",
             start=525,
             start_offset=0,
@@ -1226,22 +846,15 @@ def test_to_protein_dna_exon_boundary_minus_strand(ensembl100):
             protein_id="ENSP00000425003",
         ),
     ]
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_exon_boundary_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32316527,
-        start_offset=0,
-        end=32319078,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32316527, start_offset=0, end=32319078, end_offset=0, strand="+"
     )
     to_positions = [
         ProteinPosition(
-            _data=ensembl100,
             contig_id="13",
             start=23,
             start_offset=0,
@@ -1255,7 +868,6 @@ def test_to_protein_dna_exon_boundary_plus_strand(ensembl100):
             protein_id="ENSP00000369497",
         ),
         ProteinPosition(
-            _data=ensembl100,
             contig_id="13",
             start=23,
             start_offset=0,
@@ -1269,50 +881,31 @@ def test_to_protein_dna_exon_boundary_plus_strand(ensembl100):
             protein_id="ENSP00000439902",
         ),
     ]
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_negative_offset_into_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294666,
-        start_offset=-1,
-        end=1294666,
-        end_offset=-1,
-        strand="-",
+        contig_id="5", start=1294666, start_offset=-1, end=1294666, end_offset=-1, strand="-"
     )
     to_positions = []
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_overlapping_genes_different_strands_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="-",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="-"
     )
     to_positions = []
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_overlapping_genes_different_strands_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="+",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="+"
     )
     to_positions = [
         ProteinPosition(
-            _data=ensembl100,
             contig_id="6",
             start=194,
             start_offset=0,
@@ -1326,36 +919,23 @@ def test_to_protein_dna_overlapping_genes_different_strands_plus_strand(ensembl1
             protein_id="ENSP00000439397",
         )
     ]
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_positive_offset_normalized_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294771,
-        start_offset=1,
-        end=1294771,
-        end_offset=2,
-        strand="+",
+        contig_id="5", start=1294771, start_offset=1, end=1294771, end_offset=2, strand="+"
     )
     to_positions = []
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294667,
-        start_offset=1,
-        end=1294667,
-        end_offset=1,
-        strand="-",
+        contig_id="5", start=1294667, start_offset=1, end=1294667, end_offset=1, strand="-"
     )
     to_positions = [
         ProteinPosition(
-            _data=ensembl100,
             contig_id="5",
             start=74,
             start_offset=0,
@@ -1369,7 +949,6 @@ def test_to_protein_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             protein_id="ENSP00000309572",
         ),
         ProteinPosition(
-            _data=ensembl100,
             contig_id="5",
             start=74,
             start_offset=0,
@@ -1383,7 +962,6 @@ def test_to_protein_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             protein_id="ENSP00000334346",
         ),
         ProteinPosition(
-            _data=ensembl100,
             contig_id="5",
             start=74,
             start_offset=0,
@@ -1397,7 +975,6 @@ def test_to_protein_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             protein_id="ENSP00000425003",
         ),
         ProteinPosition(
-            _data=ensembl100,
             contig_id="5",
             start=74,
             start_offset=0,
@@ -1411,50 +988,31 @@ def test_to_protein_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             protein_id="ENSP00000499759",
         ),
     ]
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_start_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1295066,
-        start_offset=0,
-        end=1295068,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1295066, start_offset=0, end=1295068, end_offset=0, strand="-"
     )
     to_positions = []
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_protein_dna_start_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32315508,
-        start_offset=0,
-        end=32315510,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32315508, start_offset=0, end=32315510, end_offset=0, strand="+"
     )
     to_positions = []
-    assert from_position.to_protein() == to_positions
+    assert ensembl100.to_protein(from_position) == to_positions
 
 
 def test_to_rna_dna_end_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1253147,
-        start_offset=0,
-        end=1253149,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1253147, start_offset=0, end=1253149, end_offset=0, strand="-"
     )
     to_positions = [
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=2420,
             start_offset=0,
@@ -1467,36 +1025,23 @@ def test_to_rna_dna_end_minus_strand(ensembl100):
             transcript_name="TERT-204",
         )
     ]
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_end_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32400266,
-        start_offset=0,
-        end=32400268,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32400266, start_offset=0, end=32400268, end_offset=0, strand="+"
     )
     to_positions = []
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_exon_boundary_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1282623,
-        start_offset=0,
-        end=1293313,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
     )
     to_positions = [
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1652,
             start_offset=0,
@@ -1509,7 +1054,6 @@ def test_to_rna_dna_exon_boundary_minus_strand(ensembl100):
             transcript_name="TERT-201",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1573,
             start_offset=0,
@@ -1522,7 +1066,6 @@ def test_to_rna_dna_exon_boundary_minus_strand(ensembl100):
             transcript_name="TERT-202",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1573,
             start_offset=0,
@@ -1535,7 +1078,6 @@ def test_to_rna_dna_exon_boundary_minus_strand(ensembl100):
             transcript_name="TERT-203",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1631,
             start_offset=0,
@@ -1548,22 +1090,15 @@ def test_to_rna_dna_exon_boundary_minus_strand(ensembl100):
             transcript_name="TERT-206",
         ),
     ]
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_exon_boundary_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32316527,
-        start_offset=0,
-        end=32319078,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32316527, start_offset=0, end=32319078, end_offset=0, strand="+"
     )
     to_positions = [
         RnaPosition(
-            _data=ensembl100,
             contig_id="13",
             start=300,
             start_offset=0,
@@ -1576,7 +1111,6 @@ def test_to_rna_dna_exon_boundary_plus_strand(ensembl100):
             transcript_name="BRCA2-201",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="13",
             start=294,
             start_offset=0,
@@ -1589,7 +1123,6 @@ def test_to_rna_dna_exon_boundary_plus_strand(ensembl100):
             transcript_name="BRCA2-206",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="13",
             start=67,
             start_offset=0,
@@ -1602,36 +1135,23 @@ def test_to_rna_dna_exon_boundary_plus_strand(ensembl100):
             transcript_name="BRCA2-207",
         ),
     ]
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_negative_offset_into_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294666,
-        start_offset=-1,
-        end=1294666,
-        end_offset=-1,
-        strand="-",
+        contig_id="5", start=1294666, start_offset=-1, end=1294666, end_offset=-1, strand="-"
     )
     to_positions = []
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_overlapping_genes_different_strands_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="-",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="-"
     )
     to_positions = [
         RnaPosition(
-            _data=ensembl100,
             contig_id="6",
             start=535,
             start_offset=0,
@@ -1644,7 +1164,6 @@ def test_to_rna_dna_overlapping_genes_different_strands_minus_strand(ensembl100)
             transcript_name="POU5F1-204",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="6",
             start=867,
             start_offset=0,
@@ -1657,22 +1176,15 @@ def test_to_rna_dna_overlapping_genes_different_strands_minus_strand(ensembl100)
             transcript_name="POU5F1-206",
         ),
     ]
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_overlapping_genes_different_strands_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="6",
-        start=31166302,
-        start_offset=0,
-        end=31166304,
-        end_offset=0,
-        strand="+",
+        contig_id="6", start=31166302, start_offset=0, end=31166304, end_offset=0, strand="+"
     )
     to_positions = [
         RnaPosition(
-            _data=ensembl100,
             contig_id="6",
             start=580,
             start_offset=0,
@@ -1685,36 +1197,23 @@ def test_to_rna_dna_overlapping_genes_different_strands_plus_strand(ensembl100):
             transcript_name="TCF19-204",
         )
     ]
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_positive_offset_normalized_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294771,
-        start_offset=1,
-        end=1294771,
-        end_offset=2,
-        strand="+",
+        contig_id="5", start=1294771, start_offset=1, end=1294771, end_offset=2, strand="+"
     )
     to_positions = []
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1294667,
-        start_offset=1,
-        end=1294667,
-        end_offset=1,
-        strand="-",
+        contig_id="5", start=1294667, start_offset=1, end=1294667, end_offset=1, strand="-"
     )
     to_positions = [
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=299,
             start_offset=0,
@@ -1727,7 +1226,6 @@ def test_to_rna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             transcript_name="TERT-201",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=220,
             start_offset=0,
@@ -1740,7 +1238,6 @@ def test_to_rna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             transcript_name="TERT-202",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=220,
             start_offset=0,
@@ -1753,7 +1250,6 @@ def test_to_rna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             transcript_name="TERT-203",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=278,
             start_offset=0,
@@ -1766,22 +1262,15 @@ def test_to_rna_dna_positive_offset_out_of_intron_minus_strand(ensembl100):
             transcript_name="TERT-206",
         ),
     ]
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_start_minus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1295066,
-        start_offset=0,
-        end=1295068,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1295066, start_offset=0, end=1295068, end_offset=0, strand="-"
     )
     to_positions = [
         RnaPosition(
-            _data=ensembl100,
             contig_id="5",
             start=1,
             start_offset=0,
@@ -1794,22 +1283,15 @@ def test_to_rna_dna_start_minus_strand(ensembl100):
             transcript_name="TERT-201",
         )
     ]
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions
 
 
 def test_to_rna_dna_start_plus_strand(ensembl100):
     from_position = DnaPosition(
-        _data=ensembl100,
-        contig_id="13",
-        start=32315508,
-        start_offset=0,
-        end=32315510,
-        end_offset=0,
-        strand="+",
+        contig_id="13", start=32315508, start_offset=0, end=32315510, end_offset=0, strand="+"
     )
     to_positions = [
         RnaPosition(
-            _data=ensembl100,
             contig_id="13",
             start=35,
             start_offset=0,
@@ -1822,7 +1304,6 @@ def test_to_rna_dna_start_plus_strand(ensembl100):
             transcript_name="BRCA2-201",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="13",
             start=4,
             start_offset=0,
@@ -1835,7 +1316,6 @@ def test_to_rna_dna_start_plus_strand(ensembl100):
             transcript_name="BRCA2-204",
         ),
         RnaPosition(
-            _data=ensembl100,
             contig_id="13",
             start=29,
             start_offset=0,
@@ -1848,4 +1328,4 @@ def test_to_rna_dna_start_plus_strand(ensembl100):
             transcript_name="BRCA2-206",
         ),
     ]
-    assert from_position.to_rna() == to_positions
+    assert ensembl100.to_rna(from_position) == to_positions

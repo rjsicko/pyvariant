@@ -10,9 +10,8 @@ from variant_map.positions import (
 
 
 @pytest.fixture()
-def variant(ensembl69):
+def variant():
     return DnaSubstitution(
-        _data=ensembl69,
         contig_id="12",
         start=25380283,
         start_offset=0,
@@ -50,7 +49,6 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaSubstitution(
-            _data=ensembl69,
             contig_id="12",
             start=175,
             start_offset=0,
@@ -66,7 +64,6 @@ def test_to_cdna(ensembl69, variant):
             altseq="T",
         ),
         CdnaSubstitution(
-            _data=ensembl69,
             contig_id="12",
             start=175,
             start_offset=0,
@@ -82,13 +79,12 @@ def test_to_cdna(ensembl69, variant):
             altseq="T",
         ),
     ]
-    assert variant.to_cdna() == expected
+    assert ensembl69.to_cdna(variant) == expected
 
 
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaSubstitution(
-            _data=ensembl69,
             contig_id="12",
             start=25380283,
             start_offset=0,
@@ -99,13 +95,12 @@ def test_to_dna(ensembl69, variant):
             altseq="T",
         )
     ]
-    assert variant.to_dna() == expected
+    assert ensembl69.to_dna(variant) == expected
 
 
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinSubstitution(
-            _data=ensembl69,
             contig_id="12",
             start=59,
             start_offset=0,
@@ -121,7 +116,6 @@ def test_to_protein(ensembl69, variant):
             altseq="S",
         ),
         ProteinSubstitution(
-            _data=ensembl69,
             contig_id="12",
             start=59,
             start_offset=0,
@@ -137,13 +131,12 @@ def test_to_protein(ensembl69, variant):
             altseq="S",
         ),
     ]
-    assert variant.to_protein() == expected
+    assert ensembl69.to_protein(variant) == expected
 
 
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaSubstitution(
-            _data=ensembl69,
             contig_id="12",
             start=239,
             start_offset=0,
@@ -158,7 +151,6 @@ def test_to_rna(ensembl69, variant):
             altseq="T",
         ),
         RnaSubstitution(
-            _data=ensembl69,
             contig_id="12",
             start=367,
             start_offset=0,
@@ -173,4 +165,4 @@ def test_to_rna(ensembl69, variant):
             altseq="T",
         ),
     ]
-    assert variant.to_rna() == expected
+    assert ensembl69.to_rna(variant) == expected

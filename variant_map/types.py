@@ -1,68 +1,9 @@
 """Type hints for position/variant objects."""
 from typing import TypeVar
 
-from .positions import (
-    CdnaDeletion,
-    CdnaDelins,
-    CdnaDuplication,
-    CdnaFusion,
-    CdnaInsertion,
-    CdnaPosition,
-    CdnaSubstitution,
-    DnaDeletion,
-    DnaDelins,
-    DnaDuplication,
-    DnaFusion,
-    DnaInsertion,
-    DnaPosition,
-    DnaSubstitution,
-    ExonFusion,
-    ExonPosition,
-    ProteinDeletion,
-    ProteinDelins,
-    ProteinDuplication,
-    ProteinFrameshift,
-    ProteinFusion,
-    ProteinInsertion,
-    ProteinPosition,
-    ProteinSubstitution,
-    RnaDeletion,
-    RnaDelins,
-    RnaDuplication,
-    RnaFusion,
-    RnaInsertion,
-    RnaPosition,
-    RnaSubstitution,
-)
+from .positions import _Fusion, _Position, _SmallVariant, _Variant
 
-PositionOrSmallVariantType = TypeVar(
-    "PositionOrSmallVariantType",
-    CdnaSubstitution,
-    CdnaDeletion,
-    CdnaDelins,
-    CdnaDuplication,
-    CdnaInsertion,
-    CdnaPosition,
-    DnaSubstitution,
-    DnaDeletion,
-    DnaDelins,
-    DnaDuplication,
-    DnaInsertion,
-    DnaPosition,
-    ExonPosition,
-    ProteinSubstitution,
-    ProteinDeletion,
-    ProteinDelins,
-    ProteinDuplication,
-    ProteinFrameshift,
-    ProteinInsertion,
-    ProteinPosition,
-    RnaSubstitution,
-    RnaDeletion,
-    RnaDelins,
-    RnaDuplication,
-    RnaInsertion,
-    RnaPosition,
-)
-
-FusionType = TypeVar("FusionType", CdnaFusion, DnaFusion, ExonFusion, ProteinFusion, RnaFusion)
+Fusion = TypeVar("Fusion", bound=_Fusion)
+Position = TypeVar("Position", bound=_Position)
+SmallVariant = TypeVar("SmallVariant", bound=_SmallVariant)
+Variant = TypeVar("Variant", bound=_Variant)

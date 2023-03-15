@@ -16,24 +16,12 @@ from variant_map.positions import (
 
 
 @pytest.fixture()
-def variant(ensembl69):
+def variant():
     breakpoint1 = DnaPosition(
-        _data=ensembl69,
-        contig_id="X",
-        start=48895958,
-        start_offset=0,
-        end=48896632,
-        end_offset=0,
-        strand="-",
+        contig_id="X", start=48895958, start_offset=0, end=48896632, end_offset=0, strand="-"
     )
     breakpoint2 = DnaPosition(
-        _data=ensembl69,
-        contig_id="1",
-        start=156752074,
-        start_offset=0,
-        end=156752084,
-        end_offset=0,
-        strand="+",
+        contig_id="1", start=156752074, start_offset=0, end=156752084, end_offset=0, strand="+"
     )
     return DnaFusion(breakpoint1, breakpoint2)
 
@@ -63,7 +51,6 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     breakpoint1 = CdnaPosition(
-        _data=ensembl69,
         contig_id="X",
         start=534,
         start_offset=0,
@@ -77,7 +64,6 @@ def test_to_cdna(ensembl69, variant):
         protein_id="ENSP00000314129",
     )
     breakpoint2 = CdnaPosition(
-        _data=ensembl69,
         contig_id="1",
         start=469,
         start_offset=0,
@@ -91,39 +77,26 @@ def test_to_cdna(ensembl69, variant):
         protein_id="ENSP00000271526",
     )
     expected = CdnaFusion(breakpoint1, breakpoint2)
-    result = variant.to_cdna()
+    result = ensembl69.to_cdna(variant)
     assert expected in result
     assert len(result) == 2
 
 
 def test_to_dna(ensembl69, variant):
     breakpoint1 = DnaPosition(
-        _data=ensembl69,
-        contig_id="X",
-        start=48895958,
-        start_offset=0,
-        end=48896632,
-        end_offset=0,
-        strand="-",
+        contig_id="X", start=48895958, start_offset=0, end=48896632, end_offset=0, strand="-"
     )
     breakpoint2 = DnaPosition(
-        _data=ensembl69,
-        contig_id="1",
-        start=156752074,
-        start_offset=0,
-        end=156752084,
-        end_offset=0,
-        strand="+",
+        contig_id="1", start=156752074, start_offset=0, end=156752084, end_offset=0, strand="+"
     )
     expected = DnaFusion(breakpoint1, breakpoint2)
-    result = variant.to_dna()
+    result = ensembl69.to_dna(variant)
     assert expected in result
     assert len(result) == 1
 
 
 def test_to_exon(ensembl69, variant):
     breakpoint1 = ExonPosition(
-        _data=ensembl69,
         contig_id="X",
         start=3,
         start_offset=0,
@@ -137,7 +110,6 @@ def test_to_exon(ensembl69, variant):
         exon_id="ENSE00002939607",
     )
     breakpoint2 = ExonPosition(
-        _data=ensembl69,
         contig_id="1",
         start=2,
         start_offset=0,
@@ -151,14 +123,13 @@ def test_to_exon(ensembl69, variant):
         exon_id="ENSE00002871917",
     )
     expected = ExonFusion(breakpoint1, breakpoint2)
-    result = variant.to_exon()
+    result = ensembl69.to_exon(variant)
     assert expected in result
     assert len(result) == 16
 
 
 def test_to_protein(ensembl69, variant):
     breakpoint1 = ProteinPosition(
-        _data=ensembl69,
         contig_id="X",
         start=178,
         start_offset=0,
@@ -172,7 +143,6 @@ def test_to_protein(ensembl69, variant):
         protein_id="ENSP00000314129",
     )
     breakpoint2 = ProteinPosition(
-        _data=ensembl69,
         contig_id="1",
         start=157,
         start_offset=0,
@@ -186,14 +156,13 @@ def test_to_protein(ensembl69, variant):
         protein_id="ENSP00000271526",
     )
     expected = ProteinFusion(breakpoint1, breakpoint2)
-    result = variant.to_protein()
+    result = ensembl69.to_protein(variant)
     assert expected in result
     assert len(result) == 2
 
 
 def test_to_rna(ensembl69, variant):
     breakpoint1 = RnaPosition(
-        _data=ensembl69,
         contig_id="X",
         start=794,
         start_offset=0,
@@ -206,7 +175,6 @@ def test_to_rna(ensembl69, variant):
         transcript_name="TFE3-001",
     )
     breakpoint2 = RnaPosition(
-        _data=ensembl69,
         contig_id="1",
         start=741,
         start_offset=0,
@@ -219,6 +187,6 @@ def test_to_rna(ensembl69, variant):
         transcript_name="PRCC-001",
     )
     expected = RnaFusion(breakpoint1, breakpoint2)
-    result = variant.to_rna()
+    result = ensembl69.to_rna(variant)
     assert expected in result
     assert len(result) == 16

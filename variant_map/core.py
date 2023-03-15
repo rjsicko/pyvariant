@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from itertools import product
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 from gtfparse import read_gtf
@@ -19,23 +19,59 @@ from .constants import (
 )
 from .files import read_fasta, tsv_to_dict, txt_to_list
 from .positions import (
+    CdnaDeletion,
+    CdnaDelins,
+    CdnaDuplication,
+    CdnaFusion,
+    CdnaInsertion,
     CdnaPosition,
+    CdnaSubstitution,
+    DnaDeletion,
+    DnaDelins,
+    DnaDuplication,
+    DnaFusion,
+    DnaInsertion,
     DnaPosition,
+    DnaSubstitution,
+    ExonFusion,
     ExonPosition,
+    ProteinDeletion,
+    ProteinDelins,
+    ProteinDuplication,
+    ProteinFusion,
+    ProteinInsertion,
     ProteinPosition,
+    ProteinSubstitution,
+    RnaDeletion,
+    RnaDelins,
+    RnaDuplication,
+    RnaFusion,
+    RnaInsertion,
     RnaPosition,
+    RnaSubstitution,
     _CdnaSmallVariant,
     _DnaSmallVariant,
     _ExonSmallVariant,
+    _Fusion,
+    _Position,
     _ProteinSmallVariant,
     _RnaSmallVariant,
+    _SmallVariant,
 )
 from .tables import AMINO_ACID_TABLE
-from .types import PositionOrSmallVariantType
+from .types import Position
 from .utils import (
     calc_cdna_to_protein,
+    collapse_seq_change,
     expand_nt,
+    is_deletion,
+    is_delins,
+    is_duplication,
+    is_frameshift,
+    is_insertion,
+    is_substitution,
     reverse_complement,
+    reverse_translate,
     split_by_codon,
     strip_version,
 )
@@ -488,83 +524,92 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # <feature>_sequence
     # ---------------------------------------------------------------------------------------------
-    def cds_sequence(
-        self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
-    ) -> str:
-        """Return the CDS sequence between the given position(s), inclusive.
-
-        Examples:
-            >>> ensembl100.cds_sequence("ENST00000380152", 10, end=20)
-            'GGATCCAAAGA'
+    # TODO: add type hints
+    def sequence(self, position) -> str:
+        """Return the sequence for the given position, inclusive.
 
         Args:
-            transcript_id (str): transcript ID
-            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
-            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+            position (Position): Position to retrieve sequence for
 
         Returns:
-            str: The CDS sequence
+            str: Sequence
+
+        Raises:
+            ValueError: No method exists for getting a sequence for the given position type
+        """
+        # TODO: Get sequence for offset variants?
+        if position.start_offset or position.end_offset:
+            raise ValueError(f"Unable to get sequence for offset position {position}")
+
+        if position.is_cdna:
+            position = cast(CdnaPosition, position)
+            return self._cds_sequence(position.transcript_id, position.start, position.end)
+        elif position.is_dna:
+            position = cast(DnaPosition, position)
+            return self._dna_sequence(
+                position.contig_id, position.start, position.end, position.strand
+            )
+        elif position.is_exon:
+            raise NotImplementedError(f"Unable to get sequence for {position}")
+        elif position.is_protein:
+            position = cast(ProteinPosition, position)
+            return self._protein_sequence(position.protein_id, position.start, position.end)
+        elif position.is_rna:
+            position = cast(RnaPosition, position)
+            return self._rna_sequence(position.transcript_id, position.start, position.end)
+        else:
+            raise ValueError(f"Unable to get sequence for {position}")
+
+    def _cds_sequence(self, transcript_id: str, start: int, end: int) -> str:
+        """Return the sequence for the given position, inclusive.
+
+        Args:
+            transcript_id (str): Transcript ID
+            start (int): Start position
+            end (int): End position
+
+        Returns:
+            str: CDS sequence
         """
         return self._sequence(self.cds_fasta, transcript_id, start=start, end=end)
 
-    def dna_sequence(
-        self,
-        contig_id: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None,
-        strand: str = "+",
-    ) -> str:
-        """Return the DNA sequence between the given position(s), inclusive.
-
-        Examples:
-            >>> ensembl100.dna_sequence("13", 32315086, end=32315096)
-            'AAGCTTTTGTA'
+    def _dna_sequence(self, contig_id: str, start: int, end: int, strand: str) -> str:
+        """Return the sequence for the given position, inclusive.
 
         Args:
-            contig_id (str): contig ID
-            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
-            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+            contig_id (str): Contig ID
+            start (int): Start position
+            end (int): End position
+            strand (str): Strand ('+' or '-')
 
         Returns:
-            str: The DNA sequence
+            str: DNA sequence
         """
         return self._sequence(self.dna_fasta, contig_id, start=start, end=end, strand=strand)
 
-    def protein_sequence(
-        self, protein_id: str, start: Optional[int] = None, end: Optional[int] = None
-    ) -> str:
-        """Return the protein sequence between the given position(s), inclusive.
-
-        Examples:
-            >>> ensembl100.protein_sequence("ENSP00000369497", 1, end=3)
-            'MPI'
+    def _protein_sequence(self, protein_id: str, start: int, end: int) -> str:
+        """Return the sequence for the given position, inclusive.
 
         Args:
-            protein_id (str): protein ID
-            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
-            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+            protein_id (str): Protein ID
+            start (int): Start position
+            end (int): End position
 
         Returns:
-            str: The protein sequence
+            str: Protein sequence
         """
         return self._sequence(self.protein_fasta, protein_id, start=start, end=end)
 
-    def rna_sequence(
-        self, transcript_id: str, start: Optional[int] = None, end: Optional[int] = None
-    ) -> str:
-        """Return the RNA sequence between the given position(s), inclusive.
-
-        Examples:
-            >>> ensembl100.rna_sequence("ENST00000380152", 1, end=10)
-            'GGGCTTGTGG'
+    def _rna_sequence(self, transcript_id: str, start: int, end: int) -> str:
+        """Return the sequence for the given position, inclusive.
 
         Args:
-            transcript_id (str): transcript ID
-            start (Optional[int], optional): Start position of the sequence to return. Defaults to None.
-            end (Optional[int], optional): End position of the sequence to return. Defaults to the same as `start`.
+            transcript_id (str): Transcript ID
+            start (int): Start position
+            end (int): End position
 
         Returns:
-            str: The RNA sequence
+            str: RNA sequence
         """
         return self._sequence(self.rna_fasta, transcript_id, start=start, end=end)
 
@@ -693,7 +738,7 @@ class Core:
 
         Args:
             feature (str): Feature ID or name
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[CdnaPosition]: One or more cDNA positions.
@@ -708,7 +753,6 @@ class Core:
 
             result.append(
                 CdnaPosition(
-                    _data=self,
                     contig_id=cdna.contig_id,
                     start=cdna.cdna_start,
                     start_offset=0,
@@ -730,7 +774,7 @@ class Core:
 
         Args:
             feature (str): Feature ID or name
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[DnaPosition]: One or more DNA positions.
@@ -756,7 +800,6 @@ class Core:
             for strand in strand_list:
                 result.append(
                     DnaPosition(
-                        _data=self,
                         contig_id=contig_id,
                         start=start,
                         start_offset=0,
@@ -773,7 +816,7 @@ class Core:
 
         Args:
             feature (str): Feature ID or name
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[ExonPosition]: One or more exon positions.
@@ -788,7 +831,6 @@ class Core:
 
             result.append(
                 ExonPosition(
-                    _data=self,
                     contig_id=exon.contig_id,
                     start=int(exon.exon_number),
                     start_offset=0,
@@ -810,7 +852,7 @@ class Core:
 
         Args:
             feature (str): Feature ID or name
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[DnaPosition]: One or more DNA positions.
@@ -822,7 +864,6 @@ class Core:
         for _, gene in self.df[mask].iterrows():
             result.append(
                 DnaPosition(
-                    _data=self,
                     contig_id=gene.contig_id,
                     start=gene.start,
                     start_offset=0,
@@ -839,7 +880,7 @@ class Core:
 
         Args:
             feature (str): Feature ID or name
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[ProteinPosition]: One or more protein positions.
@@ -862,7 +903,7 @@ class Core:
 
         Args:
             feature (str): Feature ID or name
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[RnaPosition]: One or more RNA positions.
@@ -877,7 +918,6 @@ class Core:
 
             result.append(
                 RnaPosition(
-                    _data=self,
                     contig_id=transcript.contig_id,
                     start=transcript.transcript_start,
                     start_offset=0,
@@ -896,1320 +936,235 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # <feature>_to_<feature>
     # ---------------------------------------------------------------------------------------------
-    def cdna_to_cdna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
-        """Map a cDNA position to zero or more cDNA positions.
+    # TODO: add type hints
+    def to_cdna(self, position) -> List:
+        """Map a position to zero or more cDNA positions.
 
         Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            position (Position): Position or variant object.
 
         Returns:
-            Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+            List[CdnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._cdna_to_cdna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+        if position.is_fusion:
+            fusion = cast(_Fusion, position)
+            breakpoint1 = self.to_cdna(fusion.breakpoint1)
+            breakpoint2 = self.to_cdna(fusion.breakpoint2)
+            return [CdnaFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
+        elif position.is_small_variant:
+            position = cast(_SmallVariant, position)
+            if position.is_cdna:
+                return self._cdna_to_cdna_variant(position)
+            elif position.is_dna:
+                return self._dna_to_cdna_variant(position)
+            elif position.is_protein:
+                return self._protein_to_cdna_variant(position)
+            elif position.is_rna:
+                return self._rna_to_cdna_variant(position)
         else:
-            return self._map(
-                self.transcript_ids,
-                self._cdna_to_cdna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+            position = cast(_Position, position)
+            if position.is_cdna:
+                return self._cdna_to_cdna(position)
+            elif position.is_dna:
+                return self._dna_to_cdna(position)
+            elif position.is_exon:
+                return self._exon_to_cdna(position)
+            elif position.is_protein:
+                return self._protein_to_cdna(position)
+            elif position.is_rna:
+                return self._rna_to_cdna(position)
 
-    def cdna_to_dna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[DnaPosition], List[_DnaSmallVariant]]:
-        """Map a cDNA position to zero or more DNA positions.
+        raise AssertionError(f"Unknown position type for {position}")
+
+    def to_dna(self, position) -> List:
+        """Map a position to zero or more cDNA positions.
 
         Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            position (Position): Position or variant object.
 
         Returns:
-            Union[List[DnaPosition], List[_DnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+            List[DnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._cdna_to_dna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+        if position.is_fusion:
+            fusion = cast(_Fusion, position)
+            breakpoint1 = self.to_dna(fusion.breakpoint1)
+            breakpoint2 = self.to_dna(fusion.breakpoint2)
+            return [DnaFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
+        elif position.is_small_variant:
+            position = cast(_SmallVariant, position)
+            if position.is_cdna:
+                return self._cdna_to_dna_variant(position)
+            elif position.is_dna:
+                return self._dna_to_dna_variant(position)
+            elif position.is_protein:
+                return self._protein_to_dna_variant(position)
+            elif position.is_rna:
+                return self._rna_to_dna_variant(position)
         else:
-            return self._map(
-                self.transcript_ids,
-                self._cdna_to_dna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+            position = cast(_Position, position)
+            if position.is_cdna:
+                return self._cdna_to_dna(position)
+            elif position.is_dna:
+                return self._dna_to_dna(position)
+            elif position.is_exon:
+                return self._exon_to_dna(position)
+            elif position.is_protein:
+                return self._protein_to_dna(position)
+            elif position.is_rna:
+                return self._rna_to_dna(position)
 
-    def cdna_to_exon(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[ExonPosition], List[_ExonSmallVariant]]:
-        """Map a cDNA position to zero or more exon positions.
+        raise AssertionError(f"Unknown position type for {position}")
+
+    def to_exon(self, position) -> List:
+        """Map a position to zero or more cDNA positions.
 
         Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            position (Position): Position or variant object.
 
         Returns:
-            Union[List[ExonPosition], List[_ExonSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+            List[ExonPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._cdna_to_exon_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+        if position.is_fusion:
+            fusion = cast(_Fusion, position)
+            breakpoint1 = self.to_exon(fusion.breakpoint1)
+            breakpoint2 = self.to_exon(fusion.breakpoint2)
+            return [ExonFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
+        elif position.is_small_variant:
+            position = cast(_SmallVariant, position)
+            if position.is_cdna:
+                return self._cdna_to_exon_variant(position)
+            elif position.is_dna:
+                return self._dna_to_exon_variant(position)
+            elif position.is_protein:
+                return self._protein_to_exon_variant(position)
+            elif position.is_rna:
+                return self._rna_to_exon_variant(position)
         else:
-            return self._map(
-                self.transcript_ids,
-                self._cdna_to_exon,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+            position = cast(_Position, position)
+            if position.is_cdna:
+                return self._cdna_to_exon(position)
+            elif position.is_dna:
+                return self._dna_to_exon(position)
+            elif position.is_exon:
+                return self._exon_to_exon(position)
+            elif position.is_protein:
+                return self._protein_to_exon(position)
+            elif position.is_rna:
+                return self._rna_to_exon(position)
 
-    def cdna_to_protein(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
-        """Map a cDNA position to zero or more protein positions.
+        raise AssertionError(f"Unknown position type for {position}")
+
+    def to_protein(self, position) -> List:
+        """Map a position to zero or more cDNA positions.
 
         Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            position (Position): Position or variant object.
 
         Returns:
-            Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+            List[ProteinPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._cdna_to_protein_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+        if position.is_fusion:
+            fusion = cast(_Fusion, position)
+            breakpoint1 = self.to_protein(fusion.breakpoint1)
+            breakpoint2 = self.to_protein(fusion.breakpoint2)
+            return [ProteinFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
+        elif position.is_small_variant:
+            position = cast(_SmallVariant, position)
+            if position.is_cdna:
+                return self._cdna_to_protein_variant(position)
+            elif position.is_dna:
+                return self._dna_to_protein_variant(position)
+            elif position.is_protein:
+                return self._protein_to_protein_variant(position)
+            elif position.is_rna:
+                return self._rna_to_protein_variant(position)
         else:
-            return self._map(
-                self.transcript_ids,
-                self._cdna_to_protein,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+            position = cast(_Position, position)
+            if position.is_cdna:
+                return self._cdna_to_protein(position)
+            elif position.is_dna:
+                return self._dna_to_protein(position)
+            elif position.is_exon:
+                return self._exon_to_protein(position)
+            elif position.is_protein:
+                return self._protein_to_protein(position)
+            elif position.is_rna:
+                return self._rna_to_protein(position)
 
-    def cdna_to_rna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[RnaPosition], List[_RnaSmallVariant]]:
-        """Map a cDNA position to zero or more RNA positions.
+        raise AssertionError(f"Unknown position type for {position}")
+
+    def to_rna(self, position) -> List:
+        """Map a position to zero or more cDNA positions.
 
         Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
+            position (Position): Position or variant object.
 
         Returns:
-            Union[List[RnaPosition], List[_RnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
+            List[RnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._cdna_to_rna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+        if position.is_fusion:
+            fusion = cast(_Fusion, position)
+            breakpoint1 = self.to_rna(fusion.breakpoint1)
+            breakpoint2 = self.to_rna(fusion.breakpoint2)
+            return [RnaFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
+        elif position.is_small_variant:
+            position = cast(_SmallVariant, position)
+            if position.is_cdna:
+                return self._cdna_to_rna_variant(position)
+            elif position.is_dna:
+                return self._dna_to_rna_variant(position)
+            elif position.is_protein:
+                return self._protein_to_rna_variant(position)
+            elif position.is_rna:
+                return self._rna_to_rna_variant(position)
         else:
-            return self._map(
-                self.transcript_ids,
-                self._cdna_to_rna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+            position = cast(_Position, position)
+            if position.is_cdna:
+                return self._cdna_to_rna(position)
+            elif position.is_dna:
+                return self._dna_to_rna(position)
+            elif position.is_exon:
+                return self._exon_to_rna(position)
+            elif position.is_protein:
+                return self._protein_to_rna(position)
+            elif position.is_rna:
+                return self._rna_to_rna(position)
 
-    def dna_to_cdna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
-        """Map a DNA position to zero or more cDNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.contig_ids,
-                self._dna_to_cdna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.contig_ids,
-                self._dna_to_cdna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def dna_to_dna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[DnaPosition], List[_DnaSmallVariant]]:
-        """Map a DNA position to zero or more DNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[DnaPosition], List[_DnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.contig_ids,
-                self._dna_to_dna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.contig_ids,
-                self._dna_to_dna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def dna_to_exon(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[ExonPosition], List[_ExonSmallVariant]]:
-        """Map a DNA position to zero or more exon positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[ExonPosition], List[_ExonSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.contig_ids,
-                self._dna_to_exon_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.contig_ids,
-                self._dna_to_exon,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def dna_to_protein(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
-        """Map a DNA position to zero or more protein positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.contig_ids,
-                self._dna_to_protein_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.contig_ids,
-                self._dna_to_protein,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def dna_to_rna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[RnaPosition], List[_RnaSmallVariant]]:
-        """Map a DNA position to zero or more RNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[RnaPosition], List[_RnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.contig_ids,
-                self._dna_to_rna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.contig_ids,
-                self._dna_to_rna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def exon_to_cdna(
-        self,
-        feature: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        canonical: bool = False,
-    ) -> List[CdnaPosition]:
-        """Map an exon position to zero or more cDNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[CdnaPosition]: Zero or more cDNA positions
-        """
-        return self._map_exon(
-            self._exon_to_cdna, feature, start, start_offset, end, end_offset, strand, canonical
-        )
-
-    def exon_to_dna(
-        self,
-        feature: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        canonical: bool = False,
-    ) -> List[DnaPosition]:
-        """Map an exon position to zero or more DNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[DnaPosition]: Zero or more DNA positions
-        """
-        return self._map_exon(
-            self._exon_to_dna, feature, start, start_offset, end, end_offset, strand, canonical
-        )
-
-    def exon_to_exon(
-        self,
-        feature: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        canonical: bool = False,
-    ) -> List[ExonPosition]:
-        """Map an exon position to zero or more exon positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ExonPosition]: Zero or more exon positions
-        """
-        return self._map_exon(
-            self._exon_to_exon, feature, start, start_offset, end, end_offset, strand, canonical
-        )
-
-    def exon_to_protein(
-        self,
-        feature: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        canonical: bool = False,
-    ) -> List[ProteinPosition]:
-        """Map an exon position to zero or more protein positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[ProteinPosition]: Zero or more protein positions
-        """
-        return self._map_exon(
-            self._exon_to_protein, feature, start, start_offset, end, end_offset, strand, canonical
-        )
-
-    def exon_to_rna(
-        self,
-        feature: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        canonical: bool = False,
-    ) -> List[RnaPosition]:
-        """Map an exon position to zero or more RNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            List[RnaPosition]: Zero or more RNA positions
-        """
-        return self._map_exon(
-            self._exon_to_rna, feature, start, start_offset, end, end_offset, strand, canonical
-        )
-
-    def protein_to_cdna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
-        """Map a protein position to zero or more cDNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._protein_to_cdna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._protein_to_cdna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def protein_to_dna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[DnaPosition], List[_DnaSmallVariant]]:
-        """Map a protein position to zero or more DNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[DnaPosition], List[_DnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._protein_to_dna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._protein_to_dna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def protein_to_exon(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[ExonPosition], List[_ExonSmallVariant]]:
-        """Map a protein position to zero or more exon positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[ExonPosition], List[_ExonSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._protein_to_exon_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._protein_to_exon,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def protein_to_protein(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
-        """Map a protein position to zero or more protein positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._protein_to_protein_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._protein_to_protein,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def protein_to_rna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[RnaPosition], List[_RnaSmallVariant]]:
-        """Map a protein position to zero or more RNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[RnaPosition], List[_RnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._protein_to_rna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._protein_to_rna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def rna_to_cdna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
-        """Map an RNA position to zero or more cDNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[CdnaPosition], List[_CdnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._rna_to_cdna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._rna_to_cdna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def rna_to_dna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[DnaPosition], List[_DnaSmallVariant]]:
-        """Map an RNA position to zero or more DNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[DnaPosition], List[_DnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._rna_to_dna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._rna_to_dna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def rna_to_exon(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[ExonPosition], List[_ExonSmallVariant]]:
-        """Map an RNA position to zero or more exon positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[ExonPosition], List[_ExonSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._rna_to_exon_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._rna_to_exon,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def rna_to_protein(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
-        """Map an RNA position to zero or more protein positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[ProteinPosition], List[_ProteinSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._rna_to_protein_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._rna_to_protein,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-
-    def rna_to_rna(
-        self,
-        feature: str,
-        start: int,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-        start_offset: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        refseq: str = "",
-        altseq: str = "",
-        canonical: bool = False,
-    ) -> Union[List[RnaPosition], List[_RnaSmallVariant]]:
-        """Map an RNA position to zero or more RNA positions.
-
-        Args:
-            feature (str): Feature ID or name
-            start (int): Start position
-            end (Optional[int], optional): End position. Defaults to the same as `start`.
-            strand (Optional[str], optional): Strand ('+' or '-'). Defaults to checking either.
-            start_offset (Optional[int], optional): Nucleotide offset from `start`. Defaults to 0.
-            end_offset (Optional[int], optional): Nucleotide offset from `end`. Defaults to 0.
-            refseq (str, optional): Reference allele. Defaults to "".
-            altseq (str, optional): Alternate allele. Defaults to "".
-            canonical (bool, optional): Only map to the canonical transcript. Defaults to False.
-
-        Returns:
-            Union[List[RnaPosition], List[_RnaSmallVariant]]:
-                If `refseq` or `altseq` was given, returns a variant. Otherwise returns a position.
-        """
-        if refseq or altseq:
-            return self._map_variant(
-                self.transcript_ids,
-                self._rna_to_rna_variant,
-                feature,
-                start,
-                refseq,
-                altseq,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
-        else:
-            return self._map(
-                self.transcript_ids,
-                self._rna_to_rna,
-                feature,
-                start,
-                start_offset,
-                end,
-                end_offset,
-                strand,
-                canonical,
-            )
+        raise AssertionError(f"Unknown position type for {position}")
 
     def _cdna_to_cdna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-        include_stop: bool = True,
+        self, position: CdnaPosition, include_stop: bool = True
     ) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+        def convert(n: int, offset: int):
             result = []
 
             # If the offset position can be normalized to a non-offset position, do so. Otherwise
             # just return an offset position.
             if offset:
-                for dna in self._cdna_to_dna(
-                    transcript_ids,
-                    position,
-                    offset,
-                    position,
-                    offset,
-                    strand,
-                    canonical,
-                    include_stop=include_stop,
-                ):
-                    for cdna in dna.to_cdna(canonical=canonical):
-                        if cdna.transcript_id in transcript_ids:
+                for dna in self._cdna_to_dna(position, include_stop=include_stop):
+                    for cdna in self._dna_to_cdna(dna):
+                        if cdna.transcript_id == position.transcript_id:
                             result.append(cdna)
 
                 if result:
                     return result
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["cdna_start"] <= position)
-                & (self.df["cdna_end"] >= position)
-                & (self.df["strand"].isin(strand))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["cdna_start"] <= n)
+                & (self.df["cdna_end"] >= n)
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
                 result.append(
                     CdnaPosition(
-                        _data=self,
                         contig_id=cds.contig_id,
-                        start=start,
+                        start=position.start,
                         start_offset=offset,
-                        end=end,
+                        end=position.end,
                         end_offset=offset,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
@@ -2222,78 +1177,47 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_cdna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-        include_stop: bool = True,
+        self, position: _CdnaSmallVariant, include_stop: bool = True
     ) -> List[_CdnaSmallVariant]:
-        result: List[_CdnaSmallVariant] = []
+        result = []
 
-        for cdna in self._cdna_to_cdna(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=include_stop,
-        ):
-            result.extend(_CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
+        for cdna in self._cdna_to_cdna(position, include_stop=include_stop):
+            result.extend(
+                self._cdna_small_variant_from_cdna(cdna, position.refseq, position.altseq)
+            )
 
         return result
 
-    def _cdna_to_dna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-        include_stop: bool = True,
-    ) -> List[DnaPosition]:
+    def _cdna_to_dna(self, position: CdnaPosition, include_stop: bool = True) -> List[DnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+        def convert(n: int, offset: int):
             result = []
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["cdna_start"] <= position)
-                & (self.df["cdna_end"] >= position)
-                & (self.df["strand"].isin(strand))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["cdna_start"] <= n)
+                & (self.df["cdna_end"] >= n)
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
                 if cds.strand == "-":
-                    new_start = new_end = cds.end - (position - cds.cdna_start) - offset
+                    new_start = new_end = cds.end - (n - cds.cdna_start) - offset
                 else:
-                    new_start = new_end = cds.start + (position - cds.cdna_start) + offset
+                    new_start = new_end = cds.start + (n - cds.cdna_start) + offset
 
                 # TODO: Check that new new_start is actually on the contig
                 result.append(
                     DnaPosition(
-                        _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
                         start_offset=0,
@@ -2305,98 +1229,58 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, CONTIG_ID)
 
     def _cdna_to_dna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-        include_stop: bool = True,
+        self, position: _CdnaSmallVariant, include_stop: bool = True
     ) -> List[_DnaSmallVariant]:
-        result: List[_DnaSmallVariant] = []
+        result = []
 
-        for dna in self._cdna_to_dna(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=include_stop,
-        ):
-            result.extend(_DnaSmallVariant.from_dna(dna, refseq, altseq))
+        for dna in self._cdna_to_dna(position, include_stop=include_stop):
+            result.extend(self._dna_small_variant_from_dna(dna, position.refseq, position.altseq))
 
         return result
 
     def _cdna_to_exon(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-        include_stop: bool = True,
+        self, position: CdnaPosition, include_stop: bool = True
     ) -> List[ExonPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+        def convert(n: int, offset: int):
             result = []
 
             # For an offset position, we need to calculate then equivalent DNA position then map
             # that to one or more exons. This is slower, so if there's no offset we can just map
             # directly to an exon.
             if offset:
-                for dna in self._cdna_to_dna(
-                    transcript_ids,
-                    position,
-                    offset,
-                    position,
-                    offset,
-                    strand,
-                    canonical,
-                    include_stop=include_stop,
-                ):
-                    for exon in dna.to_exon(canonical=canonical):
-                        if exon.transcript_id in transcript_ids:
+                for dna in self._cdna_to_dna(position, include_stop=include_stop):
+                    for exon in self._dna_to_exon(dna):
+                        if exon.transcript_id == position.transcript_id:
                             result.append(exon)
 
                 return result
 
             mask_cds = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["cdna_start"] <= position)
-                & (self.df["cdna_end"] >= position)
-                & (self.df["strand"].isin(strand))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["cdna_start"] <= n)
+                & (self.df["cdna_end"] >= n)
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask_cds].iterrows():
                 mask_exon = (
-                    (self.df[TRANSCRIPT_ID].isin(transcript_ids))
+                    (self.df[TRANSCRIPT_ID] == position.transcript_id)
                     & (self.df["exon_number"] == cds.exon_number)
                     & (self.df["feature"] == "exon")
                 )
                 for _, exon_row in self.df[mask_exon].iterrows():
                     result.append(
                         ExonPosition(
-                            _data=self,
                             contig_id=exon_row.contig_id,
                             start=int(exon_row.exon_number),
                             start_offset=0,
@@ -2413,63 +1297,29 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_exon_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-        include_stop: bool = True,
+        self, position: _CdnaSmallVariant, include_stop: bool = True
     ) -> List[_ExonSmallVariant]:
-        result: List[_ExonSmallVariant] = []
+        result = []
 
-        for exon in self._cdna_to_exon(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=include_stop,
-        ):
-            result.extend(_ExonSmallVariant.from_exon(exon, refseq, altseq))
+        for exon in self._cdna_to_exon(position, include_stop=include_stop):
+            result.extend(
+                self._exon_small_variant_from_exon(exon, position.refseq, position.altseq)
+            )
 
         return result
 
-    def _cdna_to_protein(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ProteinPosition]:
+    def _cdna_to_protein(self, position: CdnaPosition) -> List[ProteinPosition]:
         result = []
-        for cdna in self._cdna_to_cdna(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=False,
-        ):
+
+        for cdna in self._cdna_to_cdna(position, include_stop=False):
             # If the postion wasn't mapped to a non-offset position by `_cdna_to_cdna`, it means
             # that the position does not map to a protein.
             if cdna.start_offset or cdna.end_offset:
@@ -2486,30 +1336,11 @@ class Core:
 
         return result
 
-    def _cdna_to_protein_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_ProteinSmallVariant]:
+    def _cdna_to_protein_variant(self, position: _CdnaSmallVariant) -> List[_ProteinSmallVariant]:
         # TODO: A lot of this function is duplicated from _cdna_to_protein()
-        result: List[_ProteinSmallVariant] = []
-        for cdna in self._cdna_to_cdna(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=False,
-        ):
+        result = []
+
+        for cdna in self._cdna_to_cdna(position, include_stop=False):
             # If the postion wasn't mapped to a non-offset position by `_cdna_to_cdna`, it means
             # that the position does not map to a protein.
             if cdna.start_offset or cdna.end_offset:
@@ -2521,61 +1352,40 @@ class Core:
             protein = ProteinPosition.copy_from(
                 cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
             )
-            result.extend(_ProteinSmallVariant.from_cdna(cdna, protein, refseq, altseq))
+            result.extend(
+                self._protein_small_variant(cdna, protein, position.refseq, position.altseq)
+            )
 
         return result
 
-    def _cdna_to_rna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-        include_stop: bool = True,
-    ) -> List[RnaPosition]:
+    def _cdna_to_rna(self, position: CdnaPosition, include_stop: bool = True) -> List[RnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+        def convert(n: int, offset: int):
             result = []
 
             # If the offset position can be normalized to a non-offset position, do so. Otherwise
             # just return an offset position.
             if offset:
-                for dna in self._cdna_to_dna(
-                    transcript_ids,
-                    position,
-                    offset,
-                    position,
-                    offset,
-                    strand,
-                    canonical,
-                    include_stop=include_stop,
-                ):
-                    for rna in dna.to_rna(canonical=canonical):
-                        if rna.transcript_id in transcript_ids:
+                for dna in self._cdna_to_dna(position, include_stop=include_stop):
+                    for rna in self._dna_to_rna(dna):
+                        if rna.transcript_id == position.transcript_id:
                             result.append(rna)
 
                 if result:
                     return result
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["cdna_start"] <= position)
-                & (self.df["cdna_end"] >= position)
-                & (self.df["strand"].isin(strand))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["cdna_start"] <= n)
+                & (self.df["cdna_end"] >= n)
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
-                new_start = new_end = cds.transcript_start + (position - cds.cdna_start)
+                new_start = new_end = cds.transcript_start + (n - cds.cdna_start)
                 result.append(
                     RnaPosition(
-                        _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
                         start_offset=offset,
@@ -2591,446 +1401,53 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _cdna_to_rna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-        include_stop: bool = True,
+        self, position: _CdnaSmallVariant, include_stop: bool = True
     ) -> List[_RnaSmallVariant]:
-        result: List[_RnaSmallVariant] = []
-
-        for rna in self._cdna_to_rna(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=include_stop,
-        ):
-            result.extend(_RnaSmallVariant.from_rna(rna, refseq, altseq))
-
-        return result
-
-    def _dna_to_cdna(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-        include_stop: bool = True,
-    ) -> List[CdnaPosition]:
-        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
-
-        def convert(position: int, offset: int):
-            result = []
-
-            for strand_ in strand:
-                if strand_ == "-":
-                    position_ = position - offset
-                else:
-                    position_ = position + offset
-
-                mask = (
-                    (self.df[CONTIG_ID].isin(contig_ids))
-                    & (self.df["start"] <= position_)
-                    & (self.df["end"] >= position_)
-                    & (self.df["strand"] == strand_)
-                    & (self.df["feature"].isin(feature))
-                )
-                for _, cds in self.df[mask].iterrows():
-                    if canonical and not self.is_canonical_transcript(cds.transcript_id):
-                        continue
-
-                    if cds.strand == "-":
-                        new_start = new_end = cds.end - position_ + cds.cdna_start
-                    else:
-                        new_start = new_end = position_ - cds.start + cds.cdna_start
-
-                    result.append(
-                        CdnaPosition(
-                            _data=self,
-                            contig_id=cds.contig_id,
-                            start=new_start,
-                            start_offset=0,
-                            end=new_end,
-                            end_offset=0,
-                            strand=cds.strand,
-                            gene_id=cds.gene_id,
-                            gene_name=cds.gene_name,
-                            transcript_id=cds.transcript_id,
-                            transcript_name=cds.transcript_name,
-                            protein_id=cds.protein_id,
-                        )
-                    )
-
-            return result
-
-        result_start = convert(start, start_offset)
-        if start == end:
-            return sorted(result_start)
-        else:
-            result_end = convert(end, end_offset)
-            return join_positions(result_start, result_end, TRANSCRIPT_ID)
-
-    def _dna_to_cdna_variant(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-        include_stop: bool = True,
-    ) -> List[_CdnaSmallVariant]:
-        result: List[_CdnaSmallVariant] = []
-
-        for cdna in self._dna_to_cdna(
-            contig_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=include_stop,
-        ):
-            result.extend(_CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
-
-        return result
-
-    def _dna_to_dna(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[DnaPosition]:
         result = []
 
-        # Sort the start and end positions after adjusting by offsets
-        start, end = sorted([start, end])
-
-        for contig_id_, strand_ in product(contig_ids, strand):
-            if strand_ == "-":
-                new_start = start - start_offset
-                new_end = end - end_offset
-            else:
-                new_start = start + start_offset
-                new_end = end + end_offset
-
-            # TODO: Check that new new_start is actually on the contig
-            result.append(
-                DnaPosition(
-                    _data=self,
-                    contig_id=contig_id_,
-                    start=new_start,
-                    start_offset=0,
-                    end=new_end,
-                    end_offset=0,
-                    strand=strand_,
-                )
-            )
+        for rna in self._cdna_to_rna(position, include_stop=include_stop):
+            result.extend(self._rna_small_variant_from_rna(rna, position.refseq, position.altseq))
 
         return result
 
-    def _dna_to_dna_variant(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_DnaSmallVariant]:
-        result: List[_DnaSmallVariant] = []
-
-        for dna in self._dna_to_dna(
-            contig_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(_DnaSmallVariant.from_dna(dna, refseq, altseq))
-
-        return result
-
-    def _dna_to_exon(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ExonPosition]:
-        def convert(position: int, offset: int):
-            result = []
-
-            for strand_ in strand:
-                if strand_ == "-":
-                    position_ = position - offset
-                else:
-                    position_ = position + offset
-
-                mask = (
-                    (self.df[CONTIG_ID].isin(contig_ids))
-                    & (self.df["start"] <= position_)
-                    & (self.df["end"] >= position_)
-                    & (self.df["strand"] == strand_)
-                    & (self.df["feature"].isin(["exon"]))
-                )
-                for _, exon in self.df[mask].iterrows():
-                    if canonical and not self.is_canonical_transcript(exon.transcript_id):
-                        continue
-
-                    result.append(
-                        ExonPosition(
-                            _data=self,
-                            contig_id=exon.contig_id,
-                            start=int(exon.exon_number),
-                            start_offset=0,
-                            end=int(exon.exon_number),
-                            end_offset=0,
-                            strand=exon.strand,
-                            gene_id=exon.gene_id,
-                            gene_name=exon.gene_name,
-                            transcript_id=exon.transcript_id,
-                            transcript_name=exon.transcript_name,
-                            exon_id=exon.exon_id,
-                        )
-                    )
-
-            return result
-
-        result_start = convert(start, start_offset)
-        if start == end:
-            return sorted(result_start)
-        else:
-            result_end = convert(end, end_offset)
-            return join_positions(result_start, result_end, TRANSCRIPT_ID)
-
-    def _dna_to_exon_variant(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_ExonSmallVariant]:
-        result: List[_ExonSmallVariant] = []
-
-        for exon in self._dna_to_exon(
-            contig_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(_ExonSmallVariant.from_exon(exon, refseq, altseq))
-
-        return result
-
-    def _dna_to_protein(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ProteinPosition]:
-        protein = []
-        for cdna in self._dna_to_cdna(
-            contig_ids, start, start_offset, end, end_offset, strand, canonical, include_stop=False
-        ):
-            # Offset cDNA position are assumed to not map to a protein
-            if cdna.start_offset or cdna.end_offset:
-                continue
-
-            pstart = calc_cdna_to_protein(cdna.start)
-            pend = calc_cdna_to_protein(cdna.end)
-            protein.append(
-                ProteinPosition.copy_from(
-                    cdna, start=pstart, start_offset=0, end=pend, end_offset=0, _data=self
-                )
-            )
-
-        return protein
-
-    def _dna_to_protein_variant(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_ProteinSmallVariant]:
-        # TODO: A lot of this function is duplicated from _dna_to_protein()
-        result: List[_ProteinSmallVariant] = []
-        for cdna in self._dna_to_cdna(
-            contig_ids, start, start_offset, end, end_offset, strand, canonical, include_stop=False
-        ):
-            # Offset cDNA position are assumed to not map to a protein
-            if cdna.start_offset or cdna.end_offset:
-                continue
-
-            pstart = calc_cdna_to_protein(cdna.start)
-            pend = calc_cdna_to_protein(cdna.end)
-            protein = ProteinPosition.copy_from(
-                cdna, start=pstart, start_offset=0, end=pend, end_offset=0, _data=self
-            )
-            result.extend(_ProteinSmallVariant.from_cdna(cdna, protein, refseq, altseq))
-
-        return result
-
-    def _dna_to_rna(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[RnaPosition]:
-        def convert(position: int, offset: int):
-            result = []
-
-            for strand_ in strand:
-                if strand_ == "-":
-                    position_ = position - offset
-                else:
-                    position_ = position + offset
-
-                mask = (
-                    (self.df[CONTIG_ID].isin(contig_ids))
-                    & (self.df["start"] <= position_)
-                    & (self.df["end"] >= position_)
-                    & (self.df["strand"] == strand_)
-                    & (self.df["feature"] == "exon")
-                )
-                for _, exon in self.df[mask].iterrows():
-                    if canonical and not self.is_canonical_transcript(exon.transcript_id):
-                        continue
-
-                    if exon.strand == "-":
-                        new_start = new_end = exon.end - position_ + exon.transcript_start
-                    else:
-                        new_start = new_end = position_ - exon.start + exon.transcript_start
-
-                    result.append(
-                        RnaPosition(
-                            _data=self,
-                            contig_id=exon.contig_id,
-                            start=new_start,
-                            start_offset=0,
-                            end=new_end,
-                            end_offset=0,
-                            strand=exon.strand,
-                            gene_id=exon.gene_id,
-                            gene_name=exon.gene_name,
-                            transcript_id=exon.transcript_id,
-                            transcript_name=exon.transcript_name,
-                        )
-                    )
-
-            return result
-
-        result_start = convert(start, start_offset)
-        if start == end:
-            return sorted(result_start)
-        else:
-            result_end = convert(end, end_offset)
-            return join_positions(result_start, result_end, TRANSCRIPT_ID)
-
-    def _dna_to_rna_variant(
-        self,
-        contig_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_RnaSmallVariant]:
-        result: List[_RnaSmallVariant] = []
-
-        for rna in self._dna_to_rna(
-            contig_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(_RnaSmallVariant.from_rna(rna, refseq, altseq))
-
-        return result
-
-    def _exon_to_cdna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-        include_stop: bool = True,
-    ) -> List[CdnaPosition]:
+    def _dna_to_cdna(self, position: DnaPosition, include_stop: bool = True) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+        def convert(n: int, offset: int):
             result = []
 
-            # TODO: Is there a reasonable case where an exon position would have an offset?
-            assert not offset, offset
+            if position.strand == "-":
+                n_ = n - offset
+            else:
+                n_ = n + offset
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["exon_number"] == float(position))
-                & (self.df["strand"].isin(strand))
+                (self.df[CONTIG_ID] == position.contig_id)
+                & (self.df["start"] <= n_)
+                & (self.df["end"] >= n_)
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
+                if cds.strand == "-":
+                    new_start = new_end = cds.end - n_ + cds.cdna_start
+                else:
+                    new_start = new_end = n_ - cds.start + cds.cdna_start
+
                 result.append(
                     CdnaPosition(
-                        _data=self,
                         contig_id=cds.contig_id,
-                        start=cds.cdna_start,
+                        start=new_start,
                         start_offset=0,
-                        end=cds.cdna_end,
+                        end=new_end,
                         end_offset=0,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
@@ -3043,89 +1460,79 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
-    def _exon_to_dna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[DnaPosition]:
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
+    def _dna_to_cdna_variant(
+        self, position: _DnaSmallVariant, include_stop: bool = True
+    ) -> List[_CdnaSmallVariant]:
+        result = []
 
-        def convert(position: int, offset: int):
-            result = []
-
-            # TODO: Is there a reasonable case where an exon position would have an offset?
-            assert not offset, offset
-
-            mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["exon_number"] == float(position))
-                & (self.df["strand"].isin(strand))
-                & (self.df["feature"] == "exon")
+        for cdna in self._dna_to_cdna(position, include_stop=include_stop):
+            result.extend(
+                self._cdna_small_variant_from_cdna(cdna, position.refseq, position.altseq)
             )
-            for _, exon in self.df[mask].iterrows():
-                result.append(
-                    DnaPosition(
-                        _data=self,
-                        contig_id=exon.contig_id,
-                        start=exon.start,
-                        start_offset=0,
-                        end=exon.end,
-                        end_offset=0,
-                        strand=exon.strand,
-                    )
-                )
 
-            return result
+        return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
-            return sorted(result_start)
+    def _dna_to_dna(self, position: DnaPosition) -> List[DnaPosition]:
+        result = []
+
+        if position.strand == "-":
+            new_start = position.start - position.start_offset
+            new_end = position.end - position.end_offset
         else:
-            result_end = convert(end, end_offset)
-            return join_positions(result_start, result_end, CONTIG_ID)
+            new_start = position.start + position.start_offset
+            new_end = position.end + position.end_offset
 
-    def _exon_to_exon(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ExonPosition]:
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
+        # Sort the start and end positions after adjusting by offsets
+        new_start, new_end = sorted([new_start, new_end])
 
-        def convert(position: int, offset):
+        # TODO: Check that new new_start is actually on the contig
+        result.append(
+            DnaPosition(
+                contig_id=position.contig_id,
+                start=new_start,
+                start_offset=0,
+                end=new_end,
+                end_offset=0,
+                strand=position.strand,
+            )
+        )
+
+        return result
+
+    def _dna_to_dna_variant(self, position: _DnaSmallVariant) -> List[_DnaSmallVariant]:
+        result = []
+
+        for dna in self._dna_to_dna(position):
+            result.extend(self._dna_small_variant_from_dna(dna, position.refseq, position.altseq))
+
+        return result
+
+    def _dna_to_exon(self, position: DnaPosition) -> List[ExonPosition]:
+        def convert(n: int, offset: int):
             result = []
 
-            # TODO: Is there a reasonable case where an exon position would have an offset?
-            assert not offset, offset
+            if position.strand == "-":
+                n_ = n - offset
+            else:
+                n_ = n + offset
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["exon_number"] == float(position))
-                & (self.df["strand"].isin(strand))
+                (self.df[CONTIG_ID] == position.contig_id)
+                & (self.df["start"] <= n_)
+                & (self.df["end"] >= n_)
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"] == "exon")
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
                     ExonPosition(
-                        _data=self,
                         contig_id=exon.contig_id,
                         start=int(exon.exon_number),
                         start_offset=0,
@@ -3142,67 +1549,255 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
-    def _exon_to_protein(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ProteinPosition]:
+    def _dna_to_exon_variant(self, position: _DnaSmallVariant) -> List[_ExonSmallVariant]:
         result = []
-        for cdna in self._exon_to_cdna(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=False,
-        ):
-            result.extend(cdna.to_protein(canonical=canonical))
+
+        for exon in self._dna_to_exon(position):
+            result.extend(
+                self._exon_small_variant_from_exon(exon, position.refseq, position.altseq)
+            )
 
         return result
 
-    def _exon_to_rna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[RnaPosition]:
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
+    def _dna_to_protein(self, position: DnaPosition) -> List[ProteinPosition]:
+        result = []
 
-        def convert(position: int, offset: int):
+        for cdna in self._dna_to_cdna(position, include_stop=False):
+            # Offset cDNA position are assumed to not map to a protein
+            if cdna.start_offset or cdna.end_offset:
+                continue
+
+            pstart = calc_cdna_to_protein(cdna.start)
+            pend = calc_cdna_to_protein(cdna.end)
+            result.append(
+                ProteinPosition.copy_from(
+                    cdna, start=pstart, start_offset=0, end=pend, end_offset=0
+                )
+            )
+
+        return result
+
+    def _dna_to_protein_variant(self, position: _DnaSmallVariant) -> List[_ProteinSmallVariant]:
+        # TODO: A lot of this function is duplicated from _dna_to_protein()
+        result = []
+
+        for cdna in self._dna_to_cdna(position, include_stop=False):
+            # Offset cDNA position are assumed to not map to a protein
+            if cdna.start_offset or cdna.end_offset:
+                continue
+
+            pstart = calc_cdna_to_protein(cdna.start)
+            pend = calc_cdna_to_protein(cdna.end)
+            protein = ProteinPosition.copy_from(
+                cdna, start=pstart, start_offset=0, end=pend, end_offset=0
+            )
+            result.extend(
+                self._protein_small_variant(cdna, protein, position.refseq, position.altseq)
+            )
+
+        return result
+
+    def _dna_to_rna(self, position: DnaPosition) -> List[RnaPosition]:
+        def convert(n: int, offset: int):
+            result = []
+
+            if position.strand == "-":
+                n_ = n - offset
+            else:
+                n_ = n + offset
+
+            mask = (
+                (self.df[CONTIG_ID] == position.contig_id)
+                & (self.df["start"] <= n_)
+                & (self.df["end"] >= n_)
+                & (self.df["strand"] == position.strand)
+                & (self.df["feature"] == "exon")
+            )
+            for _, exon in self.df[mask].iterrows():
+                if exon.strand == "-":
+                    new_start = new_end = exon.end - n_ + exon.transcript_start
+                else:
+                    new_start = new_end = n_ - exon.start + exon.transcript_start
+
+                result.append(
+                    RnaPosition(
+                        contig_id=exon.contig_id,
+                        start=new_start,
+                        start_offset=0,
+                        end=new_end,
+                        end_offset=0,
+                        strand=exon.strand,
+                        gene_id=exon.gene_id,
+                        gene_name=exon.gene_name,
+                        transcript_id=exon.transcript_id,
+                        transcript_name=exon.transcript_name,
+                    )
+                )
+
+            return result
+
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
+            return sorted(result_start)
+        else:
+            result_end = convert(position.end, position.end_offset)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
+
+    def _dna_to_rna_variant(self, position: _DnaSmallVariant) -> List[_RnaSmallVariant]:
+        result = []
+
+        for rna in self._dna_to_rna(position):
+            result.extend(self._rna_small_variant_from_rna(rna, position.refseq, position.altseq))
+
+        return result
+
+    def _exon_to_cdna(
+        self, position: ExonPosition, include_stop: bool = True
+    ) -> List[CdnaPosition]:
+        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+
+        def convert(n: int, offset: int):
             result = []
 
             # TODO: Is there a reasonable case where an exon position would have an offset?
             assert not offset, offset
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["exon_number"] == float(position))
-                & (self.df["strand"].isin(strand))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["exon_number"] == float(n))
+                & (self.df["strand"] == position.strand)
+                & (self.df["feature"].isin(feature))
+            )
+            for _, cds in self.df[mask].iterrows():
+                result.append(
+                    CdnaPosition(
+                        contig_id=cds.contig_id,
+                        start=cds.cdna_start,
+                        start_offset=0,
+                        end=cds.cdna_end,
+                        end_offset=0,
+                        strand=cds.strand,
+                        gene_id=cds.gene_id,
+                        gene_name=cds.gene_name,
+                        transcript_id=cds.transcript_id,
+                        transcript_name=cds.transcript_name,
+                        protein_id=cds.protein_id,
+                    )
+                )
+
+            return result
+
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
+            return sorted(result_start)
+        else:
+            result_end = convert(position.end, position.end_offset)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
+
+    def _exon_to_dna(self, position: ExonPosition) -> List[DnaPosition]:
+        def convert(n: int, offset: int):
+            result = []
+
+            # TODO: Is there a reasonable case where an exon position would have an offset?
+            assert not offset, offset
+
+            mask = (
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["exon_number"] == float(n))
+                & (self.df["strand"] == position.strand)
+                & (self.df["feature"] == "exon")
+            )
+            for _, exon in self.df[mask].iterrows():
+                result.append(
+                    DnaPosition(
+                        contig_id=exon.contig_id,
+                        start=exon.start,
+                        start_offset=0,
+                        end=exon.end,
+                        end_offset=0,
+                        strand=exon.strand,
+                    )
+                )
+
+            return result
+
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
+            return sorted(result_start)
+        else:
+            result_end = convert(position.end, position.end_offset)
+            return join_positions(result_start, result_end, CONTIG_ID)
+
+    def _exon_to_exon(self, position: ExonPosition) -> List[ExonPosition]:
+        def convert(n: int, offset):
+            result = []
+
+            # TODO: Is there a reasonable case where an exon position would have an offset?
+            assert not offset, offset
+
+            mask = (
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["exon_number"] == float(n))
+                & (self.df["strand"] == position.strand)
+                & (self.df["feature"] == "exon")
+            )
+            for _, exon in self.df[mask].iterrows():
+                result.append(
+                    ExonPosition(
+                        contig_id=exon.contig_id,
+                        start=int(exon.exon_number),
+                        start_offset=0,
+                        end=int(exon.exon_number),
+                        end_offset=0,
+                        strand=exon.strand,
+                        gene_id=exon.gene_id,
+                        gene_name=exon.gene_name,
+                        transcript_id=exon.transcript_id,
+                        transcript_name=exon.transcript_name,
+                        exon_id=exon.exon_id,
+                    )
+                )
+
+            return result
+
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
+            return sorted(result_start)
+        else:
+            result_end = convert(position.end, position.end_offset)
+            return join_positions(result_start, result_end, TRANSCRIPT_ID)
+
+    def _exon_to_protein(self, position: ExonPosition) -> List[ProteinPosition]:
+        result = []
+
+        for cdna in self._exon_to_cdna(position, include_stop=False):
+            result.extend(self._cdna_to_protein(cdna))
+
+        return result
+
+    def _exon_to_rna(self, position: ExonPosition) -> List[RnaPosition]:
+        def convert(n: int, offset: int):
+            result = []
+
+            # TODO: Is there a reasonable case where an exon position would have an offset?
+            assert not offset, offset
+
+            mask = (
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["exon_number"] == float(n))
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"] == "exon")
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
                     RnaPosition(
-                        _data=self,
                         contig_id=exon.contig_id,
                         start=exon.transcript_start,
                         start_offset=0,
@@ -3218,254 +1813,130 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
-    def _protein_to_cdna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[CdnaPosition]:
-        def convert(position: int):
-            return ((position - 1) * 3) + 1
+    def _protein_to_cdna(self, position: ProteinPosition) -> List[CdnaPosition]:
+        def convert(n: int):
+            return ((n - 1) * 3) + 1
 
         # TODO: Is there a reasonable case where an protein position would have an offset?
-        assert not start_offset, start_offset
-        assert not end_offset, end_offset
+        assert not position.start_offset, position.start_offset
+        assert not position.end_offset, position.end_offset
 
-        cdna_start = convert(start)
-        cdna_end = convert(end) + 2
+        cdna_start = convert(position.start)
+        cdna_end = convert(position.end) + 2
 
-        return self._cdna_to_cdna(
-            transcript_ids, cdna_start, 0, cdna_end, 0, strand, canonical, include_stop=False
-        )
+        return [CdnaPosition.copy_from(position, start=cdna_start, end=cdna_end)]
 
-    def _protein_to_cdna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_CdnaSmallVariant]:
-        result: List[_CdnaSmallVariant] = []
+    def _protein_to_cdna_variant(self, position: _ProteinSmallVariant) -> List[_CdnaSmallVariant]:
+        result = []
 
-        for cdna in self._protein_to_cdna(
-            transcript_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(_CdnaSmallVariant.from_protein(cdna, refseq, altseq))
+        for cdna in self._protein_to_cdna(position):
+            result.extend(
+                self._cdna_small_variant_from_protein(cdna, position.refseq, position.altseq)
+            )
 
         return result
 
-    def _protein_to_dna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[DnaPosition]:
+    def _protein_to_dna(self, position: ProteinPosition) -> List[DnaPosition]:
         result = []
-        for cdna in self._protein_to_cdna(
-            transcript_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(cdna.to_dna(canonical=canonical))
+
+        for cdna in self._protein_to_cdna(position):
+            result.extend(self._cdna_to_dna(cdna))
 
         return sorted(set(result))
 
-    def _protein_to_dna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_DnaSmallVariant]:
+    def _protein_to_dna_variant(self, position: _ProteinSmallVariant) -> List[_DnaSmallVariant]:
         result = []
-        for cdna in self._protein_to_cdna_variant(
-            transcript_ids, start, start_offset, end, end_offset, strand, refseq, altseq, canonical
-        ):
-            result.extend(cdna.to_dna(canonical=canonical))
+
+        for cdna in self._protein_to_cdna_variant(position):
+            result.extend(self._cdna_to_dna_variant(cdna, include_stop=True))
 
         return sorted(set(result))
 
-    def _protein_to_exon(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ExonPosition]:
+    def _protein_to_exon(self, position: ProteinPosition) -> List[ExonPosition]:
         result = []
-        for cdna in self._protein_to_cdna(
-            transcript_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(cdna.to_exon(canonical=canonical))
+
+        for cdna in self._protein_to_cdna(position):
+            result.extend(self._cdna_to_exon(cdna))
 
         return sorted(set(result))
 
-    def _protein_to_exon_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_ExonSmallVariant]:
+    def _protein_to_exon_variant(self, position: _ProteinSmallVariant) -> List[_ExonSmallVariant]:
         result = []
-        for cdna in self._protein_to_cdna_variant(
-            transcript_ids, start, start_offset, end, end_offset, strand, refseq, altseq, canonical
-        ):
-            result.extend(cdna.to_exon(canonical=canonical))
+
+        for cdna in self._protein_to_cdna_variant(position):
+            result.extend(self._cdna_to_exon_variant(cdna, include_stop=True))
 
         return sorted(set(result))
 
-    def _protein_to_protein(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ProteinPosition]:
+    def _protein_to_protein(self, position: ProteinPosition) -> List[ProteinPosition]:
         result = []
-        for cdna in self._protein_to_cdna(
-            transcript_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(cdna.to_protein(canonical=canonical))
+
+        for cdna in self._protein_to_cdna(position):
+            result.extend(self._cdna_to_protein(cdna))
 
         return sorted(set(result))
 
     def _protein_to_protein_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
+        self, position: _ProteinSmallVariant
     ) -> List[_ProteinSmallVariant]:
         result = []
-        for cdna in self._protein_to_cdna_variant(
-            transcript_ids, start, start_offset, end, end_offset, strand, refseq, altseq, canonical
-        ):
-            result.extend(cdna.to_protein(canonical=canonical))
+
+        for cdna in self._protein_to_cdna_variant(position):
+            result.extend(self._cdna_to_protein_variant(cdna))
 
         return sorted(set(result))
 
-    def _protein_to_rna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[RnaPosition]:
+    def _protein_to_rna(self, position: ProteinPosition) -> List[RnaPosition]:
         result = []
-        for cdna in self._protein_to_cdna(
-            transcript_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(cdna.to_rna(canonical=canonical))
+
+        for cdna in self._protein_to_cdna(position):
+            result.extend(self._cdna_to_rna(cdna))
 
         return sorted(set(result))
 
-    def _protein_to_rna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_RnaSmallVariant]:
+    def _protein_to_rna_variant(self, position: _ProteinSmallVariant) -> List[_RnaSmallVariant]:
         result = []
-        for cdna in self._protein_to_cdna_variant(
-            transcript_ids, start, start_offset, end, end_offset, strand, refseq, altseq, canonical
-        ):
-            result.extend(cdna.to_rna(canonical=canonical))
+
+        for cdna in self._protein_to_cdna_variant(position):
+            result.extend(self._cdna_to_rna_variant(cdna))
 
         return sorted(set(result))
 
-    def _rna_to_cdna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-        include_stop: bool = True,
-    ) -> List[CdnaPosition]:
+    def _rna_to_cdna(self, position: RnaPosition, include_stop: bool = True) -> List[CdnaPosition]:
         feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
 
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+        def convert(n: int, offset: int):
             result = []
 
             # If the offset position can be normalized to a non-offset position, do so. Otherwise
             # just return an offset position.
             if offset:
-                for dna in self._rna_to_dna(
-                    transcript_ids, position, offset, position, offset, strand, canonical
-                ):
-                    for cdna in dna.to_cdna(canonical=canonical):
-                        if cdna.transcript_id in transcript_ids:
+                for dna in self._rna_to_dna(position):
+                    for cdna in self._dna_to_cdna(dna):
+                        if cdna.transcript_id == position.transcript_id:
                             result.append(cdna)
 
                 if result:
                     return result
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["transcript_start"] <= position)
-                & (self.df["transcript_end"] >= position)
-                & (self.df["strand"].isin(strand))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["transcript_start"] <= n)
+                & (self.df["transcript_end"] >= n)
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
-                new_start = new_end = cds.cdna_start + (position - cds.transcript_start)
+                new_start = new_end = cds.cdna_start + (n - cds.transcript_start)
                 result.append(
                     CdnaPosition(
-                        _data=self,
                         contig_id=cds.contig_id,
                         start=new_start,
                         start_offset=offset,
@@ -3482,76 +1953,46 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
     def _rna_to_cdna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-        include_stop: bool = True,
+        self, position: _RnaSmallVariant, include_stop: bool = True
     ) -> List[_CdnaSmallVariant]:
-        result: List[_CdnaSmallVariant] = []
+        result = []
 
-        for cdna in self._rna_to_cdna(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=include_stop,
-        ):
-            result.extend(_CdnaSmallVariant.from_cdna(cdna, refseq, altseq))
+        for cdna in self._rna_to_cdna(position, include_stop=include_stop):
+            result.extend(
+                self._cdna_small_variant_from_cdna(cdna, position.refseq, position.altseq)
+            )
 
         return result
 
-    def _rna_to_dna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[DnaPosition]:
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+    def _rna_to_dna(self, position: RnaPosition) -> List[DnaPosition]:
+        def convert(n: int, offset: int):
             result = []
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["transcript_start"] <= position)
-                & (self.df["transcript_end"] >= position)
-                & (self.df["strand"].isin(strand))
-                & (self.df["feature"].isin(["exon"]))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["transcript_start"] <= n)
+                & (self.df["transcript_end"] >= n)
+                & (self.df["strand"] == position.strand)
+                & (self.df["feature"] == "exon")
             )
             exon_df = self.df[mask]
             for _, exon in exon_df.iterrows():
                 if exon.strand == "-":
-                    new_start = new_end = exon.end - (position - exon.transcript_start) - offset
+                    new_start = new_end = exon.end - (n - exon.transcript_start) - offset
                 else:
-                    new_start = new_end = exon.start + (position - exon.transcript_start) + offset
+                    new_start = new_end = exon.start + (n - exon.transcript_start) + offset
 
                 # TODO: Check that new new_start is actually on the contig
                 result.append(
                     DnaPosition(
-                        _data=self,
                         contig_id=exon.contig_id,
                         start=new_start,
                         start_offset=0,
@@ -3563,74 +2004,46 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, CONTIG_ID)
 
-    def _rna_to_dna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_DnaSmallVariant]:
-        result: List[_DnaSmallVariant] = []
+    def _rna_to_dna_variant(self, position: _RnaSmallVariant) -> List[_DnaSmallVariant]:
+        result = []
 
-        for dna in self._rna_to_dna(
-            transcript_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(_DnaSmallVariant.from_dna(dna, refseq, altseq))
+        for dna in self._rna_to_dna(position):
+            result.extend(self._dna_small_variant_from_dna(dna, position.refseq, position.altseq))
 
         return result
 
-    def _rna_to_exon(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ExonPosition]:
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+    def _rna_to_exon(self, position: RnaPosition) -> List[ExonPosition]:
+        def convert(n: int, offset: int):
             result = []
 
             # For an offset position, we need to calculate then equivalent DNA position then map
             # that to one or more exons. This is slower, so if there's no offset we can just map
             # directly to an exon.
             if offset:
-                for dna in self._rna_to_dna(
-                    transcript_ids, position, offset, position, offset, strand, canonical
-                ):
-                    for exon in dna.to_exon(canonical=canonical):
-                        if exon.transcript_id in transcript_ids:
+                for dna in self._rna_to_dna(position):
+                    for exon in self._dna_to_exon(dna):
+                        if exon.transcript_id == position.transcript_id:
                             result.append(exon)
 
                 return result
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["transcript_start"] <= position)
-                & (self.df["transcript_end"] >= position)
-                & (self.df["strand"].isin(strand))
-                & (self.df["feature"].isin(["exon"]))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["transcript_start"] <= n)
+                & (self.df["transcript_end"] >= n)
+                & (self.df["strand"] == position.strand)
+                & (self.df["feature"] == "exon")
             )
             for _, exon_row in self.df[mask].iterrows():
                 result.append(
                     ExonPosition(
-                        _data=self,
                         contig_id=exon_row.contig_id,
                         start=int(exon_row.exon_number),
                         start_offset=0,
@@ -3647,132 +2060,67 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
-    def _rna_to_exon_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_ExonSmallVariant]:
-        result: List[_ExonSmallVariant] = []
+    def _rna_to_exon_variant(self, position: _RnaSmallVariant) -> List[_ExonSmallVariant]:
+        result = []
 
-        for exon in self._rna_to_exon(
-            transcript_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(_ExonSmallVariant.from_exon(exon, refseq, altseq))
+        for exon in self._rna_to_exon(position):
+            result.extend(
+                self._exon_small_variant_from_exon(exon, position.refseq, position.altseq)
+            )
 
         return result
 
-    def _rna_to_protein(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[ProteinPosition]:
+    def _rna_to_protein(self, position: RnaPosition) -> List[ProteinPosition]:
         result = []
-        for cdna in self._rna_to_cdna(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            canonical,
-            include_stop=False,
-        ):
-            result.extend(cdna.to_protein(canonical=canonical))
+
+        for cdna in self._rna_to_cdna(position, include_stop=False):
+            result.extend(self._cdna_to_protein(cdna))
 
         return sorted(set(result))
 
-    def _rna_to_protein_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_ProteinSmallVariant]:
+    def _rna_to_protein_variant(self, position: _RnaSmallVariant) -> List[_ProteinSmallVariant]:
         result = []
-        for cdna in self._rna_to_cdna_variant(
-            transcript_ids,
-            start,
-            start_offset,
-            end,
-            end_offset,
-            strand,
-            refseq,
-            altseq,
-            canonical,
-            include_stop=False,
-        ):
-            result.extend(cdna.to_protein(canonical=canonical))
+
+        for cdna in self._rna_to_cdna_variant(position, include_stop=False):
+            result.extend(self._cdna_to_protein_variant(cdna))
 
         return sorted(set(result))
 
-    def _rna_to_rna(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        canonical: bool,
-    ) -> List[RnaPosition]:
-        if canonical:
-            transcript_ids = [i for i in transcript_ids if self.is_canonical_transcript(i)]
-
-        def convert(position: int, offset: int):
+    def _rna_to_rna(self, position: RnaPosition) -> List[RnaPosition]:
+        def convert(n: int, offset: int):
             result = []
 
             # If the offset position can be normalized to a non-offset position, do so. Otherwise
             # just return an offset position.
             if offset:
-                for dna in self._rna_to_dna(
-                    transcript_ids, position, offset, position, offset, strand, canonical
-                ):
-                    for rna in dna.to_rna(canonical=canonical):
-                        if rna.transcript_id in transcript_ids:
+                for dna in self._rna_to_dna(position):
+                    for rna in self._dna_to_rna(dna):
+                        if rna.transcript_id == position.transcript_id:
                             result.append(rna)
 
-                if result:
-                    return result
+                return result
 
             mask = (
-                (self.df[TRANSCRIPT_ID].isin(transcript_ids))
-                & (self.df["transcript_start"] <= position)
-                & (self.df["transcript_end"] >= position)
-                & (self.df["strand"].isin(strand))
+                (self.df[TRANSCRIPT_ID] == position.transcript_id)
+                & (self.df["transcript_start"] <= n)
+                & (self.df["transcript_end"] >= n)
+                & (self.df["strand"] == position.strand)
                 & (self.df["feature"] == "exon")
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
                     RnaPosition(
-                        _data=self,
                         contig_id=exon.contig_id,
-                        start=start,
+                        start=position.start,
                         start_offset=offset,
-                        end=end,
+                        end=position.end,
                         end_offset=offset,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
@@ -3784,188 +2132,358 @@ class Core:
 
             return result
 
-        result_start = convert(start, start_offset)
-        if start == end:
+        result_start = convert(position.start, position.start_offset)
+        if position.start == position.end:
             return sorted(result_start)
         else:
-            result_end = convert(end, end_offset)
+            result_end = convert(position.end, position.end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
-    def _rna_to_rna_variant(
-        self,
-        transcript_ids: List[str],
-        start: int,
-        start_offset: int,
-        end: int,
-        end_offset: int,
-        strand: List[str],
-        refseq: str,
-        altseq: str,
-        canonical: bool,
-    ) -> List[_RnaSmallVariant]:
-        result: List[_RnaSmallVariant] = []
+    def _rna_to_rna_variant(self, position: _RnaSmallVariant) -> List[_RnaSmallVariant]:
+        result = []
 
-        for rna in self._rna_to_rna(
-            transcript_ids, start, start_offset, end, end_offset, strand, canonical
-        ):
-            result.extend(_RnaSmallVariant.from_rna(rna, refseq, altseq))
+        for rna in self._rna_to_rna(position):
+            result.extend(self._rna_small_variant_from_rna(rna, position.refseq, position.altseq))
 
         return result
 
-    def _normalize_map_args(
-        self,
-        start: Optional[int],
-        start_offset: Optional[int],
-        end: Optional[int],
-        end_offset: Optional[int],
-        strand: Optional[str],
-    ) -> Tuple[Optional[int], int, Optional[int], int, List[str]]:
-        start_ = start if start is not None else end
-        end_ = end if end is not None else start
-        start_offset_ = start_offset or 0
-        end_offset_ = end_offset or 0
-        strand_ = [strand] if strand is not None else ["+", "-"]
+    def _cdna_small_variant_from_cdna(
+        self, cdna: CdnaPosition, refseq: str, altseq: str
+    ) -> List[_CdnaSmallVariant]:
+        """Convert a cDNA position plus ref/alt nucleotides into a cDNA variant.
 
-        return start_, start_offset_, end_, end_offset_, strand_
+        Args:
+            cdna (CdnaPosition): _Variant position
+            refseq (str): reference allele
+            altseq (str): alternate allele
 
-    def _map(
-        self,
-        idfunc: Callable,
-        mapfunc: Callable,
-        feature: str,
-        start: int,
-        start_offset: Optional[int],
-        end: Optional[int],
-        end_offset: Optional[int],
-        strand: Optional[str],
-        canonical: bool,
-    ) -> List:
-        start_, start_offset_, end_, end_offset_, strand_ = self._normalize_map_args(
-            start, start_offset, end, end_offset, strand
-        )
-        feature_ = idfunc(feature)
-        result = mapfunc(feature_, start_, start_offset_, end_, end_offset_, strand_, canonical)
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+            ValueError: The given reference allele does not match the annotated reference allele
 
-        return sorted(set(result))
+        Returns:
+            List[_CdnaSmallVariant]: One or more cDNA variants
+        """
+        variant_list = []
 
-    def _map_variant(
-        self,
-        idfunc: Callable,
-        mapfunc: Callable,
-        feature: str,
-        start: int,
-        refseq: str,
-        altseq: str,
-        start_offset: Optional[int],
-        end: Optional[int],
-        end_offset: Optional[int],
-        strand: Optional[str],
-        canonical: bool,
-    ) -> List:
-        start_, start_offset_, end_, end_offset_, strand_ = self._normalize_map_args(
-            start, start_offset, end, end_offset, strand
-        )
-        feature_ = idfunc(feature)
-        result = mapfunc(
-            feature_, start_, start_offset_, end_, end_offset_, strand_, refseq, altseq, canonical
-        )
-
-        return sorted(set(result))
-
-    def _map_exon(
-        self,
-        mapfunc: Callable,
-        feature: str,
-        start: Optional[int],
-        start_offset: Optional[int],
-        end: Optional[int],
-        end_offset: Optional[int],
-        strand: Optional[str],
-        canonical: bool,
-    ) -> List:
-        start_, start_offset_, end_, end_offset_, strand_ = self._normalize_map_args(
-            start, start_offset, end, end_offset, strand
-        )
-        feature_ = self.transcript_ids(feature)
-
-        if start_ is not None:
-            positions = list(product(feature_, [start_], [end_], strand_))
-        else:
-            positions = []
-            for exon_id in self.exon_ids(feature):
-                positions.extend(self.exon_index(exon_id, transcript_ids=feature_))
-
-        result = []
-        for transcript_id, start__, end__, strand__ in positions:
-            result.extend(
-                mapfunc(
-                    [transcript_id],
-                    start__,
-                    start_offset_,
-                    end__,
-                    end_offset_,
-                    [strand__],
-                    canonical,
+        ref_annotated = self.sequence(cdna)
+        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
+            # Assert that the given ref matches the annotated one
+            if ref != ref_annotated:
+                raise ValueError(
+                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}'"
                 )
-            )
 
-        return sorted(set(result))
+            # Trim bases that are unchanged between the ref and alt alleles
+            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
+            start = cdna.start + new_start
+            end = cdna.end - new_end
+
+            # Determine the type of variant
+            if is_deletion(new_ref, new_alt):
+                variant = CdnaDeletion.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_delins(new_ref, new_alt):
+                variant = CdnaDelins.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_duplication(new_ref, new_alt):
+                variant = CdnaDuplication.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_insertion(new_ref, new_alt):
+                variant = CdnaInsertion.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_substitution(new_ref, new_alt):
+                variant = CdnaSubstitution.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            else:
+                raise NotImplementedError(
+                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {cdna}"
+                )
+
+            variant_list.append(variant)
+
+        return variant_list
+
+    def _cdna_small_variant_from_protein(
+        self, cdna: CdnaPosition, refaa: str, altaa: str
+    ) -> List[_CdnaSmallVariant]:
+        """Convert a cDNA position plus ref/alt amino acids into a cDNA variant.
+
+        Args:
+            cdna (CdnaPosition): cDNA position
+            refseq (str): Reference allele
+            altaa (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+
+        Returns:
+            List[_CdnaSmallVariant]: One or more cDNA variants
+        """
+        variant_list = []
+
+        ref_annotated = self.sequence(cdna)
+        for ref, alt in product(reverse_translate(refaa), reverse_translate(altaa)):
+            # Assert that the given ref matches the annotated one
+            if ref != ref_annotated:
+                continue
+
+            # For insertions, check that the sequence flanking the inserted sequence matches the ref
+            if is_insertion(refaa, altaa) and not is_insertion(ref, alt):
+                continue
+
+            # Trim bases that are unchanged between the ref and alt alleles
+            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
+            start = cdna.start + new_start
+            end = cdna.end - new_end
+
+            # Determine the type of variant
+            if is_deletion(new_ref, new_alt):
+                variant = CdnaDeletion.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_delins(new_ref, new_alt):
+                variant = CdnaDelins.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_duplication(new_ref, new_alt):
+                variant = CdnaDuplication.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_insertion(new_ref, new_alt):
+                variant = CdnaInsertion.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_substitution(new_ref, new_alt):
+                variant = CdnaSubstitution.copy_from(
+                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            else:
+                raise NotImplementedError(
+                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {cdna}"
+                )
+
+            variant_list.append(variant)
+
+        return variant_list
+
+    def _dna_small_variant_from_dna(
+        self, dna: DnaPosition, refseq: str, altseq: str
+    ) -> List[_DnaSmallVariant]:
+        """Convert a DNA position plus ref/alt nucleotides into a DNA variant.
+
+        Args:
+            dna (DnaPosition): DNA position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+
+        Returns:
+            List[_DnaSmallVariant]: One or more DNA variants
+        """
+        variant_list = []
+
+        # TODO: DNA sequence get is slow
+        # ref_annotated = self.sequence(dna)
+        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
+            # # Assert that the given ref matches the annotated one
+            # if ref != ref_annotated:
+            #     raise ValueError(
+            #         f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {dna}"
+            #     )
+
+            # Trim bases that are unchanged between the ref and alt alleles
+            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
+            start = dna.start + new_start
+            end = dna.end - new_end
+
+            # Determine the type of variant
+            if is_deletion(new_ref, new_alt):
+                variant = DnaDeletion.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_delins(new_ref, new_alt):
+                variant = DnaDelins.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_duplication(new_ref, new_alt):
+                variant = DnaDuplication.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_insertion(new_ref, new_alt):
+                variant = DnaInsertion.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_substitution(new_ref, new_alt):
+                variant = DnaSubstitution.copy_from(
+                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            else:
+                raise NotImplementedError(
+                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {dna}"
+                )
+
+            variant_list.append(variant)
+
+        return variant_list
+
+    def _exon_small_variant_from_exon(
+        self, exon: ExonPosition, refseq: str, altseq: str
+    ) -> List[_ExonSmallVariant]:
+        """Convert an exon position plus ref/alt nucleotides into an exon variant.
+
+        Args:
+            exon (ExonPosition): exon position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+
+        Returns:
+            List[_ExonSmallVariant]: One or more exon variants
+        """
+        raise NotImplementedError()  # TODO
+
+    def _protein_small_variant(
+        self, cdna: CdnaPosition, protein: ProteinPosition, refseq: str, altseq: str
+    ) -> List[_ProteinSmallVariant]:
+        """Convert a cDNA position plus ref/alt amino acids into a protein variant.
+
+        Args:
+            cdna (CdnaPosition): cDNA position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+
+        Returns:
+            List[_ProteinSmallVariant]: One or more protein variants
+        """
+        variant_list = []
+
+        protein_refseq = self.sequence(protein)
+        for cdna_ref, cdna_alt in product(expand_nt(refseq), expand_nt(altseq)):
+            if is_frameshift(cdna_ref, cdna_alt):
+                raise NotImplementedError()  # TODO
+
+            for protein_alt in self.translate_cdna_variant(cdna, cdna_alt):
+                # Trim bases that are unchanged between the ref and alt alleles
+                new_ref, new_alt, new_start, new_end = collapse_seq_change(
+                    protein_refseq, protein_alt
+                )
+                start = protein.start + new_start
+                end = protein.end - new_end
+
+                # Determine the type of variant
+                if is_deletion(new_ref, new_alt):
+                    variant = ProteinDeletion.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                elif is_delins(new_ref, new_alt):
+                    variant = ProteinDelins.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                elif is_duplication(new_ref, new_alt):
+                    variant = ProteinDuplication.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                elif is_insertion(new_ref, new_alt):
+                    variant = ProteinInsertion.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                elif is_substitution(new_ref, new_alt):
+                    variant = ProteinSubstitution.copy_from(
+                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    )
+                else:
+                    raise NotImplementedError(
+                        f"Unrecognized sequence change '{new_ref}/{new_alt}' at {protein}"
+                    )
+
+                variant_list.append(variant)
+
+        return variant_list
+
+    def _rna_small_variant_from_rna(
+        self, rna: RnaPosition, refseq: str, altseq: str
+    ) -> List[_RnaSmallVariant]:
+        """Convert an RNA position plus ref/alt nucleotides into an RNA variant.
+
+        Args:
+            rna (RnaPosition): RNA position
+            refseq (str): Reference allele
+            altseq (str): Alternate allele
+
+        Raises:
+            NotImplementedError: An unsupported combination of reference/alternate alleles was given
+            ValueError: The given reference allele does not match the annotated reference allele
+
+        Returns:
+            List[_RnaSmallVariant]: One or more RNA variants
+        """
+        variant_list = []
+
+        ref_annotated = self.sequence(rna)
+        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
+            # Assert that the given ref matches the annotated one
+            if ref != ref_annotated:
+                raise ValueError(
+                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {rna}"
+                )
+
+            # Trim bases that are unchanged between the ref and alt alleles
+            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
+            start = rna.start + new_start
+            end = rna.end - new_end
+
+            # Determine the type of variant
+            if is_deletion(new_ref, new_alt):
+                variant = RnaDeletion.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_delins(new_ref, new_alt):
+                variant = RnaDelins.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_duplication(new_ref, new_alt):
+                variant = RnaDuplication.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_insertion(new_ref, new_alt):
+                variant = RnaInsertion.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            elif is_substitution(new_ref, new_alt):
+                variant = RnaSubstitution.copy_from(
+                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
+                )
+            else:
+                raise NotImplementedError(
+                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {rna}"
+                )
+
+            variant_list.append(variant)
+
+        return variant_list
 
     # ---------------------------------------------------------------------------------------------
     # Utility functions
     # ---------------------------------------------------------------------------------------------
-    def cds_offset(self, transcript_id: str) -> int:
-        """Get the integer offset of the CDS from the start of the spliced RNA.
-
-        Args:
-            transcript_id (str): transcript ID
-
-        Returns:
-            int: Nucleotide offset of the cDNA start from the start of the transcript
-        """
-        rna = self.cdna_to_rna(transcript_id, 1)
-        assert len(rna) == 1, f"Ambiguous transcript start for '{transcript_id}'"
-        offset = rna[0].start - 1
-        assert offset >= 0
-
-        return offset
-
-    def exon_index(
-        self, exon_id: str, transcript_ids: Union[List[str], str] = []
-    ) -> List[Tuple[str, int, int, str]]:
-        """Get the exon number(s) for an exon ID on each transcript. Optionally, restrict to a
-        specific transcript(s).
-
-        Args:
-            exon_id (str): exon ID
-            transcript_ids (Union[List[str], str], optional): Restrict the search to the given
-                transcript IDs. Defaults to [].
-
-        Returns:
-            List[Tuple[str, int, int, str]]: List of (exon ID, exon index, exon index, exon strand)
-        """
-        result = []
-        restrict = [transcript_ids] if isinstance(transcript_ids, str) else transcript_ids
-
-        mask = (self.df[EXON_ID] == exon_id) & (self.df["feature"] == "exon")
-        for _, exon in self.df[mask].iterrows():
-            if restrict and exon.transcript_id not in restrict:
-                continue
-            else:
-                result.append((exon.transcript_id, exon.exon_number, exon.exon_number, exon.strand))
-
-        return sorted(set(result))
-
-    def translate_cds_variant(
-        self, transcript_id: str, cdna_start: int, cdna_end: int, cdna_alt: str
-    ) -> List[str]:
+    def translate_cdna_variant(self, cdna: CdnaPosition, cdna_altseq: str) -> List[str]:
         """Return the mutated protein sequence, given a cDNA position and alt allele.
 
         Args:
-            transcript_id (str): transcript ID
-            cdna_start (int): cDNA start position
-            cdna_end (int): cDNA end position
-            cdna_alt (str): cDNA alternate allele
+            cdna (CdnaPosition): cDNA position object
+            cdna_altseq (str): cDNA alternate allele
 
         Returns:
             List[str]: protein alternate allele(s)
@@ -3973,23 +2491,24 @@ class Core:
         pep_altseq_set = set()
 
         # If no alt, assume we're talking about a deletion variant
-        if not cdna_alt:
+        if not cdna_altseq:
             return [""]
 
         # Get the codon sequence
-        codon_start_offset = (cdna_start - 1) % 3
-        codon_start = cdna_start - codon_start_offset
-        codon_end_offset = 2 - ((cdna_end - 1) % 3)
-        codon_end = cdna_end + codon_end_offset
-        codon_refseq = self.cds_sequence(transcript_id, codon_start, codon_end)
-
+        codon_start_offset = (cdna.start - 1) % 3
+        codon_start = cdna.start - codon_start_offset
+        codon_end_offset = 2 - ((cdna.end - 1) % 3)
+        codon_end = cdna.end + codon_end_offset
+        # Create a new CdnaPosition encompassing the whole codon(s)
+        codon = CdnaPosition.copy_from(cdna, start=codon_start, end=codon_end)
+        codon_refseq = self.sequence(codon)
         # Assert that the codon sequence is divisible by 3
         assert len(codon_refseq) % 3 == 0
 
         # Mutate the codon sequence
         codon_refseq_left = codon_refseq[:codon_start_offset]
         codon_refseq_right = codon_refseq[-codon_end_offset:] if codon_end_offset else ""
-        for i in expand_nt(cdna_alt):
+        for i in expand_nt(cdna_altseq):
             codon_altseq = codon_refseq_left + i + codon_refseq_right
             # Assert that the altered codon sequence is divisible by 3
             assert len(codon_altseq) % 3 == 0, codon_altseq
@@ -3999,9 +2518,7 @@ class Core:
         return sorted(pep_altseq_set)
 
 
-def join_positions(
-    start: List[PositionOrSmallVariantType], end: List[PositionOrSmallVariantType], merge_on: str
-) -> List[PositionOrSmallVariantType]:
+def join_positions(start: List[Position], end: List[Position], merge_on: str) -> List[Position]:
     """Return the combination of two list of position or variant objects - one of start positions
     and one of end positions - into one list by the given key (e.g. 'transcript_id').
 

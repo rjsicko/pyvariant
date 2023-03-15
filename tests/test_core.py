@@ -468,21 +468,72 @@ def test_is_transcript_true_from_name(ensembl100):
 # -------------------------------------------------------------------------------------------------
 # test <feature>_sequence
 # -------------------------------------------------------------------------------------------------
-def test_cds_sequence(ensembl100):
-    assert ensembl100.cds_sequence("ENST00000288135", 7, 9) == "GGC"
+@pytest.fixture
+def test_cds_sequence_pos():
+    return CdnaPosition(
+        "4",
+        7,
+        0,
+        9,
+        0,
+        "+",
+        "ENSG00000157404",
+        "KIT",
+        "ENST00000288135",
+        "KIT-201",
+        "ENSP00000288135",
+    )
 
 
-def test_dna_sequence(ensembl100):
-    assert ensembl100.dna_sequence("4", 54695512, 54695514, "+") == "GCT"
-    assert ensembl100.dna_sequence("4", 54695512, 54695514, "-") == "AGC"
+def test_cds_sequence(ensembl100, test_cds_sequence_pos):
+    assert ensembl100.sequence(test_cds_sequence_pos) == "GGC"
 
 
-def test_protein_sequence(ensembl100):
-    assert ensembl100.protein_sequence("ENSP00000288135", 3, 4) == "GA"
+@pytest.fixture
+def test_dna_sequence_pos_plus():
+    return DnaPosition("4", 54695512, 0, 54695514, 0, "+")
 
 
-def test_rna_sequence(ensembl100):
-    assert ensembl100.rna_sequence("ENST00000288135", 126, 128) == "GCT"
+@pytest.fixture
+def test_dna_sequence_pos_minus():
+    return DnaPosition("4", 54695512, 0, 54695514, 0, "-")
+
+
+def test_dna_sequence(ensembl100, test_dna_sequence_pos_plus, test_dna_sequence_pos_minus):
+    assert ensembl100.sequence(test_dna_sequence_pos_plus) == "GCT"
+    assert ensembl100.sequence(test_dna_sequence_pos_minus) == "AGC"
+
+
+@pytest.fixture
+def test_protein_sequence_pos():
+    return ProteinPosition(
+        "4",
+        3,
+        0,
+        4,
+        0,
+        "+",
+        "ENSG00000157404",
+        "KIT",
+        "ENST00000288135",
+        "KIT-201",
+        "ENSP00000288135",
+    )
+
+
+def test_protein_sequence(ensembl100, test_protein_sequence_pos):
+    assert ensembl100.sequence(test_protein_sequence_pos) == "GA"
+
+
+@pytest.fixture
+def test_rna_sequence_pos():
+    return RnaPosition(
+        "4", 126, 0, 128, 0, "+", "ENSG00000157404", "KIT", "ENST00000288135", "KIT-201"
+    )
+
+
+def test_rna_sequence(ensembl100, test_rna_sequence_pos):
+    assert ensembl100.sequence(test_rna_sequence_pos) == "GCT"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -523,9 +574,8 @@ def test_normalize_id_transcript_name(ensembl100):
 # -------------------------------------------------------------------------------------------------
 # test str
 # -------------------------------------------------------------------------------------------------
-def test_cdna_to_str(ensembl100):
+def test_cdna_to_str():
     position1 = CdnaPosition(
-        _data=ensembl100,
         contig_id="5",
         start=3399,
         start_offset=0,
@@ -539,7 +589,6 @@ def test_cdna_to_str(ensembl100):
         protein_id="ENSP00000309572",
     )
     position2 = CdnaPosition(
-        _data=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -556,26 +605,19 @@ def test_cdna_to_str(ensembl100):
     assert str(position2) == "ENST00000310581:c.1_3399"
 
 
-def test_dna_to_str(ensembl100):
+def test_dna_to_str():
     position1 = DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1234,
-        start_offset=0,
-        end=1234,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1234, start_offset=0, end=1234, end_offset=0, strand="-"
     )
     position2 = DnaPosition(
-        _data=ensembl100, contig_id="5", start=1, start_offset=0, end=1234, end_offset=0, strand="-"
+        contig_id="5", start=1, start_offset=0, end=1234, end_offset=0, strand="-"
     )
     assert str(position1) == "5:g.1234"
     assert str(position2) == "5:g.1_1234"
 
 
-def test_exon_to_str(ensembl100):
+def test_exon_to_str():
     position1 = ExonPosition(
-        _data=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -589,7 +631,6 @@ def test_exon_to_str(ensembl100):
         exon_id="ENSE00003896691",
     )
     position2 = ExonPosition(
-        _data=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -606,9 +647,8 @@ def test_exon_to_str(ensembl100):
     assert str(position2) == "ENST00000310581:e.1_2"
 
 
-def test_protein_to_str(ensembl100):
+def test_protein_to_str():
     position1 = ProteinPosition(
-        _data=ensembl100,
         contig_id="5",
         start=524,
         start_offset=0,
@@ -622,7 +662,6 @@ def test_protein_to_str(ensembl100):
         protein_id="ENSP00000309572",
     )
     position2 = ProteinPosition(
-        _data=ensembl100,
         contig_id="5",
         start=74,
         start_offset=0,
@@ -639,9 +678,8 @@ def test_protein_to_str(ensembl100):
     assert str(position2) == "ENSP00000309572:p.74_524"
 
 
-def test_transcript_to_str(ensembl100):
+def test_transcript_to_str():
     position1 = RnaPosition(
-        _data=ensembl100,
         contig_id="5",
         start=4039,
         start_offset=0,
@@ -654,7 +692,6 @@ def test_transcript_to_str(ensembl100):
         transcript_name="TERT-201",
     )
     position2 = RnaPosition(
-        _data=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -674,9 +711,8 @@ def test_transcript_to_str(ensembl100):
 # test <feature>
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def expected_cdna(ensembl100):
+def expected_cdna():
     return CdnaPosition(
-        _data=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -710,15 +746,9 @@ def test_cdna(ensembl100, expected_cdna, feature, num_results):
 
 
 @pytest.fixture
-def expected_dna(ensembl100):
+def expected_dna():
     return DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1,
-        start_offset=0,
-        end=181538259,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1, start_offset=0, end=181538259, end_offset=0, strand="-"
     )
 
 
@@ -741,9 +771,8 @@ def test_dna(ensembl100, expected_dna, feature, num_results):
 
 
 @pytest.fixture
-def expected_exon(ensembl100):
+def expected_exon():
     return ExonPosition(
-        _data=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -777,15 +806,9 @@ def test_exon(ensembl100, expected_exon, feature, num_results):
 
 
 @pytest.fixture
-def expected_gene(ensembl100):
+def expected_gene():
     return DnaPosition(
-        _data=ensembl100,
-        contig_id="5",
-        start=1253147,
-        start_offset=0,
-        end=1295068,
-        end_offset=0,
-        strand="-",
+        contig_id="5", start=1253147, start_offset=0, end=1295068, end_offset=0, strand="-"
     )
 
 
@@ -808,9 +831,8 @@ def test_gene(ensembl100, expected_gene, feature, num_results):
 
 
 @pytest.fixture
-def expected_protein(ensembl100):
+def expected_protein():
     return ProteinPosition(
-        _data=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -844,9 +866,8 @@ def test_protein(ensembl100, expected_protein, feature, num_results):
 
 
 @pytest.fixture
-def expected_rna(ensembl100):
+def expected_rna():
     return RnaPosition(
-        _data=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -907,771 +928,74 @@ def test_rna_canonical(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
-# test <feature>_to_<feature>
+# test translate_cdna_variant
 # -------------------------------------------------------------------------------------------------
-def test_cdna_to_cdna(ensembl100):
-    result = ensembl100.cdna_to_cdna(
-        "ENST00000310581", 100, end=100, start_offset=-1, end_offset=-1, strand="-"
+@pytest.fixture
+def test_cds_sequence_pos_1():
+    return CdnaPosition(
+        "4",
+        38,
+        0,
+        38,
+        0,
+        "+",
+        "ENSG00000157404",
+        "KIT",
+        "ENST00000288135",
+        "KIT-201",
+        "ENSP00000288135",
     )
-    expected = [
-        CdnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=99,
-            start_offset=0,
-            end=99,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-            protein_id="ENSP00000309572",
-        )
-    ]
-    assert result == expected
 
 
-def test_cdna_to_dna(ensembl100):
-    result = ensembl100.cdna_to_dna(
-        "ENST00000288135", 68, end=68, start_offset=-1, end_offset=-1, strand="+"
-    )
-    expected = [
-        DnaPosition(
-            _data=ensembl100,
-            contig_id="4",
-            start=54695511,
-            start_offset=0,
-            end=54695511,
-            end_offset=0,
-            strand="+",
-        )
-    ]
-    assert result == expected
-
-
-def test_cdna_to_exon(ensembl100):
-    result = ensembl100.cdna_to_exon(
-        "ENST00000380152", 10252, end=10254, start_offset=0, end_offset=0, strand="+"
-    )
-    expected = [
-        ExonPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=27,
-            start_offset=0,
-            end=27,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-            exon_id="ENSE00003717596",
-        )
-    ]
-    assert result == expected
-
-
-def test_cdna_to_protein(ensembl100):
-    result = ensembl100.cdna_to_protein(
-        "ENST00000310581", 100, end=100, start_offset=-1, end_offset=-1, strand="-"
-    )
-    expected = [
-        ProteinPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=33,
-            start_offset=0,
-            end=33,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-            protein_id="ENSP00000309572",
-        )
-    ]
-    assert result == expected
-
-
-def test_cdna_to_rna(ensembl100):
-    result = ensembl100.cdna_to_rna(
-        "ENST00000288135", 68, end=68, start_offset=-1, end_offset=-1, strand="+"
-    )
-    expected = [
-        RnaPosition(
-            _data=ensembl100,
-            contig_id="4",
-            start=126,
-            start_offset=-1,
-            end=126,
-            end_offset=-1,
-            strand="+",
-            gene_id="ENSG00000157404",
-            gene_name="KIT",
-            transcript_id="ENST00000288135",
-            transcript_name="KIT-201",
-        )
-    ]
-    assert result == expected
-
-
-def test_dna_to_cdna(ensembl100):
-    result = ensembl100.dna_to_cdna(
-        "13", 32316526, end=32319077, start_offset=1, end_offset=1, strand="+"
-    )
-    expected = [
-        CdnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=67,
-            start_offset=0,
-            end=69,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-            protein_id="ENSP00000369497",
-        ),
-        CdnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=67,
-            start_offset=0,
-            end=69,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000544455",
-            transcript_name="BRCA2-206",
-            protein_id="ENSP00000439902",
-        ),
-    ]
-    assert result == expected
-
-
-def test_dna_to_dna(ensembl100):
-    result = ensembl100.dna_to_dna(
-        "5", 1282624, end=1293314, start_offset=1, end_offset=1, strand="-"
-    )
-    expected = [
-        DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1282623,
-            start_offset=0,
-            end=1293313,
-            end_offset=0,
-            strand="-",
-        )
-    ]
-    assert result == expected
-
-
-def test_dna_to_exon(ensembl100):
-    result = ensembl100.dna_to_exon(
-        "6", 31166302, end=31166304, start_offset=0, end_offset=0, strand="-"
-    )
-    expected = [
-        ExonPosition(
-            _data=ensembl100,
-            contig_id="6",
-            start=1,
-            start_offset=0,
-            end=1,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000204531",
-            gene_name="POU5F1",
-            transcript_id="ENST00000471529",
-            transcript_name="POU5F1-204",
-            exon_id="ENSE00002568331",
-        ),
-        ExonPosition(
-            _data=ensembl100,
-            contig_id="6",
-            start=1,
-            start_offset=0,
-            end=1,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000204531",
-            gene_name="POU5F1",
-            transcript_id="ENST00000513407",
-            transcript_name="POU5F1-206",
-            exon_id="ENSE00002033137",
-        ),
-    ]
-    assert result == expected
-
-
-def test_dna_to_protein(ensembl100):
-    result = ensembl100.dna_to_protein(
-        "13", 32316526, end=32319077, start_offset=1, end_offset=1, strand="+"
-    )
-    expected = [
-        ProteinPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=23,
-            start_offset=0,
-            end=23,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-            protein_id="ENSP00000369497",
-        ),
-        ProteinPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=23,
-            start_offset=0,
-            end=23,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000544455",
-            transcript_name="BRCA2-206",
-            protein_id="ENSP00000439902",
-        ),
-    ]
-    assert result == expected
-
-
-def test_dna_to_rna(ensembl100):
-    result = ensembl100.dna_to_rna(
-        "5", 1253148, end=1253150, start_offset=1, end_offset=1, strand="-"
-    )
-    expected = [
-        RnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=2420,
-            start_offset=0,
-            end=2422,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000484238",
-            transcript_name="TERT-204",
-        )
-    ]
-    assert result == expected
-
-
-def test_exon_to_cdna(ensembl100):
-    result = ensembl100.exon_to_cdna(
-        "ENST00000380152", 27, end=27, start_offset=0, end_offset=0, strand="+"
-    )
-    expected = [
-        CdnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=10255,
-            start_offset=0,
-            end=10257,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-            protein_id="ENSP00000369497",
-        ),
-        CdnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=9649,
-            start_offset=0,
-            end=10254,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-            protein_id="ENSP00000369497",
-        ),
-    ]
-    assert result == expected
-
-
-def test_exon_to_dna(ensembl100):
-    result = ensembl100.exon_to_dna(
-        "ENST00000310581", 16, end=16, start_offset=0, end_offset=0, strand="-"
-    )
-    expected = [
-        DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1253167,
-            start_offset=0,
-            end=1253831,
-            end_offset=0,
-            strand="-",
-        )
-    ]
-    assert result == expected
-
-
-def test_exon_to_exon(ensembl100):
-    result = ensembl100.exon_to_exon(
-        "ENST00000380152", 27, end=27, start_offset=0, end_offset=0, strand="+"
-    )
-    expected = [
-        ExonPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=27,
-            start_offset=0,
-            end=27,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-            exon_id="ENSE00003717596",
-        )
-    ]
-    assert result == expected
-
-
-def test_exon_to_protein(ensembl100):
-    result = ensembl100.exon_to_protein(
-        "ENST00000310581", 16, end=16, start_offset=0, end_offset=0, strand="-"
-    )
-    expected = [
-        ProteinPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1099,
-            start_offset=0,
-            end=1132,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-            protein_id="ENSP00000309572",
-        )
-    ]
-    assert result == expected
-
-
-def test_exon_to_rna(ensembl100):
-    result = ensembl100.exon_to_rna(
-        "ENST00000380152", 27, end=27, start_offset=0, end_offset=0, strand="+"
-    )
-    expected = [
-        RnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=9882,
-            start_offset=0,
-            end=11986,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-        )
-    ]
-    assert result == expected
-
-
-def test_protein_to_cdna(ensembl100):
-    result = ensembl100.protein_to_cdna(
-        "ENST00000310581", 525, end=525, start_offset=0, end_offset=0, strand="-"
-    )
-    expected = [
-        CdnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1573,
-            start_offset=0,
-            end=1575,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-            protein_id="ENSP00000309572",
-        )
-    ]
-    assert result == expected
-
-
-def test_protein_to_dna(ensembl100):
-    result = ensembl100.protein_to_dna(
-        "ENST00000310581", 1132, end=1132, start_offset=0, end_offset=0, strand="-"
-    )
-    expected = [
-        DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1253731,
-            start_offset=0,
-            end=1253733,
-            end_offset=0,
-            strand="-",
-        )
-    ]
-    assert result == expected
-
-
-def test_protein_to_exon(ensembl100):
-    result = ensembl100.protein_to_exon(
-        "ENST00000380152", 3418, end=3418, start_offset=0, end_offset=0, strand="+"
-    )
-    to_positions = [
-        ExonPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=27,
-            start_offset=0,
-            end=27,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-            exon_id="ENSE00003717596",
-        )
-    ]
-    assert result == to_positions
-
-
-def test_protein_to_protein(ensembl100):
-    result = ensembl100.protein_to_protein(
-        "ENSP00000309572", 525, end=525, start_offset=0, end_offset=0, strand="-"
-    )
-    to_positions = [
-        ProteinPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=525,
-            start_offset=0,
-            end=525,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-            protein_id="ENSP00000309572",
-        )
-    ]
-    assert result == to_positions
-
-
-def test_protein_to_rna(ensembl100):
-    result = ensembl100.protein_to_rna(
-        "ENSP00000369497", 3418, end=3418, start_offset=0, end_offset=0, strand="+"
-    )
-    to_positions = [
-        RnaPosition(
-            _data=ensembl100,
-            contig_id="13",
-            start=10485,
-            start_offset=0,
-            end=10487,
-            end_offset=0,
-            strand="+",
-            gene_id="ENSG00000139618",
-            gene_name="BRCA2",
-            transcript_id="ENST00000380152",
-            transcript_name="BRCA2-201",
-        )
-    ]
-    assert result == to_positions
-
-
-def test_rna_to_cdna(ensembl100):
-    result = ensembl100.rna_to_cdna(
-        "ENST00000310581", 1652, end=1654, start_offset=0, end_offset=0, strand="-"
-    )
-    to_positions = [
-        CdnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1573,
-            start_offset=0,
-            end=1575,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-            protein_id="ENSP00000309572",
-        )
-    ]
-    assert result == to_positions
-
-
-def test_rna_to_dna(ensembl100):
-    result = ensembl100.rna_to_dna(
-        "ENST00000310581", 1652, end=1654, start_offset=0, end_offset=0, strand="-"
-    )
-    to_positions = [
-        DnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=1282623,
-            start_offset=0,
-            end=1293313,
-            end_offset=0,
-            strand="-",
-        )
-    ]
-    assert result == to_positions
-
-
-def test_rna_to_exon(ensembl100):
-    result = ensembl100.rna_to_exon(
-        "ENST00000310581", 4037, end=4039, start_offset=0, end_offset=0, strand="-"
-    )
-    to_positions = [
-        ExonPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=16,
-            start_offset=0,
-            end=16,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-            exon_id="ENSE00001863787",
-        )
-    ]
-    assert result == to_positions
-
-
-def test_rna_to_protein(ensembl100):
-    result = ensembl100.rna_to_protein(
-        "ENST00000310581", 1652, end=1654, start_offset=0, end_offset=0, strand="-"
-    )
-    to_positions = [
-        ProteinPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=525,
-            start_offset=0,
-            end=525,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-            protein_id="ENSP00000309572",
-        )
-    ]
-    assert result == to_positions
-
-
-def test_rna_to_rna(ensembl100):
-    result = ensembl100.rna_to_rna(
-        "ENST00000310581", 4037, end=4039, start_offset=0, end_offset=0, strand="-"
-    )
-    to_positions = [
-        RnaPosition(
-            _data=ensembl100,
-            contig_id="5",
-            start=4037,
-            start_offset=0,
-            end=4039,
-            end_offset=0,
-            strand="-",
-            gene_id="ENSG00000164362",
-            gene_name="TERT",
-            transcript_id="ENST00000310581",
-            transcript_name="TERT-201",
-        )
-    ]
-    assert result == to_positions
-
-
-# -------------------------------------------------------------------------------------------------
-# test <feature>_to_<feature> canonical only
-# -------------------------------------------------------------------------------------------------
-def test_cdna_to_cdna_canonical(ensembl100):
-    result = ensembl100.cdna_to_cdna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_cdna_to_dna_canonical(ensembl100):
-    result = ensembl100.cdna_to_dna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert (result[0].start, result[0].end) == (127588499, 127588499)
-
-
-def test_cdna_to_exon_canonical(ensembl100):
-    result = ensembl100.cdna_to_exon("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_cdna_to_protein_canonical(ensembl100):
-    result = ensembl100.cdna_to_protein("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_cdna_to_rna_canonical(ensembl100):
-    result = ensembl100.cdna_to_rna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_dna_to_cdna_canonical(ensembl100):
-    result = ensembl100.dna_to_cdna("7", 127588499, strand="+", canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_dna_to_dna_canonical(ensembl100):
-    result = ensembl100.dna_to_dna("7", 127588499, strand="+", canonical=True)
-    assert len(result) == 1
-    assert (result[0].start, result[0].end) == (127588499, 127588499)
-
-
-def test_dna_to_exon_canonical(ensembl100):
-    result = ensembl100.dna_to_exon("7", 127588499, strand="+", canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_dna_to_protein_canonical(ensembl100):
-    result = ensembl100.dna_to_protein("7", 127588499, strand="+", canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_dna_to_rna_canonical(ensembl100):
-    result = ensembl100.dna_to_rna("7", 127588499, strand="+", canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_exon_to_cdna_canonical(ensembl100):
-    result = ensembl100.exon_to_cdna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_exon_to_dna_canonical(ensembl100):
-    result = ensembl100.exon_to_dna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert (result[0].start, result[0].end) == (127588411, 127588565)
-
-
-def test_exon_to_exon_canonical(ensembl100):
-    result = ensembl100.exon_to_exon("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_exon_to_protein_canonical(ensembl100):
-    result = ensembl100.exon_to_protein("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_exon_to_rna_canonical(ensembl100):
-    result = ensembl100.exon_to_rna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_protein_to_cdna_canonical(ensembl100):
-    result = ensembl100.protein_to_cdna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_protein_to_dna_canonical(ensembl100):
-    result = ensembl100.protein_to_dna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert (result[0].start, result[0].end) == (127588499, 127588501)
-
-
-def test_protein_to_exon_canonical(ensembl100):
-    result = ensembl100.protein_to_exon("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_protein_to_protein_canonical(ensembl100):
-    result = ensembl100.protein_to_protein("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_protein_to_rna_canonical(ensembl100):
-    result = ensembl100.protein_to_rna("ARF5", 1, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_rna_to_cdna_canonical(ensembl100):
-    result = ensembl100.rna_to_cdna("ARF5", 89, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_rna_to_dna_canonical(ensembl100):
-    result = ensembl100.rna_to_dna("ARF5", 89, canonical=True)
-    assert len(result) == 1
-    assert (result[0].start, result[0].end) == (127588499, 127588499)
-
-
-def test_rna_to_exon_canonical(ensembl100):
-    result = ensembl100.rna_to_exon("ARF5", 89, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_rna_to_protein_canonical(ensembl100):
-    result = ensembl100.rna_to_protein("ARF5", 89, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-def test_rna_to_rna_canonical(ensembl100):
-    result = ensembl100.rna_to_rna("ARF5", 89, canonical=True)
-    assert len(result) == 1
-    assert result[0].transcript_id == "ENST00000000233"
-
-
-# -------------------------------------------------------------------------------------------------
-# test translate_cds_variant
-# -------------------------------------------------------------------------------------------------
-def test_translate_cds_variant(ensembl100):
+def test_translate_cdna_variant_1(ensembl100, test_cds_sequence_pos_1):
     # GTT -> GAT
-    assert ensembl100.translate_cds_variant("ENST00000288135", 38, 38, "A") == ["D"]
-    # GTTCTG -> GAAATG
-    assert ensembl100.translate_cds_variant("ENST00000288135", 38, 40, "AAA") == ["EM"]
+    assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_1, "A") == ["D"]
+
+
+def test_translate_cdna_variant_3(ensembl100, test_cds_sequence_pos_1):
     # GTT -> GAT or GCT
-    assert ensembl100.translate_cds_variant("ENST00000288135", 38, 38, "M") == ["A", "D"]
+    assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_1, "M") == ["A", "D"]
+
+
+@pytest.fixture
+def test_cds_sequence_pos_2():
+    return CdnaPosition(
+        "4",
+        38,
+        0,
+        40,
+        0,
+        "+",
+        "ENSG00000157404",
+        "KIT",
+        "ENST00000288135",
+        "KIT-201",
+        "ENSP00000288135",
+    )
+
+
+def test_translate_cdna_variant_2(ensembl100, test_cds_sequence_pos_2):
+    # GTTCTG -> GAAATG
+    assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_2, "AAA") == ["EM"]
+
+
+@pytest.fixture
+def test_cds_sequence_pos_3():
+    return CdnaPosition(
+        "4",
+        1674,
+        0,
+        1675,
+        0,
+        "+",
+        "ENSG00000157404",
+        "KIT",
+        "ENST00000288135",
+        "KIT-201",
+        "ENSP00000288135",
+    )
+
+
+def test_translate_cdna_variant_4(ensembl100, test_cds_sequence_pos_3):
     # GG -> GTTCG
-    assert ensembl100.translate_cds_variant("ENST00000288135", 1674, 1675, "GTTCG") == ["KFV"]
+    assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_3, "GTTCG") == ["KFV"]

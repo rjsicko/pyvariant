@@ -13,9 +13,8 @@ from variant_map.positions import (
 
 
 @pytest.fixture()
-def variant(ensembl69):
+def variant():
     return ProteinSubstitution(
-        _data=ensembl69,
         contig_id="12",
         start=13,
         start_offset=0,
@@ -57,7 +56,6 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     expected_substitution = CdnaSubstitution(
-        _data=ensembl69,
         contig_id="12",
         start=38,
         start_offset=0,
@@ -73,7 +71,6 @@ def test_to_cdna(ensembl69, variant):
         altseq="T",  # GTC
     )
     expected_delins = CdnaDelins(
-        _data=ensembl69,
         contig_id="12",
         start=38,
         start_offset=0,
@@ -88,7 +85,7 @@ def test_to_cdna(ensembl69, variant):
         refseq="GC",  # GGC
         altseq="TA",  # GTA
     )
-    result = variant.to_cdna()
+    result = ensembl69.to_cdna(variant)
     assert expected_substitution in result
     assert expected_delins in result
     assert len(result) == 4
@@ -96,7 +93,6 @@ def test_to_cdna(ensembl69, variant):
 
 def test_to_dna(ensembl69, variant):
     expected_substitution = DnaSubstitution(
-        _data=ensembl69,
         contig_id="12",
         start=25398281,
         start_offset=0,
@@ -107,7 +103,6 @@ def test_to_dna(ensembl69, variant):
         altseq="T",  # GTC
     )
     expected_delins = DnaDelins(
-        _data=ensembl69,
         contig_id="12",
         start=25398280,
         start_offset=0,
@@ -117,7 +112,7 @@ def test_to_dna(ensembl69, variant):
         refseq="GC",  # GGC
         altseq="TA",  # GTA
     )
-    result = variant.to_dna()
+    result = ensembl69.to_dna(variant)
     assert expected_substitution in result
     assert expected_delins in result
     assert len(result) == 4
@@ -126,7 +121,6 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinSubstitution(
-            _data=ensembl69,
             contig_id="12",
             start=13,
             start_offset=0,
@@ -142,12 +136,11 @@ def test_to_protein(ensembl69, variant):
             altseq="V",
         )
     ]
-    assert variant.to_protein() == expected
+    assert ensembl69.to_protein(variant) == expected
 
 
 def test_to_rna(ensembl69, variant):
     expected_substitution = RnaSubstitution(
-        _data=ensembl69,
         contig_id="12",
         start=102,
         start_offset=0,
@@ -162,7 +155,6 @@ def test_to_rna(ensembl69, variant):
         altseq="T",  # GTC
     )
     expected_delins = RnaDelins(
-        _data=ensembl69,
         contig_id="12",
         start=102,
         start_offset=0,
@@ -176,7 +168,7 @@ def test_to_rna(ensembl69, variant):
         refseq="GC",  # GGC
         altseq="TA",  # GTA
     )
-    result = variant.to_rna()
+    result = ensembl69.to_rna(variant)
     assert expected_substitution in result
     assert expected_delins in result
     assert len(result) == 4

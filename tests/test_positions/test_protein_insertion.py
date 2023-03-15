@@ -5,9 +5,8 @@ from variant_map.positions import CdnaInsertion, DnaInsertion, ProteinInsertion,
 
 
 @pytest.fixture()
-def variant(ensembl69):
+def variant():
     return ProteinInsertion(
-        _data=ensembl69,
         contig_id="12",
         start=11,
         start_offset=0,
@@ -49,7 +48,6 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     expected = CdnaInsertion(
-        _data=ensembl69,
         contig_id="12",
         start=33,
         start_offset=0,
@@ -64,14 +62,13 @@ def test_to_cdna(ensembl69, variant):
         refseq="TG",
         altseq="TACAG",
     )
-    result = variant.to_cdna()
+    result = ensembl69.to_cdna(variant)
     assert expected in result
     assert len(result) == 4
 
 
 def test_to_dna(ensembl69, variant):
     expected = DnaInsertion(
-        _data=ensembl69,
         contig_id="12",
         start=25398285,
         start_offset=0,
@@ -81,7 +78,7 @@ def test_to_dna(ensembl69, variant):
         refseq="TG",
         altseq="TACAG",
     )
-    result = variant.to_dna()
+    result = ensembl69.to_dna(variant)
     assert expected in result
     assert len(result) == 4
 
@@ -89,7 +86,6 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinInsertion(
-            _data=ensembl69,
             contig_id="12",
             start=11,
             start_offset=0,
@@ -105,12 +101,11 @@ def test_to_protein(ensembl69, variant):
             altseq="ATG",
         )
     ]
-    assert variant.to_protein() == expected
+    assert ensembl69.to_protein(variant) == expected
 
 
 def test_to_rna(ensembl69, variant):
     expected = RnaInsertion(
-        _data=ensembl69,
         contig_id="12",
         start=97,
         start_offset=0,
@@ -124,6 +119,6 @@ def test_to_rna(ensembl69, variant):
         refseq="TG",
         altseq="TACAG",
     )
-    result = variant.to_rna()
+    result = ensembl69.to_rna(variant)
     assert expected in result
     assert len(result) == 4

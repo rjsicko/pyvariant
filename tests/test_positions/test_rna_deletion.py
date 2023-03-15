@@ -5,9 +5,8 @@ from variant_map.positions import CdnaDeletion, DnaDeletion, ProteinDeletion, Rn
 
 
 @pytest.fixture()
-def variant(ensembl69):
+def variant():
     return RnaDeletion(
-        _data=ensembl69,
         contig_id="3",
         start=1318,
         start_offset=0,
@@ -49,7 +48,6 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaDeletion(
-            _data=ensembl69,
             contig_id="3",
             start=478,
             start_offset=0,
@@ -65,13 +63,12 @@ def test_to_cdna(ensembl69, variant):
             altseq="",
         )
     ]
-    assert variant.to_cdna() == expected
+    assert ensembl69.to_cdna(variant) == expected
 
 
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaDeletion(
-            _data=ensembl69,
             contig_id="3",
             start=10191485,
             start_offset=0,
@@ -82,13 +79,12 @@ def test_to_dna(ensembl69, variant):
             altseq="",
         )
     ]
-    assert variant.to_dna() == expected
+    assert ensembl69.to_dna(variant) == expected
 
 
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinDeletion(
-            _data=ensembl69,
             contig_id="3",
             start=160,
             start_offset=0,
@@ -104,13 +100,12 @@ def test_to_protein(ensembl69, variant):
             altseq="",
         )
     ]
-    assert variant.to_protein() == expected
+    assert ensembl69.to_protein(variant) == expected
 
 
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaDeletion(
-            _data=ensembl69,
             contig_id="3",
             start=1318,
             start_offset=0,
@@ -125,4 +120,4 @@ def test_to_rna(ensembl69, variant):
             altseq="",
         )
     ]
-    assert variant.to_rna() == expected
+    assert ensembl69.to_rna(variant) == expected

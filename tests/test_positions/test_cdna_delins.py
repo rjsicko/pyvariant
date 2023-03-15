@@ -5,9 +5,8 @@ from variant_map.positions import CdnaDelins, DnaDelins, ProteinDelins, RnaDelin
 
 
 @pytest.fixture()
-def variant(ensembl69):
+def variant():
     return CdnaDelins(
-        _data=ensembl69,
         contig_id="17",
         start=878,
         start_offset=0,
@@ -50,7 +49,6 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaDelins(
-            _data=ensembl69,
             contig_id="17",
             start=878,
             start_offset=0,
@@ -66,13 +64,12 @@ def test_to_cdna(ensembl69, variant):
             altseq="TTT",
         )
     ]
-    assert variant.to_cdna() == expected
+    assert ensembl69.to_cdna(variant) == expected
 
 
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaDelins(
-            _data=ensembl69,
             contig_id="17",
             start=7577058,
             start_offset=0,
@@ -83,13 +80,12 @@ def test_to_dna(ensembl69, variant):
             altseq="TTT",
         )
     ]
-    assert variant.to_dna() == expected
+    assert ensembl69.to_dna(variant) == expected
 
 
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinDelins(
-            _data=ensembl69,
             contig_id="17",
             start=293,
             start_offset=0,
@@ -105,12 +101,11 @@ def test_to_protein(ensembl69, variant):
             altseq="V*",
         )
     ]
-    assert variant.to_protein() == expected
+    assert ensembl69.to_protein(variant) == expected
 
 
 def test_to_protein_frameshift(ensembl69):
     variant = CdnaDelins(
-        _data=ensembl69,
         contig_id="17",
         start=878,
         start_offset=0,
@@ -126,13 +121,12 @@ def test_to_protein_frameshift(ensembl69):
         altseq="TTTA",
     )
     with pytest.raises(NotImplementedError):
-        variant.to_protein()
+        ensembl69.to_protein(variant)
 
 
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaDelins(
-            _data=ensembl69,
             contig_id="17",
             start=1068,
             start_offset=0,
@@ -147,4 +141,4 @@ def test_to_rna(ensembl69, variant):
             altseq="TTT",
         )
     ]
-    assert variant.to_rna() == expected
+    assert ensembl69.to_rna(variant) == expected
