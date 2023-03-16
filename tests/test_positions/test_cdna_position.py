@@ -9,6 +9,7 @@ from variant_map.positions import (
 )
 
 
+# TODO: use fixtures for repeated positions
 def test_is_cdna():
     from_position = CdnaPosition(
         contig_id="5",

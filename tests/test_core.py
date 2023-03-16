@@ -24,10 +24,13 @@ from variant_map.constants import (
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
-from variant_map.core import (
+from variant_map.core import Core
+from variant_map.positions import (
     CdnaPosition,
-    Core,
+    CdnaSubstitution,
     DnaPosition,
+    DnaSubstitution,
+    ExonFusion,
     ExonPosition,
     ProteinPosition,
     RnaPosition,
@@ -999,3 +1002,170 @@ def test_cds_sequence_pos_3():
 def test_translate_cdna_variant_4(ensembl100, test_cds_sequence_pos_3):
     # GG -> GTTCG
     assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_3, "GTTCG") == ["KFV"]
+
+
+# -------------------------------------------------------------------------------------------------
+# test load
+# -------------------------------------------------------------------------------------------------
+def test_load_cdna_minimal(ensembl100):
+    result = ensembl100.variant("cdna", "ENST00000375562", 123)
+    assert result == [
+        CdnaPosition(
+            contig_id="6",
+            start=123,
+            start_offset=0,
+            end=123,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000204385",
+            gene_name="SLC44A4",
+            transcript_id="ENST00000375562",
+            transcript_name="SLC44A4-203",
+            protein_id="ENSP00000364712",
+        )
+    ]
+
+
+def test_load_cdna_position(ensembl100):
+    result = ensembl100.variant(
+        "cdna", "ENST00000288135", 68, start_offset=-1, end=68, end_offset=-1, strand="+"
+    )
+    assert result == [
+        CdnaPosition(
+            contig_id="4",
+            start=68,
+            start_offset=-1,
+            end=68,
+            end_offset=-1,
+            strand="+",
+            gene_id="ENSG00000157404",
+            gene_name="KIT",
+            transcript_id="ENST00000288135",
+            transcript_name="KIT-201",
+            protein_id="ENSP00000288135",
+        )
+    ]
+
+
+def test_load_cdna_substitution(ensembl100):
+    result = ensembl100.variant(
+        "cdna",
+        "ENST00000256078",
+        38,
+        start_offset=0,
+        end=38,
+        end_offset=0,
+        strand="-",
+        refseq="G",
+        altseq="A",
+        variant_type="substitution",
+    )
+    assert result == [
+        CdnaSubstitution(
+            contig_id="12",
+            start=38,
+            start_offset=0,
+            end=38,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000133703",
+            gene_name="KRAS",
+            transcript_id="ENST00000256078",
+            transcript_name="KRAS-201",
+            protein_id="ENSP00000256078",
+            refseq="G",
+            altseq="A",
+        )
+    ]
+
+
+def test_load_dna_minimal(ensembl100):
+    result = ensembl100.variant("dna", "5", 1282623)
+    assert result == [
+        DnaPosition(
+            contig_id="5", start=1282623, start_offset=0, end=1282623, end_offset=0, strand="+"
+        ),
+        DnaPosition(
+            contig_id="5", start=1282623, start_offset=0, end=1282623, end_offset=0, strand="-"
+        ),
+    ]
+
+
+def test_load_dna_position(ensembl100):
+    result = ensembl100.variant("dna", "5", 1282623, end=1282626, strand="-")
+    assert result == [
+        DnaPosition(
+            contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand="-"
+        )
+    ]
+
+
+def test_load_dna_substitution(ensembl100):
+    result = ensembl100.variant(
+        "dna",
+        "5",
+        1282623,
+        end=1282626,
+        strand="-",
+        refseq="A",
+        altseq="G",
+        variant_type="substitution",
+    )
+    assert result == [
+        DnaSubstitution(
+            contig_id="5",
+            start=1282623,
+            start_offset=0,
+            end=1282626,
+            end_offset=0,
+            strand="-",
+            refseq="A",
+            altseq="G",
+        )
+    ]
+
+
+def test_load_exon_fusion(ensembl100):
+    result = ensembl100.variant(
+        "exon",
+        "ENST00000315869",
+        3,
+        end=4,
+        strand="-",
+        variant_type="fusion",
+        position_type2="exon",
+        feature2="ENST00000271526",
+        start2=2,
+        end2=2,
+        strand2="+",
+    )
+    assert result == [
+        ExonFusion(
+            ExonPosition(
+                contig_id="X",
+                start=3,
+                start_offset=0,
+                end=4,
+                end_offset=0,
+                strand="-",
+                gene_id="ENSG00000068323",
+                gene_name="TFE3",
+                transcript_id="ENST00000315869",
+                transcript_name="TFE3-201",
+                exon_id="ENSE00003528623",
+            ),
+            ExonPosition(
+                contig_id="1",
+                start=2,
+                start_offset=0,
+                end=2,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000143294",
+                gene_name="PRCC",
+                transcript_id="ENST00000271526",
+                transcript_name="PRCC-201",
+                exon_id="ENSE00003525835",
+            ),
+        )
+    ]
