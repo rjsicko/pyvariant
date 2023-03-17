@@ -939,6 +939,7 @@ class Core:
     # TODO: add type hints
     def variant(
         self,
+        *,
         position_type: str,
         feature: str,
         start: int,
@@ -1076,13 +1077,11 @@ class Core:
                 result = self._dna_to_dna_variant(
                     contig_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
                 )
-
             elif position_type == "protein":
                 transcript_ids = self.transcript_ids(feature)
                 result = self._protein_to_protein_variant(
                     transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
                 )
-
             elif position_type == "rna":
                 transcript_ids = self.transcript_ids(feature)
                 result = self._rna_to_rna_variant(
@@ -1096,23 +1095,19 @@ class Core:
                 result = self._cdna_to_cdna(
                     transcript_ids, start, start_offset, end, end_offset, strand_
                 )
-
             elif position_type == "dna":
                 contig_ids = self.contig_ids(feature)
                 result = self._dna_to_dna(contig_ids, start, start_offset, end, end_offset, strand_)
-
             elif position_type == "exon":
                 transcript_ids = self.transcript_ids(feature)
                 result = self._exon_to_exon(
                     transcript_ids, start, start_offset, end, end_offset, strand_
                 )
-
             elif position_type == "protein":
                 transcript_ids = self.transcript_ids(feature)
                 result = self._protein_to_protein(
                     transcript_ids, start, start_offset, end, end_offset, strand_
                 )
-
             elif position_type == "rna":
                 transcript_ids = self.transcript_ids(feature)
                 result = self._rna_to_rna(

@@ -1008,7 +1008,7 @@ def test_translate_cdna_variant_4(ensembl100, test_cds_sequence_pos_3):
 # test load
 # -------------------------------------------------------------------------------------------------
 def test_load_cdna_minimal(ensembl100):
-    result = ensembl100.variant("cdna", "ENST00000375562", 123)
+    result = ensembl100.variant(position_type="cdna", feature="ENST00000375562", start=123)
     assert result == [
         CdnaPosition(
             contig_id="6",
@@ -1028,7 +1028,13 @@ def test_load_cdna_minimal(ensembl100):
 
 def test_load_cdna_position(ensembl100):
     result = ensembl100.variant(
-        "cdna", "ENST00000288135", 68, start_offset=-1, end=68, end_offset=-1, strand="+"
+        position_type="cdna",
+        feature="ENST00000288135",
+        start=68,
+        start_offset=-1,
+        end=68,
+        end_offset=-1,
+        strand="+",
     )
     assert result == [
         CdnaPosition(
@@ -1049,9 +1055,9 @@ def test_load_cdna_position(ensembl100):
 
 def test_load_cdna_substitution(ensembl100):
     result = ensembl100.variant(
-        "cdna",
-        "ENST00000256078",
-        38,
+        position_type="cdna",
+        feature="ENST00000256078",
+        start=38,
         start_offset=0,
         end=38,
         end_offset=0,
@@ -1080,7 +1086,7 @@ def test_load_cdna_substitution(ensembl100):
 
 
 def test_load_dna_minimal(ensembl100):
-    result = ensembl100.variant("dna", "5", 1282623)
+    result = ensembl100.variant(position_type="dna", feature="5", start=1282623)
     assert result == [
         DnaPosition(
             contig_id="5", start=1282623, start_offset=0, end=1282623, end_offset=0, strand="+"
@@ -1092,7 +1098,9 @@ def test_load_dna_minimal(ensembl100):
 
 
 def test_load_dna_position(ensembl100):
-    result = ensembl100.variant("dna", "5", 1282623, end=1282626, strand="-")
+    result = ensembl100.variant(
+        position_type="dna", feature="5", start=1282623, end=1282626, strand="-"
+    )
     assert result == [
         DnaPosition(
             contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand="-"
@@ -1102,9 +1110,9 @@ def test_load_dna_position(ensembl100):
 
 def test_load_dna_substitution(ensembl100):
     result = ensembl100.variant(
-        "dna",
-        "5",
-        1282623,
+        position_type="dna",
+        feature="5",
+        start=1282623,
         end=1282626,
         strand="-",
         refseq="A",
@@ -1127,9 +1135,9 @@ def test_load_dna_substitution(ensembl100):
 
 def test_load_exon_fusion(ensembl100):
     result = ensembl100.variant(
-        "exon",
-        "ENST00000315869",
-        3,
+        position_type="exon",
+        feature="ENST00000315869",
+        start=3,
         end=4,
         strand="-",
         variant_type="fusion",
