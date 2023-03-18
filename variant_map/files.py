@@ -136,8 +136,8 @@ def read_fasta(path: str) -> Fasta:
         key_function=strip_version,
         as_raw=True,
         sequence_always_upper=True,
-        build_index=True,
-        rebuild=True,
+        build_index=False,
+        rebuild=False,
     )
 
 
