@@ -42,7 +42,7 @@ GTF_FILENAME_TEMPLATE = "{species}.{reference}.{release}.gtf.gz"
 
 # GTF column names and features
 GTF_COLUMN_RENAME = {"seqname": CONTIG_ID}
-GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
+GTF_KEEP_FEATURES = ["cds", "exon", "gene", "stop_codon", "transcript"]
 GTF_KEEP_COLUMNS = [
     "contig_id",
     "feature",
@@ -488,7 +488,7 @@ def infer_cdna(df: pd.DataFrame) -> pd.DataFrame:
     print("Inferring cDNA...", file=sys.stderr)
     for transcript_id, group in df.groupby("transcript_id"):
         if group[group.feature == "cdna"].empty:
-            cds_df = group[group.feature == "CDS"]
+            cds_df = group[group.feature == "cds"]
             if not cds_df.empty:
                 first = cds_df.iloc[0]
                 last = cds_df.iloc[-1]
@@ -589,7 +589,7 @@ def cds_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate the position of each CDS, relative to the start of the transcript."""
     print("Inferring CDS offsets from transcripts...", file=sys.stderr)
     for _, group in df.groupby("transcript_id"):
-        cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
+        cds_df = group[group.feature.isin(["cds", "stop_codon"])]
         if cds_df.empty:
             continue
 
@@ -637,7 +637,7 @@ def cds_offset_cdna(df: pd.DataFrame) -> pd.DataFrame:
         cdna = cdna_df.iloc[0]
         ascending = cdna.strand == "+"
 
-        cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
+        cds_df = group[group.feature.isin(["cds", "stop_codon"])]
         if cds_df.empty:
             continue
 

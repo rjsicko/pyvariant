@@ -20,7 +20,16 @@ PROTEIN_ID = "protein_id"
 TRANSCRIPT_ID = "transcript_id"
 TRANSCRIPT_NAME = "transcript_name"
 
-# _Variant type literals
+# Position type literals
+CDNA = "cdna"
+CDS = "CDS"
+DNA = "dna"
+EXON = "exon"
+PROTEIN = "protein"
+RNA = "rna"
+STOP_CODON = "stop_codon"
+
+# Variant type literals
 DELETION = "deletion"
 DELINS = "delins"
 DUPLICATION = "duplication"

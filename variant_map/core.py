@@ -9,16 +9,24 @@ from gtfparse import read_gtf
 from pyfaidx import Fasta
 
 from .constants import (
+    CDNA,
+    CDS,
     CONTIG_ID,
+    DNA,
+    EXON,
     EXON_ID,
     FUSION,
     GENE_ID,
     GENE_NAME,
+    PROTEIN,
     PROTEIN_ID,
+    RNA,
+    STOP_CODON,
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
 from .files import read_fasta, tsv_to_dict, txt_to_list
+from .parser import parse
 from .positions import (
     CdnaDeletion,
     CdnaDelins,
@@ -746,7 +754,7 @@ class Core:
         result = []
 
         transcript_ids = self.transcript_ids(feature)
-        mask = (self.df[TRANSCRIPT_ID].isin(transcript_ids)) & (self.df["feature"] == "cdna")
+        mask = (self.df[TRANSCRIPT_ID].isin(transcript_ids)) & (self.df["feature"] == CDNA)
         for _, cdna in self.df[mask].iterrows():
             if canonical and not self.is_canonical_transcript(cdna.transcript_id):
                 continue
@@ -824,7 +832,7 @@ class Core:
         result = []
 
         exon_ids = self.exon_ids(feature)
-        mask = (self.df[EXON_ID].isin(exon_ids)) & (self.df["feature"] == "exon")
+        mask = (self.df[EXON_ID].isin(exon_ids)) & (self.df["feature"] == EXON)
         for _, exon in self.df[mask].iterrows():
             if canonical and not self.is_canonical_transcript(exon.transcript_id):
                 continue
@@ -939,6 +947,7 @@ class Core:
     # TODO: add type hints
     def variant(
         self,
+        string: str = "",
         *,
         position_type: str,
         feature: str,
@@ -991,6 +1000,29 @@ class Core:
         """
         result: List[Any] = []
 
+        # If the input is a variant string, parse it into a dictionary of values
+        if string:
+            parsed = parse(string)
+            position_type = parsed["breakpoint1"]["position_type"]
+            feature = parsed["breakpoint1"]["feature"]
+            start = parsed["breakpoint1"]["start"]
+            start_offset = parsed["breakpoint1"]["start_offset"]
+            end = parsed["breakpoint1"]["end"]
+            end_offset = parsed["breakpoint1"]["end_offset"]
+            strand = parsed["breakpoint1"]["strand"]
+            refseq = parsed["breakpoint1"]["refseq"]
+            altseq = parsed["breakpoint1"]["altseq"]
+            variant_type = parsed["breakpoint1"]["variant_type"]
+            position_type2 = parsed["breakpoint2"]["position_type"]
+            feature2 = parsed["breakpoint2"]["feature"]
+            start2 = parsed["breakpoint2"]["start"]
+            start_offset2 = parsed["breakpoint2"]["start_offset"]
+            end2 = parsed["breakpoint2"]["end"]
+            end_offset2 = parsed["breakpoint2"]["end_offset"]
+            strand2 = parsed["breakpoint2"]["strand"]
+            refseq2 = parsed["breakpoint2"]["refseq"]
+            altseq2 = parsed["breakpoint2"]["altseq"]
+
         # Set defaults for missing inputs
         start_offset = cast(int, start_offset or 0)
         end = cast(int, end or start)
@@ -1028,15 +1060,15 @@ class Core:
                 raise ValueError(f"missing argument required for {FUSION}: 'start2'")
 
             # TODO: support mixed type fusions?
-            if position_type == "cdna" and position_type2 == "cdna":
+            if position_type == CDNA and position_type2 == CDNA:
                 fusion = CdnaFusion
-            elif position_type == "dna" and position_type2 == "dna":
+            elif position_type == DNA and position_type2 == DNA:
                 fusion = DnaFusion
-            elif position_type == "exon" and position_type2 == "exon":
+            elif position_type == EXON and position_type2 == EXON:
                 fusion = ExonFusion
-            elif position_type == "protein" and position_type2 == "protein":
+            elif position_type == PROTEIN and position_type2 == PROTEIN:
                 fusion = ProteinFusion
-            elif position_type == "rna" and position_type2 == "rna":
+            elif position_type == RNA and position_type2 == RNA:
                 fusion = RnaFusion
 
             if fusion:
@@ -1067,22 +1099,22 @@ class Core:
 
         # Load a small variant
         elif variant_type or refseq or altseq:
-            if position_type == "cdna":
+            if position_type == CDNA:
                 transcript_ids = self.transcript_ids(feature)
                 result = self._cdna_to_cdna_variant(
                     transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
                 )
-            elif position_type == "dna":
+            elif position_type == DNA:
                 contig_ids = self.contig_ids(feature)
                 result = self._dna_to_dna_variant(
                     contig_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
                 )
-            elif position_type == "protein":
+            elif position_type == PROTEIN:
                 transcript_ids = self.transcript_ids(feature)
                 result = self._protein_to_protein_variant(
                     transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
                 )
-            elif position_type == "rna":
+            elif position_type == RNA:
                 transcript_ids = self.transcript_ids(feature)
                 result = self._rna_to_rna_variant(
                     transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
@@ -1090,25 +1122,25 @@ class Core:
 
         # Load a position
         else:
-            if position_type == "cdna":
+            if position_type == CDNA:
                 transcript_ids = self.transcript_ids(feature)
                 result = self._cdna_to_cdna(
                     transcript_ids, start, start_offset, end, end_offset, strand_
                 )
-            elif position_type == "dna":
+            elif position_type == DNA:
                 contig_ids = self.contig_ids(feature)
                 result = self._dna_to_dna(contig_ids, start, start_offset, end, end_offset, strand_)
-            elif position_type == "exon":
+            elif position_type == EXON:
                 transcript_ids = self.transcript_ids(feature)
                 result = self._exon_to_exon(
                     transcript_ids, start, start_offset, end, end_offset, strand_
                 )
-            elif position_type == "protein":
+            elif position_type == PROTEIN:
                 transcript_ids = self.transcript_ids(feature)
                 result = self._protein_to_protein(
                     transcript_ids, start, start_offset, end, end_offset, strand_
                 )
-            elif position_type == "rna":
+            elif position_type == RNA:
                 transcript_ids = self.transcript_ids(feature)
                 result = self._rna_to_rna(
                     transcript_ids, start, start_offset, end, end_offset, strand_
@@ -1716,7 +1748,7 @@ class Core:
         strand: List[str],
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
-        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+        feature = [CDS, STOP_CODON] if include_stop else [CDS]
 
         def convert(n: int, offset: int):
             result = []
@@ -1811,7 +1843,7 @@ class Core:
         strand: List[str],
         include_stop: bool = True,
     ) -> List[DnaPosition]:
-        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+        feature = [CDS, STOP_CODON] if include_stop else [CDS]
 
         def convert(n: int, offset: int):
             result = []
@@ -1881,7 +1913,7 @@ class Core:
         strand: List[str],
         include_stop: bool = True,
     ) -> List[ExonPosition]:
-        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+        feature = [CDS, STOP_CODON] if include_stop else [CDS]
 
         def convert(n: int, offset: int):
             result = []
@@ -1923,7 +1955,7 @@ class Core:
                 mask_exon = (
                     (self.df[TRANSCRIPT_ID].isin(transcript_id))
                     & (self.df["exon_number"] == cds.exon_number)
-                    & (self.df["feature"] == "exon")
+                    & (self.df["feature"] == EXON)
                 )
                 for _, exon_row in self.df[mask_exon].iterrows():
                     result.append(
@@ -2044,7 +2076,7 @@ class Core:
         strand: List[str],
         include_stop: bool = True,
     ) -> List[RnaPosition]:
-        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+        feature = [CDS, STOP_CODON] if include_stop else [CDS]
 
         def convert(n: int, offset: int):
             result = []
@@ -2139,7 +2171,7 @@ class Core:
         strand: List[str],
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
-        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+        feature = [CDS, STOP_CODON] if include_stop else [CDS]
 
         def convert(n: int, offset: int):
             result = []
@@ -2286,7 +2318,7 @@ class Core:
                     & (self.df["start"] <= n_)
                     & (self.df["end"] >= n_)
                     & (self.df["strand"] == strand_)
-                    & (self.df["feature"] == "exon")
+                    & (self.df["feature"] == EXON)
                 )
                 for _, exon in self.df[mask].iterrows():
                     result.append(
@@ -2413,7 +2445,7 @@ class Core:
                     & (self.df["start"] <= n_)
                     & (self.df["end"] >= n_)
                     & (self.df["strand"] == strand_)
-                    & (self.df["feature"] == "exon")
+                    & (self.df["feature"] == EXON)
                 )
                 for _, exon in self.df[mask].iterrows():
                     if exon.strand == "-":
@@ -2473,7 +2505,7 @@ class Core:
         strand: List[str],
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
-        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+        feature = [CDS, STOP_CODON] if include_stop else [CDS]
 
         def convert(n: int, offset: int):
             result = []
@@ -2532,7 +2564,7 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["exon_number"] == float(n))
                 & (self.df["strand"].isin(strand))
-                & (self.df["feature"] == "exon")
+                & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
@@ -2574,7 +2606,7 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["exon_number"] == float(n))
                 & (self.df["strand"].isin(strand))
-                & (self.df["feature"] == "exon")
+                & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
@@ -2648,7 +2680,7 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["exon_number"] == float(n))
                 & (self.df["strand"].isin(strand))
-                & (self.df["feature"] == "exon")
+                & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
@@ -2962,7 +2994,7 @@ class Core:
         strand: List[str],
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
-        feature = ["CDS", "stop_codon"] if include_stop else ["CDS"]
+        feature = [CDS, STOP_CODON] if include_stop else [CDS]
 
         def convert(n: int, offset: int):
             result = []
@@ -3059,7 +3091,7 @@ class Core:
                 & (self.df["transcript_start"] <= n)
                 & (self.df["transcript_end"] >= n)
                 & (self.df["strand"].isin(strand))
-                & (self.df["feature"] == "exon")
+                & (self.df["feature"] == EXON)
             )
             exon_df = self.df[mask]
             for _, exon in exon_df.iterrows():
@@ -3144,7 +3176,7 @@ class Core:
                 & (self.df["transcript_start"] <= n)
                 & (self.df["transcript_end"] >= n)
                 & (self.df["strand"].isin(strand))
-                & (self.df["feature"] == "exon")
+                & (self.df["feature"] == EXON)
             )
             for _, exon_row in self.df[mask].iterrows():
                 result.append(
@@ -3292,7 +3324,7 @@ class Core:
                 & (self.df["transcript_start"] <= n)
                 & (self.df["transcript_end"] >= n)
                 & (self.df["strand"].isin(strand))
-                & (self.df["feature"] == "exon")
+                & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
                 result.append(
