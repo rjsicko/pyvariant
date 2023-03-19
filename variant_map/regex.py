@@ -216,7 +216,7 @@ REGEX = [
         r"."
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
-        r"_"
+        r"_?"
         rf"(?P<breakpoint1_end>{POSITION})?"
         rf"(?P<breakpoint1_end_offset>{OFFSET})?"
         r"::"
@@ -226,9 +226,32 @@ REGEX = [
         r"."
         rf"(?P<breakpoint2_start>{POSITION})?"
         rf"(?P<breakpoint2_start_offset>{OFFSET})?"
-        r"_"
+        r"_?"
         rf"(?P<breakpoint2_end>{POSITION})?"
         rf"(?P<breakpoint2_end_offset>{OFFSET})?"
+    ),
+    # Non-variant position, multiple bases. Examples:
+    # 5:g.1282623_1282626
+    re.compile(
+        rf"(?P<breakpoint1_feature>{REFERENCE})"
+        r":"
+        rf"(?P<breakpoint1_prefix>{PREFIX})"
+        r"."
+        rf"(?P<breakpoint1_start>{POSITION})?"
+        rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        r"_"
+        rf"(?P<breakpoint1_end>{POSITION})?"
+        rf"(?P<breakpoint1_end_offset>{OFFSET})?"
+    ),
+    # Non-variant position, single base. Examples:
+    # ENST00000078429:c.625
+    re.compile(
+        rf"(?P<breakpoint1_feature>{REFERENCE})"
+        r":"
+        rf"(?P<breakpoint1_prefix>{PREFIX})"
+        r"."
+        rf"(?P<breakpoint1_start>{POSITION})?"
+        rf"(?P<breakpoint1_start_offset>{OFFSET})?"
     ),
     # -------------------------------------------------------------------------------------------------
     # Non-HGVS string matching
