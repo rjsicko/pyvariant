@@ -139,222 +139,148 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # Functions for getting feature ID/names
     # ---------------------------------------------------------------------------------------------
-    def all_contig_ids(self) -> List[str]:
-        """List all contig (chromosome) IDs.
-
-        Examples:
-            >>> ensembl100.all_contig_ids()[:3]
-            ['1', '10', '11']
-
-        Returns:
-            List[str]: Contig IDs
-        """
-        return self._uniquify_series(self.df[CONTIG_ID])
-
-    def all_exon_ids(self) -> List[str]:
-        """List all exon IDs.
-
-        Examples:
-            >>> ensembl100.all_exon_ids()[:3]
-            ['ENSE00000000001', 'ENSE00000000002', 'ENSE00000000003']
-
-        Returns:
-            List[str]: Exon IDs
-        """
-        return self._uniquify_series(self.df[EXON_ID])
-
-    def all_gene_ids(self) -> List[str]:
-        """List all gene IDs.
-
-        Examples:
-            >>> ensembl100.all_gene_ids()[:3]
-            ['ENSG00000000003', 'ENSG00000000005', 'ENSG00000000419']
-
-        Returns:
-            List[str]: Gene IDs
-        """
-        return self._uniquify_series(self.df[GENE_ID])
-
-    def all_gene_names(self) -> List[str]:
-        """List all gene names.
-
-        Examples:
-            >>> ensembl100.all_gene_names()[:3]
-            ['A1BG', 'A1BG-AS1', 'A1CF']
-
-        Returns:
-            List[str]: Gene names
-        """
-        return self._uniquify_series(self.df[GENE_NAME])
-
-    def all_protein_ids(self) -> List[str]:
-        """List all protein IDs.
-
-        Examples:
-            >>> ensembl100.all_protein_ids()[:3]
-            ['ENSP00000000233', 'ENSP00000000412', 'ENSP00000000442']
-
-        Returns:
-            List[str]: Protein IDs
-        """
-        return self._uniquify_series(self.df[PROTEIN_ID])
-
-    def all_transcript_ids(self) -> List[str]:
-        """List all transcript IDs.
-
-        Examples:
-            >>> ensembl100.all_transcript_ids()[:3]
-            ['ENST00000000233', 'ENST00000000412', 'ENST00000000442']
-
-        Returns:
-            List[str]: Transcript IDs
-        """
-        return self._uniquify_series(self.df[TRANSCRIPT_ID])
-
-    def all_transcript_names(self) -> List[str]:
-        """List all transcript names.
-
-        Examples:
-            >>> ensembl100.all_transcript_names()[:3]
-            ['A1BG-201', 'A1BG-202', 'A1BG-203']
-
-        Returns:
-            List[str]: Transcript names
-        """
-        return self._uniquify_series(self.df[TRANSCRIPT_NAME])
-
-    def contig_ids(self, feature: str) -> List[str]:
-        """Given an ID or name, return the corresponding contig IDs.
+    def contig_ids(self, feature: str = "") -> List[str]:
+        """Return the contig IDs that map to the given feature. If no feature is given, return
+        all contig IDs.
 
         Examples:
             >>> ensembl100.contig_ids("BRCA2")
             ['13']
 
         Args:
-            feature (str): Feature ID or name
+            feature (str, optional): Feature ID or name
 
         Returns:
             List[str]: Contig IDs
         """
         return self._query_feature(CONTIG_ID, feature)
 
-    def exon_ids(self, feature: str) -> List[str]:
-        """Given an ID or name, return the corresponding exon IDs.
+    def exon_ids(self, feature: str = "") -> List[str]:
+        """Return the exon IDs that map to the given feature. If no feature is given, return
+        all exon IDs.
 
         Examples:
             >>> ensembl100.exon_ids("BRCA2")[:3]
             ['ENSE00000939167', 'ENSE00000939168', 'ENSE00000939169']
 
         Args:
-            feature (str): Feature ID or name
+            feature (str, optional): Feature ID or name
 
         Returns:
             List[str]: Exon IDs
         """
         return self._query_feature(EXON_ID, feature)
 
-    def gene_ids(self, feature: str) -> List[str]:
-        """Given an ID or name, return the corresponding gene IDs.
+    def gene_ids(self, feature: str = "") -> List[str]:
+        """Return the gene IDs that map to the given feature. If no feature is given, return
+        all gene IDs.
 
         Examples:
             >>> ensembl100.gene_ids("BRCA2")
             ['ENSG00000139618']
 
         Args:
-            feature (str): Feature ID or name
+            feature (str, optional): Feature ID or name
 
         Returns:
             List[str]: Gene IDs
         """
         return self._query_feature(GENE_ID, feature)
 
-    def gene_names(self, feature: str) -> List[str]:
-        """Given an ID or name, return the corresponding gene names.
+    def gene_names(self, feature: str = "") -> List[str]:
+        """Return the gene names that map to the given feature. If no feature is given, return
+        all gene names.
 
         Examples:
             >>> ensembl100.gene_names("ENSG00000139618")
             ['BRCA2']
 
         Args:
-            feature (str): Feature ID or name
+            feature (str, optional): Feature ID or name
 
         Returns:
             List[str]: Gene names
         """
         return self._query_feature(GENE_NAME, feature)
 
-    def protein_ids(self, feature: str) -> List[str]:
-        """Given an ID or name, return the corresponding protein IDs.
+    def protein_ids(self, feature: str = "") -> List[str]:
+        """Return the protein IDs that map to the given feature. If no feature is given, return
+        all protein IDs.
 
         Examples:
             >>> ensembl100.protein_ids("BRCA2")[:3]
             ['ENSP00000369497', 'ENSP00000433168', 'ENSP00000434898']
 
         Args:
-            feature (str): Feature ID or name
+            feature (str, optional): Feature ID or name
 
         Returns:
             List[str]: Protein IDs
         """
         return self._query_feature(PROTEIN_ID, feature)
 
-    def transcript_ids(self, feature: str) -> List[str]:
-        """Given an ID or name, return the corresponding transcript IDs.
+    def transcript_ids(self, feature: str = "") -> List[str]:
+        """Return the transcript IDs that map to the given feature. If no feature is given, return
+        all transcript IDs.
 
         Examples:
             >>> ensembl100.transcript_ids("BRCA2")[:3]
             ['ENST00000380152', 'ENST00000470094', 'ENST00000528762']
 
         Args:
-            feature (str): Feature ID or name
+            feature (str, optional): Feature ID or name
 
         Returns:
             List[str]: Transcript IDs
         """
         return self._query_feature(TRANSCRIPT_ID, feature)
 
-    def transcript_names(self, feature: str) -> List[str]:
-        """Given an ID or name, return the corresponding transcript names.
+    def transcript_names(self, feature: str = "") -> List[str]:
+        """Return the transcript names that map to the given feature. If no feature is given, return
+        all transcript names.
 
         Examples:
             >>> ensembl100.transcript_names("BRCA2")[:3]
             ['BRCA2-201', 'BRCA2-202', 'BRCA2-203']
 
         Args:
-            feature (str): Feature ID or name
+            feature (str, optional): Feature ID or name
 
         Returns:
             List[str]: Transcript names
         """
         return self._query_feature(TRANSCRIPT_NAME, feature)
 
-    def _query_feature(self, key: str, feature: str) -> List[str]:
-        parts = []
+    def _query_feature(self, key: str, feature: str = "") -> List[str]:
+        if feature:
+            parts = []
 
-        for feature, feature_type in self.normalize_id(feature):
-            if feature_type == CONTIG_ID:
-                func = self._query_contig_id
-            elif feature_type == EXON_ID:
-                func = self._query_exon_id
-            elif feature_type == GENE_ID:
-                func = self._query_gene_id
-            elif feature_type == GENE_NAME:
-                func = self._query_gene_name
-            elif feature_type == PROTEIN_ID:
-                func = self._query_protein_id
-            elif feature_type == TRANSCRIPT_ID:
-                func = self._query_transcript_id
-            elif feature_type == TRANSCRIPT_NAME:
-                func = self._query_transcript_name
+            for feature, feature_type in self.normalize_id(feature):
+                if feature_type == CONTIG_ID:
+                    func = self._query_contig_id
+                elif feature_type == EXON_ID:
+                    func = self._query_exon_id
+                elif feature_type == GENE_ID:
+                    func = self._query_gene_id
+                elif feature_type == GENE_NAME:
+                    func = self._query_gene_name
+                elif feature_type == PROTEIN_ID:
+                    func = self._query_protein_id
+                elif feature_type == TRANSCRIPT_ID:
+                    func = self._query_transcript_id
+                elif feature_type == TRANSCRIPT_NAME:
+                    func = self._query_transcript_name
+                else:
+                    raise ValueError(f"Unable to get {key} for {feature} ({feature_type})")
+
+                parts.append(func(feature)[key])
+
+            if parts:
+                result = pd.concat(parts)
             else:
-                raise ValueError(f"Unable to get {key} for {feature} ({feature_type})")
-
-            parts.append(func(feature)[key])
-
-        if parts:
-            result = pd.concat(parts)
+                result = pd.Series(dtype="object")
         else:
-            result = pd.Series(dtype="object")
+            result = self.df[key]
 
         return self._uniquify_series(result)
 

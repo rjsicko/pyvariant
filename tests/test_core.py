@@ -75,50 +75,47 @@ def test_init():
 # test all_<feature_symbol>s
 # -------------------------------------------------------------------------------------------------
 def test_all_contig_ids(ensembl100):
-    result = ensembl100.all_contig_ids()
+    result = ensembl100.contig_ids()
     assert isinstance(result, list)
     assert "16" in result
 
 
 def test_all_exon_ids(ensembl100):
-    result = ensembl100.all_exon_ids()
+    result = ensembl100.exon_ids()
     assert isinstance(result, list)
     assert "ENSE00003826864" in result
 
 
 def test_all_gene_ids(ensembl100):
-    result = ensembl100.all_gene_ids()
+    result = ensembl100.gene_ids()
     assert isinstance(result, list)
     assert "ENSG00000149925" in result
 
 
 def test_all_gene_names(ensembl100):
-    result = ensembl100.all_gene_names()
+    result = ensembl100.gene_names()
     assert isinstance(result, list)
     assert "ALDOA" in result
 
 
 def test_all_protein_ids(ensembl100):
-    result = ensembl100.all_protein_ids()
+    result = ensembl100.protein_ids()
     assert isinstance(result, list)
     assert "ENSP00000494188" in result
 
 
 def test_all_transcript_ids(ensembl100):
-    result = ensembl100.all_transcript_ids()
+    result = ensembl100.transcript_ids()
     assert isinstance(result, list)
     assert "ENST00000643777" in result
 
 
 def test_all_transcript_names(ensembl100):
-    result = ensembl100.all_transcript_names()
+    result = ensembl100.transcript_names()
     assert isinstance(result, list)
     assert "ALDOA-219" in result
 
 
-# -------------------------------------------------------------------------------------------------
-# test get_<feature_symbol>s
-# -------------------------------------------------------------------------------------------------
 def test_contig_ids_from_contig_id(ensembl100):
     result = ensembl100.contig_ids("16")
     assert isinstance(result, list)
