@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from itertools import product
-from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
 import pandas as pd
 from gtfparse import read_gtf
@@ -62,7 +62,6 @@ from .positions import (
     _DnaSmallVariant,
     _ExonSmallVariant,
     _Fusion,
-    _Position,
     _ProteinSmallVariant,
     _RnaSmallVariant,
 )
@@ -1094,116 +1093,13 @@ class Core:
         Returns:
             List[CdnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if position.is_fusion:
-            fusion = cast(_Fusion, position)
-            breakpoint1 = self.to_cdna(fusion.breakpoint1)
-            breakpoint2 = self.to_cdna(fusion.breakpoint2)
-            return [CdnaFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
-        elif position.is_small_variant:
-            if position.is_cdna:
-                position = cast(_CdnaSmallVariant, position)
-                return self._cdna_to_cdna_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_dna:
-                position = cast(_DnaSmallVariant, position)
-                return self._dna_to_cdna_variant(
-                    [position.contig_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_protein:
-                position = cast(_ProteinSmallVariant, position)
-                return self._protein_to_cdna_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_rna:
-                position = cast(_RnaSmallVariant, position)
-                return self._rna_to_cdna_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
+        if isinstance(position, str):
+            return self._string_to_cdna(position)
         else:
-            if position.is_cdna:
-                position = cast(CdnaPosition, position)
-                return self._cdna_to_cdna(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_dna:
-                position = cast(DnaPosition, position)
-                return self._dna_to_cdna(
-                    [position.contig_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_exon:
-                position = cast(ExonPosition, position)
-                return self._exon_to_cdna(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_protein:
-                position = cast(ProteinPosition, position)
-                return self._protein_to_cdna(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_rna:
-                position = cast(RnaPosition, position)
-                return self._rna_to_cdna(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-
-        raise AssertionError(f"Unknown position type for {position}")
+            return self._position_to_cdna(position)
 
     def to_dna(self, position) -> List:
-        """Map a position to zero or more cDNA positions.
+        """Map a position to zero or more DNA positions.
 
         Args:
             position (Position): Position or variant object.
@@ -1211,117 +1107,13 @@ class Core:
         Returns:
             List[DnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if position.is_fusion:
-            fusion = cast(_Fusion, position)
-            breakpoint1 = self.to_dna(fusion.breakpoint1)
-            breakpoint2 = self.to_dna(fusion.breakpoint2)
-            return [DnaFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
-        elif position.is_small_variant:
-            if position.is_cdna:
-                position = cast(_CdnaSmallVariant, position)
-                return self._cdna_to_dna_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_dna:
-                position = cast(_DnaSmallVariant, position)
-                return self._dna_to_dna_variant(
-                    [position.contig_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_protein:
-                position = cast(_ProteinSmallVariant, position)
-                return self._protein_to_dna_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_rna:
-                position = cast(_RnaSmallVariant, position)
-                return self._rna_to_dna_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
+        if isinstance(position, str):
+            return self._string_to_dna(position)
         else:
-            position = cast(_Position, position)
-            if position.is_cdna:
-                position = cast(CdnaPosition, position)
-                return self._cdna_to_dna(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_dna:
-                position = cast(DnaPosition, position)
-                return self._dna_to_dna(
-                    [position.contig_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_exon:
-                position = cast(ExonPosition, position)
-                return self._exon_to_dna(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_protein:
-                position = cast(ProteinPosition, position)
-                return self._protein_to_dna(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_rna:
-                position = cast(RnaPosition, position)
-                return self._rna_to_dna(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-
-        raise AssertionError(f"Unknown position type for {position}")
+            return self._position_to_dna(position)
 
     def to_exon(self, position) -> List:
-        """Map a position to zero or more cDNA positions.
+        """Map a position to zero or more exon positions.
 
         Args:
             position (Position): Position or variant object.
@@ -1329,116 +1121,13 @@ class Core:
         Returns:
             List[ExonPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if position.is_fusion:
-            fusion = cast(_Fusion, position)
-            breakpoint1 = self.to_exon(fusion.breakpoint1)
-            breakpoint2 = self.to_exon(fusion.breakpoint2)
-            return [ExonFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
-        elif position.is_small_variant:
-            if position.is_cdna:
-                position = cast(_CdnaSmallVariant, position)
-                return self._cdna_to_exon_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_dna:
-                position = cast(_DnaSmallVariant, position)
-                return self._dna_to_exon_variant(
-                    [position.contig_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_protein:
-                position = cast(_ProteinSmallVariant, position)
-                return self._protein_to_exon_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_rna:
-                position = cast(_RnaSmallVariant, position)
-                return self._rna_to_exon_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
+        if isinstance(position, str):
+            return self._string_to_exon(position)
         else:
-            if position.is_cdna:
-                position = cast(CdnaPosition, position)
-                return self._cdna_to_exon(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_dna:
-                position = cast(DnaPosition, position)
-                return self._dna_to_exon(
-                    [position.contig_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_exon:
-                position = cast(ExonPosition, position)
-                return self._exon_to_exon(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_protein:
-                position = cast(ProteinPosition, position)
-                return self._protein_to_exon(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_rna:
-                position = cast(RnaPosition, position)
-                return self._rna_to_exon(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-
-        raise AssertionError(f"Unknown position type for {position}")
+            return self._position_to_exon(position)
 
     def to_protein(self, position) -> List:
-        """Map a position to zero or more cDNA positions.
+        """Map a position to zero or more protein positions.
 
         Args:
             position (Position): Position or variant object.
@@ -1446,116 +1135,13 @@ class Core:
         Returns:
             List[ProteinPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
-        if position.is_fusion:
-            fusion = cast(_Fusion, position)
-            breakpoint1 = self.to_protein(fusion.breakpoint1)
-            breakpoint2 = self.to_protein(fusion.breakpoint2)
-            return [ProteinFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
-        elif position.is_small_variant:
-            if position.is_cdna:
-                position = cast(_CdnaSmallVariant, position)
-                return self._cdna_to_protein_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_dna:
-                position = cast(_DnaSmallVariant, position)
-                return self._dna_to_protein_variant(
-                    [position.contig_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_protein:
-                position = cast(_ProteinSmallVariant, position)
-                return self._protein_to_protein_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
-            elif position.is_rna:
-                position = cast(_RnaSmallVariant, position)
-                return self._rna_to_protein_variant(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                    position.refseq,
-                    position.altseq,
-                )
+        if isinstance(position, str):
+            return self._string_to_protein(position)
         else:
-            if position.is_cdna:
-                position = cast(CdnaPosition, position)
-                return self._cdna_to_protein(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_dna:
-                position = cast(DnaPosition, position)
-                return self._dna_to_protein(
-                    [position.contig_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_exon:
-                position = cast(ExonPosition, position)
-                return self._exon_to_protein(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_protein:
-                position = cast(ProteinPosition, position)
-                return self._protein_to_protein(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-            elif position.is_rna:
-                position = cast(RnaPosition, position)
-                return self._rna_to_protein(
-                    [position.transcript_id],
-                    position.start,
-                    position.start_offset,
-                    position.end,
-                    position.end_offset,
-                    [position.strand],
-                )
-
-        raise AssertionError(f"Unknown position type for {position}")
+            return self._position_to_protein(position)
 
     def to_rna(self, position) -> List:
-        """Map a position to zero or more cDNA positions.
+        """Map a position to zero or more RNA positions.
 
         Args:
             position (Position): Position or variant object.
@@ -1563,15 +1149,138 @@ class Core:
         Returns:
             List[RnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
+        if isinstance(position, str):
+            return self._string_to_rna(position)
+        else:
+            return self._position_to_rna(position)
+
+    def _string_to_cdna(self, string: str):
+        return self._string_to(string, self._position_to_cdna)
+
+    def _string_to_dna(self, string: str):
+        return self._string_to(string, self._position_to_dna)
+
+    def _string_to_exon(self, string: str):
+        return self._string_to(string, self._position_to_exon)
+
+    def _string_to_protein(self, string: str):
+        return self._string_to(string, self._position_to_protein)
+
+    def _string_to_rna(self, string: str):
+        return self._string_to(string, self._position_to_rna)
+
+    def _string_to(self, string: str, func: Callable):
+        result = []
+
+        for position in self.parse(string):
+            result.extend(func(position))
+
+        return result
+
+    def _position_to_cdna(self, position):
+        return self._position_to(
+            position,
+            fusionf=self._position_to_cdna,
+            fusiont=CdnaFusion,
+            cdnavf=self._cdna_to_cdna_variant,
+            dnavf=self._dna_to_cdna_variant,
+            proteinvf=self._protein_to_cdna_variant,
+            rnavf=self._rna_to_cdna_variant,
+            cdnaf=self._cdna_to_cdna,
+            dnaf=self._dna_to_cdna,
+            exonf=self._exon_to_cdna,
+            proteinf=self._protein_to_cdna,
+            rnaf=self._rna_to_cdna,
+        )
+
+    def _position_to_dna(self, position):
+        return self._position_to(
+            position,
+            fusionf=self._position_to_dna,
+            fusiont=DnaFusion,
+            cdnavf=self._cdna_to_dna_variant,
+            dnavf=self._dna_to_dna_variant,
+            proteinvf=self._protein_to_dna_variant,
+            rnavf=self._rna_to_dna_variant,
+            cdnaf=self._cdna_to_dna,
+            dnaf=self._dna_to_dna,
+            exonf=self._exon_to_dna,
+            proteinf=self._protein_to_dna,
+            rnaf=self._rna_to_dna,
+        )
+
+    def _position_to_exon(self, position):
+        return self._position_to(
+            position,
+            fusionf=self._position_to_exon,
+            fusiont=ExonFusion,
+            cdnavf=self._cdna_to_exon_variant,
+            dnavf=self._dna_to_exon_variant,
+            proteinvf=self._protein_to_exon_variant,
+            rnavf=self._rna_to_exon_variant,
+            cdnaf=self._cdna_to_exon,
+            dnaf=self._dna_to_exon,
+            exonf=self._exon_to_exon,
+            proteinf=self._protein_to_exon,
+            rnaf=self._rna_to_exon,
+        )
+
+    def _position_to_protein(self, position):
+        return self._position_to(
+            position,
+            fusionf=self._position_to_protein,
+            fusiont=ProteinFusion,
+            cdnavf=self._cdna_to_protein_variant,
+            dnavf=self._dna_to_protein_variant,
+            proteinvf=self._protein_to_protein_variant,
+            rnavf=self._rna_to_protein_variant,
+            cdnaf=self._cdna_to_protein,
+            dnaf=self._dna_to_protein,
+            exonf=self._exon_to_protein,
+            proteinf=self._protein_to_protein,
+            rnaf=self._rna_to_protein,
+        )
+
+    def _position_to_rna(self, position):
+        return self._position_to(
+            position,
+            fusionf=self._position_to_rna,
+            fusiont=RnaFusion,
+            cdnavf=self._cdna_to_rna_variant,
+            dnavf=self._dna_to_rna_variant,
+            proteinvf=self._protein_to_rna_variant,
+            rnavf=self._rna_to_rna_variant,
+            cdnaf=self._cdna_to_rna,
+            dnaf=self._dna_to_rna,
+            exonf=self._exon_to_rna,
+            proteinf=self._protein_to_rna,
+            rnaf=self._rna_to_rna,
+        )
+
+    def _position_to(
+        self,
+        position,
+        fusionf: Callable,
+        fusiont: Type,
+        cdnavf: Callable,
+        dnavf: Callable,
+        proteinvf: Callable,
+        rnavf: Callable,
+        cdnaf: Callable,
+        dnaf: Callable,
+        exonf: Callable,
+        proteinf: Callable,
+        rnaf: Callable,
+    ) -> List:
         if position.is_fusion:
             fusion = cast(_Fusion, position)
-            breakpoint1 = self.to_rna(fusion.breakpoint1)
-            breakpoint2 = self.to_rna(fusion.breakpoint2)
-            return [RnaFusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
+            breakpoint1 = fusionf(fusion.breakpoint1)
+            breakpoint2 = fusionf(fusion.breakpoint2)
+            return [fusiont(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
         elif position.is_small_variant:
             if position.is_cdna:
                 position = cast(_CdnaSmallVariant, position)
-                return self._cdna_to_rna_variant(
+                return cdnavf(
                     [position.transcript_id],
                     position.start,
                     position.start_offset,
@@ -1583,7 +1292,7 @@ class Core:
                 )
             elif position.is_dna:
                 position = cast(_DnaSmallVariant, position)
-                return self._dna_to_rna_variant(
+                return dnavf(
                     [position.contig_id],
                     position.start,
                     position.start_offset,
@@ -1595,7 +1304,7 @@ class Core:
                 )
             elif position.is_protein:
                 position = cast(_ProteinSmallVariant, position)
-                return self._protein_to_rna_variant(
+                return proteinvf(
                     [position.transcript_id],
                     position.start,
                     position.start_offset,
@@ -1607,7 +1316,7 @@ class Core:
                 )
             elif position.is_rna:
                 position = cast(_RnaSmallVariant, position)
-                return self._rna_to_rna_variant(
+                return rnavf(
                     [position.transcript_id],
                     position.start,
                     position.start_offset,
@@ -1620,7 +1329,7 @@ class Core:
         else:
             if position.is_cdna:
                 position = cast(CdnaPosition, position)
-                return self._cdna_to_rna(
+                return cdnaf(
                     [position.transcript_id],
                     position.start,
                     position.start_offset,
@@ -1630,7 +1339,7 @@ class Core:
                 )
             elif position.is_dna:
                 position = cast(DnaPosition, position)
-                return self._dna_to_rna(
+                return dnaf(
                     [position.contig_id],
                     position.start,
                     position.start_offset,
@@ -1640,7 +1349,7 @@ class Core:
                 )
             elif position.is_exon:
                 position = cast(ExonPosition, position)
-                return self._exon_to_rna(
+                return exonf(
                     [position.transcript_id],
                     position.start,
                     position.start_offset,
@@ -1650,7 +1359,7 @@ class Core:
                 )
             elif position.is_protein:
                 position = cast(ProteinPosition, position)
-                return self._protein_to_rna(
+                return proteinf(
                     [position.transcript_id],
                     position.start,
                     position.start_offset,
@@ -1660,7 +1369,7 @@ class Core:
                 )
             elif position.is_rna:
                 position = cast(RnaPosition, position)
-                return self._rna_to_rna(
+                return rnaf(
                     [position.transcript_id],
                     position.start,
                     position.start_offset,
