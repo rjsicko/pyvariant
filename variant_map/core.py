@@ -137,7 +137,7 @@ class Core:
         self._transcript_alias = tsv_to_dict(transcript_alias)
 
     # ---------------------------------------------------------------------------------------------
-    # all_<feature_symbol>s
+    # Functions for getting feature ID/names
     # ---------------------------------------------------------------------------------------------
     def all_contig_ids(self) -> List[str]:
         """List all contig (chromosome) IDs.
@@ -223,12 +223,6 @@ class Core:
         """
         return self._uniquify_series(self.df[TRANSCRIPT_NAME])
 
-    def _uniquify_series(self, series: pd.Series) -> List:
-        return sorted(series.dropna().unique().tolist())
-
-    # ---------------------------------------------------------------------------------------------
-    # <feature_symbol>s
-    # ---------------------------------------------------------------------------------------------
     def contig_ids(self, feature: str) -> List[str]:
         """Given an ID or name, return the corresponding contig IDs.
 
@@ -391,8 +385,76 @@ class Core:
 
         return sudbf
 
+    def _uniquify_series(self, series: pd.Series) -> List:
+        return sorted(series.dropna().unique().tolist())
+
     # ---------------------------------------------------------------------------------------------
-    # normalize_id
+    # Functions for getting feature aliases
+    # ---------------------------------------------------------------------------------------------
+    def contig_alias(self, contig_id: str) -> List[str]:
+        """List all aliases of the given contig ID.
+
+        Args:
+            contig_id (str): contig ID
+
+        Returns:
+            List[str]: All aliases of the given contig ID
+        """
+        return self._alias(contig_id, self._contig_alias)
+
+    def exon_alias(self, exon_id: str) -> List[str]:
+        """List all aliases of the given exon ID.
+
+        Args:
+            exon_id (str): exon ID
+
+        Returns:
+            List[str]: All aliases of the given exon ID
+        """
+        return self._alias(exon_id, self._exon_alias)
+
+    def gene_alias(self, gene_id: str) -> List[str]:
+        """List all aliases of the given gene ID.
+
+        Args:
+            gene_id (str): gene ID
+
+        Returns:
+            List[str]: All aliases of the given gene ID
+        """
+        return self._alias(gene_id, self._gene_alias)
+
+    def protein_alias(self, protein_id: str) -> List[str]:
+        """List all aliases of the given protein ID.
+
+        Args:
+            protein_id (str): protein ID
+
+        Returns:
+            List[str]: All aliases of the given protein ID
+        """
+        return self._alias(protein_id, self._protein_alias)
+
+    def transcript_alias(self, transcript_id: str) -> List[str]:
+        """List all aliases of the given transcript ID.
+
+        Args:
+            transcript_id (str): transcript ID
+
+        Returns:
+            List[str]: All aliases of the given transcript ID
+        """
+        return self._alias(transcript_id, self._transcript_alias)
+
+    def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
+        for key in [feature, strip_version(feature)]:
+            if alias := alias_dict.get(key, []):
+                return alias
+        else:
+            return []
+
+    # ---------------------------------------------------------------------------------------------
+    # Functions for normalizing feature ID/names
     # ---------------------------------------------------------------------------------------------
     def normalize_id(self, feature: str) -> List[Tuple[str, str]]:
         """Normalize an ID or name to the annotated equivalent(s).
@@ -472,7 +534,7 @@ class Core:
         return self._query_transcript_name(featurel)
 
     # ---------------------------------------------------------------------------------------------
-    # is_<feature>
+    # Functions for checking feature type
     # ---------------------------------------------------------------------------------------------
     def is_contig(self, feature: str) -> bool:
         """Check if the given ID or name is a contig.
@@ -530,7 +592,21 @@ class Core:
         return any((i[1] in (TRANSCRIPT_ID, TRANSCRIPT_NAME) for i in self.normalize_id(feature)))
 
     # ---------------------------------------------------------------------------------------------
-    # <feature>_sequence
+    # Functions for checking if a transcript is a canonical transcript
+    # ---------------------------------------------------------------------------------------------
+    def is_canonical_transcript(self, transcript_id: str) -> bool:
+        """Check if the given transcript ID is the canonical transcript for its gene.
+
+        Args:
+            transcript_id (str): transcript ID
+
+        Returns:
+            bool: True if the transcript is the canonical transcript else False
+        """
+        return transcript_id in self._canonical_transcript
+
+    # ---------------------------------------------------------------------------------------------
+    # Functions for getting variant sequences
     # ---------------------------------------------------------------------------------------------
     # TODO: add type hints
     def sequence(self, position) -> str:
@@ -658,85 +734,6 @@ class Core:
             subseq = reverse_complement(subseq)
 
         return subseq
-
-    # ---------------------------------------------------------------------------------------------
-    # <feature>_alias
-    # ---------------------------------------------------------------------------------------------
-    def contig_alias(self, contig_id: str) -> List[str]:
-        """List all aliases of the given contig ID.
-
-        Args:
-            contig_id (str): contig ID
-
-        Returns:
-            List[str]: All aliases of the given contig ID
-        """
-        return self._alias(contig_id, self._contig_alias)
-
-    def exon_alias(self, exon_id: str) -> List[str]:
-        """List all aliases of the given exon ID.
-
-        Args:
-            exon_id (str): exon ID
-
-        Returns:
-            List[str]: All aliases of the given exon ID
-        """
-        return self._alias(exon_id, self._exon_alias)
-
-    def gene_alias(self, gene_id: str) -> List[str]:
-        """List all aliases of the given gene ID.
-
-        Args:
-            gene_id (str): gene ID
-
-        Returns:
-            List[str]: All aliases of the given gene ID
-        """
-        return self._alias(gene_id, self._gene_alias)
-
-    def protein_alias(self, protein_id: str) -> List[str]:
-        """List all aliases of the given protein ID.
-
-        Args:
-            protein_id (str): protein ID
-
-        Returns:
-            List[str]: All aliases of the given protein ID
-        """
-        return self._alias(protein_id, self._protein_alias)
-
-    def transcript_alias(self, transcript_id: str) -> List[str]:
-        """List all aliases of the given transcript ID.
-
-        Args:
-            transcript_id (str): transcript ID
-
-        Returns:
-            List[str]: All aliases of the given transcript ID
-        """
-        return self._alias(transcript_id, self._transcript_alias)
-
-    def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
-        for key in [feature, strip_version(feature)]:
-            if alias := alias_dict.get(key, []):
-                return alias
-        else:
-            return []
-
-    # ---------------------------------------------------------------------------------------------
-    # is_canonical_transcript
-    # ---------------------------------------------------------------------------------------------
-    def is_canonical_transcript(self, transcript_id: str) -> bool:
-        """Check if the given transcript ID is the canonical transcript for its gene.
-
-        Args:
-            transcript_id (str): transcript ID
-
-        Returns:
-            bool: True if the transcript is the canonical transcript else False
-        """
-        return transcript_id in self._canonical_transcript
 
     # ---------------------------------------------------------------------------------------------
     # <feature>
@@ -1149,7 +1146,7 @@ class Core:
         return result
 
     # ---------------------------------------------------------------------------------------------
-    # <feature>_to_<feature>
+    # Functions for mapping to other position types
     # ---------------------------------------------------------------------------------------------
     # TODO: add type hints
     def to_cdna(self, position) -> List:

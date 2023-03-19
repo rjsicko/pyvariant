@@ -7,7 +7,7 @@ from Bio.bgzf import BgzfWriter
 from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_ENS100_CDNA_FASTA
 from pyfaidx import Fasta
 
-from variant_map.constants import CACHE_DIR_ENV, NAME
+from variant_map.constants import CACHE_DIR_ENV, CACHE_DIR_NAME
 from variant_map.files import (
     bgzip,
     get_cache_dir,
@@ -76,7 +76,7 @@ def test_is_bgzipped_true(bgzip_file):
 
 
 def test_get_cache_dir():
-    assert get_cache_dir().rstrip("/").endswith(NAME)
+    assert get_cache_dir().rstrip("/").endswith(CACHE_DIR_NAME)
 
 
 def test_get_cache_dir_env_var(cache_env_var):

@@ -1,7 +1,28 @@
 import re
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 
 from Bio.Data import IUPACData
+
+# -------------------------------------------------------------------------------------------------
+# Match object types
+# -------------------------------------------------------------------------------------------------
+MISSING = None  # Default value for missing attributes
+MATCH_TYPES = {
+    "feature": str,
+    "prefix": str,
+    "start": int,
+    "start_offset": int,
+    "start_seq": str,
+    "end": int,
+    "end_offset": int,
+    "end_seq": str,
+    "strand": str,
+    "refseq": str,
+    "altseq": str,
+    "suffix": str,
+    "suffix2": str,
+}
+
 
 # -------------------------------------------------------------------------------------------------
 # General purpose regex
@@ -17,27 +38,10 @@ SUFFIX = r"delins|del|dup|fs|ins|>"  # HGVS variant suffixes
 # Regex used to capture all 3-letter amino acid codes
 PROTEIN_LETTERS_3 = re.compile("|".join(IUPACData.protein_letters_3to1.keys()))
 
-# -------------------------------------------------------------------------------------------------
-# Match object attributes
-# -------------------------------------------------------------------------------------------------
-DEFAULT = None  # Default value for missing attributes
-MATCH_TYPES: Dict[str, Callable] = {
-    "feature": str,
-    "prefix": str,
-    "start": int,
-    "start_offset": int,
-    "start_seq": str,
-    "end": int,
-    "end_offset": int,
-    "end_seq": str,
-    "strand": str,
-    "refseq": str,
-    "altseq": str,
-    "suffix": str,
-    "suffix_2": str,
-}
 
-
+# -------------------------------------------------------------------------------------------------
+# Variant matching regex
+# -------------------------------------------------------------------------------------------------
 REGEX = [
     # -------------------------------------------------------------------------------------------------
     # HGVS (and "HGVS-like") string matching
@@ -241,7 +245,7 @@ REGEX = [
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
         r"(?P<breakpoint1_suffix>del)"
         rf"(?P<breakpoint1_refseq>{SEQ})"
-        r"(?P<breakpoint1_suffix_2>ins)"
+        r"(?P<breakpoint1_suffix2>ins)"
         rf"(?P<breakpoint1_altseq>{SEQ})"
     ),
     # Fusion. Examples:
@@ -288,13 +292,13 @@ def match(string: str) -> Dict:
         Dict: Position/variant attributes
     """
 
-    def count_none(breakpoint_groups: Dict[str, Dict]) -> int:
+    def count_missing(breakpoint_groups: Dict[str, Dict]) -> int:
         count = 0
 
         if breakpoint_groups:
             for bp in breakpoint_groups.values():
                 for value in bp.values():
-                    if value is None:
+                    if value is MISSING:
                         count += 1
 
         return count
@@ -318,17 +322,17 @@ def match(string: str) -> Dict:
                         breakpoint_groups[bp][key] = to_type(breakpoint_groups[bp][key])
                     else:
                         # Add in null values for any missing keys
-                        breakpoint_groups[bp][key] = DEFAULT
+                        breakpoint_groups[bp][key] = MISSING
 
                 # Special case, join split suffixes (e.g. 'delVins' -> 'delins')
-                if suffix_2 := breakpoint_groups[bp].get("suffix_2", ""):
-                    breakpoint_groups[bp]["suffix"] += suffix_2
+                if suffix2 := breakpoint_groups[bp].get("suffix2", ""):
+                    breakpoint_groups[bp]["suffix"] += suffix2
 
-                breakpoint_groups[bp].pop("suffix_2")
+                breakpoint_groups[bp].pop("suffix2")
 
             # If the string matches multiple regexes, return the match with more values filled out.
             # Presumably this is a better match.
-            count = count_none(breakpoint_groups)
+            count = count_missing(breakpoint_groups)
             if count < best_match_nones:
                 best_match = breakpoint_groups
                 best_match_nones = count

@@ -1,17 +1,15 @@
 """Collection of constants used throughout the package."""
 import os.path
 
-# Package constants
-NAME = "variant_map"
-
-# Default species/release
+# Default Ensembl species and release
 DEFAULT_SPECIES = "homo_sapiens"
 DEFAULT_ENSEMBL_RELEASE = 100
 
-# Variable set the cache directory
+# Environmental variable used to set the cache directory
 CACHE_DIR_ENV = "VARIANT_MAP_CACHE"
+CACHE_DIR_NAME = "variant_map"
 
-# Literals used throughout the package
+# Attribute name literals
 CONTIG_ID = "contig_id"
 EXON_ID = "exon_id"
 GENE_ID = "gene_id"

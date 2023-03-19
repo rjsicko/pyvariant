@@ -16,7 +16,20 @@ from .constants import (
     RNA,
     SUBTITUTION,
 )
-from .regex import DEFAULT, PROTEIN_LETTERS_3, match
+from .regex import MISSING, PROTEIN_LETTERS_3, match
+
+# Map an HGVS variant prefix to a position type
+PREFIX_TO_POSITION_TYPE = {"c": CDNA, "e": EXON, "g": DNA, "p": PROTEIN, "r": RNA}
+
+# Map a HGVS variant string to a variant type
+SUFFIX_TO_VARIANT_TYPE = {
+    "del": DELETION,
+    "delins": DELINS,
+    "dup": DUPLICATION,
+    "fs": FRAMESHIFT,
+    "ins": INSERTION,
+    ">": SUBTITUTION,
+}
 
 
 def parse(string: str) -> Dict[str, Any]:
@@ -39,7 +52,7 @@ def parse(string: str) -> Dict[str, Any]:
     else:
         # Otherwise, the type of variant depends on the suffix in the variant string
         parsed["breakpoint1"]["variant_type"] = translate_suffix(parsed["breakpoint1"]["suffix"])
-        parsed["breakpoint2"]["variant_type"] = DEFAULT
+        parsed["breakpoint2"]["variant_type"] = MISSING
 
     # Normalize values in each breakpoint
     for breakpoint in parsed.values():
@@ -94,14 +107,13 @@ def translate_prefix(prefix: Optional[str]) -> Optional[str]:
     """Convert an HGVS variant prefix to a position type.
 
     Args:
-        prefix (str): Prefix (e.g. 'r.')
+        prefix (str): Prefix (e.g. 'r')
 
     Returns:
         str: Position type (e.g. 'rna')
     """
-    convert: Dict[Optional[str], str] = {"c": CDNA, "e": EXON, "g": DNA, "p": PROTEIN, "r": RNA}
-    prefix = prefix.rstrip(".").lower() if prefix else prefix
-    return convert.get(prefix)
+    prefix = prefix.strip().rstrip(".").lower() if prefix else ""
+    return PREFIX_TO_POSITION_TYPE.get(prefix)
 
 
 def translate_suffix(suffix: Optional[str]) -> Optional[str]:
@@ -113,12 +125,5 @@ def translate_suffix(suffix: Optional[str]) -> Optional[str]:
     Returns:
         str: Variant type (e.g. 'deletion')
     """
-    convert: Dict[Optional[str], str] = {
-        "del": DELETION,
-        "delins": DELINS,
-        "dup": DUPLICATION,
-        "fs": FRAMESHIFT,
-        "ins": INSERTION,
-        ">": SUBTITUTION,
-    }
-    return convert.get(suffix)
+    suffix = suffix.strip().lower() if suffix else ""
+    return SUFFIX_TO_VARIANT_TYPE.get(suffix)

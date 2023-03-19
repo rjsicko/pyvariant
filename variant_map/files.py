@@ -11,7 +11,7 @@ from appdirs import user_data_dir
 from Bio.bgzf import BgzfWriter, _bgzf_magic
 from pyfaidx import Fasta
 
-from .constants import CACHE_DIR_ENV, EMPTY_FASTA, NAME
+from .constants import CACHE_DIR_ENV, CACHE_DIR_NAME, EMPTY_FASTA
 from .utils import strip_version
 
 
@@ -102,7 +102,7 @@ def get_cache_dir() -> str:
     try:
         return os.environ[CACHE_DIR_ENV]
     except KeyError:
-        return os.path.join(user_data_dir(), NAME)
+        return os.path.join(user_data_dir(), CACHE_DIR_NAME)
 
 
 def is_bgzipped(path: str) -> bool:
