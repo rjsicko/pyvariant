@@ -1002,9 +1002,114 @@ def test_translate_cdna_variant_4(ensembl100, test_cds_sequence_pos_3):
 
 
 # -------------------------------------------------------------------------------------------------
+# test parse
+# -------------------------------------------------------------------------------------------------
+def test_parse_cdna_position(ensembl100):
+    result = ensembl100.parse("ENST00000288135:c.68-1")
+    assert result == [
+        CdnaPosition(
+            contig_id="4",
+            start=68,
+            start_offset=-1,
+            end=68,
+            end_offset=-1,
+            strand="+",
+            gene_id="ENSG00000157404",
+            gene_name="KIT",
+            transcript_id="ENST00000288135",
+            transcript_name="KIT-201",
+            protein_id="ENSP00000288135",
+        )
+    ]
+
+
+def test_parse_cdna_substitution(ensembl100):
+    result = ensembl100.parse("ENST00000256078:c.38G>A")
+    assert result == [
+        CdnaSubstitution(
+            contig_id="12",
+            start=38,
+            start_offset=0,
+            end=38,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000133703",
+            gene_name="KRAS",
+            transcript_id="ENST00000256078",
+            transcript_name="KRAS-201",
+            protein_id="ENSP00000256078",
+            refseq="G",
+            altseq="A",
+        )
+    ]
+
+
+def test_parse_dna_position(ensembl100):
+    result = ensembl100.parse("5:g.1282623_1282626")
+    assert result == [
+        DnaPosition(
+            contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand="+"
+        ),
+        DnaPosition(
+            contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand="-"
+        ),
+    ]
+
+
+def test_parse_dna_substitution(ensembl100):
+    result = ensembl100.parse("5:g.1282623C>G")
+    assert result == [
+        DnaSubstitution(
+            contig_id="5",
+            start=1282623,
+            start_offset=0,
+            end=1282623,
+            end_offset=0,
+            strand="+",
+            refseq="C",
+            altseq="G",
+        )
+    ]
+
+
+def test_parse_exon_fusion(ensembl100):
+    result = ensembl100.parse("ENST00000315869:e.3_4::ENST00000271526:e.2")
+    assert result == [
+        ExonFusion(
+            ExonPosition(
+                contig_id="X",
+                start=3,
+                start_offset=0,
+                end=4,
+                end_offset=0,
+                strand="-",
+                gene_id="ENSG00000068323",
+                gene_name="TFE3",
+                transcript_id="ENST00000315869",
+                transcript_name="TFE3-201",
+                exon_id="ENSE00003528623",
+            ),
+            ExonPosition(
+                contig_id="1",
+                start=2,
+                start_offset=0,
+                end=2,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000143294",
+                gene_name="PRCC",
+                transcript_id="ENST00000271526",
+                transcript_name="PRCC-201",
+                exon_id="ENSE00003525835",
+            ),
+        )
+    ]
+
+
+# -------------------------------------------------------------------------------------------------
 # test load
 # -------------------------------------------------------------------------------------------------
-def test_load_cdna_minimal(ensembl100):
+def test_variant_cdna_minimal(ensembl100):
     result = ensembl100.variant(position_type="cdna", feature="ENST00000375562", start=123)
     assert result == [
         CdnaPosition(
@@ -1023,7 +1128,7 @@ def test_load_cdna_minimal(ensembl100):
     ]
 
 
-def test_load_cdna_position(ensembl100):
+def test_variant_cdna_position(ensembl100):
     result = ensembl100.variant(
         position_type="cdna",
         feature="ENST00000288135",
@@ -1050,7 +1155,7 @@ def test_load_cdna_position(ensembl100):
     ]
 
 
-def test_load_cdna_substitution(ensembl100):
+def test_variant_cdna_substitution(ensembl100):
     result = ensembl100.variant(
         position_type="cdna",
         feature="ENST00000256078",
@@ -1082,7 +1187,7 @@ def test_load_cdna_substitution(ensembl100):
     ]
 
 
-def test_load_dna_minimal(ensembl100):
+def test_variant_dna_minimal(ensembl100):
     result = ensembl100.variant(position_type="dna", feature="5", start=1282623)
     assert result == [
         DnaPosition(
@@ -1094,7 +1199,7 @@ def test_load_dna_minimal(ensembl100):
     ]
 
 
-def test_load_dna_position(ensembl100):
+def test_variant_dna_position(ensembl100):
     result = ensembl100.variant(
         position_type="dna", feature="5", start=1282623, end=1282626, strand="-"
     )
@@ -1105,14 +1210,14 @@ def test_load_dna_position(ensembl100):
     ]
 
 
-def test_load_dna_substitution(ensembl100):
+def test_variant_dna_substitution(ensembl100):
     result = ensembl100.variant(
         position_type="dna",
         feature="5",
         start=1282623,
-        end=1282626,
-        strand="-",
-        refseq="A",
+        end=1282623,
+        strand="+",
+        refseq="C",
         altseq="G",
         variant_type="substitution",
     )
@@ -1121,16 +1226,16 @@ def test_load_dna_substitution(ensembl100):
             contig_id="5",
             start=1282623,
             start_offset=0,
-            end=1282626,
+            end=1282623,
             end_offset=0,
-            strand="-",
-            refseq="A",
+            strand="+",
+            refseq="C",
             altseq="G",
         )
     ]
 
 
-def test_load_exon_fusion(ensembl100):
+def test_variant_exon_fusion(ensembl100):
     result = ensembl100.variant(
         position_type="exon",
         feature="ENST00000315869",

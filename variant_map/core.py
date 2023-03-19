@@ -137,6 +137,223 @@ class Core:
         self._transcript_alias = tsv_to_dict(transcript_alias)
 
     # ---------------------------------------------------------------------------------------------
+    # Functions for loading variants
+    # ---------------------------------------------------------------------------------------------
+    def parse(self, string: str) -> List:
+        """Parse a variant string into a variant object.
+
+        Args:
+            string (str): String representing a variant, in HGVS format
+
+        Returns:
+            List: One or more normalized variants
+        """
+        parsed = parse(string)
+        result = self.variant(
+            position_type=parsed["breakpoint1"]["position_type"],
+            feature=parsed["breakpoint1"]["feature"],
+            start=parsed["breakpoint1"]["start"],
+            start_offset=parsed["breakpoint1"]["start_offset"],
+            end=parsed["breakpoint1"]["end"],
+            end_offset=parsed["breakpoint1"]["end_offset"],
+            strand=parsed["breakpoint1"]["strand"],
+            refseq=parsed["breakpoint1"]["refseq"],
+            altseq=parsed["breakpoint1"]["altseq"],
+            variant_type=parsed["breakpoint1"]["variant_type"],
+            position_type2=parsed["breakpoint2"]["position_type"],
+            feature2=parsed["breakpoint2"]["feature"],
+            start2=parsed["breakpoint2"]["start"],
+            start_offset2=parsed["breakpoint2"]["start_offset"],
+            end2=parsed["breakpoint2"]["end"],
+            end_offset2=parsed["breakpoint2"]["end_offset"],
+            strand2=parsed["breakpoint2"]["strand"],
+            refseq2=parsed["breakpoint2"]["refseq"],
+            altseq2=parsed["breakpoint2"]["altseq"],
+        )
+
+        return result
+
+    # TODO: add type hints
+    def variant(
+        self,
+        *,
+        position_type: str,
+        feature: str,
+        start: int,
+        start_offset: Optional[int] = None,
+        end: Optional[int] = None,
+        end_offset: Optional[int] = None,
+        strand: Optional[str] = None,
+        refseq: Optional[str] = None,
+        altseq: Optional[str] = None,
+        variant_type: Optional[str] = None,
+        position_type2: Optional[str] = None,
+        feature2: Optional[str] = None,
+        start2: Optional[int] = None,
+        start_offset2: Optional[int] = None,
+        end2: Optional[int] = None,
+        end_offset2: Optional[int] = None,
+        strand2: Optional[str] = None,
+        refseq2: Optional[str] = None,
+        altseq2: Optional[str] = None,
+    ) -> List:
+        """Initialize one or more position or variants objects from the given arguments.
+
+        Args:
+            position_type (str): Position type for `start` and `end`. One of 'cdna', 'dna', 'exon', 'protein', or 'rna'.
+            feature (str): Feature such as a transcript ID or gene name.
+            start (int): Start position.
+            start_offset (int, optional): Offset from `start`.
+            end (int, optional): End position. Defaults to `start`.
+            end_offset (int, optional): Offset from `end`.
+            strand (str, optional): Strand the feature is on. One of '+' or '-'.
+            refseq (str, optional): Reference allele. Required if the given position represents a variant.
+            altseq (str, optional): Alternate allele. Required if the given position represents a variant.
+            variant_type (str, optional): Variant type. Required if `refseq` or `altseq` is given.
+            position_type2 (str, optional): For fusions. Position type for `start2` and `end2`. One of 'cdna', 'dna', 'exon', 'protein', or 'rna'.
+            feature2 (str, optional): For fusions. Feature such as a transcript ID or gene name.
+            start2 (int, optional): For fusions. Start position.
+            start_offset2 (int, optional): For fusions. Offset from `start2`.
+            end2 (int, optional): For fusions. End position. Defaults to `start2`.
+            end_offset2 (int, optional): For fusions. Offset from `end2`.
+            strand2 (str, optional): For fusions. Strand the feature is on. One of '+' or '-'.
+            refseq2 (str, optional): For fusions. Reference allele. Required if the given position represents a variant.
+            altseq2 (str, optional): For fusions. Alternate allele. Required if the given position represents a variant.
+
+        Raises:
+            ValueError: Arguments are missing.
+
+        Returns:
+            List: Position or Variants objects
+        """
+        result: List[Any] = []
+
+        # Set defaults for missing inputs
+        start_offset = cast(int, start_offset or 0)
+        end = cast(int, end or start)
+        end_offset = cast(int, end_offset or 0)
+        strand = cast(str, strand or "")
+        refseq = cast(str, refseq or "")
+        altseq = cast(str, altseq or "")
+        variant_type = cast(str, variant_type or "")
+
+        if (refseq or altseq) and not variant_type:
+            raise ValueError("refseq and/or altseq given without a variant_type")
+
+        strand_ = [strand] if strand else ["+", "-"]
+
+        # Load a fusion
+        # TODO: infer is a fusion if position_type2, etc is given?
+        if variant_type == FUSION:
+            fusion: Optional[Type[_Fusion]] = None
+
+            # TODO: default to any exon for exon fusions?
+
+            if position_type2:
+                position_type2 = cast(str, position_type2)
+            else:
+                raise ValueError(f"missing argument required for {FUSION}: 'position_type2'")
+
+            if feature2:
+                feature2 = cast(str, feature2)
+            else:
+                raise ValueError(f"missing argument required for {FUSION}: 'feature2'")
+
+            if start2:
+                start2 = cast(int, start2)
+            else:
+                raise ValueError(f"missing argument required for {FUSION}: 'start2'")
+
+            # TODO: support mixed type fusions?
+            if position_type == CDNA and position_type2 == CDNA:
+                fusion = CdnaFusion
+            elif position_type == DNA and position_type2 == DNA:
+                fusion = DnaFusion
+            elif position_type == EXON and position_type2 == EXON:
+                fusion = ExonFusion
+            elif position_type == PROTEIN and position_type2 == PROTEIN:
+                fusion = ProteinFusion
+            elif position_type == RNA and position_type2 == RNA:
+                fusion = RnaFusion
+
+            if fusion:
+                breakpoint1 = self.variant(
+                    feature=feature,
+                    start=start,
+                    position_type=position_type,
+                    start_offset=start_offset,
+                    end=end,
+                    end_offset=end_offset,
+                    strand=strand,
+                    refseq=refseq,
+                    altseq=altseq,
+                )
+                breakpoint2 = self.variant(
+                    feature=feature2,
+                    start=start2,
+                    position_type=position_type2,
+                    start_offset=start_offset2,
+                    end=end2,
+                    end_offset=end_offset2,
+                    strand=strand2,
+                    refseq=refseq2,
+                    altseq=altseq2,
+                )
+
+                return list(fusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2))
+
+        # Load a small variant
+        elif variant_type or refseq or altseq:
+            if position_type == CDNA:
+                transcript_ids = self.transcript_ids(feature)
+                result = self._cdna_to_cdna_variant(
+                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
+                )
+            elif position_type == DNA:
+                contig_ids = self.contig_ids(feature)
+                result = self._dna_to_dna_variant(
+                    contig_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
+                )
+            elif position_type == PROTEIN:
+                transcript_ids = self.transcript_ids(feature)
+                result = self._protein_to_protein_variant(
+                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
+                )
+            elif position_type == RNA:
+                transcript_ids = self.transcript_ids(feature)
+                result = self._rna_to_rna_variant(
+                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
+                )
+
+        # Load a position
+        else:
+            if position_type == CDNA:
+                transcript_ids = self.transcript_ids(feature)
+                result = self._cdna_to_cdna(
+                    transcript_ids, start, start_offset, end, end_offset, strand_
+                )
+            elif position_type == DNA:
+                contig_ids = self.contig_ids(feature)
+                result = self._dna_to_dna(contig_ids, start, start_offset, end, end_offset, strand_)
+            elif position_type == EXON:
+                transcript_ids = self.transcript_ids(feature)
+                result = self._exon_to_exon(
+                    transcript_ids, start, start_offset, end, end_offset, strand_
+                )
+            elif position_type == PROTEIN:
+                transcript_ids = self.transcript_ids(feature)
+                result = self._protein_to_protein(
+                    transcript_ids, start, start_offset, end, end_offset, strand_
+                )
+            elif position_type == RNA:
+                transcript_ids = self.transcript_ids(feature)
+                result = self._rna_to_rna(
+                    transcript_ids, start, start_offset, end, end_offset, strand_
+                )
+
+        return result
+
+    # ---------------------------------------------------------------------------------------------
     # Functions for getting feature ID/names
     # ---------------------------------------------------------------------------------------------
     def contig_ids(self, feature: str = "") -> List[str]:
@@ -863,213 +1080,6 @@ class Core:
             )
 
         return sorted(set(result))
-
-    # ---------------------------------------------------------------------------------------------
-    # variant
-    # ---------------------------------------------------------------------------------------------
-    # TODO: add type hints
-    def variant(
-        self,
-        string: str = "",
-        *,
-        position_type: str,
-        feature: str,
-        start: int,
-        start_offset: Optional[int] = None,
-        end: Optional[int] = None,
-        end_offset: Optional[int] = None,
-        strand: Optional[str] = None,
-        refseq: Optional[str] = None,
-        altseq: Optional[str] = None,
-        variant_type: Optional[str] = None,
-        position_type2: Optional[str] = None,
-        feature2: Optional[str] = None,
-        start2: Optional[int] = None,
-        start_offset2: Optional[int] = None,
-        end2: Optional[int] = None,
-        end_offset2: Optional[int] = None,
-        strand2: Optional[str] = None,
-        refseq2: Optional[str] = None,
-        altseq2: Optional[str] = None,
-    ) -> List:
-        """Initialize one or more position or variants objects from the given arguments.
-
-        Args:
-            position_type (str): Position type for `start` and `end`. One of 'cdna', 'dna', 'exon', 'protein', or 'rna'.
-            feature (str): Feature such as a transcript ID or gene name.
-            start (int): Start position.
-            start_offset (int, optional): Offset from `start`.
-            end (int, optional): End position. Defaults to `start`.
-            end_offset (int, optional): Offset from `end`.
-            strand (str, optional): Strand the feature is on. One of '+' or '-'.
-            refseq (str, optional): Reference allele. Required if the given position represents a variant.
-            altseq (str, optional): Alternate allele. Required if the given position represents a variant.
-            variant_type (str, optional): Variant type. Required if `refseq` or `altseq` is given.
-            position_type2 (str, optional): For fusions. Position type for `start2` and `end2`. One of 'cdna', 'dna', 'exon', 'protein', or 'rna'.
-            feature2 (str, optional): For fusions. Feature such as a transcript ID or gene name.
-            start2 (int, optional): For fusions. Start position.
-            start_offset2 (int, optional): For fusions. Offset from `start2`.
-            end2 (int, optional): For fusions. End position. Defaults to `start2`.
-            end_offset2 (int, optional): For fusions. Offset from `end2`.
-            strand2 (str, optional): For fusions. Strand the feature is on. One of '+' or '-'.
-            refseq2 (str, optional): For fusions. Reference allele. Required if the given position represents a variant.
-            altseq2 (str, optional): For fusions. Alternate allele. Required if the given position represents a variant.
-
-        Raises:
-            ValueError: Arguments are missing.
-
-        Returns:
-            List: Position or Variants objects
-        """
-        result: List[Any] = []
-
-        # If the input is a variant string, parse it into a dictionary of values
-        if string:
-            parsed = parse(string)
-            position_type = parsed["breakpoint1"]["position_type"]
-            feature = parsed["breakpoint1"]["feature"]
-            start = parsed["breakpoint1"]["start"]
-            start_offset = parsed["breakpoint1"]["start_offset"]
-            end = parsed["breakpoint1"]["end"]
-            end_offset = parsed["breakpoint1"]["end_offset"]
-            strand = parsed["breakpoint1"]["strand"]
-            refseq = parsed["breakpoint1"]["refseq"]
-            altseq = parsed["breakpoint1"]["altseq"]
-            variant_type = parsed["breakpoint1"]["variant_type"]
-            position_type2 = parsed["breakpoint2"]["position_type"]
-            feature2 = parsed["breakpoint2"]["feature"]
-            start2 = parsed["breakpoint2"]["start"]
-            start_offset2 = parsed["breakpoint2"]["start_offset"]
-            end2 = parsed["breakpoint2"]["end"]
-            end_offset2 = parsed["breakpoint2"]["end_offset"]
-            strand2 = parsed["breakpoint2"]["strand"]
-            refseq2 = parsed["breakpoint2"]["refseq"]
-            altseq2 = parsed["breakpoint2"]["altseq"]
-
-        # Set defaults for missing inputs
-        start_offset = cast(int, start_offset or 0)
-        end = cast(int, end or start)
-        end_offset = cast(int, end_offset or 0)
-        strand = cast(str, strand or "")
-        refseq = cast(str, refseq or "")
-        altseq = cast(str, altseq or "")
-        variant_type = cast(str, variant_type or "")
-
-        if (refseq or altseq) and not variant_type:
-            raise ValueError("refseq and/or altseq given without a variant_type")
-
-        strand_ = [strand] if strand else ["+", "-"]
-
-        # Load a fusion
-        # TODO: infer is a fusion if position_type2, etc is given?
-        if variant_type == FUSION:
-            fusion: Optional[Type[_Fusion]] = None
-
-            # TODO: default to any exon for exon fusions?
-
-            if position_type2:
-                position_type2 = cast(str, position_type2)
-            else:
-                raise ValueError(f"missing argument required for {FUSION}: 'position_type2'")
-
-            if feature2:
-                feature2 = cast(str, feature2)
-            else:
-                raise ValueError(f"missing argument required for {FUSION}: 'feature2'")
-
-            if start2:
-                start2 = cast(int, start2)
-            else:
-                raise ValueError(f"missing argument required for {FUSION}: 'start2'")
-
-            # TODO: support mixed type fusions?
-            if position_type == CDNA and position_type2 == CDNA:
-                fusion = CdnaFusion
-            elif position_type == DNA and position_type2 == DNA:
-                fusion = DnaFusion
-            elif position_type == EXON and position_type2 == EXON:
-                fusion = ExonFusion
-            elif position_type == PROTEIN and position_type2 == PROTEIN:
-                fusion = ProteinFusion
-            elif position_type == RNA and position_type2 == RNA:
-                fusion = RnaFusion
-
-            if fusion:
-                breakpoint1 = self.variant(
-                    feature=feature,
-                    start=start,
-                    position_type=position_type,
-                    start_offset=start_offset,
-                    end=end,
-                    end_offset=end_offset,
-                    strand=strand,
-                    refseq=refseq,
-                    altseq=altseq,
-                )
-                breakpoint2 = self.variant(
-                    feature=feature2,
-                    start=start2,
-                    position_type=position_type2,
-                    start_offset=start_offset2,
-                    end=end2,
-                    end_offset=end_offset2,
-                    strand=strand2,
-                    refseq=refseq2,
-                    altseq=altseq2,
-                )
-
-                return list(fusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2))
-
-        # Load a small variant
-        elif variant_type or refseq or altseq:
-            if position_type == CDNA:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._cdna_to_cdna_variant(
-                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
-                )
-            elif position_type == DNA:
-                contig_ids = self.contig_ids(feature)
-                result = self._dna_to_dna_variant(
-                    contig_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
-                )
-            elif position_type == PROTEIN:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._protein_to_protein_variant(
-                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
-                )
-            elif position_type == RNA:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._rna_to_rna_variant(
-                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
-                )
-
-        # Load a position
-        else:
-            if position_type == CDNA:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._cdna_to_cdna(
-                    transcript_ids, start, start_offset, end, end_offset, strand_
-                )
-            elif position_type == DNA:
-                contig_ids = self.contig_ids(feature)
-                result = self._dna_to_dna(contig_ids, start, start_offset, end, end_offset, strand_)
-            elif position_type == EXON:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._exon_to_exon(
-                    transcript_ids, start, start_offset, end, end_offset, strand_
-                )
-            elif position_type == PROTEIN:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._protein_to_protein(
-                    transcript_ids, start, start_offset, end, end_offset, strand_
-                )
-            elif position_type == RNA:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._rna_to_rna(
-                    transcript_ids, start, start_offset, end, end_offset, strand_
-                )
-
-        return result
 
     # ---------------------------------------------------------------------------------------------
     # Functions for mapping to other position types
@@ -3436,13 +3446,11 @@ class Core:
         variant_list = []
 
         # TODO: DNA sequence get is slow
-        # ref_annotated = self.sequence(dna)
+        ref_annotated = self.sequence(dna)
         for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # # Assert that the given ref matches the annotated one
-            # if ref != ref_annotated:
-            #     raise ValueError(
-            #         f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {dna}"
-            #     )
+            # Assert that the given ref matches the annotated one
+            if ref != ref_annotated:
+                continue
 
             # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
