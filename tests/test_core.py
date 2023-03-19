@@ -38,7 +38,7 @@ from variant_map.positions import (
 
 
 # -------------------------------------------------------------------------------------------------
-# test init
+# init
 # -------------------------------------------------------------------------------------------------
 def test_init():
     obj = Core(
@@ -72,50 +72,8 @@ def test_init():
 
 
 # -------------------------------------------------------------------------------------------------
-# test all_<feature_symbol>s
+# contig_ids
 # -------------------------------------------------------------------------------------------------
-def test_all_contig_ids(ensembl100):
-    result = ensembl100.contig_ids()
-    assert isinstance(result, list)
-    assert "16" in result
-
-
-def test_all_exon_ids(ensembl100):
-    result = ensembl100.exon_ids()
-    assert isinstance(result, list)
-    assert "ENSE00003826864" in result
-
-
-def test_all_gene_ids(ensembl100):
-    result = ensembl100.gene_ids()
-    assert isinstance(result, list)
-    assert "ENSG00000149925" in result
-
-
-def test_all_gene_names(ensembl100):
-    result = ensembl100.gene_names()
-    assert isinstance(result, list)
-    assert "ALDOA" in result
-
-
-def test_all_protein_ids(ensembl100):
-    result = ensembl100.protein_ids()
-    assert isinstance(result, list)
-    assert "ENSP00000494188" in result
-
-
-def test_all_transcript_ids(ensembl100):
-    result = ensembl100.transcript_ids()
-    assert isinstance(result, list)
-    assert "ENST00000643777" in result
-
-
-def test_all_transcript_names(ensembl100):
-    result = ensembl100.transcript_names()
-    assert isinstance(result, list)
-    assert "ALDOA-219" in result
-
-
 def test_contig_ids_from_contig_id(ensembl100):
     result = ensembl100.contig_ids("16")
     assert isinstance(result, list)
@@ -155,6 +113,15 @@ def test_contig_ids_from_transcript(ensembl100):
     assert ret_by_id == ret_by_name
 
 
+def test_contig_ids_all(ensembl100):
+    result = ensembl100.contig_ids()
+    assert isinstance(result, list)
+    assert "16" in result
+
+
+# -------------------------------------------------------------------------------------------------
+# exon_ids
+# -------------------------------------------------------------------------------------------------
 def test_exon_ids_from_contig_id(ensembl100):
     result = ensembl100.exon_ids("16")
     assert isinstance(result, list)
@@ -189,6 +156,15 @@ def test_exon_ids_from_transcript(ensembl100):
     assert ret_by_id == ret_by_name
 
 
+def test_exon_ids_all(ensembl100):
+    result = ensembl100.exon_ids()
+    assert isinstance(result, list)
+    assert "ENSE00003826864" in result
+
+
+# -------------------------------------------------------------------------------------------------
+# gene_ids
+# -------------------------------------------------------------------------------------------------
 def test_gene_ids_different_gene_ids(ensembl69, ensembl100):
     # Gene ID changed bewteen 69 and 100
     # ENSG00000166748 AGBL1
@@ -239,6 +215,15 @@ def test_gene_ids_from_transcript(ensembl100):
     assert ret_by_id == ret_by_name
 
 
+def test_gene_ids_all(ensembl100):
+    result = ensembl100.gene_ids()
+    assert isinstance(result, list)
+    assert "ENSG00000149925" in result
+
+
+# -------------------------------------------------------------------------------------------------
+# gene_names
+# -------------------------------------------------------------------------------------------------
 def test_gene_names_different_gene_ids(ensembl69, ensembl100):
     # Gene ID changed bewteen 69 and 100
     # ENSG00000204645 SSX4
@@ -300,6 +285,15 @@ def test_gene_names_from_transcript(ensembl100):
     assert ret_by_id == ret_by_name
 
 
+def test_gene_names_all(ensembl100):
+    result = ensembl100.gene_names()
+    assert isinstance(result, list)
+    assert "ALDOA" in result
+
+
+# -------------------------------------------------------------------------------------------------
+# protein_ids
+# -------------------------------------------------------------------------------------------------
 def test_protein_ids_from_contig_id(ensembl100):
     result = ensembl100.protein_ids("16")
     assert isinstance(result, list)
@@ -334,6 +328,15 @@ def test_protein_ids_from_transcript(ensembl100):
     assert ret_by_id == ret_by_name
 
 
+def test_protein_ids_all(ensembl100):
+    result = ensembl100.protein_ids()
+    assert isinstance(result, list)
+    assert "ENSP00000494188" in result
+
+
+# -------------------------------------------------------------------------------------------------
+# transcript_ids
+# -------------------------------------------------------------------------------------------------
 def test_transcript_ids_from_contig_id(ensembl100):
     result = ensembl100.transcript_ids("16")
     assert isinstance(result, list)
@@ -368,6 +371,15 @@ def test_transcript_ids_from_transcript(ensembl100):
     assert ret_by_id == ret_by_name
 
 
+def test_transcript_ids_all(ensembl100):
+    result = ensembl100.transcript_ids()
+    assert isinstance(result, list)
+    assert "ENST00000643777" in result
+
+
+# -------------------------------------------------------------------------------------------------
+# transcript_names
+# -------------------------------------------------------------------------------------------------
 def test_transcript_names_from_contig_id(ensembl100):
     result = ensembl100.transcript_names("16")
     assert isinstance(result, list)
@@ -402,16 +414,25 @@ def test_transcript_names_from_transcript(ensembl100):
     assert ret_by_id == ret_by_name
 
 
+def test_transcript_names_all(ensembl100):
+    result = ensembl100.transcript_names()
+    assert isinstance(result, list)
+    assert "ALDOA-219" in result
+
+
 # -------------------------------------------------------------------------------------------------
-# test is_canonical_transcript
+# is_canonical_transcript
 # -------------------------------------------------------------------------------------------------
-def test_is_canonical_transcript(ensembl100):
+def test_is_canonical_transcript_true(ensembl100):
     assert ensembl100.is_canonical_transcript("ENST00000000233") is True
+
+
+def test_is_canonical_transcript_false(ensembl100):
     assert ensembl100.is_canonical_transcript("spam") is False
 
 
 # -------------------------------------------------------------------------------------------------
-# test is_<feature>
+# is_contig
 # -------------------------------------------------------------------------------------------------
 def test_is_contig_false(ensembl100):
     assert ensembl100.is_contig("spam") is False
@@ -425,6 +446,9 @@ def test_is_contig_true_alias(ensembl100):
     assert ensembl100.is_contig("chr4") is True
 
 
+# -------------------------------------------------------------------------------------------------
+# is_exon
+# -------------------------------------------------------------------------------------------------
 def test_is_exon_false(ensembl100):
     assert ensembl100.is_exon("spam") is False
 
@@ -433,6 +457,9 @@ def test_is_exon_true(ensembl100):
     assert ensembl100.is_exon("ENSE00003826864") is True
 
 
+# -------------------------------------------------------------------------------------------------
+# is_gene
+# -------------------------------------------------------------------------------------------------
 def test_is_gene_false(ensembl100):
     assert ensembl100.is_gene("spam") is False
 
@@ -445,6 +472,9 @@ def test_is_gene_true_from_name(ensembl100):
     assert ensembl100.is_gene("ALDOA") is True
 
 
+# -------------------------------------------------------------------------------------------------
+# is_protein
+# -------------------------------------------------------------------------------------------------
 def test_is_protein_false(ensembl100):
     assert ensembl100.is_protein("spam") is False
 
@@ -453,6 +483,9 @@ def test_is_protein_true(ensembl100):
     assert ensembl100.is_protein("ENSP00000494188") is True
 
 
+# -------------------------------------------------------------------------------------------------
+# is_transcript
+# -------------------------------------------------------------------------------------------------
 def test_is_transcript_false(ensembl100):
     assert ensembl100.is_transcript("spam") is False
 
@@ -466,10 +499,10 @@ def test_is_transcript_true_from_name(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
-# test <feature>_sequence
+# sequence
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_cds_sequence_pos():
+def test_sequence_cdna_pos():
     return CdnaPosition(
         "4",
         7,
@@ -485,27 +518,27 @@ def test_cds_sequence_pos():
     )
 
 
-def test_cds_sequence(ensembl100, test_cds_sequence_pos):
-    assert ensembl100.sequence(test_cds_sequence_pos) == "GGC"
+def test_sequence_cdna(ensembl100, test_sequence_cdna_pos):
+    assert ensembl100.sequence(test_sequence_cdna_pos) == "GGC"
 
 
 @pytest.fixture
-def test_dna_sequence_pos_plus():
+def test_sequence_dna_pos_plus():
     return DnaPosition("4", 54695512, 0, 54695514, 0, "+")
 
 
 @pytest.fixture
-def test_dna_sequence_pos_minus():
+def test_sequence_dna_pos_minus():
     return DnaPosition("4", 54695512, 0, 54695514, 0, "-")
 
 
-def test_dna_sequence(ensembl100, test_dna_sequence_pos_plus, test_dna_sequence_pos_minus):
-    assert ensembl100.sequence(test_dna_sequence_pos_plus) == "GCT"
-    assert ensembl100.sequence(test_dna_sequence_pos_minus) == "AGC"
+def test_sequence_dna(ensembl100, test_sequence_dna_pos_plus, test_sequence_dna_pos_minus):
+    assert ensembl100.sequence(test_sequence_dna_pos_plus) == "GCT"
+    assert ensembl100.sequence(test_sequence_dna_pos_minus) == "AGC"
 
 
 @pytest.fixture
-def test_protein_sequence_pos():
+def test_sequence_protein_pos():
     return ProteinPosition(
         "4",
         3,
@@ -521,23 +554,23 @@ def test_protein_sequence_pos():
     )
 
 
-def test_protein_sequence(ensembl100, test_protein_sequence_pos):
-    assert ensembl100.sequence(test_protein_sequence_pos) == "GA"
+def test_sequence_protein(ensembl100, test_sequence_protein_pos):
+    assert ensembl100.sequence(test_sequence_protein_pos) == "GA"
 
 
 @pytest.fixture
-def test_rna_sequence_pos():
+def test_sequence_rna_pos():
     return RnaPosition(
         "4", 126, 0, 128, 0, "+", "ENSG00000157404", "KIT", "ENST00000288135", "KIT-201"
     )
 
 
-def test_rna_sequence(ensembl100, test_rna_sequence_pos):
-    assert ensembl100.sequence(test_rna_sequence_pos) == "GCT"
+def test_sequence_rna(ensembl100, test_sequence_rna_pos):
+    assert ensembl100.sequence(test_sequence_rna_pos) == "GCT"
 
 
 # -------------------------------------------------------------------------------------------------
-# test normalize_id(feature, feature_type)
+# normalize_id
 # -------------------------------------------------------------------------------------------------
 def test_normalize_id_contig_id(ensembl100):
     assert ensembl100.normalize_id("4") == [("4", CONTIG_ID)]
@@ -572,146 +605,10 @@ def test_normalize_id_transcript_name(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
-# test str
-# -------------------------------------------------------------------------------------------------
-def test_cdna_to_str():
-    position1 = CdnaPosition(
-        contig_id="5",
-        start=3399,
-        start_offset=0,
-        end=3399,
-        end_offset=0,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    position2 = CdnaPosition(
-        contig_id="5",
-        start=1,
-        start_offset=0,
-        end=3399,
-        end_offset=0,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert str(position1) == "ENST00000310581:c.3399"
-    assert str(position2) == "ENST00000310581:c.1_3399"
-
-
-def test_dna_to_str():
-    position1 = DnaPosition(
-        contig_id="5", start=1234, start_offset=0, end=1234, end_offset=0, strand="-"
-    )
-    position2 = DnaPosition(
-        contig_id="5", start=1, start_offset=0, end=1234, end_offset=0, strand="-"
-    )
-    assert str(position1) == "5:g.1234"
-    assert str(position2) == "5:g.1_1234"
-
-
-def test_exon_to_str():
-    position1 = ExonPosition(
-        contig_id="5",
-        start=1,
-        start_offset=0,
-        end=1,
-        end_offset=0,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        exon_id="ENSE00003896691",
-    )
-    position2 = ExonPosition(
-        contig_id="5",
-        start=1,
-        start_offset=0,
-        end=2,
-        end_offset=0,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        exon_id="ENSE00003896691",
-    )
-    assert str(position1) == "ENST00000310581:e.1"
-    assert str(position2) == "ENST00000310581:e.1_2"
-
-
-def test_protein_to_str():
-    position1 = ProteinPosition(
-        contig_id="5",
-        start=524,
-        start_offset=0,
-        end=524,
-        end_offset=0,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    position2 = ProteinPosition(
-        contig_id="5",
-        start=74,
-        start_offset=0,
-        end=524,
-        end_offset=0,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-        protein_id="ENSP00000309572",
-    )
-    assert str(position1) == "ENSP00000309572:p.524"
-    assert str(position2) == "ENSP00000309572:p.74_524"
-
-
-def test_transcript_to_str():
-    position1 = RnaPosition(
-        contig_id="5",
-        start=4039,
-        start_offset=0,
-        end=4039,
-        end_offset=0,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-    )
-    position2 = RnaPosition(
-        contig_id="5",
-        start=1,
-        start_offset=0,
-        end=4039,
-        end_offset=0,
-        strand="-",
-        gene_id="ENSG00000164362",
-        gene_name="TERT",
-        transcript_id="ENST00000310581",
-        transcript_name="TERT-201",
-    )
-    assert str(position1) == "ENST00000310581:r.4039"
-    assert str(position2) == "ENST00000310581:r.1_4039"
-
-
-# -------------------------------------------------------------------------------------------------
-# test <feature>
+# cdna
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def expected_cdna():
+def test_cdna_pos():
     return CdnaPosition(
         contig_id="5",
         start=1,
@@ -739,14 +636,48 @@ def expected_cdna():
         ("TERT-201", 1),
     ],
 )
-def test_cdna(ensembl100, expected_cdna, feature, num_results):
+def test_cdna(ensembl100, test_cdna_pos, feature, num_results):
     results = ensembl100.cdna(feature)
     assert len(results) == num_results
-    assert expected_cdna in results
+    assert test_cdna_pos in results
+
+
+def test_cdna_canonical(ensembl100):
+    results = ensembl100.cdna("ARF5", canonical=True)
+    assert len(results) == 1
+    assert results[0].transcript_id == "ENST00000000233"
+
+
+# -------------------------------------------------------------------------------------------------
+# dna
+# -------------------------------------------------------------------------------------------------
+@pytest.fixture
+def expected_dna():
+    return DnaPosition(
+        contig_id="5", start=1253147, start_offset=0, end=1295068, end_offset=0, strand="-"
+    )
+
+
+@pytest.mark.parametrize(
+    "feature,num_results",
+    [
+        ("5", 2987),
+        ("ENSE00003896691", 1),
+        ("ENSG00000164362", 1),
+        ("ENSP00000309572", 1),
+        ("ENST00000310581", 1),
+        ("TERT", 1),
+        ("TERT-201", 1),
+    ],
+)
+def test_gene(ensembl100, expected_dna, feature, num_results):
+    results = ensembl100.gene(feature)
+    assert len(results) == num_results
+    assert expected_dna in results
 
 
 @pytest.fixture
-def expected_dna():
+def test_dna_pos_whole_contig():
     return DnaPosition(
         contig_id="5", start=1, start_offset=0, end=181538259, end_offset=0, strand="-"
     )
@@ -764,14 +695,17 @@ def expected_dna():
         ("TERT-201", 1),
     ],
 )
-def test_dna(ensembl100, expected_dna, feature, num_results):
+def test_dna(ensembl100, test_dna_pos_whole_contig, feature, num_results):
     results = ensembl100.dna(feature)
     assert len(results) == num_results
-    assert expected_dna in results
+    assert test_dna_pos_whole_contig in results
 
 
+# -------------------------------------------------------------------------------------------------
+# exon
+# -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def expected_exon():
+def test_exon_pos():
     return ExonPosition(
         contig_id="5",
         start=1,
@@ -799,39 +733,24 @@ def expected_exon():
         ("TERT-201", 33),
     ],
 )
-def test_exon(ensembl100, expected_exon, feature, num_results):
+def test_exon(ensembl100, test_exon_pos, feature, num_results):
     results = ensembl100.exon(feature)
     assert len(results) == num_results
-    assert expected_exon in results
+    assert test_exon_pos in results
 
 
+def test_exon_canonical(ensembl100):
+    results = ensembl100.exon("ARF5", canonical=True)
+    assert len(results) == 6
+    for exon in results:
+        assert exon.transcript_id == "ENST00000000233"
+
+
+# -------------------------------------------------------------------------------------------------
+# protein
+# -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def expected_gene():
-    return DnaPosition(
-        contig_id="5", start=1253147, start_offset=0, end=1295068, end_offset=0, strand="-"
-    )
-
-
-@pytest.mark.parametrize(
-    "feature,num_results",
-    [
-        ("5", 2987),
-        ("ENSE00003896691", 1),
-        ("ENSG00000164362", 1),
-        ("ENSP00000309572", 1),
-        ("ENST00000310581", 1),
-        ("TERT", 1),
-        ("TERT-201", 1),
-    ],
-)
-def test_gene(ensembl100, expected_gene, feature, num_results):
-    results = ensembl100.gene(feature)
-    assert len(results) == num_results
-    assert expected_gene in results
-
-
-@pytest.fixture
-def expected_protein():
+def test_protein_pos():
     return ProteinPosition(
         contig_id="5",
         start=1,
@@ -859,14 +778,23 @@ def expected_protein():
         ("TERT-201", 1),
     ],
 )
-def test_protein(ensembl100, expected_protein, feature, num_results):
+def test_protein(ensembl100, test_protein_pos, feature, num_results):
     results = ensembl100.protein(feature)
     assert len(results) == num_results
-    assert expected_protein in results
+    assert test_protein_pos in results
 
 
+def test_protein_canonical(ensembl100):
+    results = ensembl100.protein("ARF5", canonical=True)
+    assert len(results) == 1
+    assert results[0].transcript_id == "ENST00000000233"
+
+
+# -------------------------------------------------------------------------------------------------
+# rna
+# -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def expected_rna():
+def test_rna_pos():
     return RnaPosition(
         contig_id="5",
         start=1,
@@ -893,32 +821,10 @@ def expected_rna():
         ("TERT-201", 1),
     ],
 )
-def test_transcript(ensembl100, expected_rna, feature, num_results):
+def test_transcript(ensembl100, test_rna_pos, feature, num_results):
     results = ensembl100.rna(feature)
     assert len(results) == num_results
-    assert expected_rna in results
-
-
-# -------------------------------------------------------------------------------------------------
-# test <feature> canonical only
-# -------------------------------------------------------------------------------------------------
-def test_cdna_canonical(ensembl100):
-    results = ensembl100.cdna("ARF5", canonical=True)
-    assert len(results) == 1
-    assert results[0].transcript_id == "ENST00000000233"
-
-
-def test_exon_canonical(ensembl100):
-    results = ensembl100.exon("ARF5", canonical=True)
-    assert len(results) == 6
-    for exon in results:
-        assert exon.transcript_id == "ENST00000000233"
-
-
-def test_protein_canonical(ensembl100):
-    results = ensembl100.protein("ARF5", canonical=True)
-    assert len(results) == 1
-    assert results[0].transcript_id == "ENST00000000233"
+    assert test_rna_pos in results
 
 
 def test_rna_canonical(ensembl100):
@@ -928,10 +834,10 @@ def test_rna_canonical(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
-# test translate_cdna_variant
+# translate_cdna_variant
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_cds_sequence_pos_1():
+def test_translate_cdna_variant_pos_1():
     return CdnaPosition(
         "4",
         38,
@@ -947,18 +853,18 @@ def test_cds_sequence_pos_1():
     )
 
 
-def test_translate_cdna_variant_1(ensembl100, test_cds_sequence_pos_1):
+def test_translate_cdna_variant_1(ensembl100, test_translate_cdna_variant_pos_1):
     # GTT -> GAT
-    assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_1, "A") == ["D"]
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_1, "A") == ["D"]
 
 
-def test_translate_cdna_variant_3(ensembl100, test_cds_sequence_pos_1):
+def test_translate_cdna_variant_3(ensembl100, test_translate_cdna_variant_pos_1):
     # GTT -> GAT or GCT
-    assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_1, "M") == ["A", "D"]
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_1, "M") == ["A", "D"]
 
 
 @pytest.fixture
-def test_cds_sequence_pos_2():
+def test_translate_cdna_variant_pos_2():
     return CdnaPosition(
         "4",
         38,
@@ -974,13 +880,13 @@ def test_cds_sequence_pos_2():
     )
 
 
-def test_translate_cdna_variant_2(ensembl100, test_cds_sequence_pos_2):
+def test_translate_cdna_variant_2(ensembl100, test_translate_cdna_variant_pos_2):
     # GTTCTG -> GAAATG
-    assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_2, "AAA") == ["EM"]
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_2, "AAA") == ["EM"]
 
 
 @pytest.fixture
-def test_cds_sequence_pos_3():
+def test_translate_cdna_variant_pos_3():
     return CdnaPosition(
         "4",
         1674,
@@ -996,13 +902,13 @@ def test_cds_sequence_pos_3():
     )
 
 
-def test_translate_cdna_variant_4(ensembl100, test_cds_sequence_pos_3):
+def test_translate_cdna_variant_4(ensembl100, test_translate_cdna_variant_pos_3):
     # GG -> GTTCG
-    assert ensembl100.translate_cdna_variant(test_cds_sequence_pos_3, "GTTCG") == ["KFV"]
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_3, "GTTCG") == ["KFV"]
 
 
 # -------------------------------------------------------------------------------------------------
-# test parse
+# parse
 # -------------------------------------------------------------------------------------------------
 def test_parse_cdna_position(ensembl100):
     result = ensembl100.parse("ENST00000288135:c.68-1")
@@ -1107,7 +1013,7 @@ def test_parse_exon_fusion(ensembl100):
 
 
 # -------------------------------------------------------------------------------------------------
-# test load
+# variant
 # -------------------------------------------------------------------------------------------------
 def test_variant_cdna_minimal(ensembl100):
     result = ensembl100.variant(position_type="cdna", feature="ENST00000375562", start=123)

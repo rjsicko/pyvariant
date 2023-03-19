@@ -353,401 +353,6 @@ class Core:
         return result
 
     # ---------------------------------------------------------------------------------------------
-    # Functions for getting feature ID/names
-    # ---------------------------------------------------------------------------------------------
-    def contig_ids(self, feature: str = "") -> List[str]:
-        """Return the contig IDs that map to the given feature. If no feature is given, return
-        all contig IDs.
-
-        Examples:
-            >>> ensembl100.contig_ids("BRCA2")
-            ['13']
-
-        Args:
-            feature (str, optional): Feature ID or name
-
-        Returns:
-            List[str]: Contig IDs
-        """
-        return self._query_feature(CONTIG_ID, feature)
-
-    def exon_ids(self, feature: str = "") -> List[str]:
-        """Return the exon IDs that map to the given feature. If no feature is given, return
-        all exon IDs.
-
-        Examples:
-            >>> ensembl100.exon_ids("BRCA2")[:3]
-            ['ENSE00000939167', 'ENSE00000939168', 'ENSE00000939169']
-
-        Args:
-            feature (str, optional): Feature ID or name
-
-        Returns:
-            List[str]: Exon IDs
-        """
-        return self._query_feature(EXON_ID, feature)
-
-    def gene_ids(self, feature: str = "") -> List[str]:
-        """Return the gene IDs that map to the given feature. If no feature is given, return
-        all gene IDs.
-
-        Examples:
-            >>> ensembl100.gene_ids("BRCA2")
-            ['ENSG00000139618']
-
-        Args:
-            feature (str, optional): Feature ID or name
-
-        Returns:
-            List[str]: Gene IDs
-        """
-        return self._query_feature(GENE_ID, feature)
-
-    def gene_names(self, feature: str = "") -> List[str]:
-        """Return the gene names that map to the given feature. If no feature is given, return
-        all gene names.
-
-        Examples:
-            >>> ensembl100.gene_names("ENSG00000139618")
-            ['BRCA2']
-
-        Args:
-            feature (str, optional): Feature ID or name
-
-        Returns:
-            List[str]: Gene names
-        """
-        return self._query_feature(GENE_NAME, feature)
-
-    def protein_ids(self, feature: str = "") -> List[str]:
-        """Return the protein IDs that map to the given feature. If no feature is given, return
-        all protein IDs.
-
-        Examples:
-            >>> ensembl100.protein_ids("BRCA2")[:3]
-            ['ENSP00000369497', 'ENSP00000433168', 'ENSP00000434898']
-
-        Args:
-            feature (str, optional): Feature ID or name
-
-        Returns:
-            List[str]: Protein IDs
-        """
-        return self._query_feature(PROTEIN_ID, feature)
-
-    def transcript_ids(self, feature: str = "") -> List[str]:
-        """Return the transcript IDs that map to the given feature. If no feature is given, return
-        all transcript IDs.
-
-        Examples:
-            >>> ensembl100.transcript_ids("BRCA2")[:3]
-            ['ENST00000380152', 'ENST00000470094', 'ENST00000528762']
-
-        Args:
-            feature (str, optional): Feature ID or name
-
-        Returns:
-            List[str]: Transcript IDs
-        """
-        return self._query_feature(TRANSCRIPT_ID, feature)
-
-    def transcript_names(self, feature: str = "") -> List[str]:
-        """Return the transcript names that map to the given feature. If no feature is given, return
-        all transcript names.
-
-        Examples:
-            >>> ensembl100.transcript_names("BRCA2")[:3]
-            ['BRCA2-201', 'BRCA2-202', 'BRCA2-203']
-
-        Args:
-            feature (str, optional): Feature ID or name
-
-        Returns:
-            List[str]: Transcript names
-        """
-        return self._query_feature(TRANSCRIPT_NAME, feature)
-
-    def _query_feature(self, key: str, feature: str = "") -> List[str]:
-        if feature:
-            parts = []
-
-            for feature, feature_type in self.normalize_id(feature):
-                if feature_type == CONTIG_ID:
-                    func = self._query_contig_id
-                elif feature_type == EXON_ID:
-                    func = self._query_exon_id
-                elif feature_type == GENE_ID:
-                    func = self._query_gene_id
-                elif feature_type == GENE_NAME:
-                    func = self._query_gene_name
-                elif feature_type == PROTEIN_ID:
-                    func = self._query_protein_id
-                elif feature_type == TRANSCRIPT_ID:
-                    func = self._query_transcript_id
-                elif feature_type == TRANSCRIPT_NAME:
-                    func = self._query_transcript_name
-                else:
-                    raise ValueError(f"Unable to get {key} for {feature} ({feature_type})")
-
-                parts.append(func(feature)[key])
-
-            if parts:
-                result = pd.concat(parts)
-            else:
-                result = pd.Series(dtype="object")
-        else:
-            result = self.df[key]
-
-        return self._uniquify_series(result)
-
-    def _query_contig_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        return self._query(feature, CONTIG_ID)
-
-    def _query_exon_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        return self._query(feature, EXON_ID)
-
-    def _query_gene_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        return self._query(feature, GENE_ID)
-
-    def _query_gene_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        return self._query(feature, GENE_NAME)
-
-    def _query_protein_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        return self._query(feature, PROTEIN_ID)
-
-    def _query_transcript_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        return self._query(feature, TRANSCRIPT_ID)
-
-    def _query_transcript_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
-        return self._query(feature, TRANSCRIPT_NAME)
-
-    def _query(self, feature: Union[List[str], str], col: str) -> pd.DataFrame:
-        feature = [feature] if isinstance(feature, str) else feature
-        sudbf = self.df.loc[self.df[col].isin(feature)]
-
-        return sudbf
-
-    def _uniquify_series(self, series: pd.Series) -> List:
-        return sorted(series.dropna().unique().tolist())
-
-    # ---------------------------------------------------------------------------------------------
-    # Functions for getting feature aliases
-    # ---------------------------------------------------------------------------------------------
-    def contig_alias(self, contig_id: str) -> List[str]:
-        """List all aliases of the given contig ID.
-
-        Args:
-            contig_id (str): contig ID
-
-        Returns:
-            List[str]: All aliases of the given contig ID
-        """
-        return self._alias(contig_id, self._contig_alias)
-
-    def exon_alias(self, exon_id: str) -> List[str]:
-        """List all aliases of the given exon ID.
-
-        Args:
-            exon_id (str): exon ID
-
-        Returns:
-            List[str]: All aliases of the given exon ID
-        """
-        return self._alias(exon_id, self._exon_alias)
-
-    def gene_alias(self, gene_id: str) -> List[str]:
-        """List all aliases of the given gene ID.
-
-        Args:
-            gene_id (str): gene ID
-
-        Returns:
-            List[str]: All aliases of the given gene ID
-        """
-        return self._alias(gene_id, self._gene_alias)
-
-    def protein_alias(self, protein_id: str) -> List[str]:
-        """List all aliases of the given protein ID.
-
-        Args:
-            protein_id (str): protein ID
-
-        Returns:
-            List[str]: All aliases of the given protein ID
-        """
-        return self._alias(protein_id, self._protein_alias)
-
-    def transcript_alias(self, transcript_id: str) -> List[str]:
-        """List all aliases of the given transcript ID.
-
-        Args:
-            transcript_id (str): transcript ID
-
-        Returns:
-            List[str]: All aliases of the given transcript ID
-        """
-        return self._alias(transcript_id, self._transcript_alias)
-
-    def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
-        for key in [feature, strip_version(feature)]:
-            if alias := alias_dict.get(key, []):
-                return alias
-        else:
-            return []
-
-    # ---------------------------------------------------------------------------------------------
-    # Functions for normalizing feature ID/names
-    # ---------------------------------------------------------------------------------------------
-    def normalize_id(self, feature: str) -> List[Tuple[str, str]]:
-        """Normalize an ID or name to the annotated equivalent(s).
-
-        Examples:
-            >>> ensembl100.normalize_id("BRCA2-201")
-            [('BRCA2-201', 'transcript_name')]
-
-        Args:
-            feature (str): Feature ID or name
-
-        Returns:
-            List[Tuple[str, str]]: List of (normalized ID/name, normalized type (e.g. 'gene',
-                'transcript', etc.))
-        """
-        normalized = []
-
-        feature_type, result = self._normalize_id(feature)
-        if feature_type:
-            normalized = self._uniquify_series(result[feature_type])
-
-        return [(i, feature_type) for i in normalized]
-
-    def _normalize_id(self, feature: str) -> Tuple[str, pd.DataFrame]:
-        feature_type = ""
-        result = pd.DataFrame()
-
-        for key, func in [
-            (CONTIG_ID, self._normalize_contig_id),
-            (EXON_ID, self._normalize_exon_id),
-            (GENE_ID, self._normalize_gene_id),
-            (GENE_NAME, self._normalize_gene_name),
-            (PROTEIN_ID, self._normalize_protein_id),
-            (TRANSCRIPT_ID, self._normalize_transcript_id),
-            (TRANSCRIPT_NAME, self._normalize_transcript_name),
-        ]:
-            result = func(feature)
-            if not result.empty:
-                feature_type = key
-                break
-
-        return feature_type, result
-
-    def _normalize_contig_id(self, feature: str) -> pd.DataFrame:
-        featurel = [feature] + self.contig_alias(feature)
-
-        return self._query_contig_id(featurel)
-
-    def _normalize_exon_id(self, feature: str) -> pd.DataFrame:
-        featurel = [feature] + self.exon_alias(feature)
-
-        return self._query_exon_id(featurel)
-
-    def _normalize_gene_id(self, feature: str) -> pd.DataFrame:
-        featurel = [feature] + self.gene_alias(feature)
-
-        return self._query_gene_id(featurel)
-
-    def _normalize_gene_name(self, feature: str) -> pd.DataFrame:
-        featurel = [feature] + self.gene_alias(feature)
-
-        return self._query_gene_name(featurel)
-
-    def _normalize_protein_id(self, feature: str) -> pd.DataFrame:
-        featurel = [feature] + self.protein_alias(feature)
-
-        return self._query_protein_id(featurel)
-
-    def _normalize_transcript_id(self, feature: str) -> pd.DataFrame:
-        featurel = [feature] + self.transcript_alias(feature)
-
-        return self._query_transcript_id(featurel)
-
-    def _normalize_transcript_name(self, feature: str) -> pd.DataFrame:
-        featurel = [feature] + self.transcript_alias(feature)
-
-        return self._query_transcript_name(featurel)
-
-    # ---------------------------------------------------------------------------------------------
-    # Functions for checking feature type
-    # ---------------------------------------------------------------------------------------------
-    def is_contig(self, feature: str) -> bool:
-        """Check if the given ID or name is a contig.
-
-        Args:
-            feature (str): Feature ID or name
-
-        Returns:
-            bool: True if is a contig else False
-        """
-        return any((i[1] == CONTIG_ID for i in self.normalize_id(feature)))
-
-    def is_exon(self, feature: str) -> bool:
-        """Check if the given ID or name is an exon.
-
-        Args:
-            feature (str): Feature ID or name
-
-        Returns:
-            bool: True if is an exon else False
-        """
-        return any((i[1] == EXON_ID for i in self.normalize_id(feature)))
-
-    def is_gene(self, feature: str) -> bool:
-        """Check if the given ID or name is a gene.
-
-        Args:
-            feature (str): Feature ID or name
-
-        Returns:
-            bool: True if is an gene else False
-        """
-        return any((i[1] in (GENE_ID, GENE_NAME) for i in self.normalize_id(feature)))
-
-    def is_protein(self, feature: str) -> bool:
-        """Check if the given ID or name is a protein.
-
-        Args:
-            feature (str): Feature ID or name
-
-        Returns:
-            bool: True if is an protein else False
-        """
-        return any((i[1] == PROTEIN_ID for i in self.normalize_id(feature)))
-
-    def is_transcript(self, feature: str) -> bool:
-        """Check if the given ID or name is a transcript.
-
-        Args:
-            feature (str): Feature ID or name
-
-        Returns:
-            bool: True if is an transcript else False
-        """
-        return any((i[1] in (TRANSCRIPT_ID, TRANSCRIPT_NAME) for i in self.normalize_id(feature)))
-
-    # ---------------------------------------------------------------------------------------------
-    # Functions for checking if a transcript is a canonical transcript
-    # ---------------------------------------------------------------------------------------------
-    def is_canonical_transcript(self, transcript_id: str) -> bool:
-        """Check if the given transcript ID is the canonical transcript for its gene.
-
-        Args:
-            transcript_id (str): transcript ID
-
-        Returns:
-            bool: True if the transcript is the canonical transcript else False
-        """
-        return transcript_id in self._canonical_transcript
-
-    # ---------------------------------------------------------------------------------------------
     # Functions for getting variant sequences
     # ---------------------------------------------------------------------------------------------
     # TODO: add type hints
@@ -876,209 +481,6 @@ class Core:
             subseq = reverse_complement(subseq)
 
         return subseq
-
-    # ---------------------------------------------------------------------------------------------
-    # <feature>
-    # ---------------------------------------------------------------------------------------------
-    def cdna(self, feature: str, canonical: bool = False) -> List[CdnaPosition]:
-        """Return the cDNA position(s) matching the given feature ID or name.
-
-        Args:
-            feature (str): Feature ID or name
-            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
-
-        Returns:
-            List[CdnaPosition]: One or more cDNA positions.
-        """
-        result = []
-
-        transcript_ids = self.transcript_ids(feature)
-        mask = (self.df[TRANSCRIPT_ID].isin(transcript_ids)) & (self.df["feature"] == CDNA)
-        for _, cdna in self.df[mask].iterrows():
-            if canonical and not self.is_canonical_transcript(cdna.transcript_id):
-                continue
-
-            result.append(
-                CdnaPosition(
-                    contig_id=cdna.contig_id,
-                    start=cdna.cdna_start,
-                    start_offset=0,
-                    end=cdna.cdna_end,
-                    end_offset=0,
-                    strand=cdna.strand,
-                    gene_id=cdna.gene_id,
-                    gene_name=cdna.gene_name,
-                    transcript_id=cdna.transcript_id,
-                    transcript_name=cdna.transcript_name,
-                    protein_id=cdna.protein_id,
-                )
-            )
-
-        return sorted(set(result))
-
-    def dna(self, feature: str) -> List[DnaPosition]:
-        """Return the DNA position(s) matching the given feature ID or name.
-
-        Args:
-            feature (str): Feature ID or name
-            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
-
-        Returns:
-            List[DnaPosition]: One or more DNA positions.
-        """
-        result = []
-
-        # get the strand of the original feature
-        _, df = self._normalize_id(feature)
-        strand_list = self._uniquify_series(df["strand"])
-
-        for contig_id in self.contig_ids(feature):
-            for fasta in self.dna_fasta:
-                try:
-                    contig_seq = fasta[contig_id]
-                    break
-                except KeyError:
-                    continue
-            else:
-                raise KeyError(f"Sequence '{contig_id}' not found")
-
-            start = 1
-            end = len(contig_seq)
-            for strand in strand_list:
-                result.append(
-                    DnaPosition(
-                        contig_id=contig_id,
-                        start=start,
-                        start_offset=0,
-                        end=end,
-                        end_offset=0,
-                        strand=strand,
-                    )
-                )
-
-        return sorted(set(result))
-
-    def exon(self, feature: str, canonical: bool = False) -> List[ExonPosition]:
-        """Return the exon position(s) matching the given feature ID or name.
-
-        Args:
-            feature (str): Feature ID or name
-            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
-
-        Returns:
-            List[ExonPosition]: One or more exon positions.
-        """
-        result = []
-
-        exon_ids = self.exon_ids(feature)
-        mask = (self.df[EXON_ID].isin(exon_ids)) & (self.df["feature"] == EXON)
-        for _, exon in self.df[mask].iterrows():
-            if canonical and not self.is_canonical_transcript(exon.transcript_id):
-                continue
-
-            result.append(
-                ExonPosition(
-                    contig_id=exon.contig_id,
-                    start=int(exon.exon_number),
-                    start_offset=0,
-                    end=int(exon.exon_number),
-                    end_offset=0,
-                    strand=exon.strand,
-                    gene_id=exon.gene_id,
-                    gene_name=exon.gene_name,
-                    transcript_id=exon.transcript_id,
-                    transcript_name=exon.transcript_name,
-                    exon_id=exon.exon_id,
-                )
-            )
-
-        return sorted(set(result))
-
-    def gene(self, feature: str) -> List[DnaPosition]:
-        """Return the gene position(s) matching the given feature ID or name.
-
-        Args:
-            feature (str): Feature ID or name
-            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
-
-        Returns:
-            List[DnaPosition]: One or more DNA positions.
-        """
-        result = []
-
-        gene_ids = self.gene_ids(feature)
-        mask = (self.df[GENE_ID].isin(gene_ids)) & (self.df["feature"] == "gene")
-        for _, gene in self.df[mask].iterrows():
-            result.append(
-                DnaPosition(
-                    contig_id=gene.contig_id,
-                    start=gene.start,
-                    start_offset=0,
-                    end=gene.end,
-                    end_offset=0,
-                    strand=gene.strand,
-                )
-            )
-
-        return sorted(set(result))
-
-    def protein(self, feature: str, canonical: bool = False) -> List[ProteinPosition]:
-        """Return the protein position(s) matching the given feature ID or name.
-
-        Args:
-            feature (str): Feature ID or name
-            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
-
-        Returns:
-            List[ProteinPosition]: One or more protein positions.
-        """
-        result = []
-        for cdna in self.cdna(feature, canonical=canonical):
-            # Convert the cDNA position to a protein position
-            protein_start = calc_cdna_to_protein(cdna.start)
-            protein_end = calc_cdna_to_protein(cdna.end)
-            result.append(
-                ProteinPosition.copy_from(
-                    cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
-                )
-            )
-
-        return sorted(set(result))
-
-    def rna(self, feature: str, canonical: bool = False) -> List[RnaPosition]:
-        """Return the RNA position(s) matching the given feature ID or name.
-
-        Args:
-            feature (str): Feature ID or name
-            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
-
-        Returns:
-            List[RnaPosition]: One or more RNA positions.
-        """
-        result = []
-
-        transcript_ids = self.transcript_ids(feature)
-        mask = (self.df[TRANSCRIPT_ID].isin(transcript_ids)) & (self.df["feature"] == "transcript")
-        for _, transcript in self.df[mask].iterrows():
-            if canonical and not self.is_canonical_transcript(transcript.transcript_id):
-                continue
-
-            result.append(
-                RnaPosition(
-                    contig_id=transcript.contig_id,
-                    start=transcript.transcript_start,
-                    start_offset=0,
-                    end=transcript.transcript_end,
-                    end_offset=0,
-                    strand=transcript.strand,
-                    gene_id=transcript.gene_id,
-                    gene_name=transcript.gene_name,
-                    transcript_id=transcript.transcript_id,
-                    transcript_name=transcript.transcript_name,
-                )
-            )
-
-        return sorted(set(result))
 
     # ---------------------------------------------------------------------------------------------
     # Functions for mapping to other position types
@@ -3336,6 +2738,604 @@ class Core:
             variant_list.append(variant)
 
         return variant_list
+
+    # ---------------------------------------------------------------------------------------------
+    # Functions for getting feature ID/names
+    # ---------------------------------------------------------------------------------------------
+    def contig_ids(self, feature: str = "") -> List[str]:
+        """Return the contig IDs that map to the given feature. If no feature is given, return
+        all contig IDs.
+
+        Examples:
+            >>> ensembl100.contig_ids("BRCA2")
+            ['13']
+
+        Args:
+            feature (str, optional): Feature ID or name
+
+        Returns:
+            List[str]: Contig IDs
+        """
+        return self._query_feature(CONTIG_ID, feature)
+
+    def exon_ids(self, feature: str = "") -> List[str]:
+        """Return the exon IDs that map to the given feature. If no feature is given, return
+        all exon IDs.
+
+        Examples:
+            >>> ensembl100.exon_ids("BRCA2")[:3]
+            ['ENSE00000939167', 'ENSE00000939168', 'ENSE00000939169']
+
+        Args:
+            feature (str, optional): Feature ID or name
+
+        Returns:
+            List[str]: Exon IDs
+        """
+        return self._query_feature(EXON_ID, feature)
+
+    def gene_ids(self, feature: str = "") -> List[str]:
+        """Return the gene IDs that map to the given feature. If no feature is given, return
+        all gene IDs.
+
+        Examples:
+            >>> ensembl100.gene_ids("BRCA2")
+            ['ENSG00000139618']
+
+        Args:
+            feature (str, optional): Feature ID or name
+
+        Returns:
+            List[str]: Gene IDs
+        """
+        return self._query_feature(GENE_ID, feature)
+
+    def gene_names(self, feature: str = "") -> List[str]:
+        """Return the gene names that map to the given feature. If no feature is given, return
+        all gene names.
+
+        Examples:
+            >>> ensembl100.gene_names("ENSG00000139618")
+            ['BRCA2']
+
+        Args:
+            feature (str, optional): Feature ID or name
+
+        Returns:
+            List[str]: Gene names
+        """
+        return self._query_feature(GENE_NAME, feature)
+
+    def protein_ids(self, feature: str = "") -> List[str]:
+        """Return the protein IDs that map to the given feature. If no feature is given, return
+        all protein IDs.
+
+        Examples:
+            >>> ensembl100.protein_ids("BRCA2")[:3]
+            ['ENSP00000369497', 'ENSP00000433168', 'ENSP00000434898']
+
+        Args:
+            feature (str, optional): Feature ID or name
+
+        Returns:
+            List[str]: Protein IDs
+        """
+        return self._query_feature(PROTEIN_ID, feature)
+
+    def transcript_ids(self, feature: str = "") -> List[str]:
+        """Return the transcript IDs that map to the given feature. If no feature is given, return
+        all transcript IDs.
+
+        Examples:
+            >>> ensembl100.transcript_ids("BRCA2")[:3]
+            ['ENST00000380152', 'ENST00000470094', 'ENST00000528762']
+
+        Args:
+            feature (str, optional): Feature ID or name
+
+        Returns:
+            List[str]: Transcript IDs
+        """
+        return self._query_feature(TRANSCRIPT_ID, feature)
+
+    def transcript_names(self, feature: str = "") -> List[str]:
+        """Return the transcript names that map to the given feature. If no feature is given, return
+        all transcript names.
+
+        Examples:
+            >>> ensembl100.transcript_names("BRCA2")[:3]
+            ['BRCA2-201', 'BRCA2-202', 'BRCA2-203']
+
+        Args:
+            feature (str, optional): Feature ID or name
+
+        Returns:
+            List[str]: Transcript names
+        """
+        return self._query_feature(TRANSCRIPT_NAME, feature)
+
+    def _query_feature(self, key: str, feature: str = "") -> List[str]:
+        if feature:
+            parts = []
+
+            for feature, feature_type in self.normalize_id(feature):
+                if feature_type == CONTIG_ID:
+                    func = self._query_contig_id
+                elif feature_type == EXON_ID:
+                    func = self._query_exon_id
+                elif feature_type == GENE_ID:
+                    func = self._query_gene_id
+                elif feature_type == GENE_NAME:
+                    func = self._query_gene_name
+                elif feature_type == PROTEIN_ID:
+                    func = self._query_protein_id
+                elif feature_type == TRANSCRIPT_ID:
+                    func = self._query_transcript_id
+                elif feature_type == TRANSCRIPT_NAME:
+                    func = self._query_transcript_name
+                else:
+                    raise ValueError(f"Unable to get {key} for {feature} ({feature_type})")
+
+                parts.append(func(feature)[key])
+
+            if parts:
+                result = pd.concat(parts)
+            else:
+                result = pd.Series(dtype="object")
+        else:
+            result = self.df[key]
+
+        return self._uniquify_series(result)
+
+    def _query_contig_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        return self._query(feature, CONTIG_ID)
+
+    def _query_exon_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        return self._query(feature, EXON_ID)
+
+    def _query_gene_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        return self._query(feature, GENE_ID)
+
+    def _query_gene_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        return self._query(feature, GENE_NAME)
+
+    def _query_protein_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        return self._query(feature, PROTEIN_ID)
+
+    def _query_transcript_id(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        return self._query(feature, TRANSCRIPT_ID)
+
+    def _query_transcript_name(self, feature: Union[List[str], str]) -> pd.DataFrame:
+        return self._query(feature, TRANSCRIPT_NAME)
+
+    def _query(self, feature: Union[List[str], str], col: str) -> pd.DataFrame:
+        feature = [feature] if isinstance(feature, str) else feature
+        sudbf = self.df.loc[self.df[col].isin(feature)]
+
+        return sudbf
+
+    def _uniquify_series(self, series: pd.Series) -> List:
+        return sorted(series.dropna().unique().tolist())
+
+    # ---------------------------------------------------------------------------------------------
+    # Functions for getting feature aliases
+    # ---------------------------------------------------------------------------------------------
+    def contig_alias(self, contig_id: str) -> List[str]:
+        """List all aliases of the given contig ID.
+
+        Args:
+            contig_id (str): contig ID
+
+        Returns:
+            List[str]: All aliases of the given contig ID
+        """
+        return self._alias(contig_id, self._contig_alias)
+
+    def exon_alias(self, exon_id: str) -> List[str]:
+        """List all aliases of the given exon ID.
+
+        Args:
+            exon_id (str): exon ID
+
+        Returns:
+            List[str]: All aliases of the given exon ID
+        """
+        return self._alias(exon_id, self._exon_alias)
+
+    def gene_alias(self, gene_id: str) -> List[str]:
+        """List all aliases of the given gene ID.
+
+        Args:
+            gene_id (str): gene ID
+
+        Returns:
+            List[str]: All aliases of the given gene ID
+        """
+        return self._alias(gene_id, self._gene_alias)
+
+    def protein_alias(self, protein_id: str) -> List[str]:
+        """List all aliases of the given protein ID.
+
+        Args:
+            protein_id (str): protein ID
+
+        Returns:
+            List[str]: All aliases of the given protein ID
+        """
+        return self._alias(protein_id, self._protein_alias)
+
+    def transcript_alias(self, transcript_id: str) -> List[str]:
+        """List all aliases of the given transcript ID.
+
+        Args:
+            transcript_id (str): transcript ID
+
+        Returns:
+            List[str]: All aliases of the given transcript ID
+        """
+        return self._alias(transcript_id, self._transcript_alias)
+
+    def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
+        for key in [feature, strip_version(feature)]:
+            if alias := alias_dict.get(key, []):
+                return alias
+        else:
+            return []
+
+    # ---------------------------------------------------------------------------------------------
+    # Functions for normalizing feature ID/names
+    # ---------------------------------------------------------------------------------------------
+    def normalize_id(self, feature: str) -> List[Tuple[str, str]]:
+        """Normalize an ID or name to the annotated equivalent(s).
+
+        Examples:
+            >>> ensembl100.normalize_id("BRCA2-201")
+            [('BRCA2-201', 'transcript_name')]
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            List[Tuple[str, str]]: List of (normalized ID/name, normalized type (e.g. 'gene',
+                'transcript', etc.))
+        """
+        normalized = []
+
+        feature_type, result = self._normalize_id(feature)
+        if feature_type:
+            normalized = self._uniquify_series(result[feature_type])
+
+        return [(i, feature_type) for i in normalized]
+
+    def _normalize_id(self, feature: str) -> Tuple[str, pd.DataFrame]:
+        feature_type = ""
+        result = pd.DataFrame()
+
+        for key, func in [
+            (CONTIG_ID, self._normalize_contig_id),
+            (EXON_ID, self._normalize_exon_id),
+            (GENE_ID, self._normalize_gene_id),
+            (GENE_NAME, self._normalize_gene_name),
+            (PROTEIN_ID, self._normalize_protein_id),
+            (TRANSCRIPT_ID, self._normalize_transcript_id),
+            (TRANSCRIPT_NAME, self._normalize_transcript_name),
+        ]:
+            result = func(feature)
+            if not result.empty:
+                feature_type = key
+                break
+
+        return feature_type, result
+
+    def _normalize_contig_id(self, feature: str) -> pd.DataFrame:
+        featurel = [feature] + self.contig_alias(feature)
+
+        return self._query_contig_id(featurel)
+
+    def _normalize_exon_id(self, feature: str) -> pd.DataFrame:
+        featurel = [feature] + self.exon_alias(feature)
+
+        return self._query_exon_id(featurel)
+
+    def _normalize_gene_id(self, feature: str) -> pd.DataFrame:
+        featurel = [feature] + self.gene_alias(feature)
+
+        return self._query_gene_id(featurel)
+
+    def _normalize_gene_name(self, feature: str) -> pd.DataFrame:
+        featurel = [feature] + self.gene_alias(feature)
+
+        return self._query_gene_name(featurel)
+
+    def _normalize_protein_id(self, feature: str) -> pd.DataFrame:
+        featurel = [feature] + self.protein_alias(feature)
+
+        return self._query_protein_id(featurel)
+
+    def _normalize_transcript_id(self, feature: str) -> pd.DataFrame:
+        featurel = [feature] + self.transcript_alias(feature)
+
+        return self._query_transcript_id(featurel)
+
+    def _normalize_transcript_name(self, feature: str) -> pd.DataFrame:
+        featurel = [feature] + self.transcript_alias(feature)
+
+        return self._query_transcript_name(featurel)
+
+    # ---------------------------------------------------------------------------------------------
+    # Functions for checking feature type
+    # ---------------------------------------------------------------------------------------------
+    def is_contig(self, feature: str) -> bool:
+        """Check if the given ID or name is a contig.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is a contig else False
+        """
+        return any((i[1] == CONTIG_ID for i in self.normalize_id(feature)))
+
+    def is_exon(self, feature: str) -> bool:
+        """Check if the given ID or name is an exon.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is an exon else False
+        """
+        return any((i[1] == EXON_ID for i in self.normalize_id(feature)))
+
+    def is_gene(self, feature: str) -> bool:
+        """Check if the given ID or name is a gene.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is an gene else False
+        """
+        return any((i[1] in (GENE_ID, GENE_NAME) for i in self.normalize_id(feature)))
+
+    def is_protein(self, feature: str) -> bool:
+        """Check if the given ID or name is a protein.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is an protein else False
+        """
+        return any((i[1] == PROTEIN_ID for i in self.normalize_id(feature)))
+
+    def is_transcript(self, feature: str) -> bool:
+        """Check if the given ID or name is a transcript.
+
+        Args:
+            feature (str): Feature ID or name
+
+        Returns:
+            bool: True if is an transcript else False
+        """
+        return any((i[1] in (TRANSCRIPT_ID, TRANSCRIPT_NAME) for i in self.normalize_id(feature)))
+
+    # ---------------------------------------------------------------------------------------------
+    # Functions for checking if a transcript is a canonical transcript
+    # ---------------------------------------------------------------------------------------------
+    def is_canonical_transcript(self, transcript_id: str) -> bool:
+        """Check if the given transcript ID is the canonical transcript for its gene.
+
+        Args:
+            transcript_id (str): transcript ID
+
+        Returns:
+            bool: True if the transcript is the canonical transcript else False
+        """
+        return transcript_id in self._canonical_transcript
+
+    # ---------------------------------------------------------------------------------------------
+    # <feature>
+    # ---------------------------------------------------------------------------------------------
+    def cdna(self, feature: str, canonical: bool = False) -> List[CdnaPosition]:
+        """Return the cDNA position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[CdnaPosition]: One or more cDNA positions.
+        """
+        result = []
+
+        transcript_ids = self.transcript_ids(feature)
+        mask = (self.df[TRANSCRIPT_ID].isin(transcript_ids)) & (self.df["feature"] == CDNA)
+        for _, cdna in self.df[mask].iterrows():
+            if canonical and not self.is_canonical_transcript(cdna.transcript_id):
+                continue
+
+            result.append(
+                CdnaPosition(
+                    contig_id=cdna.contig_id,
+                    start=cdna.cdna_start,
+                    start_offset=0,
+                    end=cdna.cdna_end,
+                    end_offset=0,
+                    strand=cdna.strand,
+                    gene_id=cdna.gene_id,
+                    gene_name=cdna.gene_name,
+                    transcript_id=cdna.transcript_id,
+                    transcript_name=cdna.transcript_name,
+                    protein_id=cdna.protein_id,
+                )
+            )
+
+        return sorted(set(result))
+
+    def dna(self, feature: str) -> List[DnaPosition]:
+        """Return the DNA position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[DnaPosition]: One or more DNA positions.
+        """
+        result = []
+
+        # get the strand of the original feature
+        _, df = self._normalize_id(feature)
+        strand_list = self._uniquify_series(df["strand"])
+
+        for contig_id in self.contig_ids(feature):
+            for fasta in self.dna_fasta:
+                try:
+                    contig_seq = fasta[contig_id]
+                    break
+                except KeyError:
+                    continue
+            else:
+                raise KeyError(f"Sequence '{contig_id}' not found")
+
+            start = 1
+            end = len(contig_seq)
+            for strand in strand_list:
+                result.append(
+                    DnaPosition(
+                        contig_id=contig_id,
+                        start=start,
+                        start_offset=0,
+                        end=end,
+                        end_offset=0,
+                        strand=strand,
+                    )
+                )
+
+        return sorted(set(result))
+
+    def exon(self, feature: str, canonical: bool = False) -> List[ExonPosition]:
+        """Return the exon position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[ExonPosition]: One or more exon positions.
+        """
+        result = []
+
+        exon_ids = self.exon_ids(feature)
+        mask = (self.df[EXON_ID].isin(exon_ids)) & (self.df["feature"] == EXON)
+        for _, exon in self.df[mask].iterrows():
+            if canonical and not self.is_canonical_transcript(exon.transcript_id):
+                continue
+
+            result.append(
+                ExonPosition(
+                    contig_id=exon.contig_id,
+                    start=int(exon.exon_number),
+                    start_offset=0,
+                    end=int(exon.exon_number),
+                    end_offset=0,
+                    strand=exon.strand,
+                    gene_id=exon.gene_id,
+                    gene_name=exon.gene_name,
+                    transcript_id=exon.transcript_id,
+                    transcript_name=exon.transcript_name,
+                    exon_id=exon.exon_id,
+                )
+            )
+
+        return sorted(set(result))
+
+    def gene(self, feature: str) -> List[DnaPosition]:
+        """Return the gene position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[DnaPosition]: One or more DNA positions.
+        """
+        result = []
+
+        gene_ids = self.gene_ids(feature)
+        mask = (self.df[GENE_ID].isin(gene_ids)) & (self.df["feature"] == "gene")
+        for _, gene in self.df[mask].iterrows():
+            result.append(
+                DnaPosition(
+                    contig_id=gene.contig_id,
+                    start=gene.start,
+                    start_offset=0,
+                    end=gene.end,
+                    end_offset=0,
+                    strand=gene.strand,
+                )
+            )
+
+        return sorted(set(result))
+
+    def protein(self, feature: str, canonical: bool = False) -> List[ProteinPosition]:
+        """Return the protein position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[ProteinPosition]: One or more protein positions.
+        """
+        result = []
+        for cdna in self.cdna(feature, canonical=canonical):
+            # Convert the cDNA position to a protein position
+            protein_start = calc_cdna_to_protein(cdna.start)
+            protein_end = calc_cdna_to_protein(cdna.end)
+            result.append(
+                ProteinPosition.copy_from(
+                    cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
+                )
+            )
+
+        return sorted(set(result))
+
+    def rna(self, feature: str, canonical: bool = False) -> List[RnaPosition]:
+        """Return the RNA position(s) matching the given feature ID or name.
+
+        Args:
+            feature (str): Feature ID or name
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[RnaPosition]: One or more RNA positions.
+        """
+        result = []
+
+        transcript_ids = self.transcript_ids(feature)
+        mask = (self.df[TRANSCRIPT_ID].isin(transcript_ids)) & (self.df["feature"] == "transcript")
+        for _, transcript in self.df[mask].iterrows():
+            if canonical and not self.is_canonical_transcript(transcript.transcript_id):
+                continue
+
+            result.append(
+                RnaPosition(
+                    contig_id=transcript.contig_id,
+                    start=transcript.transcript_start,
+                    start_offset=0,
+                    end=transcript.transcript_end,
+                    end_offset=0,
+                    strand=transcript.strand,
+                    gene_id=transcript.gene_id,
+                    gene_name=transcript.gene_name,
+                    transcript_id=transcript.transcript_id,
+                    transcript_name=transcript.transcript_name,
+                )
+            )
+
+        return sorted(set(result))
 
     # ---------------------------------------------------------------------------------------------
     # Utility functions
