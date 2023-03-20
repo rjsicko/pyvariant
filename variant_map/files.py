@@ -5,7 +5,7 @@ import shutil
 import sys
 from ftplib import FTP
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Set
 
 from appdirs import user_data_dir
 from Bio.bgzf import BgzfWriter, _bgzf_magic
@@ -150,20 +150,20 @@ def tsv_to_dict(path: str) -> Dict[str, List[str]]:
     Returns:
         Dict[str, List[str]]: Mapping of alias to annotated name
     """
-    result: Dict = {}
+    result_: Dict[str, Set[str]] = {}
 
-    if path:
-        # load data from the TSV file, keep only unique values
-        with open(path, "r") as fh:
-            for line in fh:
-                if line:
-                    alias, name = line.strip().split("\t")[:2]
-                    result.setdefault(alias, set())
-                    result[alias].add(name)
+    # load data from the TSV file, keep only unique values
+    with open(path, "r") as fh:
+        for line in fh:
+            if line:
+                alias, name = line.strip().split("\t")[:2]
+                result_.setdefault(alias, set())
+                result_[alias].add(name)
 
-        # convert values to sorted lists
-        for alias in result:
-            result[alias] = sorted(result[alias])
+    # convert values to sorted lists
+    result = {}
+    for alias in result_:
+        result[alias] = sorted(result_[alias])
 
     return result
 
@@ -179,10 +179,9 @@ def txt_to_list(path: str) -> List[str]:
     """
     result = set()
 
-    if path:
-        with open(path, "r") as fh:
-            for line in fh:
-                if line:
-                    result.add(line.strip())
+    with open(path, "r") as fh:
+        for line in fh:
+            if line:
+                result.add(line.strip())
 
     return sorted(result)

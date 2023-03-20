@@ -1,7 +1,7 @@
 """Definitions for the `EnsemblRelease` class."""
 from __future__ import annotations
 
-from typing import List, cast
+from typing import Dict, List, Union, cast
 
 from .core import Core
 from .ensembl_cache import EnsemblCache
@@ -19,24 +19,23 @@ class EnsemblRelease(Core):
         species: str,
         release: int,
         cache_dir: str = "",
-        canonical_transcript: str = "",
-        contig_alias: str = "",
-        exon_alias: str = "",
-        gene_alias: str = "",
-        protein_alias: str = "",
-        transcript_alias: str = "",
+        canonical_transcript: Union[List[str], str] = [],
+        contig_alias: Union[str, Dict] = {},
+        exon_alias: Union[str, Dict] = {},
+        gene_alias: Union[str, Dict] = {},
+        protein_alias: Union[str, Dict] = {},
+        transcript_alias: Union[str, Dict] = {},
     ):
         """
         Args:
             species (str): Species name
             release (int): Ensembl release number
-            cache_dir (str, optional): Path to the cache directory. Defaults to platform-specific user cache
-            canonical_transcript (str, optional): Path to a list of canonical transcripts
-            contig_alias (str, optional): Path to a tab-separated file of contig aliases
-            exon_alias (str, optional): Path to a tab-separated file of exon aliases
-            gene_alias (str, optional): Path to a tab-separated file of gene aliases
-            protein_alias (str, optional): Path to a tab-separated file of protein aliases
-            transcript_alias (str, optional): Path to a tab-separated file of transcript aliases
+            canonical_transcript (Union[List[str], str], optional): List of canonical transcript IDs, or the path to a text file
+            contig_alias (Union[str, Dict], optional): Dictionary mapping contig aliases to their normalized ID, or a path to a text file
+            exon_alias (Union[str, Dict], optional): Dictionary mapping exon aliases to their normalized ID, or a path to a text file
+            gene_alias (Union[str, Dict], optional): Dictionary mapping gene aliases to their normalized ID, or a path to a text file
+            protein_alias (Union[str, Dict], optional): Dictionary mapping protein aliases to their normalized ID, or a path to a text file
+            transcript_alias (Union[str, Dict], optional): Dictionary mapping transcript aliases to their normalized ID, or a path to a text file
         """
         self.ensembl_cache = EnsemblCache(species, release, cache_dir=cache_dir)
         self.cache_dir = self.ensembl_cache.release_cache_dir
@@ -51,12 +50,36 @@ class EnsemblRelease(Core):
             self.ensembl_cache.load_cdna_fasta(),
             self.ensembl_cache.load_ncrna_fasta(),
         ]
-        self._canonical_transcript = txt_to_list(canonical_transcript)
-        self._contig_alias = tsv_to_dict(contig_alias)
-        self._exon_alias = tsv_to_dict(exon_alias)
-        self._gene_alias = tsv_to_dict(gene_alias)
-        self._protein_alias = tsv_to_dict(protein_alias)
-        self._transcript_alias = tsv_to_dict(transcript_alias)
+
+        if isinstance(canonical_transcript, str):
+            self._canonical_transcript = txt_to_list(canonical_transcript)
+        else:
+            self._canonical_transcript = canonical_transcript
+
+        if isinstance(contig_alias, str):
+            self._contig_alias = tsv_to_dict(contig_alias)
+        else:
+            self._contig_alias = contig_alias
+
+        if isinstance(exon_alias, str):
+            self._exon_alias = tsv_to_dict(exon_alias)
+        else:
+            self._exon_alias = exon_alias
+
+        if isinstance(gene_alias, str):
+            self._gene_alias = tsv_to_dict(gene_alias)
+        else:
+            self._gene_alias = gene_alias
+
+        if isinstance(protein_alias, str):
+            self._protein_alias = tsv_to_dict(protein_alias)
+        else:
+            self._protein_alias = protein_alias
+
+        if isinstance(transcript_alias, str):
+            self._transcript_alias = tsv_to_dict(transcript_alias)
+        else:
+            self._transcript_alias = transcript_alias
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(species={self.species}, release={self.release})"

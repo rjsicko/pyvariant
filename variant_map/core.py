@@ -95,44 +95,63 @@ class Core:
         dna: List[str],
         peptide: List[str],
         rna: List[str],
-        canonical_transcript: str = "",
-        contig_alias: str = "",
-        exon_alias: str = "",
-        gene_alias: str = "",
-        protein_alias: str = "",
-        transcript_alias: str = "",
+        canonical_transcript: Union[List[str], str] = [],
+        contig_alias: Union[str, Dict] = {},
+        exon_alias: Union[str, Dict] = {},
+        gene_alias: Union[str, Dict] = {},
+        protein_alias: Union[str, Dict] = {},
+        transcript_alias: Union[str, Dict] = {},
     ):
-        """
+        """_summary_
+
         Args:
             gtf (str): Path to a GTF files with feature annotations
             cds (List[str]): List of paths to a FASTA files of CDS sequences
             dna (List[str]): List of paths to a FASTA files of DNA sequences
             peptide (List[str]): List of paths to a FASTA files of peptide sequences
             rna (List[str]): List of paths to a FASTA files of RNA sequences
-            canonical_transcript (str, optional): Path to a text file of canonical transcript IDs.
-                Defaults to "".
-            contig_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
-                Defaults to "".
-            exon_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
-                Defaults to "".
-            gene_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
-                Defaults to "".
-            protein_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
-                Defaults to "".
-            transcript_alias (str, optional): Path to a TSV file mapping contig IDs to their alias(es).
-                Defaults to "".
+            canonical_transcript (Union[List[str], str], optional): List of canonical transcript IDs, or the path to a text file
+            contig_alias (Union[str, Dict], optional): Dictionary mapping contig aliases to their normalized ID, or a path to a text file
+            exon_alias (Union[str, Dict], optional): Dictionary mapping exon aliases to their normalized ID, or a path to a text file
+            gene_alias (Union[str, Dict], optional): Dictionary mapping gene aliases to their normalized ID, or a path to a text file
+            protein_alias (Union[str, Dict], optional): Dictionary mapping protein aliases to their normalized ID, or a path to a text file
+            transcript_alias (Union[str, Dict], optional): Dictionary mapping transcript aliases to their normalized ID, or a path to a text file
         """
         self.df = read_gtf(gtf, result_type="pandas")  # TODO: switch to 'polars'?
         self.cds_fasta = [read_fasta(i) for i in cds]
         self.dna_fasta = [read_fasta(i) for i in dna]
         self.protein_fasta = [read_fasta(i) for i in peptide]
         self.rna_fasta = [read_fasta(i) for i in rna]
-        self._canonical_transcript = txt_to_list(canonical_transcript)
-        self._contig_alias = tsv_to_dict(contig_alias)
-        self._exon_alias = tsv_to_dict(exon_alias)
-        self._gene_alias = tsv_to_dict(gene_alias)
-        self._protein_alias = tsv_to_dict(protein_alias)
-        self._transcript_alias = tsv_to_dict(transcript_alias)
+
+        if isinstance(canonical_transcript, str):
+            self._canonical_transcript = txt_to_list(canonical_transcript)
+        else:
+            self._canonical_transcript = canonical_transcript
+
+        if isinstance(contig_alias, str):
+            self._contig_alias = tsv_to_dict(contig_alias)
+        else:
+            self._contig_alias = contig_alias
+
+        if isinstance(exon_alias, str):
+            self._exon_alias = tsv_to_dict(exon_alias)
+        else:
+            self._exon_alias = exon_alias
+
+        if isinstance(gene_alias, str):
+            self._gene_alias = tsv_to_dict(gene_alias)
+        else:
+            self._gene_alias = gene_alias
+
+        if isinstance(protein_alias, str):
+            self._protein_alias = tsv_to_dict(protein_alias)
+        else:
+            self._protein_alias = protein_alias
+
+        if isinstance(transcript_alias, str):
+            self._transcript_alias = tsv_to_dict(transcript_alias)
+        else:
+            self._transcript_alias = transcript_alias
 
     # ---------------------------------------------------------------------------------------------
     # Functions for loading variants
@@ -2975,9 +2994,21 @@ class Core:
         return self._alias(transcript_id, self._transcript_alias)
 
     def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
-        for key in [feature, strip_version(feature)]:
+        # Try different variations on the feature ID until one is found
+        for key in [
+            feature,
+            strip_version(feature),
+            feature.lower(),
+            strip_version(feature).lower(),
+            feature.upper(),
+            strip_version(feature).upper(),
+        ]:
             if alias := alias_dict.get(key, []):
-                return alias
+                # Coerce the alias to a list
+                if isinstance(alias, str):
+                    return [alias]
+                else:
+                    return list(alias)
         else:
             return []
 
