@@ -66,7 +66,6 @@ from .positions import (
     _RnaSmallVariant,
 )
 from .tables import AMINO_ACID_TABLE
-from .types import Position
 from .utils import (
     calc_cdna_to_protein,
     collapse_seq_change,
@@ -3380,19 +3379,19 @@ class Core:
         return sorted(pep_altseq_set)
 
 
-def join_positions(start: List[Position], end: List[Position], merge_on: str) -> List[Position]:
+def join_positions(start: List, end: List, merge_on: str) -> List:
     """Return the combination of two list of position or variant objects - one of start positions
     and one of end positions - into one list by the given key (e.g. 'transcript_id').
 
     All positions must be of the same class.
 
     Args:
-        start (List[PositionOrSmallVariantType]): Start positions
-        end (List[PositionOrSmallVariantType]): End positions
+        start (List[position or small variant]): Start positions
+        end (List[position or small variant]): End positions
         merge_on (str): Attribute to merge on (e.g. 'transcript_id')
 
     Returns:
-        List[PositionOrSmallVariantType]: New position or variant objects
+        List[position or small variant]: New position or variant objects
     """
     result = set()
 
