@@ -395,7 +395,7 @@ class _Variant(_Base):
 # SmallVariant classes
 # -------------------------------------------------------------------------------------------------
 @dataclass(eq=True, frozen=True)
-class _SmallVariant(_Base):
+class _SmallVariant(_Variant):
     """Base class for small variants."""
 
     refseq: str
