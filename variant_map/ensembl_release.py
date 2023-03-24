@@ -116,9 +116,14 @@ class EnsemblRelease(Core):
         Raises:
             ValueError: No method exists for getting a sequence for the given position type
         """
-        # TODO: Get sequence for offset variants?
+        # TODO: Is this the correct behaviour for offset variants?
         if position.start_offset or position.end_offset:
-            raise ValueError(f"Unable to get sequence for offset position {position}")
+            if position.is_protein:
+                raise ValueError(f"Unable to get sequence for {position}")
+            else:
+                position_ = self.to_dna(position)
+                assert len(position_) == 1
+                position = position_[0]
 
         # Ensembl does not provide a CDS FASTA so we need to get the sequence from the RNA FASTA
         if position.is_cdna:

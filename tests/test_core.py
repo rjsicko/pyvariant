@@ -26,6 +26,7 @@ from variant_map.constants import (
 )
 from variant_map.core import Core
 from variant_map.positions import (
+    CdnaDeletion,
     CdnaPosition,
     CdnaSubstitution,
     DnaPosition,
@@ -929,6 +930,70 @@ def test_parse_cdna_position(ensembl100):
     ]
 
 
+def test_parse_cdna_intron_deletion(ensembl100):
+    result = ensembl100.parse("ENST00000372348:c.136+596_136+650del")
+    assert result == [
+        CdnaDeletion(
+            contig_id="9",
+            start=136,
+            start_offset=596,
+            end=136,
+            end_offset=650,
+            strand="+",
+            gene_id="ENSG00000097007",
+            gene_name="ABL1",
+            transcript_id="ENST00000372348",
+            transcript_name="ABL1-202",
+            protein_id="ENSP00000361423",
+            refseq="TCCATAAGGAGTAATCTCTTCCTCGTTGATGAAGCTTTCATCCTGTCTTCTCCCT",
+            altseq="",
+        )
+    ]
+
+
+# TODO
+# def test_parse_cdna_duplication(ensembl100):
+#     result = ensembl100.parse("ENST00000307078:c.1394_1399dup")
+#     assert result == [
+#         CdnaDuplication(
+#             contig_id="17",
+#             start=1394,
+#             start_offset=0,
+#             end=1399,
+#             end_offset=0,
+#             strand="-",
+#             gene_id="ENSG00000168646",
+#             gene_name="AXIN2",
+#             transcript_id="ENST00000307078",
+#             transcript_name="AXIN2-201",
+#             protein_id="ENSP00000302625",
+#             refseq="GCTCCC",
+#             altseq="GCTCCCGCTCCC",
+#         )
+#     ]
+
+
+def test_parse_cdna_promoter_substitution(ensembl100):
+    result = ensembl100.parse("ENST00000257430:c.-290G>A")
+    assert result == [
+        CdnaSubstitution(
+            contig_id="5",
+            start=1,
+            start_offset=-290,
+            end=1,
+            end_offset=-290,
+            strand="+",
+            gene_id="ENSG00000134982",
+            gene_name="APC",
+            transcript_id="ENST00000257430",
+            transcript_name="APC-201",
+            protein_id="ENSP00000257430",
+            refseq="G",
+            altseq="A",
+        )
+    ]
+
+
 def test_parse_cdna_substitution(ensembl100):
     result = ensembl100.parse("ENST00000256078:c.38G>A")
     assert result == [
@@ -955,10 +1020,7 @@ def test_parse_dna_position(ensembl100):
     assert result == [
         DnaPosition(
             contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand="+"
-        ),
-        DnaPosition(
-            contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand="-"
-        ),
+        )
     ]
 
 
@@ -1098,10 +1160,7 @@ def test_variant_dna_minimal(ensembl100):
     assert result == [
         DnaPosition(
             contig_id="5", start=1282623, start_offset=0, end=1282623, end_offset=0, strand="+"
-        ),
-        DnaPosition(
-            contig_id="5", start=1282623, start_offset=0, end=1282623, end_offset=0, strand="-"
-        ),
+        )
     ]
 
 

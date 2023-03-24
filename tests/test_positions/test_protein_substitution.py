@@ -1,6 +1,6 @@
 import pytest
 
-from variant_map.constants import SUBTITUTION
+from variant_map.constants import SUBSTITUTION
 from variant_map.positions import (
     CdnaDelins,
     CdnaSubstitution,
@@ -44,7 +44,7 @@ def test_type(variant):
 
 
 def test_variant_type(variant):
-    assert variant.type == SUBTITUTION
+    assert variant.type == SUBSTITUTION
     assert not variant.is_deletion
     assert not variant.is_delins
     assert not variant.is_duplication

@@ -12,16 +12,19 @@ from .constants import (
     CDNA,
     CDS,
     CONTIG_ID,
+    DELINS,
     DNA,
     EXON,
     EXON_ID,
     FUSION,
     GENE_ID,
     GENE_NAME,
+    INSERTION,
     PROTEIN,
     PROTEIN_ID,
     RNA,
     STOP_CODON,
+    SUBSTITUTION,
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
@@ -257,8 +260,6 @@ class Core:
         if (refseq or altseq) and not variant_type:
             raise ValueError("refseq and/or altseq given without a variant_type")
 
-        strand_ = [strand] if strand else ["+", "-"]
-
         # Load a fusion
         # TODO: infer is a fusion if position_type2, etc is given?
         if variant_type == FUSION:
@@ -319,8 +320,18 @@ class Core:
 
                 return list(fusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2))
 
+        if strand:
+            strand_ = [strand]
+        elif position_type == DNA:
+            strand_ = ["+"]
+        else:
+            strand_ = ["+", "-"]
+
         # Load a small variant
-        elif variant_type or refseq or altseq:
+        if variant_type:
+            if variant_type in [DELINS, INSERTION, SUBSTITUTION]:
+                assert altseq, f"{variant_type} requires an alternate allele"
+
             if position_type == CDNA:
                 transcript_ids = self.transcript_ids(feature)
                 result = self._cdna_to_cdna_variant(
@@ -386,9 +397,14 @@ class Core:
         Raises:
             ValueError: No method exists for getting a sequence for the given position type
         """
-        # TODO: Get sequence for offset variants?
+        # TODO: Is this the correct behaviour for offset variants?
         if position.start_offset or position.end_offset:
-            raise ValueError(f"Unable to get sequence for offset position {position}")
+            if position.is_protein:
+                raise ValueError(f"Unable to get sequence for {position}")
+            else:
+                position_ = self.to_dna(position)
+                assert len(position_) == 1
+                position = position_[0]
 
         if position.is_cdna:
             position = cast(CdnaPosition, position)
@@ -868,7 +884,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -891,7 +907,7 @@ class Core:
         for cdna in self._cdna_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._variant_class_from_cdna(cdna, refseq, altseq))
+            result.extend(self._cdna_small_variant_from_cdna(cdna, refseq, altseq))
 
         return result
 
@@ -938,7 +954,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1039,7 +1055,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1124,7 +1140,9 @@ class Core:
             protein = ProteinPosition.copy_from(
                 cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
             )
-            result.extend(self._protein_small_variant(cdna, protein, refseq, altseq))
+            result.extend(
+                self._protein_small_variant_from_protein_cdna(cdna, protein, refseq, altseq)
+            )
 
         return result
 
@@ -1196,7 +1214,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1276,7 +1294,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1299,7 +1317,7 @@ class Core:
         for cdna in self._dna_to_cdna(
             contig_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._variant_class_from_cdna(cdna, refseq, altseq))
+            result.extend(self._cdna_small_variant_from_cdna(cdna, refseq, altseq))
 
         return result
 
@@ -1402,7 +1420,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1480,7 +1498,9 @@ class Core:
             protein = ProteinPosition.copy_from(
                 cdna, start=pstart, start_offset=0, end=pend, end_offset=0
             )
-            result.extend(self._protein_small_variant(cdna, protein, refseq, altseq))
+            result.extend(
+                self._protein_small_variant_from_protein_cdna(cdna, protein, refseq, altseq)
+            )
 
         return result
 
@@ -1533,7 +1553,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1601,7 +1621,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1643,7 +1663,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1690,7 +1710,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1763,7 +1783,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -1808,7 +1828,7 @@ class Core:
         for cdna in self._protein_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand
         ):
-            result.extend(self._variant_class_from_protein(cdna, refseq, altseq))
+            result.extend(self._cdna_small_variant_from_cdna_protein(cdna, refseq, altseq))
 
         return result
 
@@ -2109,7 +2129,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -2132,7 +2152,7 @@ class Core:
         for cdna in self._rna_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._variant_class_from_cdna(cdna, refseq, altseq))
+            result.extend(self._cdna_small_variant_from_cdna(cdna, refseq, altseq))
 
         return result
 
@@ -2177,7 +2197,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -2260,7 +2280,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -2407,7 +2427,7 @@ class Core:
             return result
 
         result_start = convert(start, start_offset)
-        if start == end:
+        if (start, start_offset) == (end, end_offset):
             return sorted(result_start)
         else:
             result_end = convert(end, end_offset)
@@ -2431,7 +2451,7 @@ class Core:
 
         return result
 
-    def _variant_class_from_cdna(
+    def _cdna_small_variant_from_cdna(
         self, cdna: CdnaPosition, refseq: str, altseq: str
     ) -> List[_CdnaSmallVariant]:
         """Convert a cDNA position plus ref/alt nucleotides into a cDNA variant.
@@ -2451,6 +2471,9 @@ class Core:
         variant_list = []
 
         ref_annotated = self.sequence(cdna)
+        if not refseq:
+            refseq = ref_annotated
+
         for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
             # Assert that the given ref matches the annotated one
             if ref != ref_annotated:
@@ -2493,7 +2516,7 @@ class Core:
 
         return variant_list
 
-    def _variant_class_from_protein(
+    def _cdna_small_variant_from_cdna_protein(
         self, cdna: CdnaPosition, refaa: str, altaa: str
     ) -> List[_CdnaSmallVariant]:
         """Convert a cDNA position plus ref/alt amino acids into a cDNA variant.
@@ -2575,11 +2598,14 @@ class Core:
         variant_list = []
 
         # TODO: DNA sequence get is slow
-        ref_annotated = self.sequence(dna)
+        # ref_annotated = self.sequence(dna)
+        # if not refseq:
+        #     refseq = ref_annotated
+
         for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                continue
+            # # Assert that the given ref matches the annotated one
+            # if ref != ref_annotated:
+            #     continue
 
             # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
@@ -2634,7 +2660,7 @@ class Core:
         """
         raise NotImplementedError()  # TODO
 
-    def _protein_small_variant(
+    def _protein_small_variant_from_protein_cdna(
         self, cdna: CdnaPosition, protein: ProteinPosition, refseq: str, altseq: str
     ) -> List[_ProteinSmallVariant]:
         """Convert a cDNA position plus ref/alt amino acids into a protein variant.
@@ -2715,6 +2741,9 @@ class Core:
         variant_list = []
 
         ref_annotated = self.sequence(rna)
+        if not refseq:
+            refseq = ref_annotated
+
         for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
             # Assert that the given ref matches the annotated one
             if ref != ref_annotated:

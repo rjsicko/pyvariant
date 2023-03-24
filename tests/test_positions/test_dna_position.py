@@ -1,5 +1,3 @@
-import pytest
-
 from variant_map.positions import (
     CdnaPosition,
     DnaPosition,
@@ -68,10 +66,10 @@ def test_sequence(ensembl100):
 
 def test_sequence_offset(ensembl100):
     from_position = DnaPosition(
-        contig_id="5", start=1282623, start_offset=1, end=1293313, end_offset=1, strand="-"
+        contig_id="5", start=1282622, start_offset=-1, end=1293312, end_offset=-1, strand="-"
     )
-    with pytest.raises(ValueError):
-        ensembl100.sequence(from_position)
+    sequence = ensembl100.sequence(from_position)
+    assert (sequence[:3], sequence[-3:]) == ("GGT", "GGG")
 
 
 def test_str_mutli_position():

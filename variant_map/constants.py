@@ -34,7 +34,7 @@ DUPLICATION = "duplication"
 FRAMESHIFT = "frameshift"
 FUSION = "fusion"
 INSERTION = "insertion"
-SUBTITUTION = "substitution"
+SUBSTITUTION = "substitution"
 
 # Fallback FASTA file used if none are provided
 EMPTY_FASTA = os.path.join(os.path.dirname(__file__), "data", "empty.fa")

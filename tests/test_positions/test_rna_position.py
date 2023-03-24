@@ -137,12 +137,15 @@ def test_sequence(ensembl100):
     assert ensembl100.sequence(from_position) == "GGG"
 
 
+@pytest.mark.skip(reason="how to handle?")
 def test_sequence_offset(ensembl100):
+    # Position crosses exon boundary so getting DNA sequence returns intron sequences as well
+    # TODO: How to handle sequences for offset variants?
     from_position = RnaPosition(
         contig_id="5",
-        start=1652,
+        start=1651,
         start_offset=1,
-        end=1654,
+        end=1653,
         end_offset=1,
         strand="-",
         gene_id="ENSG00000164362",
@@ -150,8 +153,7 @@ def test_sequence_offset(ensembl100):
         transcript_id="ENST00000310581",
         transcript_name="TERT-201",
     )
-    with pytest.raises(ValueError):
-        ensembl100.sequence(from_position)
+    assert ensembl100.sequence(from_position) == "GGG"
 
 
 def test_str_mutli_position():

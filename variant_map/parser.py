@@ -14,7 +14,7 @@ from .constants import (
     INSERTION,
     PROTEIN,
     RNA,
-    SUBTITUTION,
+    SUBSTITUTION,
 )
 from .regex import MISSING, PROTEIN_LETTERS_3, match
 
@@ -28,18 +28,18 @@ SUFFIX_TO_VARIANT_TYPE = {
     "dup": DUPLICATION,
     "fs": FRAMESHIFT,
     "ins": INSERTION,
-    ">": SUBTITUTION,
+    ">": SUBSTITUTION,
 }
 
 
-def parse(string: str) -> Dict[str, Any]:
+def parse(string: str) -> Dict[str, Dict[str, Any]]:
     """Parse a position or variant, represented as a string, into a normalized set of values.
 
     Args:
         string (str): String representation
 
     Returns:
-        Dict[str, Any]: Normalized values parsed from the string
+        Dict[str, Dict[str, Any]]: Normalized values parsed from the string
     """
     # Parse the given string
     parsed = match(string)
@@ -70,7 +70,7 @@ def parse(string: str) -> Dict[str, Any]:
         if breakpoint["position_type"] == PROTEIN:
             # Protein substitutions don't have the '>' to explicitly say it's a substitution
             if not breakpoint["variant_type"]:
-                breakpoint["variant_type"] = SUBTITUTION
+                breakpoint["variant_type"] = SUBSTITUTION
 
             # Convert 3-letter amino acid codes to 1-letter codes
             for key in ["refseq", "altseq", "start_seq", "end_seq"]:

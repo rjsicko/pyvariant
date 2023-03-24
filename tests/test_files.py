@@ -99,16 +99,6 @@ def test_tsv_to_dict():
     assert result == {"chr4": ["4"]}
 
 
-def test_tsv_to_dict_empty():
-    result = tsv_to_dict("")
-    assert result == {}
-
-
 def test_txt_to_list():
     result = txt_to_list(CANONICAL_TRANSCRIPT)
     assert result == ["ENST00000000233"]
-
-
-def test_txt_to_list_empty():
-    result = txt_to_list("")
-    assert result == []

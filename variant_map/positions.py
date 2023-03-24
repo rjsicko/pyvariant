@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from typing import Any, Dict, Type
 
-from .constants import DELETION, DELINS, DUPLICATION, FRAMESHIFT, FUSION, INSERTION, SUBTITUTION
+from .constants import DELETION, DELINS, DUPLICATION, FRAMESHIFT, FUSION, INSERTION, SUBSTITUTION
 from .utils import format_hgvs_position
 
 
@@ -154,7 +154,7 @@ class _Base:
         Returns:
             bool: True if the position is a substitution else False
         """
-        return self.type == SUBTITUTION
+        return self.type == SUBSTITUTION
 
     @property
     def is_variant(self) -> bool:
@@ -748,7 +748,7 @@ class _Substitution(_SmallVariant):
         Returns:
             str: Type of variant
         """
-        return SUBTITUTION
+        return SUBSTITUTION
 
 
 @dataclass(eq=True, frozen=True)
