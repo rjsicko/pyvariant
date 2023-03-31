@@ -2516,15 +2516,10 @@ class Core:
         variant_list = []
 
         ref_annotated = self.sequence(cdna)
-        if not refseq:
-            refseq = ref_annotated
-
         for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
             # Assert that the given ref matches the annotated one
             if ref != ref_annotated:
-                raise ValueError(
-                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}'"
-                )
+                continue
 
             # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
@@ -2643,14 +2638,11 @@ class Core:
         variant_list = []
 
         # TODO: DNA sequence get is slow
-        # ref_annotated = self.sequence(dna)
-        # if not refseq:
-        #     refseq = ref_annotated
-
+        ref_annotated = self.sequence(dna)
         for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # # Assert that the given ref matches the annotated one
-            # if ref != ref_annotated:
-            #     continue
+            # Assert that the given ref matches the annotated one
+            if ref != ref_annotated:
+                continue
 
             # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
@@ -2786,15 +2778,10 @@ class Core:
         variant_list = []
 
         ref_annotated = self.sequence(rna)
-        if not refseq:
-            refseq = ref_annotated
-
         for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
             # Assert that the given ref matches the annotated one
             if ref != ref_annotated:
-                raise ValueError(
-                    f"Given ref allele '{ref}' does not match annotated ref allele '{ref_annotated}' for {rna}"
-                )
+                continue
 
             # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
