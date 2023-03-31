@@ -27,6 +27,7 @@ from variant_map.constants import (
 from variant_map.core import Core
 from variant_map.positions import (
     CdnaDeletion,
+    CdnaDuplication,
     CdnaPosition,
     CdnaSubstitution,
     DnaPosition,
@@ -951,26 +952,25 @@ def test_parse_cdna_intron_deletion(ensembl100):
     ]
 
 
-# TODO
-# def test_parse_cdna_duplication(ensembl100):
-#     result = ensembl100.parse("ENST00000307078:c.1394_1399dup")
-#     assert result == [
-#         CdnaDuplication(
-#             contig_id="17",
-#             start=1394,
-#             start_offset=0,
-#             end=1399,
-#             end_offset=0,
-#             strand="-",
-#             gene_id="ENSG00000168646",
-#             gene_name="AXIN2",
-#             transcript_id="ENST00000307078",
-#             transcript_name="AXIN2-201",
-#             protein_id="ENSP00000302625",
-#             refseq="GCTCCC",
-#             altseq="GCTCCCGCTCCC",
-#         )
-#     ]
+def test_parse_cdna_duplication(ensembl100):
+    result = ensembl100.parse("ENST00000307078:c.1394_1399dup")
+    assert result == [
+        CdnaDuplication(
+            contig_id="17",
+            start=1394,
+            start_offset=0,
+            end=1399,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000168646",
+            gene_name="AXIN2",
+            transcript_id="ENST00000307078",
+            transcript_name="AXIN2-201",
+            protein_id="ENSP00000302625",
+            refseq="GCTCCC",
+            altseq="GCTCCCGCTCCC",
+        )
+    ]
 
 
 def test_parse_cdna_promoter_substitution(ensembl100):

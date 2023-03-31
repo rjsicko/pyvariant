@@ -12,10 +12,13 @@ from .constants import (
     CDNA,
     CDS,
     CONTIG_ID,
+    DELETION,
     DELINS,
     DNA,
+    DUPLICATION,
     EXON,
     EXON_ID,
+    FRAMESHIFT,
     FUSION,
     GENE_ID,
     GENE_NAME,
@@ -247,6 +250,7 @@ class Core:
             List: Position or Variants objects
         """
         result: List[Any] = []
+        result_: List[Any] = []
 
         # Set defaults for missing inputs
         start_offset = cast(int, start_offset or 0)
@@ -259,6 +263,26 @@ class Core:
 
         if (refseq or altseq) and not variant_type:
             raise ValueError("refseq and/or altseq given without a variant_type")
+
+        def get_refseq_altseq(position) -> Tuple[str, str]:
+            refseq_ = refseq or self.sequence(position)
+            if altseq:
+                altseq_ = altseq
+            else:
+                if variant_type == DELETION:
+                    altseq_ = ""
+                elif variant_type == DELINS:
+                    raise ValueError(f"altseq required for {DELINS}")
+                elif variant_type == DUPLICATION:
+                    altseq_ = refseq_ * 2
+                elif variant_type == FRAMESHIFT:
+                    raise ValueError(f"altseq required for {FRAMESHIFT}")
+                elif variant_type == INSERTION:
+                    raise ValueError(f"altseq required for {INSERTION}")
+                elif variant_type == SUBSTITUTION:
+                    raise ValueError(f"altseq required for {SUBSTITUTION}")
+
+            return refseq_, altseq_
 
         # Load a fusion
         # TODO: infer is a fusion if position_type2, etc is given?
@@ -327,57 +351,78 @@ class Core:
         else:
             strand_ = ["+", "-"]
 
-        # Load a small variant
-        if variant_type:
-            if variant_type in [DELINS, INSERTION, SUBSTITUTION]:
-                assert altseq, f"{variant_type} requires an alternate allele"
+        # Map parameters to a cDNA position
+        if position_type == CDNA:
+            transcript_ids = self.transcript_ids(feature)
+            result = self._cdna_to_cdna(
+                transcript_ids, start, start_offset, end, end_offset, strand_
+            )
+            if variant_type:
+                result_ = []
+                for cdna in result:
+                    refseq_, altseq_ = get_refseq_altseq(cdna)
+                    result_.extend(self._cdna_small_variant_from_cdna(cdna, refseq_, altseq_))
 
-            if position_type == CDNA:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._cdna_to_cdna_variant(
-                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
-                )
-            elif position_type == DNA:
-                contig_ids = self.contig_ids(feature)
-                result = self._dna_to_dna_variant(
-                    contig_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
-                )
-            elif position_type == PROTEIN:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._protein_to_protein_variant(
-                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
-                )
-            elif position_type == RNA:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._rna_to_rna_variant(
-                    transcript_ids, start, start_offset, end, end_offset, strand_, refseq, altseq
-                )
+                result = result_
+        # Map parameters to a DNA position
+        elif position_type == DNA:
+            contig_ids = self.contig_ids(feature)
+            result = self._dna_to_dna(contig_ids, start, start_offset, end, end_offset, strand_)
+            if variant_type:
+                result_ = []
+                for dna in result:
+                    refseq_, altseq_ = get_refseq_altseq(dna)
+                    result_.extend(self._dna_small_variant_from_dna(dna, refseq_, altseq_))
 
-        # Load a position
-        else:
-            if position_type == CDNA:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._cdna_to_cdna(
-                    transcript_ids, start, start_offset, end, end_offset, strand_
-                )
-            elif position_type == DNA:
-                contig_ids = self.contig_ids(feature)
-                result = self._dna_to_dna(contig_ids, start, start_offset, end, end_offset, strand_)
-            elif position_type == EXON:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._exon_to_exon(
-                    transcript_ids, start, start_offset, end, end_offset, strand_
-                )
-            elif position_type == PROTEIN:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._protein_to_protein(
-                    transcript_ids, start, start_offset, end, end_offset, strand_
-                )
-            elif position_type == RNA:
-                transcript_ids = self.transcript_ids(feature)
-                result = self._rna_to_rna(
-                    transcript_ids, start, start_offset, end, end_offset, strand_
-                )
+                result = result_
+        # Map parameters to an exon position
+        elif position_type == EXON:
+            transcript_ids = self.transcript_ids(feature)
+            result = self._exon_to_exon(
+                transcript_ids, start, start_offset, end, end_offset, strand_
+            )
+            if variant_type:
+                result_ = []
+                for exon in result:
+                    refseq_, altseq_ = get_refseq_altseq(exon)
+                    result_.extend(self._exon_small_variant_from_exon(exon, refseq_, altseq_))
+
+                result = result_
+        # Map parameters to a protein position
+        elif position_type == PROTEIN:
+            transcript_ids = self.transcript_ids(feature)
+            result = self._protein_to_protein(
+                transcript_ids, start, start_offset, end, end_offset, strand_
+            )
+            if variant_type:
+                result_ = []
+                for protein in result:
+                    refseq_, altseq_ = get_refseq_altseq(protein)
+                    result_.extend(
+                        self._cdna_to_protein_variant(
+                            [protein.transcript_id],
+                            protein.start,
+                            protein.start_offset,
+                            protein.end,
+                            protein.end_offset,
+                            [protein.strand],
+                            refseq_,
+                            altseq_,
+                        )
+                    )
+
+                result = result_
+        # Map parameters to an RNA position
+        elif position_type == RNA:
+            transcript_ids = self.transcript_ids(feature)
+            result = self._rna_to_rna(transcript_ids, start, start_offset, end, end_offset, strand_)
+            if variant_type:
+                result_ = []
+                for rna in result:
+                    refseq_, altseq_ = get_refseq_altseq(rna)
+                    result_.extend(self._rna_small_variant_from_rna(rna, refseq_, altseq_))
+
+                result = result_
 
         return result
 
