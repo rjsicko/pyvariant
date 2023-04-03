@@ -264,6 +264,10 @@ class Core:
         if (refseq or altseq) and not variant_type:
             raise ValueError("refseq and/or altseq given without a variant_type")
 
+        # Replace 'indel' with the HGVS 'delins'
+        if variant_type.lower() == "indel":
+            variant_type = DELINS
+
         def get_refseq_altseq(position) -> Tuple[str, str]:
             refseq_ = refseq or self.sequence(position)
             if altseq:
@@ -281,6 +285,8 @@ class Core:
                     raise ValueError(f"altseq required for {INSERTION}")
                 elif variant_type == SUBSTITUTION:
                     raise ValueError(f"altseq required for {SUBSTITUTION}")
+                else:
+                    raise ValueError(f"Unsupported variant type '{variant_type}'")
 
             return refseq_, altseq_
 
@@ -317,6 +323,8 @@ class Core:
                 fusion = ProteinFusion
             elif position_type == RNA and position_type2 == RNA:
                 fusion = RnaFusion
+            else:
+                raise ValueError(f"Fusions are not supported for {position_type}::{position_type2}")
 
             if fusion:
                 breakpoint1 = self.variant(
@@ -423,6 +431,15 @@ class Core:
                     result_.extend(self._rna_small_variant_from_rna(rna, refseq_, altseq_))
 
                 result = result_
+        # Sanity check
+        else:
+            raise ValueError(f"Unrecognized position type '{position_type}'")
+
+        # TODO: Should always raise an error?
+        if not result:
+            raise ValueError("Unable to convert inputs to a variant")
+
+        return result
 
         return result
 
@@ -2835,7 +2852,7 @@ class Core:
         Returns:
             List[str]: Contig IDs
         """
-        return self._query_feature(CONTIG_ID, feature)
+        return self._query_feature(CONTIG_ID, feature, alias=self.contig_alias)
 
     def exon_ids(self, feature: str = "") -> List[str]:
         """Return the exon IDs that map to the given feature. If no feature is given, return
@@ -2851,7 +2868,7 @@ class Core:
         Returns:
             List[str]: Exon IDs
         """
-        return self._query_feature(EXON_ID, feature)
+        return self._query_feature(EXON_ID, feature, alias=self.exon_alias)
 
     def gene_ids(self, feature: str = "") -> List[str]:
         """Return the gene IDs that map to the given feature. If no feature is given, return
@@ -2867,7 +2884,7 @@ class Core:
         Returns:
             List[str]: Gene IDs
         """
-        return self._query_feature(GENE_ID, feature)
+        return self._query_feature(GENE_ID, feature, alias=self.gene_alias)
 
     def gene_names(self, feature: str = "") -> List[str]:
         """Return the gene names that map to the given feature. If no feature is given, return
@@ -2883,7 +2900,7 @@ class Core:
         Returns:
             List[str]: Gene names
         """
-        return self._query_feature(GENE_NAME, feature)
+        return self._query_feature(GENE_NAME, feature, alias=self.gene_alias)
 
     def protein_ids(self, feature: str = "") -> List[str]:
         """Return the protein IDs that map to the given feature. If no feature is given, return
@@ -2899,7 +2916,7 @@ class Core:
         Returns:
             List[str]: Protein IDs
         """
-        return self._query_feature(PROTEIN_ID, feature)
+        return self._query_feature(PROTEIN_ID, feature, alias=self.protein_alias)
 
     def transcript_ids(self, feature: str = "") -> List[str]:
         """Return the transcript IDs that map to the given feature. If no feature is given, return
@@ -2915,7 +2932,7 @@ class Core:
         Returns:
             List[str]: Transcript IDs
         """
-        return self._query_feature(TRANSCRIPT_ID, feature)
+        return self._query_feature(TRANSCRIPT_ID, feature, alias=self.transcript_alias)
 
     def transcript_names(self, feature: str = "") -> List[str]:
         """Return the transcript names that map to the given feature. If no feature is given, return
@@ -2931,9 +2948,11 @@ class Core:
         Returns:
             List[str]: Transcript names
         """
-        return self._query_feature(TRANSCRIPT_NAME, feature)
+        return self._query_feature(TRANSCRIPT_NAME, feature, alias=self.transcript_alias)
 
-    def _query_feature(self, key: str, feature: str = "") -> List[str]:
+    def _query_feature(
+        self, key: str, feature: str = "", alias: Optional[Callable] = None
+    ) -> List[str]:
         if feature:
             parts = []
 
@@ -2955,7 +2974,12 @@ class Core:
                 else:
                     raise ValueError(f"Unable to get {key} for {feature} ({feature_type})")
 
-                parts.append(func(feature)[key])
+                # Try different aliases to see which have a match to the annotations
+                feature_ = [feature]
+                if alias:
+                    feature_ += alias(feature)
+
+                parts.append(func(feature_)[key])
 
             if parts:
                 result = pd.concat(parts)
@@ -3008,7 +3032,20 @@ class Core:
         Returns:
             List[str]: All aliases of the given contig ID
         """
-        return self._alias(contig_id, self._contig_alias)
+        alias = self._alias(contig_id, self._contig_alias)
+
+        # TODO: Better way to handle chromosome naming?
+        if contig_id.startswith("chr"):
+            contig_id_alt = contig_id[3:]
+            if contig_id_alt not in alias:
+                alias.append(contig_id_alt)
+
+        if not contig_id.startswith("chr"):
+            contig_id_alt = "chr" + contig_id
+            if contig_id_alt not in alias:
+                alias.append(contig_id_alt)
+
+        return alias
 
     def exon_alias(self, exon_id: str) -> List[str]:
         """List all aliases of the given exon ID.
