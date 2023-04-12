@@ -1,6 +1,7 @@
 """Core logic for handling annotations and mapping positions/variants between different types."""
 from __future__ import annotations
 
+import sys
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
@@ -250,7 +251,6 @@ class Core:
             List: Position or Variants objects
         """
         result: List[Any] = []
-        result_: List[Any] = []
 
         # Set defaults for missing inputs
         start_offset = cast(int, start_offset or 0)
@@ -261,8 +261,12 @@ class Core:
         altseq = cast(str, altseq or "")
         variant_type = cast(str, variant_type or "")
 
+        # Infer the variant type from the refseq and altseq, if not given
         if (refseq or altseq) and not variant_type:
-            variant_type = classify_seq_change(refseq, altseq)
+            if position_type2:
+                variant_type = FUSION
+            else:
+                variant_type = classify_seq_change(refseq, altseq)
 
         # Replace 'indel' with the HGVS 'delins'
         if variant_type.lower() == "indel":
@@ -291,7 +295,6 @@ class Core:
             return refseq_, altseq_
 
         # Load a fusion
-        # TODO: infer is a fusion if position_type2, etc is given?
         if variant_type == FUSION:
             fusion: Optional[Type[_Fusion]] = None
 
@@ -352,6 +355,9 @@ class Core:
 
                 return list(fusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2))
 
+        # Respect the given strand
+        # If the strand is not given, and the position is on DNA, assume we mean the + strand
+        # If the strand is not given, and the position is on the DNA, assume we mean the + strand
         if strand:
             strand_ = [strand]
         elif position_type == DNA:
@@ -359,76 +365,43 @@ class Core:
         else:
             strand_ = ["+", "-"]
 
-        # Map parameters to a cDNA position
+        # Convert the given parameters to a position of the specified type
         if position_type == CDNA:
             transcript_ids = self.transcript_ids(feature)
             result = self._cdna_to_cdna(
                 transcript_ids, start, start_offset, end, end_offset, strand_
             )
-            if variant_type:
-                result_ = []
-                for cdna in result:
-                    refseq_, altseq_ = get_refseq_altseq(cdna)
-                    result_.extend(self._position_to_small_variant(cdna, refseq_, altseq_))
-
-                result = result_
-        # Map parameters to a DNA position
         elif position_type == DNA:
             contig_ids = self.contig_ids(feature)
             result = self._dna_to_dna(contig_ids, start, start_offset, end, end_offset, strand_)
-            if variant_type:
-                result_ = []
-                for dna in result:
-                    refseq_, altseq_ = get_refseq_altseq(dna)
-                    result_.extend(self._position_to_small_variant(dna, refseq_, altseq_))
-
-                result = result_
-        # Map parameters to an exon position
         elif position_type == EXON:
             transcript_ids = self.transcript_ids(feature)
             result = self._exon_to_exon(
                 transcript_ids, start, start_offset, end, end_offset, strand_
             )
-            if variant_type:
-                result_ = []
-                for exon in result:
-                    refseq_, altseq_ = get_refseq_altseq(exon)
-                    result_.extend(self._position_to_small_variant(exon, refseq_, altseq_))
-
-                result = result_
-        # Map parameters to a protein position
         elif position_type == PROTEIN:
             transcript_ids = self.transcript_ids(feature)
             result = self._protein_to_protein(
                 transcript_ids, start, start_offset, end, end_offset, strand_
             )
-            if variant_type:
-                result_ = []
-                for protein in result:
-                    refseq_, altseq_ = get_refseq_altseq(protein)
-                    result_.extend(self._position_to_small_variant(protein, refseq_, altseq_))
-
-                result = result_
-        # Map parameters to an RNA position
         elif position_type == RNA:
             transcript_ids = self.transcript_ids(feature)
             result = self._rna_to_rna(transcript_ids, start, start_offset, end, end_offset, strand_)
-            if variant_type:
-                result_ = []
-                for rna in result:
-                    refseq_, altseq_ = get_refseq_altseq(rna)
-                    result_.extend(self._position_to_small_variant(rna, refseq_, altseq_))
-
-                result = result_
-        # Sanity check
         else:
             raise ValueError(f"Unrecognized position type '{position_type}'")
 
-        # TODO: Should always raise an error?
+        # Optional, convert each position and the given ref and alt sequences to variants
+        if variant_type:
+            result_ = []
+            for position in result:
+                refseq_, altseq_ = get_refseq_altseq(position)
+                result_.extend(self._position_to_small_variant(position, refseq_, altseq_))
+
+            result = result_
+
+        # TODO: Should this always raise an error?
         if not result:
             raise ValueError("Unable to convert inputs to a variant")
-
-        return result
 
         return result
 
@@ -1880,7 +1853,7 @@ class Core:
                 if is_insertion(refseq, altseq) and not is_insertion(ref, alt):
                     continue
 
-                result.extend(self._position_to_small_variant(cdna, ref, alt))
+                result.extend(self._position_to_small_variant(cdna, ref, alt, validate=True))
 
         return result
 
@@ -2509,7 +2482,7 @@ class Core:
         refseq: str,
         altseq: str,
         is_frameshift: bool = False,
-        validate: bool = True,
+        validate: bool = False,
     ) -> List:
         """Convert an position plus reference and alternate alleles into a variant.
 
@@ -2563,8 +2536,11 @@ class Core:
         for ref, alt in product(expand(refseq), expand(altseq)):
             # Optionally, assert that the given ref matches the annotated one
             if validate:
-                if ref != self.sequence(position):
-                    continue
+                try:
+                    if ref != self.sequence(position):
+                        continue
+                except KeyError as exc:
+                    print(exc, file=sys.stderr)
 
             # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, start_adjust, end_adjust = collapse_seq_change(ref, alt)
