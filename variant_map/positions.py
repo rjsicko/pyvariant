@@ -4,7 +4,20 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from typing import Any, Dict, Type
 
-from .constants import DELETION, DELINS, DUPLICATION, FRAMESHIFT, FUSION, INSERTION, SUBSTITUTION
+from .constants import (
+    CDNA,
+    DELETION,
+    DELINS,
+    DNA,
+    DUPLICATION,
+    EXON,
+    FRAMESHIFT,
+    FUSION,
+    INSERTION,
+    PROTEIN,
+    RNA,
+    SUBSTITUTION,
+)
 from .utils import format_hgvs_position
 
 
@@ -55,7 +68,7 @@ class _Base:
         Returns:
             bool: True if the position is a deletion else False
         """
-        return self.type == DELETION
+        return self.variant_type == DELETION
 
     @property
     def is_delins(self) -> bool:
@@ -64,7 +77,7 @@ class _Base:
         Returns:
             bool: True if the position is a delins else False
         """
-        return self.type == DELINS
+        return self.variant_type == DELINS
 
     @property
     def is_dna(self) -> bool:
@@ -82,7 +95,7 @@ class _Base:
         Returns:
             bool: True if the position is a duplication else False
         """
-        return self.type == DUPLICATION
+        return self.variant_type == DUPLICATION
 
     @property
     def is_exon(self) -> bool:
@@ -100,7 +113,7 @@ class _Base:
         Returns:
             bool: True if the position is a frameshift else False
         """
-        return self.type == FRAMESHIFT
+        return self.variant_type == FRAMESHIFT
 
     @property
     def is_fusion(self) -> bool:
@@ -109,7 +122,7 @@ class _Base:
         Returns:
             bool: True if the position is a fusion else False
         """
-        return self.type == FUSION
+        return self.variant_type == FUSION
 
     @property
     def is_insertion(self) -> bool:
@@ -118,7 +131,7 @@ class _Base:
         Returns:
             bool: True if the position is an insertion else False
         """
-        return self.type == INSERTION
+        return self.variant_type == INSERTION
 
     @property
     def is_protein(self) -> bool:
@@ -154,7 +167,7 @@ class _Base:
         Returns:
             bool: True if the position is a substitution else False
         """
-        return self.type == SUBSTITUTION
+        return self.variant_type == SUBSTITUTION
 
     @property
     def is_variant(self) -> bool:
@@ -184,11 +197,20 @@ class _Base:
         raise NotImplementedError()  # Defined by inheriting class
 
     @property
-    def type(self) -> str:
+    def position_type(self) -> str:
+        """Get the position type.
+
+        Returns:
+            str: Type of position (e.g, 'cdna')
+        """
+        raise NotImplementedError()  # Defined by inheriting class
+
+    @property
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:
-            str: Type of variant
+            str: Type of variant (e.g, 'substitution')
         """
         raise NotImplementedError()  # Defined by inheriting class
 
@@ -231,11 +253,20 @@ class _Position(_Base):
         return self.strand == "+"
 
     @property
-    def type(self) -> str:
+    def position_type(self) -> str:
+        """Get the position type.
+
+        Returns:
+            str: Type of position (e.g, 'cdna')
+        """
+        return ""
+
+    @property
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:
-            str: Type of variant
+            str: Type of variant (e.g, 'substitution')
         """
         return ""
 
@@ -267,6 +298,15 @@ class CdnaPosition(_Position):
         """
         return True
 
+    @property
+    def position_type(self) -> str:
+        """Get the position type.
+
+        Returns:
+            str: Type of position (e.g, 'cdna')
+        """
+        return CDNA
+
 
 @dataclass(eq=True, frozen=True)
 class DnaPosition(_Position):
@@ -288,6 +328,15 @@ class DnaPosition(_Position):
             bool: True if the position is on DNA else False
         """
         return True
+
+    @property
+    def position_type(self) -> str:
+        """Get the position type.
+
+        Returns:
+            str: Type of position (e.g, 'cdna')
+        """
+        return DNA
 
 
 @dataclass(eq=True, frozen=True)
@@ -318,6 +367,15 @@ class ExonPosition(_Position):
         """
         return True
 
+    @property
+    def position_type(self) -> str:
+        """Get the position type.
+
+        Returns:
+            str: Type of position (e.g, 'cdna')
+        """
+        return EXON
+
 
 @dataclass(eq=True, frozen=True)
 class ProteinPosition(_Position):
@@ -346,6 +404,15 @@ class ProteinPosition(_Position):
         """
         return True
 
+    @property
+    def position_type(self) -> str:
+        """Get the position type.
+
+        Returns:
+            str: Type of position (e.g, 'cdna')
+        """
+        return PROTEIN
+
 
 @dataclass(eq=True, frozen=True)
 class RnaPosition(_Position):
@@ -372,6 +439,15 @@ class RnaPosition(_Position):
             bool: True if the position is on an RNA else False
         """
         return True
+
+    @property
+    def position_type(self) -> str:
+        """Get the position type.
+
+        Returns:
+            str: Type of position (e.g, 'cdna')
+        """
+        return RNA
 
 
 # -------------------------------------------------------------------------------------------------
@@ -444,7 +520,7 @@ class _Deletion(_SmallVariant):
     """Base class for deletion variants."""
 
     @property
-    def type(self) -> str:
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:
@@ -515,7 +591,7 @@ class _Delins(_SmallVariant):
     """Base class for delins variants."""
 
     @property
-    def type(self) -> str:
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:
@@ -586,7 +662,7 @@ class _Duplication(_SmallVariant):
     """Base class for duplication variants."""
 
     @property
-    def type(self) -> str:
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:
@@ -657,7 +733,7 @@ class _Frameshift(_SmallVariant):
     """Base class for insertion variants."""
 
     @property
-    def type(self) -> str:
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:
@@ -679,7 +755,7 @@ class _Insertion(_SmallVariant):
     """Base class for insertion variants."""
 
     @property
-    def type(self) -> str:
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:
@@ -742,7 +818,7 @@ class _Substitution(_SmallVariant):
     """Base class for substitution variants."""
 
     @property
-    def type(self) -> str:
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:
@@ -819,7 +895,7 @@ class _Fusion(_Variant):
         return "+" in (self.breakpoint1.strand, self.breakpoint2.strand)
 
     @property
-    def type(self) -> str:
+    def variant_type(self) -> str:
         """Get the variant type.
 
         Returns:

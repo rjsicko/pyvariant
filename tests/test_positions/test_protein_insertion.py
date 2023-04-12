@@ -36,7 +36,7 @@ def test_type(variant):
 
 
 def test_variant_type(variant):
-    assert variant.type == INSERTION
+    assert variant.variant_type == INSERTION
     assert not variant.is_deletion
     assert not variant.is_delins
     assert not variant.is_duplication
@@ -64,7 +64,7 @@ def test_to_cdna(ensembl69, variant):
     )
     result = ensembl69.to_cdna(variant)
     assert expected in result
-    assert len(result) == 4
+    assert len(result) == 7
 
 
 def test_to_dna(ensembl69, variant):
@@ -80,7 +80,7 @@ def test_to_dna(ensembl69, variant):
     )
     result = ensembl69.to_dna(variant)
     assert expected in result
-    assert len(result) == 4
+    assert len(result) == 7
 
 
 def test_to_protein(ensembl69, variant):
@@ -121,4 +121,4 @@ def test_to_rna(ensembl69, variant):
     )
     result = ensembl69.to_rna(variant)
     assert expected in result
-    assert len(result) == 4
+    assert len(result) == 7

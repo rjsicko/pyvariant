@@ -2,6 +2,7 @@ import pytest
 
 from variant_map.ensembl_cache import normalize_release, normalize_species, reference_by_release
 from variant_map.utils import (
+    classify_seq_change,
     collapse_seq_change,
     expand_nt,
     expand_pep,
@@ -21,6 +22,15 @@ from variant_map.utils import (
 )
 
 
+def test_classify_seq_change():
+    assert classify_seq_change("ATG", "") == "deletion"
+    assert classify_seq_change("ATG", "CT") == "delins"
+    assert classify_seq_change("AT", "ATAT") == "duplication"
+    assert classify_seq_change("AT", "ACCCT") == "insertion"
+    assert classify_seq_change("A", "ACCC") == "insertion"
+    assert classify_seq_change("A", "T") == "substitution"
+
+
 def test_collapse_seq_change():
     assert collapse_seq_change("GGT", "GTT") == ("G", "T", 1, 1)  # substitution
     assert collapse_seq_change("GTT", "CTT") == ("G", "C", 0, 2)  # substitution
@@ -31,10 +41,16 @@ def test_collapse_seq_change():
     assert collapse_seq_change("CTTTAA", "CA") == ("TTTA", "", 1, 1)  # deletion
     assert collapse_seq_change("A", "AA") == ("A", "AA", 0, 0)  # duplication
     assert collapse_seq_change("ATG", "ATGATG") == ("ATG", "ATGATG", 0, 0)  # duplication
-    assert collapse_seq_change("TCT", "AGCTCT") == ("TCT", "AGCTCT", 0, 0)  # amino acid duplication
     assert collapse_seq_change("AA", "ATTTA") == ("AA", "ATTTA", 0, 0)  # insertion
     assert collapse_seq_change("AAC", "AATTTC") == ("AC", "ATTTC", 1, 0)  # insertion
     assert collapse_seq_change("CAA", "CTTTAA") == ("CA", "CTTTA", 0, 1)  # insertion
+    assert collapse_seq_change("G", "GGAT") == ("G", "GGAT", 0, 0)  # insertion
+    assert collapse_seq_change("TCT", "AGCTCT") == (
+        "TCT",
+        "AGCTCT",
+        0,
+        0,
+    )  # insertion (amino acid duplication)
     assert collapse_seq_change("GGT", "GTG") == ("GT", "TG", 1, 0)  # delins
     assert collapse_seq_change("ATCG", "ATT") == ("CG", "T", 2, 0)  # delins
     assert collapse_seq_change("ATCG", "TTG") == ("ATC", "TT", 0, 1)  # delins
@@ -85,9 +101,10 @@ def test_is_deletion():
 def test_is_delins():
     assert is_delins("AGT", "AAA")
     assert is_delins("AGT", "C")
-    assert is_delins("AGT", "AGTAG")
+    assert is_delins("ATT", "AGTAG")
     assert not is_delins("AGT", "AGTAGT")  # duplication
     assert not is_delins("AG", "ACCCG")  # insertion
+    assert not is_delins("G", "GT")  # insertion
     assert not is_delins("A", "G")  # substitution
     assert not is_delins("", "")
 
@@ -97,17 +114,20 @@ def test_is_duplication():
     assert is_duplication("A", "AA")
     assert not is_duplication("ATG", "ATGAT")
     assert not is_duplication("ATG", "ATGAATG")
+    assert not is_duplication("", "")
 
 
 def test_is_frameshift():
     assert is_frameshift("AAA", "A")
     assert is_frameshift("AAA", "AA")
     assert not is_frameshift("AAA", "AAA")
+    assert not is_frameshift("", "")
 
 
 def test_is_insertion():
     assert is_insertion("GT", "GAT")
     assert is_insertion("GGGTTT", "GGGAAATTT")
+    assert is_insertion("G", "GT")
     assert not is_insertion("GT", "GAA")
     assert not is_insertion("GT", "G")
     assert not is_insertion("GT", "T")

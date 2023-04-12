@@ -53,6 +53,7 @@ from .positions import (
     ProteinDeletion,
     ProteinDelins,
     ProteinDuplication,
+    ProteinFrameshift,
     ProteinFusion,
     ProteinInsertion,
     ProteinPosition,
@@ -68,20 +69,19 @@ from .positions import (
     _DnaSmallVariant,
     _ExonSmallVariant,
     _Fusion,
+    _Position,
     _ProteinSmallVariant,
     _RnaSmallVariant,
+    _SmallVariant,
 )
 from .tables import AMINO_ACID_TABLE
 from .utils import (
     calc_cdna_to_protein,
+    classify_seq_change,
     collapse_seq_change,
     expand_nt,
-    is_deletion,
-    is_delins,
-    is_duplication,
-    is_frameshift,
+    expand_pep,
     is_insertion,
-    is_substitution,
     reverse_complement,
     reverse_translate,
     split_by_codon,
@@ -262,7 +262,7 @@ class Core:
         variant_type = cast(str, variant_type or "")
 
         if (refseq or altseq) and not variant_type:
-            raise ValueError("refseq and/or altseq given without a variant_type")
+            variant_type = classify_seq_change(refseq, altseq)
 
         # Replace 'indel' with the HGVS 'delins'
         if variant_type.lower() == "indel":
@@ -369,7 +369,7 @@ class Core:
                 result_ = []
                 for cdna in result:
                     refseq_, altseq_ = get_refseq_altseq(cdna)
-                    result_.extend(self._cdna_small_variant_from_cdna(cdna, refseq_, altseq_))
+                    result_.extend(self._position_to_small_variant(cdna, refseq_, altseq_))
 
                 result = result_
         # Map parameters to a DNA position
@@ -380,7 +380,7 @@ class Core:
                 result_ = []
                 for dna in result:
                     refseq_, altseq_ = get_refseq_altseq(dna)
-                    result_.extend(self._dna_small_variant_from_dna(dna, refseq_, altseq_))
+                    result_.extend(self._position_to_small_variant(dna, refseq_, altseq_))
 
                 result = result_
         # Map parameters to an exon position
@@ -393,7 +393,7 @@ class Core:
                 result_ = []
                 for exon in result:
                     refseq_, altseq_ = get_refseq_altseq(exon)
-                    result_.extend(self._exon_small_variant_from_exon(exon, refseq_, altseq_))
+                    result_.extend(self._position_to_small_variant(exon, refseq_, altseq_))
 
                 result = result_
         # Map parameters to a protein position
@@ -406,18 +406,7 @@ class Core:
                 result_ = []
                 for protein in result:
                     refseq_, altseq_ = get_refseq_altseq(protein)
-                    result_.extend(
-                        self._cdna_to_protein_variant(
-                            [protein.transcript_id],
-                            protein.start,
-                            protein.start_offset,
-                            protein.end,
-                            protein.end_offset,
-                            [protein.strand],
-                            refseq_,
-                            altseq_,
-                        )
-                    )
+                    result_.extend(self._position_to_small_variant(protein, refseq_, altseq_))
 
                 result = result_
         # Map parameters to an RNA position
@@ -428,7 +417,7 @@ class Core:
                 result_ = []
                 for rna in result:
                     refseq_, altseq_ = get_refseq_altseq(rna)
-                    result_.extend(self._rna_small_variant_from_rna(rna, refseq_, altseq_))
+                    result_.extend(self._position_to_small_variant(rna, refseq_, altseq_))
 
                 result = result_
         # Sanity check
@@ -969,7 +958,7 @@ class Core:
         for cdna in self._cdna_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._cdna_small_variant_from_cdna(cdna, refseq, altseq))
+            result.extend(self._position_to_small_variant(cdna, refseq, altseq))
 
         return result
 
@@ -1039,7 +1028,7 @@ class Core:
         for dna in self._cdna_to_dna(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._dna_small_variant_from_dna(dna, refseq, altseq))
+            result.extend(self._position_to_small_variant(dna, refseq, altseq))
 
         return result
 
@@ -1140,7 +1129,7 @@ class Core:
         for exon in self._cdna_to_exon(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._exon_small_variant_from_exon(exon, refseq, altseq))
+            result.extend(self._position_to_small_variant(exon, refseq, altseq))
 
         return result
 
@@ -1158,21 +1147,24 @@ class Core:
         for cdna in self._cdna_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=False
         ):
-            # If the postion wasn't mapped to a non-offset position by `_cdna_to_cdna`, it means
-            # that the position does not map to a protein.
-            if cdna.start_offset or cdna.end_offset:
-                continue
-
-            # Convert the cDNA position to a protein position
-            protein_start = calc_cdna_to_protein(cdna.start)
-            protein_end = calc_cdna_to_protein(cdna.end)
-            result.append(
-                ProteinPosition.copy_from(
-                    cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
-                )
-            )
+            result.extend(self._cdna_to_protein_core(cdna))
 
         return result
+
+    def _cdna_to_protein_core(self, cdna: CdnaPosition) -> List[ProteinPosition]:
+        # If the postion wasn't mapped to a non-offset position by `_cdna_to_cdna`, it means
+        # that the position does not map to a protein.
+        if cdna.start_offset or cdna.end_offset:
+            return []
+
+        # Convert the cDNA position to a protein position
+        protein_start = calc_cdna_to_protein(cdna.start)
+        protein_end = calc_cdna_to_protein(cdna.end)
+        protein = ProteinPosition.copy_from(
+            cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
+        )
+
+        return [protein]
 
     def _cdna_to_protein_variant(
         self,
@@ -1185,25 +1177,40 @@ class Core:
         refseq: str,
         altseq: str,
     ) -> List[_ProteinSmallVariant]:
-        # TODO: A lot of this function is duplicated from _cdna_to_protein()
         result = []
 
         for cdna in self._cdna_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=False
         ):
-            # If the postion wasn't mapped to a non-offset position by `_cdna_to_cdna`, it means
-            # that the position does not map to a protein.
-            if cdna.start_offset or cdna.end_offset:
-                continue
+            result.extend(self._cdna_to_protein_variant_core(cdna, refseq, altseq))
 
-            # Convert the cDNA position to a protein position
-            protein_start = calc_cdna_to_protein(cdna.start)
-            protein_end = calc_cdna_to_protein(cdna.end)
-            protein = ProteinPosition.copy_from(
-                cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
-            )
+        return result
+
+    def _cdna_to_protein_variant_core(
+        self, cdna: CdnaPosition, refseq: str, altseq: str
+    ) -> List[_ProteinSmallVariant]:
+        result = []
+
+        # If the postion wasn't mapped to a non-offset position by `_cdna_to_cdna`, it means
+        # that the position does not map to a protein.
+        if cdna.start_offset or cdna.end_offset:
+            return []
+
+        # Skip positions where the given refseq does not match what's annotated
+        if refseq != self.sequence(cdna):
+            return []
+
+        # Convert the cDNA position to a protein position
+        protein_start = calc_cdna_to_protein(cdna.start)
+        protein_end = calc_cdna_to_protein(cdna.end)
+        protein = ProteinPosition.copy_from(
+            cdna, start=protein_start, start_offset=0, end=protein_end, end_offset=0
+        )
+        refaa = self.sequence(protein)
+        for altaa, is_frameshift in self.translate_cdna_variant(cdna, altseq):
+            # TODO: Support frameshift variants
             result.extend(
-                self._protein_small_variant_from_protein_cdna(cdna, protein, refseq, altseq)
+                self._position_to_small_variant(protein, refaa, altaa, is_frameshift=is_frameshift)
             )
 
         return result
@@ -1299,7 +1306,7 @@ class Core:
         for rna in self._cdna_to_rna(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._rna_small_variant_from_rna(rna, refseq, altseq))
+            result.extend(self._position_to_small_variant(rna, refseq, altseq))
 
         return result
 
@@ -1379,7 +1386,7 @@ class Core:
         for cdna in self._dna_to_cdna(
             contig_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._cdna_small_variant_from_cdna(cdna, refseq, altseq))
+            result.extend(self._position_to_small_variant(cdna, refseq, altseq))
 
         return result
 
@@ -1433,7 +1440,7 @@ class Core:
         result = []
 
         for dna in self._dna_to_dna(contig_id, start, start_offset, end, end_offset, strand):
-            result.extend(self._dna_small_variant_from_dna(dna, refseq, altseq))
+            result.extend(self._position_to_small_variant(dna, refseq, altseq))
 
         return result
 
@@ -1502,7 +1509,7 @@ class Core:
         result = []
 
         for exon in self._dna_to_exon(contig_id, start, start_offset, end, end_offset, strand):
-            result.extend(self._exon_small_variant_from_exon(exon, refseq, altseq))
+            result.extend(self._position_to_small_variant(exon, refseq, altseq))
 
         return result
 
@@ -1520,17 +1527,7 @@ class Core:
         for cdna in self._dna_to_cdna(
             contig_id, start, start_offset, end, end_offset, strand, include_stop=False
         ):
-            # Offset cDNA position are assumed to not map to a protein
-            if cdna.start_offset or cdna.end_offset:
-                continue
-
-            pstart = calc_cdna_to_protein(cdna.start)
-            pend = calc_cdna_to_protein(cdna.end)
-            result.append(
-                ProteinPosition.copy_from(
-                    cdna, start=pstart, start_offset=0, end=pend, end_offset=0
-                )
-            )
+            result.extend(self._cdna_to_protein_core(cdna))
 
         return result
 
@@ -1545,24 +1542,12 @@ class Core:
         refseq: str,
         altseq: str,
     ) -> List[_ProteinSmallVariant]:
-        # TODO: A lot of this function is duplicated from _dna_to_protein()
         result = []
 
         for cdna in self._dna_to_cdna(
             contig_id, start, start_offset, end, end_offset, strand, include_stop=False
         ):
-            # Offset cDNA position are assumed to not map to a protein
-            if cdna.start_offset or cdna.end_offset:
-                continue
-
-            pstart = calc_cdna_to_protein(cdna.start)
-            pend = calc_cdna_to_protein(cdna.end)
-            protein = ProteinPosition.copy_from(
-                cdna, start=pstart, start_offset=0, end=pend, end_offset=0
-            )
-            result.extend(
-                self._protein_small_variant_from_protein_cdna(cdna, protein, refseq, altseq)
-            )
+            result.extend(self._cdna_to_protein_variant_core(cdna, refseq, altseq))
 
         return result
 
@@ -1635,7 +1620,7 @@ class Core:
         result = []
 
         for rna in self._dna_to_rna(contig_id, start, start_offset, end, end_offset, strand):
-            result.extend(self._rna_small_variant_from_rna(rna, refseq, altseq))
+            result.extend(self._position_to_small_variant(rna, refseq, altseq))
 
         return result
 
@@ -1890,7 +1875,12 @@ class Core:
         for cdna in self._protein_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand
         ):
-            result.extend(self._cdna_small_variant_from_cdna_protein(cdna, refseq, altseq))
+            for ref, alt in product(reverse_translate(refseq), reverse_translate(altseq)):
+                # For insertions, check that the sequence flanking the inserted sequence matches the ref
+                if is_insertion(refseq, altseq) and not is_insertion(ref, alt):
+                    continue
+
+                result.extend(self._position_to_small_variant(cdna, ref, alt))
 
         return result
 
@@ -2214,7 +2204,7 @@ class Core:
         for cdna in self._rna_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
         ):
-            result.extend(self._cdna_small_variant_from_cdna(cdna, refseq, altseq))
+            result.extend(self._position_to_small_variant(cdna, refseq, altseq))
 
         return result
 
@@ -2279,7 +2269,7 @@ class Core:
         result = []
 
         for dna in self._rna_to_dna(transcript_id, start, start_offset, end, end_offset, strand):
-            result.extend(self._dna_small_variant_from_dna(dna, refseq, altseq))
+            result.extend(self._position_to_small_variant(dna, refseq, altseq))
 
         return result
 
@@ -2362,7 +2352,7 @@ class Core:
         result = []
 
         for exon in self._rna_to_exon(transcript_id, start, start_offset, end, end_offset, strand):
-            result.extend(self._exon_small_variant_from_exon(exon, refseq, altseq))
+            result.extend(self._position_to_small_variant(exon, refseq, altseq))
 
         return result
 
@@ -2509,329 +2499,111 @@ class Core:
         result = []
 
         for rna in self._rna_to_rna(transcript_id, start, start_offset, end, end_offset, strand):
-            result.extend(self._rna_small_variant_from_rna(rna, refseq, altseq))
+            result.extend(self._position_to_small_variant(rna, refseq, altseq))
 
         return result
 
-    def _cdna_small_variant_from_cdna(
-        self, cdna: CdnaPosition, refseq: str, altseq: str
-    ) -> List[_CdnaSmallVariant]:
-        """Convert a cDNA position plus ref/alt nucleotides into a cDNA variant.
+    def _position_to_small_variant(
+        self,
+        position: _Position,
+        refseq: str,
+        altseq: str,
+        is_frameshift: bool = False,
+        validate: bool = True,
+    ) -> List:
+        """Convert an position plus reference and alternate alleles into a variant.
 
         Args:
-            cdna (CdnaPosition): _Variant position
-            refseq (str): feature allele
-            altseq (str): alternate allele
+            position (_Position): Position
+            refseq (str): Reference allele, amino acids if the position is protein otherwise nucleotides
+            altseq (str): Alternate allele, amino acids if the position is protein otherwise nucleotides
+            is_frameshift (str): Sequence change results in a frameshift
+            validate (bool): Check that the given refseq matches the annotated sequence
 
         Raises:
             NotImplementedError: An unsupported combination of feature/alternate alleles was given
             ValueError: The given feature allele does not match the annotated feature allele
 
         Returns:
-            List[_CdnaSmallVariant]: One or more cDNA variants
+            List: One or more variants
         """
         variant_list = []
 
-        ref_annotated = self.sequence(cdna)
-        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                continue
+        variant_class: Optional[Type[_SmallVariant]] = None
+        variant_class_map: Dict[Tuple, Type[_SmallVariant]] = {
+            (CDNA, DELETION): CdnaDeletion,
+            (CDNA, DELINS): CdnaDelins,
+            (CDNA, DUPLICATION): CdnaDuplication,
+            (CDNA, INSERTION): CdnaInsertion,
+            (CDNA, SUBSTITUTION): CdnaSubstitution,
+            (DNA, DELETION): DnaDeletion,
+            (DNA, DELINS): DnaDelins,
+            (DNA, DUPLICATION): DnaDuplication,
+            (DNA, INSERTION): DnaInsertion,
+            (DNA, SUBSTITUTION): DnaSubstitution,
+            (PROTEIN, DELETION): ProteinDeletion,
+            (PROTEIN, DELINS): ProteinDelins,
+            (PROTEIN, DUPLICATION): ProteinDuplication,
+            (PROTEIN, FRAMESHIFT): ProteinFrameshift,
+            (PROTEIN, INSERTION): ProteinInsertion,
+            (PROTEIN, SUBSTITUTION): ProteinSubstitution,
+            (RNA, DELETION): RnaDeletion,
+            (RNA, DELINS): RnaDelins,
+            (RNA, DUPLICATION): RnaDuplication,
+            (RNA, INSERTION): RnaInsertion,
+            (RNA, SUBSTITUTION): RnaSubstitution,
+        }
+
+        # Select the function to use to expand ambiguous sequences
+        if position.is_protein:
+            expand = expand_pep
+        else:
+            expand = expand_nt
+
+        for ref, alt in product(expand(refseq), expand(altseq)):
+            # Optionally, assert that the given ref matches the annotated one
+            if validate:
+                if ref != self.sequence(position):
+                    continue
 
             # Trim bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
-            start = cdna.start + new_start
-            end = cdna.end - new_end
+            new_ref, new_alt, start_adjust, end_adjust = collapse_seq_change(ref, alt)
+            start = position.start + start_adjust
+            end = position.end - end_adjust
 
             # Determine the type of variant
-            if is_deletion(new_ref, new_alt):
-                variant = CdnaDeletion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_delins(new_ref, new_alt):
-                variant = CdnaDelins.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                variant = CdnaDuplication.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_insertion(new_ref, new_alt):
-                variant = CdnaInsertion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_substitution(new_ref, new_alt):
-                variant = CdnaSubstitution.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
+            variant_type = classify_seq_change(new_ref, new_alt)
+
+            # Special case: Insertions
+            if variant_type == INSERTION:
+                if len(ref) == 1:
+                    # Adjust the position so it includes both bases flanking the insertion site
+                    end = start + 1
+                    position = position.copy_from(position, start=start, end=end)
+                    new_ref = self.sequence(position)
+                    new_alt = new_alt + new_ref[-1]
+
+            # Special case: Frameshifts
+            if position.position_type == PROTEIN and is_frameshift:
+                # NOTE: Only the first amino acid change is preserved.
+                # See https://varnomen.hgvs.org/recommendations/protein/variant/frameshift/
+                variant_class = ProteinFrameshift
+                end = start
+                new_ref = new_ref[0]
+                new_alt = new_alt[0]
             else:
-                raise NotImplementedError(
-                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {cdna}"
+                variant_class = variant_class_map.get((position.position_type, variant_type))
+
+            # Initialize a new variant object from the given position object
+            if variant_class:
+                variant = variant_class.copy_from(
+                    position, start=start, end=end, refseq=new_ref, altseq=new_alt
                 )
-
-            variant_list.append(variant)
-
-        return variant_list
-
-    def _cdna_small_variant_from_cdna_protein(
-        self, cdna: CdnaPosition, refaa: str, altaa: str
-    ) -> List[_CdnaSmallVariant]:
-        """Convert a cDNA position plus ref/alt amino acids into a cDNA variant.
-
-        Args:
-            cdna (CdnaPosition): cDNA position
-            refseq (str): Reference allele
-            altaa (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of feature/alternate alleles was given
-
-        Returns:
-            List[_CdnaSmallVariant]: One or more cDNA variants
-        """
-        variant_list = []
-
-        ref_annotated = self.sequence(cdna)
-        for ref, alt in product(reverse_translate(refaa), reverse_translate(altaa)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                continue
-
-            # For insertions, check that the sequence flanking the inserted sequence matches the ref
-            if is_insertion(refaa, altaa) and not is_insertion(ref, alt):
-                continue
-
-            # Trim bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
-            start = cdna.start + new_start
-            end = cdna.end - new_end
-
-            # Determine the type of variant
-            if is_deletion(new_ref, new_alt):
-                variant = CdnaDeletion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_delins(new_ref, new_alt):
-                variant = CdnaDelins.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                variant = CdnaDuplication.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_insertion(new_ref, new_alt):
-                variant = CdnaInsertion.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_substitution(new_ref, new_alt):
-                variant = CdnaSubstitution.copy_from(
-                    cdna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            else:
-                raise NotImplementedError(
-                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {cdna}"
-                )
-
-            variant_list.append(variant)
-
-        return variant_list
-
-    def _dna_small_variant_from_dna(
-        self, dna: DnaPosition, refseq: str, altseq: str
-    ) -> List[_DnaSmallVariant]:
-        """Convert a DNA position plus ref/alt nucleotides into a DNA variant.
-
-        Args:
-            dna (DnaPosition): DNA position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of feature/alternate alleles was given
-
-        Returns:
-            List[_DnaSmallVariant]: One or more DNA variants
-        """
-        variant_list = []
-
-        # TODO: DNA sequence get is slow
-        ref_annotated = self.sequence(dna)
-        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                continue
-
-            # Trim bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
-            start = dna.start + new_start
-            end = dna.end - new_end
-
-            # Determine the type of variant
-            if is_deletion(new_ref, new_alt):
-                variant = DnaDeletion.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_delins(new_ref, new_alt):
-                variant = DnaDelins.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                variant = DnaDuplication.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_insertion(new_ref, new_alt):
-                variant = DnaInsertion.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_substitution(new_ref, new_alt):
-                variant = DnaSubstitution.copy_from(
-                    dna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            else:
-                raise NotImplementedError(
-                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {dna}"
-                )
-
-            variant_list.append(variant)
-
-        return variant_list
-
-    def _exon_small_variant_from_exon(
-        self, exon: ExonPosition, refseq: str, altseq: str
-    ) -> List[_ExonSmallVariant]:
-        """Convert an exon position plus ref/alt nucleotides into an exon variant.
-
-        Args:
-            exon (ExonPosition): exon position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of feature/alternate alleles was given
-
-        Returns:
-            List[_ExonSmallVariant]: One or more exon variants
-        """
-        raise NotImplementedError()  # TODO
-
-    def _protein_small_variant_from_protein_cdna(
-        self, cdna: CdnaPosition, protein: ProteinPosition, refseq: str, altseq: str
-    ) -> List[_ProteinSmallVariant]:
-        """Convert a cDNA position plus ref/alt amino acids into a protein variant.
-
-        Args:
-            cdna (CdnaPosition): cDNA position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of feature/alternate alleles was given
-
-        Returns:
-            List[_ProteinSmallVariant]: One or more protein variants
-        """
-        variant_list = []
-
-        protein_refseq = self.sequence(protein)
-        for cdna_ref, cdna_alt in product(expand_nt(refseq), expand_nt(altseq)):
-            if is_frameshift(cdna_ref, cdna_alt):
-                raise NotImplementedError()  # TODO
-
-            for protein_alt in self.translate_cdna_variant(cdna, cdna_alt):
-                # Trim bases that are unchanged between the ref and alt alleles
-                new_ref, new_alt, new_start, new_end = collapse_seq_change(
-                    protein_refseq, protein_alt
-                )
-                start = protein.start + new_start
-                end = protein.end - new_end
-
-                # Determine the type of variant
-                if is_deletion(new_ref, new_alt):
-                    variant = ProteinDeletion.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                elif is_delins(new_ref, new_alt):
-                    variant = ProteinDelins.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                elif is_duplication(new_ref, new_alt):
-                    variant = ProteinDuplication.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                elif is_insertion(new_ref, new_alt):
-                    variant = ProteinInsertion.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                elif is_substitution(new_ref, new_alt):
-                    variant = ProteinSubstitution.copy_from(
-                        protein, start=start, end=end, refseq=new_ref, altseq=new_alt
-                    )
-                else:
-                    raise NotImplementedError(
-                        f"Unrecognized sequence change '{new_ref}/{new_alt}' at {protein}"
-                    )
-
                 variant_list.append(variant)
-
-        return variant_list
-
-    def _rna_small_variant_from_rna(
-        self, rna: RnaPosition, refseq: str, altseq: str
-    ) -> List[_RnaSmallVariant]:
-        """Convert an RNA position plus ref/alt nucleotides into an RNA variant.
-
-        Args:
-            rna (RnaPosition): RNA position
-            refseq (str): Reference allele
-            altseq (str): Alternate allele
-
-        Raises:
-            NotImplementedError: An unsupported combination of feature/alternate alleles was given
-            ValueError: The given feature allele does not match the annotated feature allele
-
-        Returns:
-            List[_RnaSmallVariant]: One or more RNA variants
-        """
-        variant_list = []
-
-        ref_annotated = self.sequence(rna)
-        for ref, alt in product(expand_nt(refseq), expand_nt(altseq)):
-            # Assert that the given ref matches the annotated one
-            if ref != ref_annotated:
-                continue
-
-            # Trim bases that are unchanged between the ref and alt alleles
-            new_ref, new_alt, new_start, new_end = collapse_seq_change(ref, alt)
-            start = rna.start + new_start
-            end = rna.end - new_end
-
-            # Determine the type of variant
-            if is_deletion(new_ref, new_alt):
-                variant = RnaDeletion.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_delins(new_ref, new_alt):
-                variant = RnaDelins.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_duplication(new_ref, new_alt):
-                variant = RnaDuplication.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_insertion(new_ref, new_alt):
-                variant = RnaInsertion.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
-            elif is_substitution(new_ref, new_alt):
-                variant = RnaSubstitution.copy_from(
-                    rna, start=start, end=end, refseq=new_ref, altseq=new_alt
-                )
             else:
-                raise NotImplementedError(
-                    f"Unrecognized sequence change '{new_ref}/{new_alt}' at {rna}"
+                raise ValueError(
+                    f"Unrecognized variant type for {position.position_type}/{variant_type} ({new_ref}/{new_alt})"
                 )
-
-            variant_list.append(variant)
 
         return variant_list
 
@@ -3468,7 +3240,9 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # Utility functions
     # ---------------------------------------------------------------------------------------------
-    def translate_cdna_variant(self, cdna: CdnaPosition, cdna_altseq: str) -> List[str]:
+    def translate_cdna_variant(
+        self, cdna: CdnaPosition, cdna_altseq: str
+    ) -> List[Tuple[str, bool]]:
         """Return the mutated protein sequence, given a cDNA position and alt allele.
 
         Args:
@@ -3480,16 +3254,12 @@ class Core:
         """
         pep_altseq_set = set()
 
-        # If no alt, assume we're talking about a deletion variant
-        if not cdna_altseq:
-            return [""]
-
         # Get the codon sequence
         codon_start_offset = (cdna.start - 1) % 3
         codon_start = cdna.start - codon_start_offset
         codon_end_offset = 2 - ((cdna.end - 1) % 3)
         codon_end = cdna.end + codon_end_offset
-        # Create a new CdnaPosition encompassing the whole codon(s)
+        # Create a new CdnaPosition encompassing the entire codon(s)
         codon = CdnaPosition.copy_from(cdna, start=codon_start, end=codon_end)
         codon_refseq = self.sequence(codon)
         # Assert that the codon sequence is divisible by 3
@@ -3500,10 +3270,17 @@ class Core:
         codon_refseq_right = codon_refseq[-codon_end_offset:] if codon_end_offset else ""
         for i in expand_nt(cdna_altseq):
             codon_altseq = codon_refseq_left + i + codon_refseq_right
-            # Assert that the altered codon sequence is divisible by 3
-            assert len(codon_altseq) % 3 == 0, codon_altseq
+            # A frameshift results when the length of the alternate sequence is not divisible by 3
+            remainder = len(codon_altseq) % 3
+            if remainder != 0:
+                # TODO: A way to preserve information about the downstream nucleotide change?
+                codon_altseq = codon_altseq[:-remainder]
+                is_frameshift = True
+            else:
+                is_frameshift = False
+
             pep_altseq = "".join(AMINO_ACID_TABLE[codon] for codon in split_by_codon(codon_altseq))
-            pep_altseq_set.add(pep_altseq)
+            pep_altseq_set.add((pep_altseq, is_frameshift))
 
         return sorted(pep_altseq_set)
 

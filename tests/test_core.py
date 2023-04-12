@@ -30,6 +30,7 @@ from variant_map.positions import (
     CdnaDuplication,
     CdnaPosition,
     CdnaSubstitution,
+    DnaInsertion,
     DnaPosition,
     DnaSubstitution,
     ExonFusion,
@@ -856,13 +857,26 @@ def test_translate_cdna_variant_pos_1():
 
 
 def test_translate_cdna_variant_1(ensembl100, test_translate_cdna_variant_pos_1):
+    # A simple T>A substitution
     # GTT -> GAT
-    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_1, "A") == ["D"]
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_1, "A") == [
+        ("D", False)
+    ]
+
+
+def test_translate_cdna_variant_2(ensembl100, test_translate_cdna_variant_pos_1):
+    # An ambiguous substitution of either T>A or T>C
+    # GTT -> GAT or GCT
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_1, "M") == [
+        ("A", False),
+        ("D", False),
+    ]
 
 
 def test_translate_cdna_variant_3(ensembl100, test_translate_cdna_variant_pos_1):
-    # GTT -> GAT or GCT
-    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_1, "M") == ["A", "D"]
+    # A frameshifting deletion of T
+    # GTT -> GT
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_1, "") == [("", True)]
 
 
 @pytest.fixture
@@ -882,9 +896,20 @@ def test_translate_cdna_variant_pos_2():
     )
 
 
-def test_translate_cdna_variant_2(ensembl100, test_translate_cdna_variant_pos_2):
+def test_translate_cdna_variant_4(ensembl100, test_translate_cdna_variant_pos_2):
+    # A delins of TTC>AAA
     # GTTCTG -> GAAATG
-    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_2, "AAA") == ["EM"]
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_2, "AAA") == [
+        ("EM", False)
+    ]
+
+
+def test_translate_cdna_variant_5(ensembl100, test_translate_cdna_variant_pos_2):
+    # A non-frameshifting deletion of TTC
+    # GTTCTG -> GTG
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_2, "") == [
+        ("V", False)
+    ]
 
 
 @pytest.fixture
@@ -904,9 +929,20 @@ def test_translate_cdna_variant_pos_3():
     )
 
 
-def test_translate_cdna_variant_4(ensembl100, test_translate_cdna_variant_pos_3):
-    # GG -> GTTCG
-    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_3, "GTTCG") == ["KFV"]
+def test_translate_cdna_variant_6(ensembl100, test_translate_cdna_variant_pos_3):
+    # A non-frameshift insertion of TTC
+    # GG -> AAGTTCG
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_3, "GTTCG") == [
+        ("KFV", False)
+    ]
+
+
+def test_translate_cdna_variant_7(ensembl100, test_translate_cdna_variant_pos_3):
+    # A frameshifting insertion of TTCA
+    # GG -> GTTCAG frameshift
+    assert ensembl100.translate_cdna_variant(test_translate_cdna_variant_pos_3, "GTTCAG") == [
+        ("KFS", True)
+    ]
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1171,6 +1207,31 @@ def test_variant_dna_position(ensembl100):
     assert result == [
         DnaPosition(
             contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand="-"
+        )
+    ]
+
+
+def test_variant_dna_insertion_normalized(ensembl100):
+    result = ensembl100.variant(
+        position_type="dna",
+        feature="1",
+        start=826577,
+        end=826577,
+        strand="+",
+        refseq="A",
+        altseq="AT",
+        variant_type="insertion",
+    )
+    assert result == [
+        DnaInsertion(
+            contig_id="1",
+            start=826577,
+            start_offset=0,
+            end=826578,
+            end_offset=0,
+            strand="+",
+            refseq="AC",
+            altseq="ATC",
         )
     ]
 

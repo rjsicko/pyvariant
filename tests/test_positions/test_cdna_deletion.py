@@ -36,7 +36,7 @@ def test_type(variant):
 
 
 def test_variant_type(variant):
-    assert variant.type == DELETION
+    assert variant.variant_type == DELETION
     assert variant.is_deletion
     assert not variant.is_delins
     assert not variant.is_duplication

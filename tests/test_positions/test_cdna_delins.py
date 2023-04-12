@@ -1,7 +1,7 @@
 import pytest
 
 from variant_map.constants import DELINS
-from variant_map.positions import CdnaDelins, DnaDelins, ProteinDelins, RnaDelins
+from variant_map.positions import CdnaDelins, DnaDelins, ProteinDelins, ProteinFrameshift, RnaDelins
 
 
 @pytest.fixture()
@@ -36,7 +36,7 @@ def test_type(variant):
 
 
 def test_variant_type(variant):
-    assert variant.type == DELINS
+    assert variant.variant_type == DELINS
     assert not variant.is_deletion
     assert variant.is_delins
     assert not variant.is_duplication
@@ -120,8 +120,24 @@ def test_to_protein_frameshift(ensembl69):
         refseq="GGG",
         altseq="TTTA",
     )
-    with pytest.raises(NotImplementedError):
-        ensembl69.to_protein(variant)
+    expected = [
+        ProteinFrameshift(
+            contig_id="17",
+            start=293,
+            start_offset=0,
+            end=293,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000141510",
+            gene_name="TP53",
+            transcript_id="ENST00000269305",
+            transcript_name="TP53-001",
+            protein_id="ENSP00000269305",
+            refseq="G",
+            altseq="V",
+        )
+    ]
+    assert ensembl69.to_protein(variant) == expected
 
 
 def test_to_rna(ensembl69, variant):

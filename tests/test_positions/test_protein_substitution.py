@@ -44,7 +44,7 @@ def test_type(variant):
 
 
 def test_variant_type(variant):
-    assert variant.type == SUBSTITUTION
+    assert variant.variant_type == SUBSTITUTION
     assert not variant.is_deletion
     assert not variant.is_delins
     assert not variant.is_duplication

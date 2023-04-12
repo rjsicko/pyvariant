@@ -6,6 +6,8 @@ from typing import Iterator, List, Optional, Tuple, Union
 
 from Bio.Seq import Seq
 
+from variant_map.constants import DELETION, DELINS, DUPLICATION, INSERTION, SUBSTITUTION
+
 from .tables import DNA, DNA_CODON_TABLE, PROTEIN
 
 # Dictionary used to replace punctuation in a string
@@ -22,6 +24,33 @@ def calc_cdna_to_protein(position: int) -> int:
         int: Equivalent protein position
     """
     return floor((position - 1) / 3 + 1)
+
+
+def classify_seq_change(refseq: str, altseq: str) -> str:
+    """Return the type of variant based on the given reference -> alternate allele change.
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Raises:
+        ValueError: Could not determine the type of variant
+
+    Returns:
+        str: Variant type
+    """
+    if is_deletion(refseq, altseq):
+        return DELETION
+    elif is_delins(refseq, altseq):
+        return DELINS
+    elif is_duplication(refseq, altseq):
+        return DUPLICATION
+    elif is_insertion(refseq, altseq):
+        return INSERTION
+    elif is_substitution(refseq, altseq):
+        return SUBSTITUTION
+    else:
+        raise ValueError(f"Unable to determine variant type for {refseq}/{altseq}")
 
 
 def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
@@ -175,7 +204,7 @@ def is_duplication(refseq: str, altseq: str) -> bool:
     Returns:
         bool: True if the sequence change represents a duplication else False
     """
-    return altseq == refseq * 2
+    return len(refseq) > 0 and altseq == refseq * 2
 
 
 def is_frameshift(cdna_refseq: str, cdna_altseq: str) -> bool:
@@ -341,19 +370,10 @@ def split_insertion(refseq: str, altseq: str) -> Optional[Tuple[str, str, str]]:
             Insertion sequence,
             Sequence flanking the insertion sequence on the right,
     """
-    # If the alt does not have more bases than the ref, it can't be an insertion
-    if len(altseq) <= len(refseq):
-        return None
-
-    # Split the ref at different positions, if both halves match the ends of the alt, it's an insertion
-    # e.g. 'GGGTTT' -> ['GGG', 'TTT']
-    # Try in the middle first, since that's the most likely position
-    mid = len(refseq) // 2
-    idx = [mid] + [i for i in range(1, len(refseq)) if i != mid]
-    for n in idx:
-        l, r = refseq[:n], refseq[n:]
-        if altseq[:n] == l and altseq[-n:] == r:
-            return (altseq[:n], altseq[n:-n], altseq[-n:])
+    if refseq:
+        _, alt_collapse, same_5_prime, same_3_prime = split_common_sequence(refseq, altseq)
+        if same_5_prime + same_3_prime == refseq:
+            return (same_5_prime, alt_collapse, same_3_prime)
 
     return None
 
