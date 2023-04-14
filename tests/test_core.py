@@ -27,6 +27,7 @@ from variant_map.constants import (
 from variant_map.core import Core
 from variant_map.positions import (
     CdnaDeletion,
+    CdnaDelins,
     CdnaDuplication,
     CdnaPosition,
     CdnaSubstitution,
@@ -983,6 +984,72 @@ def test_parse_cdna_intron_deletion(ensembl100):
             transcript_name="ABL1-202",
             protein_id="ENSP00000361423",
             refseq="TCCATAAGGAGTAATCTCTTCCTCGTTGATGAAGCTTTCATCCTGTCTTCTCCCT",
+            altseq="",
+        )
+    ]
+
+
+def test_parse_cdna_stop_deletion(ensembl100):
+    # TODO: Support positions offset from stop codon
+    # result = ensembl100.parse("ENST00000257430:c.*6_*7del")
+    # assert result == [
+    #     CdnaDeletion(
+    #         contig_id="9",
+    #         start=10704,
+    #         start_offset=6,
+    #         end=10704,
+    #         end_offset=7,
+    #         strand="+",
+    #         gene_id="ENSG00000134982",
+    #         gene_name="ABL1",
+    #         transcript_id="ENST00000257430",
+    #         transcript_name="ABL1-201",
+    #         protein_id="ENSP00000257430",
+    #         refseq="AG",
+    #         altseq="",
+    #     )
+    # ]
+    with pytest.raises(ValueError):
+        ensembl100.parse("ENST00000257430:c.*6_*7del")
+
+
+def test_parse_cdna_promoter_delins_multiple(ensembl100):
+    result = ensembl100.parse("ENST00000257430:c.-30347_-30346delinsA")
+    assert result == [
+        CdnaDelins(
+            contig_id="5",
+            start=1,
+            start_offset=-30347,
+            end=1,
+            end_offset=-30346,
+            strand="+",
+            gene_id="ENSG00000134982",
+            gene_name="APC",
+            transcript_id="ENST00000257430",
+            transcript_name="APC-201",
+            protein_id="ENSP00000257430",
+            refseq="CG",
+            altseq="A",
+        )
+    ]
+
+
+def test_parse_cdna_promoter_delins_to_deletion(ensembl100):
+    result = ensembl100.parse("ENST00000257430:c.-30353_-30352delinsA")
+    assert result == [
+        CdnaDeletion(
+            contig_id="5",
+            start=1,
+            start_offset=-30353,
+            end=1,
+            end_offset=-30353,
+            strand="+",
+            gene_id="ENSG00000134982",
+            gene_name="APC",
+            transcript_id="ENST00000257430",
+            transcript_name="APC-201",
+            protein_id="ENSP00000257430",
+            refseq="T",
             altseq="",
         )
     ]

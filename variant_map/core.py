@@ -2544,18 +2544,50 @@ class Core:
 
             # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, start_adjust, end_adjust = collapse_seq_change(ref, alt)
-            start = position.start + start_adjust
-            end = position.end - end_adjust
 
             # Determine the type of variant
             variant_type = classify_seq_change(new_ref, new_alt)
+
+            # Adjust the start position to the collapsed ref and alt. Example:
+            # (start=1, start_offset=-3) + start_adjust=2 == (start=1, start_offset=-1)
+            # (start=1, start_offset=-1) + start_adjust=2 == (start=2, start_offset=0)
+            if position.start_offset:
+                if position.start_offset < 0:
+                    start_offset = min(position.start_offset + start_adjust, 0)
+                    start = position.start + (start_adjust - (start_offset - position.start_offset))
+                else:
+                    start_offset = position.start_offset + start_adjust
+                    start = position.start
+            else:
+                start_offset = position.start_offset
+                start = position.start + start_adjust
+
+            # Adjust the end position to the collapsed ref and alt. Example:
+            # (end=3, end_offset=3) + end_adjust=2 == (end=3, end_offset=1)
+            # (end=3, end_offset=1) + end_adjust=2 == (end=2, end_offset=0)
+            if position.end_offset:
+                if position.end_offset > 0:
+                    end_offset = max(position.end_offset - end_adjust, 0)
+                    end = position.end - (end_adjust + (end_offset - position.end_offset))
+                else:
+                    end_offset = position.end_offset - end_adjust
+                    end = position.end
+            else:
+                end_offset = position.end_offset
+                end = position.end - end_adjust
 
             # Special case: Insertions
             if variant_type == INSERTION:
                 if len(ref) == 1:
                     # Adjust the position so it includes both bases flanking the insertion site
                     end = start + 1
-                    position = position.copy_from(position, start=start, end=end)
+                    position = position.copy_from(
+                        position,
+                        start=start,
+                        start_offset=start_offset,
+                        end=end,
+                        end_offset=start_offset,
+                    )
                     new_ref = self.sequence(position)
                     new_alt = new_alt + new_ref[-1]
 
@@ -2573,7 +2605,13 @@ class Core:
             # Initialize a new variant object from the given position object
             if variant_class:
                 variant = variant_class.copy_from(
-                    position, start=start, end=end, refseq=new_ref, altseq=new_alt
+                    position,
+                    start=start,
+                    start_offset=start_offset,
+                    end=end,
+                    end_offset=end_offset,
+                    refseq=new_ref,
+                    altseq=new_alt,
                 )
                 variant_list.append(variant)
             else:

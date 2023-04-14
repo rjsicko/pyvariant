@@ -329,36 +329,38 @@ def match(string: str) -> Dict:
     best_match_nones = 99
     best_match = {}
 
-    # Iteratively try each regex until the string matches one
-    for regex in REGEX:
-        if parsed := regex.fullmatch(string):
-            breakpoint_groups: Dict[str, Dict] = {"breakpoint1": {}, "breakpoint2": {}}
-            groups: Dict[str, Any] = parsed.groupdict()
-            for key, value in groups.items():
-                bp, bpkey = key.split("_", 1)
-                breakpoint_groups[bp][bpkey] = value
+    # TODO: Support positions offset from stop codon
+    if not re.search(r"\*\d", string):
+        # Iteratively try each regex until the string matches one
+        for regex in REGEX:
+            if parsed := regex.fullmatch(string):
+                breakpoint_groups: Dict[str, Dict] = {"breakpoint1": {}, "breakpoint2": {}}
+                groups: Dict[str, Any] = parsed.groupdict()
+                for key, value in groups.items():
+                    bp, bpkey = key.split("_", 1)
+                    breakpoint_groups[bp][bpkey] = value
 
-            for bp in breakpoint_groups:
-                for key, to_type in MATCH_TYPES.items():
-                    if breakpoint_groups[bp].get(key):
-                        # Coerce found values to the expected type
-                        breakpoint_groups[bp][key] = to_type(breakpoint_groups[bp][key])
-                    else:
-                        # Add in null values for any missing keys
-                        breakpoint_groups[bp][key] = MISSING
+                for bp in breakpoint_groups:
+                    for key, to_type in MATCH_TYPES.items():
+                        if breakpoint_groups[bp].get(key):
+                            # Coerce found values to the expected type
+                            breakpoint_groups[bp][key] = to_type(breakpoint_groups[bp][key])
+                        else:
+                            # Add in null values for any missing keys
+                            breakpoint_groups[bp][key] = MISSING
 
-                # Special case, join split suffixes (e.g. 'delVins' -> 'delins')
-                if suffix2 := breakpoint_groups[bp].get("suffix2", ""):
-                    breakpoint_groups[bp]["suffix"] += suffix2
+                    # Special case, join split suffixes (e.g. 'delVins' -> 'delins')
+                    if suffix2 := breakpoint_groups[bp].get("suffix2", ""):
+                        breakpoint_groups[bp]["suffix"] += suffix2
 
-                breakpoint_groups[bp].pop("suffix2")
+                    breakpoint_groups[bp].pop("suffix2")
 
-            # If the string matches multiple regexes, return the match with more values filled out.
-            # Presumably this is a better match.
-            count = count_missing(breakpoint_groups)
-            if count < best_match_nones:
-                best_match = breakpoint_groups
-                best_match_nones = count
+                # If the string matches multiple regexes, return the match with more values filled out.
+                # Presumably this is a better match.
+                count = count_missing(breakpoint_groups)
+                if count < best_match_nones:
+                    best_match = breakpoint_groups
+                    best_match_nones = count
 
     if best_match:
         return best_match
