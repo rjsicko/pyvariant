@@ -6,7 +6,7 @@ from typing import Dict, List, Union, cast
 from .core import Core
 from .ensembl_cache import EnsemblCache
 from .files import tsv_to_dict, txt_to_list
-from .positions import CdnaPosition, DnaPosition, ProteinPosition, RnaPosition
+from .positions import CdnaPosition
 
 
 class EnsemblRelease(Core):
@@ -103,8 +103,7 @@ class EnsemblRelease(Core):
             clean=clean, recache=recache, redownload=redownload, restrict_genes=restrict_genes
         )
 
-    # TODO: add type hints
-    def sequence(self, position) -> str:
+    def sequence(self, position, window: int = -1) -> str:
         """Return the sequence for the given position, inclusive.
 
         Args:
@@ -126,26 +125,29 @@ class EnsemblRelease(Core):
                 position = position_[0]
 
         # Ensembl does not provide a CDS FASTA so we need to get the sequence from the RNA FASTA
-        if position.is_cdna:
-            if self.cds_fasta:
-                return self._cds_sequence(position.transcript_id, position.start, position.end)
-            else:
-                position = cast(CdnaPosition, position)
-                if rna := self.to_rna(position):
-                    position = rna[0]
+        if position.is_cdna and not self.cds_fasta:
+            position = cast(CdnaPosition, position)
+            if rna := self.to_rna(position):
+                position = rna[0]
 
-        if position.is_dna:
-            position = cast(DnaPosition, position)
-            return self._dna_sequence(
-                position.contig_id, position.start, position.end, position.strand
-            )
+        # Get the correct reference
+        if position.is_cdna:
+            fasta = self._get_fasta(self.cds_fasta, position.transcript_id)
+        elif position.is_dna:
+            fasta = self._get_fasta(self.dna_fasta, position.contig_id)
         elif position.is_exon:
-            raise NotImplementedError(f"Unable to get sequence for {position}")
+            raise NotImplementedError(f"No FASTA for exons ({position})")
         elif position.is_protein:
-            position = cast(ProteinPosition, position)
-            return self._protein_sequence(position.protein_id, position.start, position.end)
+            fasta = self._get_fasta(self.protein_fasta, position.protein_id)
         elif position.is_rna:
-            position = cast(RnaPosition, position)
-            return self._rna_sequence(position.transcript_id, position.start, position.end)
+            fasta = self._get_fasta(self.rna_fasta, position.transcript_id)
         else:
             raise ValueError(f"Unable to get sequence for {position}")
+
+        # Retrieve the sequence at the given position
+        if position.is_fusion:
+            return self._fusion_sequence(position, window, fasta)
+        elif position.is_small_variant:
+            return self._small_variant_sequence(position, window, fasta)
+        else:
+            return self._position_sequence(position, window, fasta)

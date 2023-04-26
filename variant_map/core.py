@@ -75,6 +75,7 @@ from .positions import (
     _RnaSmallVariant,
     _SmallVariant,
 )
+from .sequence import get_sequence, mutate_sequence
 from .tables import AMINO_ACID_TABLE
 from .utils import (
     calc_cdna_to_protein,
@@ -409,7 +410,7 @@ class Core:
     # Functions for getting variant sequences
     # ---------------------------------------------------------------------------------------------
     # TODO: add type hints
-    def sequence(self, position) -> str:
+    def sequence(self, position, window: int = -1) -> str:
         """Return the sequence for the given position, inclusive.
 
         Args:
@@ -430,115 +431,146 @@ class Core:
                 assert len(position_) == 1
                 position = position_[0]
 
+        # Get the correct reference
         if position.is_cdna:
-            position = cast(CdnaPosition, position)
-            return self._cds_sequence(position.transcript_id, position.start, position.end)
+            fasta = self._get_fasta(self.cds_fasta, position.transcript_id)
         elif position.is_dna:
-            position = cast(DnaPosition, position)
-            return self._dna_sequence(
-                position.contig_id, position.start, position.end, position.strand
-            )
+            fasta = self._get_fasta(self.dna_fasta, position.contig_id)
         elif position.is_exon:
-            raise NotImplementedError(f"Unable to get sequence for {position}")
+            raise NotImplementedError(f"No FASTA for exons ({position})")
         elif position.is_protein:
-            position = cast(ProteinPosition, position)
-            return self._protein_sequence(position.protein_id, position.start, position.end)
+            fasta = self._get_fasta(self.protein_fasta, position.protein_id)
         elif position.is_rna:
-            position = cast(RnaPosition, position)
-            return self._rna_sequence(position.transcript_id, position.start, position.end)
+            fasta = self._get_fasta(self.rna_fasta, position.transcript_id)
         else:
             raise ValueError(f"Unable to get sequence for {position}")
 
-    def _cds_sequence(self, transcript_id: str, start: int, end: int) -> str:
-        """Return the sequence for the given position, inclusive.
+        # Retrieve the sequence at the given position
+        if position.is_fusion:
+            return self._fusion_sequence(position, window, fasta)
+        elif position.is_small_variant:
+            return self._small_variant_sequence(position, window, fasta)
+        else:
+            return self._position_sequence(position, window, fasta)
 
-        Args:
-            transcript_id (str): Transcript ID
-            start (int): Start position
-            end (int): End position
-
-        Returns:
-            str: CDS sequence
-        """
-        return self._sequence(self.cds_fasta, transcript_id, start=start, end=end)
-
-    def _dna_sequence(self, contig_id: str, start: int, end: int, strand: str) -> str:
-        """Return the sequence for the given position, inclusive.
-
-        Args:
-            contig_id (str): Contig ID
-            start (int): Start position
-            end (int): End position
-            strand (str): Strand ('+' or '-')
-
-        Returns:
-            str: DNA sequence
-        """
-        return self._sequence(self.dna_fasta, contig_id, start=start, end=end, strand=strand)
-
-    def _protein_sequence(self, protein_id: str, start: int, end: int) -> str:
-        """Return the sequence for the given position, inclusive.
-
-        Args:
-            protein_id (str): Protein ID
-            start (int): Start position
-            end (int): End position
-
-        Returns:
-            str: Protein sequence
-        """
-        return self._sequence(self.protein_fasta, protein_id, start=start, end=end)
-
-    def _rna_sequence(self, transcript_id: str, start: int, end: int) -> str:
-        """Return the sequence for the given position, inclusive.
-
-        Args:
-            transcript_id (str): Transcript ID
-            start (int): Start position
-            end (int): End position
-
-        Returns:
-            str: RNA sequence
-        """
-        return self._sequence(self.rna_fasta, transcript_id, start=start, end=end)
-
-    def _sequence(
-        self,
-        fasta: List[Fasta],
-        ref: str,
-        start: Optional[int] = None,
-        end: Optional[int] = None,
-        strand: Optional[str] = None,
-    ):
-        for f in fasta:
-            try:
-                seq = f[ref]
-                break
-            except KeyError:
-                continue
+    def _get_fasta(self, fasta_list: List[Fasta], ref: str) -> Fasta:
+        for fasta in fasta_list:
+            if ref in fasta:
+                return fasta
         else:
             raise KeyError(f"Sequence '{ref}' not found")
 
-        # if no positions are given, return the whole sequence
-        seqlen = len(seq)
-        start = start if start is not None else 1
-        end = end if end is not None else seqlen
+    def _fusion_sequence(self, position, window: int, fasta: Fasta) -> str:
+        # TODO: Get fusion breakpoint sequence
+        raise NotImplementedError(f"Unable to get sequence for {position}")
 
-        # validate that the given positions fall within the sequence
-        if not (0 <= start <= seqlen):
-            raise ValueError(f"Start must be from 1 to {seqlen} ({start})")
-        if not (0 < end <= seqlen):
-            raise ValueError(f"End must be from 1 to {seqlen} ({end})")
+    def _position_sequence(self, position, window: int, fasta: Fasta) -> str:
+        if position.is_cdna:
+            position = cast(CdnaPosition, position)
+            return self._cdna_position_sequence(position, window, fasta)
+        elif position.is_dna:
+            position = cast(DnaPosition, position)
+            return self._dna_position_sequence(position, window, fasta)
+        elif position.is_exon:
+            position = cast(ExonPosition, position)
+            return self._exon_position_sequence(position, window, fasta)
+        elif position.is_protein:
+            position = cast(ProteinPosition, position)
+            return self._protein_position_sequence(position, window, fasta)
+        elif position.is_rna:
+            position = cast(RnaPosition, position)
+            return self._rna_position_sequence(position, window, fasta)
+        else:
+            raise ValueError(f"Unable to get sequence for {position}")
 
-        # sanity check that the end position is after the start
-        if end < start:
-            raise ValueError(f"End must be >= start ({end} < {start})")
+    def _small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+        if variant.is_cdna:
+            variant = cast(_CdnaSmallVariant, variant)
+            return self._cdna_small_variant_sequence(variant, window, fasta)
+        elif variant.is_dna:
+            variant = cast(_DnaSmallVariant, variant)
+            return self._dna_small_variant_sequence(variant, window, fasta)
+        elif variant.is_exon:
+            variant = cast(_ExonSmallVariant, variant)
+            return self._exon_small_variant_sequence(variant, window, fasta)
+        elif variant.is_protein:
+            variant = cast(_ProteinSmallVariant, variant)
+            return self._protein_small_variant_sequence(variant, window, fasta)
+        elif variant.is_rna:
+            variant = cast(_RnaSmallVariant, variant)
+            return self._rna_small_variant_sequence(variant, window, fasta)
+        else:
+            raise ValueError(f"Unable to get sequence for {variant}")
 
-        subseq = seq[start - 1 : end]
-        if strand == "-":
+    def _cdna_position_sequence(self, position, window: int, fasta: Fasta) -> str:
+        return get_sequence(fasta, position.transcript_id, position.start, position.end, window)
+
+    def _dna_position_sequence(self, position, window: int, fasta: Fasta) -> str:
+        subseq = get_sequence(fasta, position.contig_id, position.start, position.end, window)
+        if position.on_negative_strand:
             subseq = reverse_complement(subseq)
 
         return subseq
+
+    def _exon_position_sequence(self, position, window: int, fasta: Fasta) -> str:
+        raise NotImplementedError(f"Unable to get sequence for {position}")
+
+    def _protein_position_sequence(self, position, window: int, fasta: Fasta) -> str:
+        return get_sequence(fasta, position.protein_id, position.start, position.end, window)
+
+    def _rna_position_sequence(self, position, window: int, fasta: Fasta) -> str:
+        return get_sequence(fasta, position.transcript_id, position.start, position.end, window)
+
+    def _cdna_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+        return mutate_sequence(
+            fasta,
+            variant.transcript_id,
+            variant.start,
+            variant.end,
+            window,
+            variant.altseq,
+            insertion=variant.is_insertion,
+        )
+
+    def _dna_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+        subseq = mutate_sequence(
+            fasta,
+            variant.contig_id,
+            variant.start,
+            variant.end,
+            window,
+            variant.altseq,
+            insertion=variant.is_insertion,
+        )
+        if variant.on_negative_strand:
+            subseq = reverse_complement(subseq)
+
+        return subseq
+
+    def _exon_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+        raise NotImplementedError(f"Unable to get sequence for {variant}")
+
+    def _protein_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+        return mutate_sequence(
+            fasta,
+            variant.protein_id,
+            variant.start,
+            variant.end,
+            window,
+            variant.altseq,
+            insertion=variant.is_insertion,
+        )
+
+    def _rna_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+        return mutate_sequence(
+            fasta,
+            variant.transcript_id,
+            variant.start,
+            variant.end,
+            window,
+            variant.altseq,
+            insertion=variant.is_insertion,
+        )
 
     # ---------------------------------------------------------------------------------------------
     # Functions for mapping to other position types
