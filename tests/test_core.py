@@ -573,6 +573,26 @@ def test_sequence_rna(ensembl100, test_sequence_rna_pos):
     assert ensembl100.sequence(test_sequence_rna_pos) == "GCT"
 
 
+def test_sequence_from_string(ensembl100):
+    assert ensembl100.sequence("ENST00000288135:c.126_128delinsGT") == "GT"
+
+
+def test_sequence_from_string_strand(ensembl100):
+    assert ensembl100.sequence("ENST00000288135:c.126_128delinsGT", strand="-") == "AC"
+
+
+def test_sequence_from_string_window(ensembl100):
+    assert (
+        ensembl100.sequence("ENST00000288135:c.126_128delinsGT", window=20)
+        == "CCATCCAGGGTATCAGACTT"
+    )
+
+
+def test_sequence_from_string_ambiguous(ensembl100):
+    with pytest.raises(ValueError):
+        ensembl100.sequence("KRAS:c.126_128delinsGT", window=20)
+
+
 # -------------------------------------------------------------------------------------------------
 # normalize_id
 # -------------------------------------------------------------------------------------------------

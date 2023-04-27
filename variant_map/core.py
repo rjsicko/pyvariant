@@ -410,11 +410,13 @@ class Core:
     # Functions for getting variant sequences
     # ---------------------------------------------------------------------------------------------
     # TODO: add type hints
-    def sequence(self, position, window: int = -1) -> str:
+    def sequence(self, position_or_str, strand: Optional[str] = None, window: int = -1) -> str:
         """Return the sequence for the given position, inclusive.
 
         Args:
-            position (Position): Position to retrieve sequence for
+            position_or_str: Position or variant to retrieve sequence for
+            strand (Optional[str]): Normalize the sequence to the given strand ('+' or '-')
+            window (Optional[int]): Total length of the returned sequence
 
         Returns:
             str: Sequence
@@ -422,6 +424,38 @@ class Core:
         Raises:
             ValueError: No method exists for getting a sequence for the given position type
         """
+        assert strand in [None, "+", "-"]
+        sequence_set = set()
+
+        if isinstance(position_or_str, str):
+            position_list = self.parse(position_or_str)
+        else:
+            position_list = [position_or_str]
+
+        for position in position_list:
+            sequence = self._sequence(position, window)
+            # Reverse complement the sequence if the strand the position is on isn't the desired strand
+            if strand == "+" and position.on_negative_strand:
+                sequence = reverse_complement(sequence)
+            elif strand == "-" and position.on_positive_strand:
+                sequence = reverse_complement(sequence)
+            # NOTE: Assumes the DNA FASTA represents the "+" strand of the genome
+            elif position.is_dna and position.on_negative_strand and strand != "-":
+                sequence = reverse_complement(sequence)
+
+            sequence_set.add(sequence)
+
+        if len(sequence_set) > 1:
+            raise ValueError(f"Ambiguous sequences for '{position_or_str}': {sequence_set}")
+        else:
+            return sequence_set.pop()
+
+    def _sequence(self, position, window: int) -> str:
+        if isinstance(position, str):
+            position_ = self.parse(position)
+            assert len(position_) == 1
+            position = position_[0]
+
         # TODO: Is this the correct behaviour for offset variants?
         if position.start_offset or position.end_offset:
             if position.is_protein:
@@ -506,11 +540,7 @@ class Core:
         return get_sequence(fasta, position.transcript_id, position.start, position.end, window)
 
     def _dna_position_sequence(self, position, window: int, fasta: Fasta) -> str:
-        subseq = get_sequence(fasta, position.contig_id, position.start, position.end, window)
-        if position.on_negative_strand:
-            subseq = reverse_complement(subseq)
-
-        return subseq
+        return get_sequence(fasta, position.contig_id, position.start, position.end, window)
 
     def _exon_position_sequence(self, position, window: int, fasta: Fasta) -> str:
         raise NotImplementedError(f"Unable to get sequence for {position}")
@@ -533,7 +563,7 @@ class Core:
         )
 
     def _dna_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
-        subseq = mutate_sequence(
+        return mutate_sequence(
             fasta,
             variant.contig_id,
             variant.start,
@@ -542,10 +572,6 @@ class Core:
             variant.altseq,
             insertion=variant.is_insertion,
         )
-        if variant.on_negative_strand:
-            subseq = reverse_complement(subseq)
-
-        return subseq
 
     def _exon_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
         raise NotImplementedError(f"Unable to get sequence for {variant}")

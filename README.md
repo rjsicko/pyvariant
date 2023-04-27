@@ -79,6 +79,22 @@ Exon to RNA:
 [RnaFusion(breakpoint1=RnaPosition(contig_id='12', start=972, start_offset=0, end=2240, end_offset=0, strand='+', gene_id='ENSG00000123374', gene_name='CDK2', transcript_id='ENST00000266970', transcript_name='CDK2-201'), breakpoint2=RnaPosition(contig_id='12', start=63, start_offset=0, end=317, end_offset=0, strand='+', gene_id='ENSG00000111540', gene_name='RAB5B', transcript_id='ENST00000360299', transcript_name='RAB5B-201'))]
 ```
 
+### Fetch sequences
+
+Get the mutated reference sequence, within a given window:
+
+```python
+>>> ensembl100.sequence("ENST00000635293:c.1044A>C", window=50)
+CGCCTCTTTCAGAGACTTTTAACTTCAACATCTGTCCCTACCCAGCAGGC
+```
+
+The sequence can also be normalized to a specific strand of the genome:
+
+```python
+>>> ensembl100.sequence("ENST00000635293:c.1044A>C", window=50, strand='+')
+GCCTGCTGGGTAGGGACAGATGTTGAAGTTAAAAGTCTCTGAAAGAGGCG
+```
+
 ### Retrieve feature information
 
 `variant-map` also has functions for retrieving general information about various features. For example:

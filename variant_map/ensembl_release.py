@@ -103,18 +103,7 @@ class EnsemblRelease(Core):
             clean=clean, recache=recache, redownload=redownload, restrict_genes=restrict_genes
         )
 
-    def sequence(self, position, window: int = -1) -> str:
-        """Return the sequence for the given position, inclusive.
-
-        Args:
-            position (Position): Position to retrieve sequence for
-
-        Returns:
-            str: Sequence
-
-        Raises:
-            ValueError: No method exists for getting a sequence for the given position type
-        """
+    def _sequence(self, position, window: int) -> str:
         # TODO: Is this the correct behaviour for offset variants?
         if position.start_offset or position.end_offset:
             if position.is_protein:
