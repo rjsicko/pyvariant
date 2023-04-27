@@ -410,13 +410,22 @@ class Core:
     # Functions for getting variant sequences
     # ---------------------------------------------------------------------------------------------
     # TODO: add type hints
-    def sequence(self, position_or_str, strand: Optional[str] = None, window: int = -1) -> str:
+    def sequence(
+        self,
+        position_or_str,
+        strand: Optional[str] = None,
+        window: Optional[int] = -1,
+        floor: Optional[int] = -1,
+        ceiling: Optional[int] = -1,
+    ) -> str:
         """Return the sequence for the given position, inclusive.
 
         Args:
             position_or_str: Position or variant to retrieve sequence for
             strand (Optional[str]): Normalize the sequence to the given strand ('+' or '-')
             window (Optional[int]): Total length of the returned sequence
+            floor (Optional[int]): Minimum start position of the returned sequence
+            ceiling (Optional[int]): Maximum end position of the returned sequence
 
         Returns:
             str: Sequence
@@ -433,31 +442,39 @@ class Core:
             position_list = [position_or_str]
 
         for position in position_list:
-            sequence = self._sequence(position, window)
-            # Reverse complement the sequence if the strand the position is on isn't the desired strand
-            if strand == "+" and position.on_negative_strand:
-                sequence = reverse_complement(sequence)
-            elif strand == "-" and position.on_positive_strand:
-                sequence = reverse_complement(sequence)
-            # NOTE: Assumes the DNA FASTA represents the "+" strand of the genome
-            elif position.is_dna and position.on_negative_strand and strand != "-":
-                sequence = reverse_complement(sequence)
-
-            sequence_set.add(sequence)
+            if position.is_fusion:
+                sequence_set.add(self._fusion_sequence(position, strand, window, floor, ceiling))
+            else:
+                sequence_set.add(self._sequence(position, strand, window, floor, ceiling))
 
         if len(sequence_set) > 1:
             raise ValueError(f"Ambiguous sequences for '{position_or_str}': {sequence_set}")
         else:
             return sequence_set.pop()
 
-    def _sequence(self, position, window: int) -> str:
+    def _sequence(
+        self,
+        position,
+        strand: Optional[str],
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+    ) -> str:
         if isinstance(position, str):
             position_ = self.parse(position)
             assert len(position_) == 1
             position = position_[0]
 
         # TODO: Is this the correct behaviour for offset variants?
-        if position.start_offset or position.end_offset:
+        if (not position.is_fusion and (position.start_offset or position.end_offset)) or (
+            position.is_fusion
+            and (
+                position.breakpoint1.start_offset
+                or position.breakpoint1.end_offset
+                or position.breakpoint2.start_offset
+                or position.breakpoint2.end_offset
+            )
+        ):
             if position.is_protein:
                 raise ValueError(f"Unable to get sequence for {position}")
             else:
@@ -480,12 +497,21 @@ class Core:
             raise ValueError(f"Unable to get sequence for {position}")
 
         # Retrieve the sequence at the given position
-        if position.is_fusion:
-            return self._fusion_sequence(position, window, fasta)
-        elif position.is_small_variant:
-            return self._small_variant_sequence(position, window, fasta)
+        if position.is_small_variant:
+            sequence = self._small_variant_sequence(position, window, floor, ceiling, fasta)
         else:
-            return self._position_sequence(position, window, fasta)
+            sequence = self._position_sequence(position, window, floor, ceiling, fasta)
+
+        # Reverse complement the sequence if the strand the position is on isn't the desired strand
+        if strand == "+" and position.on_negative_strand:
+            sequence = reverse_complement(sequence)
+        elif strand == "-" and position.on_positive_strand:
+            sequence = reverse_complement(sequence)
+        # NOTE: Assumes the DNA FASTA represents the "+" strand of the genome
+        elif position.is_dna and position.on_negative_strand and strand != "-":
+            sequence = reverse_complement(sequence)
+
+        return sequence
 
     def _get_fasta(self, fasta_list: List[Fasta], ref: str) -> Fasta:
         for fasta in fasta_list:
@@ -494,106 +520,228 @@ class Core:
         else:
             raise KeyError(f"Sequence '{ref}' not found")
 
-    def _fusion_sequence(self, position, window: int, fasta: Fasta) -> str:
-        # TODO: Get fusion breakpoint sequence
-        raise NotImplementedError(f"Unable to get sequence for {position}")
+    def _fusion_sequence(
+        self,
+        position,
+        strand: Optional[str],
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+    ) -> str:
+        sequence = ""
 
-    def _position_sequence(self, position, window: int, fasta: Fasta) -> str:
+        if window and window > 0:
+            pad_left = window // 2
+            pad_right = window - pad_left
+        else:
+            pad_left = position.breakpoint1.end - position.breakpoint1.start + 1
+            pad_right = position.breakpoint2.end - position.breakpoint2.start + 1
+
+        sequence += self.sequence(
+            position.breakpoint1, strand, pad_left, floor, position.breakpoint1.end
+        )
+        sequence += self.sequence(
+            position.breakpoint2, strand, pad_right, position.breakpoint2.start, ceiling
+        )
+
+        return sequence
+
+    def _position_sequence(
+        self,
+        position,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
         if position.is_cdna:
             position = cast(CdnaPosition, position)
-            return self._cdna_position_sequence(position, window, fasta)
+            return self._cdna_position_sequence(position, window, floor, ceiling, fasta)
         elif position.is_dna:
             position = cast(DnaPosition, position)
-            return self._dna_position_sequence(position, window, fasta)
+            return self._dna_position_sequence(position, window, floor, ceiling, fasta)
         elif position.is_exon:
             position = cast(ExonPosition, position)
-            return self._exon_position_sequence(position, window, fasta)
+            return self._exon_position_sequence(position, window, floor, ceiling, fasta)
         elif position.is_protein:
             position = cast(ProteinPosition, position)
-            return self._protein_position_sequence(position, window, fasta)
+            return self._protein_position_sequence(position, window, floor, ceiling, fasta)
         elif position.is_rna:
             position = cast(RnaPosition, position)
-            return self._rna_position_sequence(position, window, fasta)
+            return self._rna_position_sequence(position, window, floor, ceiling, fasta)
         else:
             raise ValueError(f"Unable to get sequence for {position}")
 
-    def _small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+    def _small_variant_sequence(
+        self,
+        variant,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
         if variant.is_cdna:
             variant = cast(_CdnaSmallVariant, variant)
-            return self._cdna_small_variant_sequence(variant, window, fasta)
+            return self._cdna_small_variant_sequence(variant, window, floor, ceiling, fasta)
         elif variant.is_dna:
             variant = cast(_DnaSmallVariant, variant)
-            return self._dna_small_variant_sequence(variant, window, fasta)
+            return self._dna_small_variant_sequence(variant, window, floor, ceiling, fasta)
         elif variant.is_exon:
             variant = cast(_ExonSmallVariant, variant)
-            return self._exon_small_variant_sequence(variant, window, fasta)
+            return self._exon_small_variant_sequence(variant, window, floor, ceiling, fasta)
         elif variant.is_protein:
             variant = cast(_ProteinSmallVariant, variant)
-            return self._protein_small_variant_sequence(variant, window, fasta)
+            return self._protein_small_variant_sequence(variant, window, floor, ceiling, fasta)
         elif variant.is_rna:
             variant = cast(_RnaSmallVariant, variant)
-            return self._rna_small_variant_sequence(variant, window, fasta)
+            return self._rna_small_variant_sequence(variant, window, floor, ceiling, fasta)
         else:
             raise ValueError(f"Unable to get sequence for {variant}")
 
-    def _cdna_position_sequence(self, position, window: int, fasta: Fasta) -> str:
-        return get_sequence(fasta, position.transcript_id, position.start, position.end, window)
+    def _cdna_position_sequence(
+        self,
+        position,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
+        return get_sequence(
+            fasta, position.transcript_id, position.start, position.end, window, floor, ceiling
+        )
 
-    def _dna_position_sequence(self, position, window: int, fasta: Fasta) -> str:
-        return get_sequence(fasta, position.contig_id, position.start, position.end, window)
+    def _dna_position_sequence(
+        self,
+        position,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
+        return get_sequence(
+            fasta, position.contig_id, position.start, position.end, window, floor, ceiling
+        )
 
-    def _exon_position_sequence(self, position, window: int, fasta: Fasta) -> str:
+    def _exon_position_sequence(
+        self,
+        position,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
         raise NotImplementedError(f"Unable to get sequence for {position}")
 
-    def _protein_position_sequence(self, position, window: int, fasta: Fasta) -> str:
-        return get_sequence(fasta, position.protein_id, position.start, position.end, window)
+    def _protein_position_sequence(
+        self,
+        position,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
+        return get_sequence(
+            fasta, position.protein_id, position.start, position.end, window, floor, ceiling
+        )
 
-    def _rna_position_sequence(self, position, window: int, fasta: Fasta) -> str:
-        return get_sequence(fasta, position.transcript_id, position.start, position.end, window)
+    def _rna_position_sequence(
+        self,
+        position,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
+        return get_sequence(
+            fasta, position.transcript_id, position.start, position.end, window, floor, ceiling
+        )
 
-    def _cdna_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+    def _cdna_small_variant_sequence(
+        self,
+        variant,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
         return mutate_sequence(
             fasta,
             variant.transcript_id,
             variant.start,
             variant.end,
             window,
+            floor,
+            ceiling,
             variant.altseq,
             insertion=variant.is_insertion,
         )
 
-    def _dna_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+    def _dna_small_variant_sequence(
+        self,
+        variant,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
         return mutate_sequence(
             fasta,
             variant.contig_id,
             variant.start,
             variant.end,
             window,
+            floor,
+            ceiling,
             variant.altseq,
             insertion=variant.is_insertion,
         )
 
-    def _exon_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+    def _exon_small_variant_sequence(
+        self,
+        variant,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
         raise NotImplementedError(f"Unable to get sequence for {variant}")
 
-    def _protein_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+    def _protein_small_variant_sequence(
+        self,
+        variant,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
         return mutate_sequence(
             fasta,
             variant.protein_id,
             variant.start,
             variant.end,
             window,
+            floor,
+            ceiling,
             variant.altseq,
             insertion=variant.is_insertion,
         )
 
-    def _rna_small_variant_sequence(self, variant, window: int, fasta: Fasta) -> str:
+    def _rna_small_variant_sequence(
+        self,
+        variant,
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+        fasta: Fasta,
+    ) -> str:
         return mutate_sequence(
             fasta,
             variant.transcript_id,
             variant.start,
             variant.end,
             window,
+            floor,
+            ceiling,
             variant.altseq,
             insertion=variant.is_insertion,
         )

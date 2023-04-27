@@ -593,6 +593,19 @@ def test_sequence_from_string_ambiguous(ensembl100):
         ensembl100.sequence("KRAS:c.126_128delinsGT", window=20)
 
 
+def test_sequence_fusion_plus_minus(ensembl100):
+    assert (
+        ensembl100.sequence("ENST00000288135:r.7::ENST00000256078:r.5", window=11) == "ACTTGGCGGCG"
+    )
+
+
+def test_sequence_fusion_plus_plus(ensembl100):
+    assert (
+        ensembl100.sequence("ENST00000399410:r.2871::ENST00000561813:r.317", window=50)
+        == "ACAGTGCAGGGAAGCAACTGCAGAGGCTGTGCAATCTTGCACAAATATCT"
+    )
+
+
 # -------------------------------------------------------------------------------------------------
 # normalize_id
 # -------------------------------------------------------------------------------------------------

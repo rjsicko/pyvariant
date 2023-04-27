@@ -95,6 +95,13 @@ The sequence can also be normalized to a specific strand of the genome:
 GCCTGCTGGGTAGGGACAGATGTTGAAGTTAAAAGTCTCTGAAAGAGGCG
 ```
 
+Get the sequence surrounding a fusion breakpoint:
+
+```python
+>>> ensembl100.sequence("ENST00000399410:r.2871::ENST00000561813:r.317", window=50)
+ACAGTGCAGGGAAGCAACTGCAGAGGCTGTGCAATCTTGCACAAATATCT
+```
+
 ### Retrieve feature information
 
 `variant-map` also has functions for retrieving general information about various features. For example:

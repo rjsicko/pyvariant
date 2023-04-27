@@ -1,12 +1,13 @@
 """Definitions for the `EnsemblRelease` class."""
 from __future__ import annotations
 
-from typing import Dict, List, Union, cast
+from typing import Dict, List, Optional, Union, cast
 
 from .core import Core
 from .ensembl_cache import EnsemblCache
 from .files import tsv_to_dict, txt_to_list
 from .positions import CdnaPosition
+from .utils import reverse_complement
 
 
 class EnsemblRelease(Core):
@@ -103,9 +104,24 @@ class EnsemblRelease(Core):
             clean=clean, recache=recache, redownload=redownload, restrict_genes=restrict_genes
         )
 
-    def _sequence(self, position, window: int) -> str:
+    def _sequence(
+        self,
+        position,
+        strand: Optional[str],
+        window: Optional[int],
+        floor: Optional[int],
+        ceiling: Optional[int],
+    ) -> str:
         # TODO: Is this the correct behaviour for offset variants?
-        if position.start_offset or position.end_offset:
+        if (not position.is_fusion and (position.start_offset or position.end_offset)) or (
+            position.is_fusion
+            and (
+                position.breakpoint1.start_offset
+                or position.breakpoint1.end_offset
+                or position.breakpoint2.start_offset
+                or position.breakpoint2.end_offset
+            )
+        ):
             if position.is_protein:
                 raise ValueError(f"Unable to get sequence for {position}")
             else:
@@ -134,9 +150,18 @@ class EnsemblRelease(Core):
             raise ValueError(f"Unable to get sequence for {position}")
 
         # Retrieve the sequence at the given position
-        if position.is_fusion:
-            return self._fusion_sequence(position, window, fasta)
-        elif position.is_small_variant:
-            return self._small_variant_sequence(position, window, fasta)
+        if position.is_small_variant:
+            sequence = self._small_variant_sequence(position, window, floor, ceiling, fasta)
         else:
-            return self._position_sequence(position, window, fasta)
+            sequence = self._position_sequence(position, window, floor, ceiling, fasta)
+
+        # Reverse complement the sequence if the strand the position is on isn't the desired strand
+        if strand == "+" and position.on_negative_strand:
+            sequence = reverse_complement(sequence)
+        elif strand == "-" and position.on_positive_strand:
+            sequence = reverse_complement(sequence)
+        # NOTE: Assumes the DNA FASTA represents the "+" strand of the genome
+        elif position.is_dna and position.on_negative_strand and strand != "-":
+            sequence = reverse_complement(sequence)
+
+        return sequence
