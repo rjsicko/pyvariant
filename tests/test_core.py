@@ -31,13 +31,18 @@ from variant_map.positions import (
     CdnaDuplication,
     CdnaPosition,
     CdnaSubstitution,
+    DnaDelins,
     DnaInsertion,
     DnaPosition,
     DnaSubstitution,
     ExonFusion,
     ExonPosition,
+    ProteinFrameshift,
     ProteinPosition,
+    ProteinSubstitution,
+    RnaDelins,
     RnaPosition,
+    RnaSubstitution,
 )
 
 
@@ -1430,5 +1435,419 @@ def test_variant_exon_fusion(ensembl100):
                 transcript_name="PRCC-201",
                 exon_id="ENSE00003525835",
             ),
+        )
+    ]
+
+
+# -------------------------------------------------------------------------------------------------
+# to_all
+# -------------------------------------------------------------------------------------------------
+def test_to_all_from_cdna_delins(ensembl100):
+    result = ensembl100.to_all("ENST00000288135:c.126_128delinsGT")
+    assert result == {
+        "cdna": [
+            CdnaDelins(
+                refseq="AAA",
+                altseq="GT",
+                contig_id="4",
+                start=126,
+                start_offset=0,
+                end=128,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+                protein_id="ENSP00000288135",
+            )
+        ],
+        "dna": [
+            DnaDelins(
+                refseq="AAA",
+                altseq="GT",
+                contig_id="4",
+                start=54695570,
+                start_offset=0,
+                end=54695572,
+                end_offset=0,
+                strand="+",
+            )
+        ],
+        "exon": [
+            ExonPosition(
+                contig_id="4",
+                start=2,
+                start_offset=0,
+                end=2,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+                exon_id="ENSE00001032350",
+            )
+        ],
+        "protein": [
+            ProteinFrameshift(
+                refseq="K",
+                altseq="",
+                contig_id="4",
+                start=43,
+                start_offset=0,
+                end=43,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+                protein_id="ENSP00000288135",
+            )
+        ],
+        "rna": [
+            RnaDelins(
+                refseq="AAA",
+                altseq="GT",
+                contig_id="4",
+                start=184,
+                start_offset=0,
+                end=186,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+            )
+        ],
+    }
+
+
+def test_to_all_from_dna_position(ensembl100):
+    result = ensembl100.to_all("4:g.54695570_54695572")
+    assert result == {
+        "cdna": [
+            CdnaPosition(
+                contig_id="4",
+                start=126,
+                start_offset=0,
+                end=128,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+                protein_id="ENSP00000288135",
+            ),
+            CdnaPosition(
+                contig_id="4",
+                start=126,
+                start_offset=0,
+                end=128,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000412167",
+                transcript_name="KIT-202",
+                protein_id="ENSP00000390987",
+            ),
+        ],
+        "dna": [
+            DnaPosition(
+                contig_id="4",
+                start=54695570,
+                start_offset=0,
+                end=54695572,
+                end_offset=0,
+                strand="+",
+            )
+        ],
+        "exon": [
+            ExonPosition(
+                contig_id="4",
+                start=2,
+                start_offset=0,
+                end=2,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+                exon_id="ENSE00001032350",
+            ),
+            ExonPosition(
+                contig_id="4",
+                start=2,
+                start_offset=0,
+                end=2,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000412167",
+                transcript_name="KIT-202",
+                exon_id="ENSE00001032350",
+            ),
+            ExonPosition(
+                contig_id="4",
+                start=2,
+                start_offset=0,
+                end=2,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000514582",
+                transcript_name="KIT-204",
+                exon_id="ENSE00002084370",
+            ),
+        ],
+        "protein": [
+            ProteinPosition(
+                contig_id="4",
+                start=42,
+                start_offset=0,
+                end=43,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+                protein_id="ENSP00000288135",
+            ),
+            ProteinPosition(
+                contig_id="4",
+                start=42,
+                start_offset=0,
+                end=43,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000412167",
+                transcript_name="KIT-202",
+                protein_id="ENSP00000390987",
+            ),
+        ],
+        "rna": [
+            RnaPosition(
+                contig_id="4",
+                start=184,
+                start_offset=0,
+                end=186,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+            ),
+            RnaPosition(
+                contig_id="4",
+                start=223,
+                start_offset=0,
+                end=225,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000412167",
+                transcript_name="KIT-202",
+            ),
+            RnaPosition(
+                contig_id="4",
+                start=202,
+                start_offset=0,
+                end=204,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000514582",
+                transcript_name="KIT-204",
+            ),
+        ],
+    }
+
+
+# -------------------------------------------------------------------------------------------------
+# same_<position_type>
+# -------------------------------------------------------------------------------------------------
+def test_same(ensembl100):
+    assert ensembl100.same("ENSP00000358548:p.Q61K", "NRAS:c.181C>A") == {
+        "cdna": [
+            CdnaSubstitution(
+                refseq="C",
+                altseq="A",
+                contig_id="1",
+                start=181,
+                start_offset=0,
+                end=181,
+                end_offset=0,
+                strand="-",
+                gene_id="ENSG00000213281",
+                gene_name="NRAS",
+                transcript_id="ENST00000369535",
+                transcript_name="NRAS-201",
+                protein_id="ENSP00000358548",
+            )
+        ],
+        "dna": [
+            DnaSubstitution(
+                refseq="C",
+                altseq="A",
+                contig_id="1",
+                start=114713909,
+                start_offset=0,
+                end=114713909,
+                end_offset=0,
+                strand="-",
+            )
+        ],
+        "exon": [
+            ExonPosition(
+                contig_id="1",
+                start=3,
+                start_offset=0,
+                end=3,
+                end_offset=0,
+                strand="-",
+                gene_id="ENSG00000213281",
+                gene_name="NRAS",
+                transcript_id="ENST00000369535",
+                transcript_name="NRAS-201",
+                exon_id="ENSE00001751295",
+            )
+        ],
+        "protein": [
+            ProteinSubstitution(
+                refseq="Q",
+                altseq="K",
+                contig_id="1",
+                start=61,
+                start_offset=0,
+                end=61,
+                end_offset=0,
+                strand="-",
+                gene_id="ENSG00000213281",
+                gene_name="NRAS",
+                transcript_id="ENST00000369535",
+                transcript_name="NRAS-201",
+                protein_id="ENSP00000358548",
+            )
+        ],
+        "rna": [
+            RnaSubstitution(
+                refseq="C",
+                altseq="A",
+                contig_id="1",
+                start=312,
+                start_offset=0,
+                end=312,
+                end_offset=0,
+                strand="-",
+                gene_id="ENSG00000213281",
+                gene_name="NRAS",
+                transcript_id="ENST00000369535",
+                transcript_name="NRAS-201",
+            )
+        ],
+    }
+
+
+def test_same_cdna(ensembl100):
+    assert ensembl100.same_cdna("ENSP00000358548:p.Q61K", "NRAS:c.181C>A") == [
+        CdnaSubstitution(
+            refseq="C",
+            altseq="A",
+            contig_id="1",
+            start=181,
+            start_offset=0,
+            end=181,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000213281",
+            gene_name="NRAS",
+            transcript_id="ENST00000369535",
+            transcript_name="NRAS-201",
+            protein_id="ENSP00000358548",
+        )
+    ]
+
+
+def test_same_dna(ensembl100):
+    assert ensembl100.same_dna("ENSP00000358548:p.Q61K", "NRAS:c.181C>A") == [
+        DnaSubstitution(
+            refseq="C",
+            altseq="A",
+            contig_id="1",
+            start=114713909,
+            start_offset=0,
+            end=114713909,
+            end_offset=0,
+            strand="-",
+        )
+    ]
+
+
+def test_same_exon(ensembl100):
+    assert ensembl100.same_exon("ENSP00000358548:p.61", "NRAS:c.181") == [
+        ExonPosition(
+            contig_id="1",
+            start=3,
+            start_offset=0,
+            end=3,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000213281",
+            gene_name="NRAS",
+            transcript_id="ENST00000369535",
+            transcript_name="NRAS-201",
+            exon_id="ENSE00001751295",
+        )
+    ]
+
+
+def test_same_protein(ensembl100):
+    assert ensembl100.same_protein("ENSP00000358548:p.Q61K", "NRAS:c.181C>A") == [
+        ProteinSubstitution(
+            refseq="Q",
+            altseq="K",
+            contig_id="1",
+            start=61,
+            start_offset=0,
+            end=61,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000213281",
+            gene_name="NRAS",
+            transcript_id="ENST00000369535",
+            transcript_name="NRAS-201",
+            protein_id="ENSP00000358548",
+        )
+    ]
+
+
+def test_same_rna(ensembl100):
+    assert ensembl100.same_rna("ENSP00000358548:p.Q61K", "NRAS:c.181C>A") == [
+        RnaSubstitution(
+            refseq="C",
+            altseq="A",
+            contig_id="1",
+            start=312,
+            start_offset=0,
+            end=312,
+            end_offset=0,
+            strand="-",
+            gene_id="ENSG00000213281",
+            gene_name="NRAS",
+            transcript_id="ENST00000369535",
+            transcript_name="NRAS-201",
         )
     ]

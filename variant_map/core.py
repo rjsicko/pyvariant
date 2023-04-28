@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+import warnings
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
@@ -838,6 +839,31 @@ class Core:
             return self._string_to_rna(position)
         else:
             return self._position_to_rna(position)
+
+    def to_all(self, position) -> Dict[str, List]:
+        """Map a position to all alternate positions.
+
+        Args:
+            position (Position): Position or variant object.
+
+        Returns:
+            Dict[str, List]: A dictionary of cDNA, DNA, exon, protein, and RNA positions.
+        """
+        result = {CDNA: [], DNA: [], EXON: [], PROTEIN: [], RNA: []}  # type: ignore
+
+        if isinstance(position, str):
+            position_list = self.parse(position)
+        else:
+            position_list = [position]
+
+        for position in position_list:
+            result[CDNA].extend(self._position_to_cdna(position))
+            result[DNA].extend(self._position_to_dna(position))
+            result[EXON].extend(self._position_to_exon(position))
+            result[PROTEIN].extend(self._position_to_protein(position))
+            result[RNA].extend(self._position_to_rna(position))
+
+        return result
 
     def _string_to_cdna(self, string: str):
         return self._string_to(string, self._position_to_cdna)
@@ -2822,8 +2848,8 @@ class Core:
                 # See https://varnomen.hgvs.org/recommendations/protein/variant/frameshift/
                 variant_class = ProteinFrameshift
                 end = start
-                new_ref = new_ref[0]
-                new_alt = new_alt[0]
+                new_ref = new_ref[0] if new_ref else new_ref
+                new_alt = new_alt[0] if new_alt else new_alt
             else:
                 variant_class = variant_class_map.get((position.position_type, variant_type))
 
@@ -2839,12 +2865,112 @@ class Core:
                     altseq=new_alt,
                 )
                 variant_list.append(variant)
+            elif position.is_exon:
+                warnings.warn(
+                    f"Unable to coerce an exon position ({position} {new_ref}/{new_alt}) to a variant. An exon position is returned."
+                )
+                variant_list.append(position)
             else:
                 raise ValueError(
                     f"Unrecognized variant type for {position.position_type}/{variant_type} ({new_ref}/{new_alt})"
                 )
 
         return variant_list
+
+    # ---------------------------------------------------------------------------------------------
+    # Functions for checking if positions/variants are equivalent
+    # ---------------------------------------------------------------------------------------------
+    def same(self, query, reference) -> Dict[str, List]:
+        """Return any positions that are shared between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            Dict[str, List]: Positions shared between `query` and `reference`
+        """
+        result = {CDNA: [], DNA: [], EXON: [], PROTEIN: [], RNA: []}  # type: ignore
+
+        query_pos = self.to_all(query)
+        reference_pos = self.to_all(reference)
+        for key in result:
+            for q in query_pos[key]:
+                if q in reference_pos[key]:
+                    result[key].append(q)
+
+        return result
+
+    def same_cdna(self, query, reference) -> List:
+        """Return cDNA positions that are shared between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            List: cDNA positions shared between `query` and `reference`
+        """
+        return self._same(query, reference, self.to_cdna)
+
+    def same_dna(self, query, reference) -> List:
+        """Return DNA positions that are shared between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            List: DNA positions shared between `query` and `reference`
+        """
+        return self._same(query, reference, self.to_dna)
+
+    def same_exon(self, query, reference) -> List:
+        """Return exon positions that are shared between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            List: Exon positions shared between `query` and `reference`
+        """
+        return self._same(query, reference, self.to_exon)
+
+    def same_protein(self, query, reference) -> List:
+        """Return protein positions that are shared between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            List: Protein positions shared between `query` and `reference`
+        """
+        return self._same(query, reference, self.to_protein)
+
+    def same_rna(self, query, reference) -> List:
+        """Return RNA positions that are shared between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            List: RNA positions shared between `query` and `reference`
+        """
+        return self._same(query, reference, self.to_rna)
+
+    def _same(self, query, reference, func: Callable) -> List:
+        result = []
+
+        query_pos = func(query)
+        reference_pos = func(reference)
+        for q in query_pos:
+            if q in reference_pos:
+                result.append(q)
+
+        return result
 
     # ---------------------------------------------------------------------------------------------
     # Functions for getting feature ID/names

@@ -69,7 +69,7 @@ def parse(string: str) -> Dict[str, Dict[str, Any]]:
         # Extra parsing of proteins
         if breakpoint["position_type"] == PROTEIN:
             # Protein substitutions don't have the '>' to explicitly say it's a substitution
-            if not breakpoint["variant_type"]:
+            if not breakpoint["variant_type"] and (breakpoint["refseq"] or breakpoint["altseq"]):
                 breakpoint["variant_type"] = SUBSTITUTION
 
             # Convert 3-letter amino acid codes to 1-letter codes

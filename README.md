@@ -79,6 +79,18 @@ Exon to RNA:
 [RnaFusion(breakpoint1=RnaPosition(contig_id='12', start=972, start_offset=0, end=2240, end_offset=0, strand='+', gene_id='ENSG00000123374', gene_name='CDK2', transcript_id='ENST00000266970', transcript_name='CDK2-201'), breakpoint2=RnaPosition(contig_id='12', start=63, start_offset=0, end=317, end_offset=0, strand='+', gene_id='ENSG00000111540', gene_name='RAB5B', transcript_id='ENST00000360299', transcript_name='RAB5B-201'))]
 ```
 
+### Check if two variants are equivalent
+
+Example:
+
+```python
+>>> x = ensembl100.same("ENSP00000358548:p.Q61K", "NRAS:c.181C>A")
+>>> x.keys()
+dict_keys(['cdna', 'dna', 'exon', 'protein', 'rna'])
+>>> x["dna"]
+[DnaSubstitution(refseq='C', altseq='A', contig_id='1', start=114713909, start_offset=0, end=114713909, end_offset=0, strand='-')]
+```
+
 ### Fetch sequences
 
 Get the mutated reference sequence, within a given window:
