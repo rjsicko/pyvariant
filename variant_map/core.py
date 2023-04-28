@@ -530,18 +530,37 @@ class Core:
     ) -> str:
         sequence = ""
 
+        breakpoint1 = position.breakpoint1
+        breakpoint2 = position.breakpoint2
+
+        # To get exon positions, we need to first map the position to DNA
+        if breakpoint1.is_exon:
+            breakpoint1_ = self.to_dna(breakpoint1)
+            assert len(breakpoint1_) == 1
+            breakpoint1 = breakpoint1_[0]
+
+        if breakpoint2.is_exon:
+            breakpoint2_ = self.to_dna(breakpoint2)
+            assert len(breakpoint2_) == 1
+            breakpoint2 = breakpoint2_[0]
+
+        # We only care about the position surrounding the breakpoint
+        breakpoint1 = breakpoint1.copy_from(breakpoint1, start=breakpoint1.end)
+        breakpoint2 = breakpoint2.copy_from(breakpoint2, end=breakpoint2.start)
+
+        # If a window isn't given, make it equal to the breakpoint size
         if window and window > 0:
             pad_left = window // 2
             pad_right = window - pad_left
         else:
-            pad_left = position.breakpoint1.end - position.breakpoint1.start + 1
-            pad_right = position.breakpoint2.end - position.breakpoint2.start + 1
+            pad_left = breakpoint1.end - breakpoint1.start + 1
+            pad_right = breakpoint2.end - breakpoint2.start + 1
 
         sequence += self.sequence(
-            position.breakpoint1, strand, pad_left, floor, position.breakpoint1.end
+            breakpoint1, strand or breakpoint1.strand, pad_left, floor, breakpoint1.end
         )
         sequence += self.sequence(
-            position.breakpoint2, strand, pad_right, position.breakpoint2.start, ceiling
+            breakpoint2, strand or breakpoint2.strand, pad_right, breakpoint2.start, ceiling
         )
 
         return sequence

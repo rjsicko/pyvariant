@@ -593,16 +593,43 @@ def test_sequence_from_string_ambiguous(ensembl100):
         ensembl100.sequence("KRAS:c.126_128delinsGT", window=20)
 
 
-def test_sequence_fusion_plus_minus(ensembl100):
+def test_sequence_fusion_plus_plus_read_through(ensembl69):
+    # (BCR,JAK2):fusion(e.1,e.15)
+    # BCR exon 1: TTCCAGGACTGCAGAACTGGCCCAG...GAGGGCGCCTTCCATGGAGACGCAG
+    # JAK2 exon 15: ATATTCTGGTTCAGGAGTTTGTAAA...GTTGGCATGGGCCATGCATTTTCTA
     assert (
-        ensembl100.sequence("ENST00000288135:r.7::ENST00000256078:r.5", window=11) == "ACTTGGCGGCG"
+        ensembl69.sequence("ENST00000305877:r.1_2030::ENST00000381652:r.2359_2486", window=50)
+        == "GAGGGCGCCTTCCATGGAGACGCAGATATTCTGGTTCAGGAGTTTGTAAA"
     )
 
 
-def test_sequence_fusion_plus_plus(ensembl100):
+def test_sequence_fusion_minus_minus_read_through(ensembl69):
+    # (ABCA5,PPP4R1L):fusion(e.3,e.4)
+    # ABCA5 exon 3: GAAATTCTTTTTCCACTATTTTTTT...GTGTCTACTGATCATCTACCTGATG
+    # PPP4R1L exon 4: GATGTAATACCTCAGCCGCTGCTAG...TGAAACACTGGCTTCTGATGTACAG
     assert (
-        ensembl100.sequence("ENST00000399410:r.2871::ENST00000561813:r.317", window=50)
-        == "ACAGTGCAGGGAAGCAACTGCAGAGGCTGTGCAATCTTGCACAAATATCT"
+        ensembl69.sequence("ENST00000392676:r.168_372::ENST00000497138:r.753_938", window=50)
+        == "GTGTCTACTGATCATCTACCTGATGGATGTAATACCTCAGCCGCTGCTAG"
+    )
+
+
+def test_sequence_fusion_plus_minus_read_through(ensembl69):
+    # (CTNNA1,GLRA1):fusion(e.7,e.4)
+    # CTNNA1 exon 7: AAACAAATCATTGTGGACCCCTTGA...CCTGCTTTCGGAGTACATGGGCAAT
+    # GLRA1 exon 4: GACTATAGGGTCAACATCTTCCTGC...ATGGGAATGTCCTCTACAGCATCAG
+    assert (
+        ensembl69.sequence("ENST00000302763:r.949_1152::ENST00000455880:r.540_763", window=50)
+        == "CCTGCTTTCGGAGTACATGGGCAATGACTATAGGGTCAACATCTTCCTGC"
+    )
+
+
+def test_sequence_fusion_minus_plus_read_through(ensembl69):
+    # (LYRM5,JAK2):fusion(e.3,e.15)
+    # LYRM5 exon 3: CTGCTGTATCTTGGACGAGACTATC...GGAAATAAATAAATAATGTTATCCT
+    # JAK2 exon 15: ATATTCTGGTTCAGGAGTTTGTAAA...GTTGGCATGGGCCATGCATTTTCTA
+    assert (
+        ensembl69.sequence("ENST00000381356:r.211_1134::ENST00000381652:r.2359_2486", window=50)
+        == "GGAAATAAATAAATAATGTTATCCTATATTCTGGTTCAGGAGTTTGTAAA"
     )
 
 
