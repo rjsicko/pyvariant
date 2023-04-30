@@ -1679,6 +1679,67 @@ def test_to_all_from_dna_position(ensembl100):
 # -------------------------------------------------------------------------------------------------
 # same_<position_type>
 # -------------------------------------------------------------------------------------------------
+def test_diff(ensembl100):
+    assert ensembl100.diff("ENSP00000358548:p.Q61K", "NRAS:c.181C>A") == {
+        "cdna": (
+            [
+                CdnaDelins(
+                    refseq="CAA",
+                    altseq="AAG",
+                    contig_id="1",
+                    start=181,
+                    start_offset=0,
+                    end=183,
+                    end_offset=0,
+                    strand="-",
+                    gene_id="ENSG00000213281",
+                    gene_name="NRAS",
+                    transcript_id="ENST00000369535",
+                    transcript_name="NRAS-201",
+                    protein_id="ENSP00000358548",
+                )
+            ],
+            [],
+        ),
+        "dna": (
+            [
+                DnaDelins(
+                    refseq="CAA",
+                    altseq="AAG",
+                    contig_id="1",
+                    start=114713907,
+                    start_offset=0,
+                    end=114713909,
+                    end_offset=0,
+                    strand="-",
+                )
+            ],
+            [],
+        ),
+        "exon": ([], []),
+        "protein": ([], []),
+        "rna": (
+            [
+                RnaDelins(
+                    refseq="CAA",
+                    altseq="AAG",
+                    contig_id="1",
+                    start=312,
+                    start_offset=0,
+                    end=314,
+                    end_offset=0,
+                    strand="-",
+                    gene_id="ENSG00000213281",
+                    gene_name="NRAS",
+                    transcript_id="ENST00000369535",
+                    transcript_name="NRAS-201",
+                )
+            ],
+            [],
+        ),
+    }
+
+
 def test_same(ensembl100):
     assert ensembl100.same("ENSP00000358548:p.Q61K", "NRAS:c.181C>A") == {
         "cdna": [

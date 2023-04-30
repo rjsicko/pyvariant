@@ -81,7 +81,7 @@ Exon to RNA:
 
 ### Check if two variants are equivalent
 
-Example:
+Get the notation(s) that represent both variants:
 
 ```python
 >>> x = ensembl100.same("ENSP00000358548:p.Q61K", "NRAS:c.181C>A")
@@ -89,6 +89,17 @@ Example:
 dict_keys(['cdna', 'dna', 'exon', 'protein', 'rna'])
 >>> x["dna"]
 [DnaSubstitution(refseq='C', altseq='A', contig_id='1', start=114713909, start_offset=0, end=114713909, end_offset=0, strand='-')]
+```
+
+
+...or get the notation(s) that are unique to each variant:
+
+```python
+>>> x = ensembl100.diff("ENSP00000358548:p.Q61K", "NRAS:c.181C>A")
+>>> x.keys()
+dict_keys(['cdna', 'dna', 'exon', 'protein', 'rna'])
+>>> x["dna"]
+([DnaDelins(refseq='CAA', altseq='AAG', contig_id='1', start=114713907, start_offset=0, end=114713909, end_offset=0, strand='-')], [])
 ```
 
 ### Fetch sequences

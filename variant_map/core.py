@@ -2880,6 +2880,105 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # Functions for checking if positions/variants are equivalent
     # ---------------------------------------------------------------------------------------------
+    def diff(self, query, reference) -> Dict[str, Tuple[List, List]]:
+        """Return any positions that are shared between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            Dict[str, List]: Positions different between `query` and `reference`
+        """
+        return {
+            CDNA: self.diff_cdna(query, reference),
+            DNA: self.diff_dna(query, reference),
+            EXON: self.diff_exon(query, reference),
+            PROTEIN: self.diff_protein(query, reference),
+            RNA: self.diff_rna(query, reference),
+        }
+
+    def diff_cdna(self, query, reference) -> Tuple[List, List]:
+        """Return cDNA positions that are different between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            Tuple[List, List]: A list of cDNA positions unique to `query` and a list of cDNA
+                positions unique to `reference`
+        """
+        return self._diff(query, reference, self.to_cdna)
+
+    def diff_dna(self, query, reference) -> Tuple[List, List]:
+        """Return DNA positions that are different between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            Tuple[List, List]: A list of DNA positions unique to `query` and a list of DNA positions
+                unique to `reference`
+        """
+        return self._diff(query, reference, self.to_dna)
+
+    def diff_exon(self, query, reference) -> Tuple[List, List]:
+        """Return exon positions that are different between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            Tuple[List, List]: A list of exon positions unique to `query` and a list of exon positions
+                unique to `reference`
+        """
+        return self._diff(query, reference, self.to_exon)
+
+    def diff_protein(self, query, reference) -> Tuple[List, List]:
+        """Return protein positions that are different between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            Tuple[List, List]: A list of protein positions unique to `query` and a list of protein
+                positions unique to `reference`
+        """
+        return self._diff(query, reference, self.to_protein)
+
+    def diff_rna(self, query, reference) -> Tuple[List, List]:
+        """Return RNA positions that are different between two positions
+
+        Args:
+            query (Position): Query position
+            reference (Position): Reference position
+
+        Returns:
+            Tuple[List, List]: A list of RNA positions unique to `query` and a list of RNA positions
+                unique to `reference`
+        """
+        return self._diff(query, reference, self.to_rna)
+
+    def _diff(self, query, reference, func: Callable) -> Tuple[List, List]:
+        query_result = []
+        reference_result = []
+
+        query_pos = func(query)
+        reference_pos = func(reference)
+        for i in query_pos:
+            if i not in reference_pos:
+                query_result.append(i)
+
+        for i in reference_pos:
+            if i not in query_pos:
+                reference_result.append(i)
+
+        return query_result, reference_result
+
     def same(self, query, reference) -> Dict[str, List]:
         """Return any positions that are shared between two positions
 
@@ -2890,16 +2989,13 @@ class Core:
         Returns:
             Dict[str, List]: Positions shared between `query` and `reference`
         """
-        result = {CDNA: [], DNA: [], EXON: [], PROTEIN: [], RNA: []}  # type: ignore
-
-        query_pos = self.to_all(query)
-        reference_pos = self.to_all(reference)
-        for key in result:
-            for q in query_pos[key]:
-                if q in reference_pos[key]:
-                    result[key].append(q)
-
-        return result
+        return {
+            CDNA: self.same_cdna(query, reference),
+            DNA: self.same_dna(query, reference),
+            EXON: self.same_exon(query, reference),
+            PROTEIN: self.same_protein(query, reference),
+            RNA: self.same_rna(query, reference),
+        }
 
     def same_cdna(self, query, reference) -> List:
         """Return cDNA positions that are shared between two positions
@@ -2966,9 +3062,9 @@ class Core:
 
         query_pos = func(query)
         reference_pos = func(reference)
-        for q in query_pos:
-            if q in reference_pos:
-                result.append(q)
+        for i in query_pos:
+            if i in reference_pos:
+                result.append(i)
 
         return result
 
