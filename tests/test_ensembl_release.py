@@ -8,9 +8,9 @@ from constants import (
     PROTEIN_ALIAS,
     TRANSCRIPT_ALIAS,
 )
-from pyfaidx import Fasta
 
 from variant_map.ensembl_release import EnsemblRelease
+from variant_map.sequence import _FastaABC
 
 
 def test_init():
@@ -29,11 +29,11 @@ def test_init():
     assert isinstance(obj.cds_fasta, list)
     assert not obj.cds_fasta
     assert isinstance(obj.dna_fasta, list)
-    assert isinstance(obj.dna_fasta[0], Fasta)
+    assert isinstance(obj.dna_fasta[0], _FastaABC)
     assert isinstance(obj.protein_fasta, list)
-    assert isinstance(obj.protein_fasta[0], Fasta)
+    assert isinstance(obj.protein_fasta[0], _FastaABC)
     assert isinstance(obj.rna_fasta, list)
-    assert isinstance(obj.rna_fasta[0], Fasta)
+    assert isinstance(obj.rna_fasta[0], _FastaABC)
     assert isinstance(obj._canonical_transcript, list)
     assert isinstance(obj._contig_alias, dict)
     assert isinstance(obj._exon_alias, dict)

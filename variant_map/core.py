@@ -33,7 +33,7 @@ from .constants import (
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
-from .files import read_fasta, tsv_to_dict, txt_to_list
+from .files import tsv_to_dict, txt_to_list
 from .parser import parse
 from .positions import (
     CdnaDeletion,
@@ -76,7 +76,7 @@ from .positions import (
     _RnaSmallVariant,
     _SmallVariant,
 )
-from .sequence import get_sequence, mutate_sequence
+from .sequence import DictFasta, PyfaidxFasta, _FastaABC, get_sequence, mutate_sequence
 from .tables import AMINO_ACID_TABLE
 from .utils import (
     calc_cdna_to_protein,
@@ -110,6 +110,7 @@ class Core:
         gene_alias: Union[str, Dict] = {},
         protein_alias: Union[str, Dict] = {},
         transcript_alias: Union[str, Dict] = {},
+        low_memory: bool = True,
     ):
         """_summary_
 
@@ -125,12 +126,24 @@ class Core:
             gene_alias (Union[str, Dict], optional): Dictionary mapping gene aliases to their normalized ID, or a path to a text file
             protein_alias (Union[str, Dict], optional): Dictionary mapping protein aliases to their normalized ID, or a path to a text file
             transcript_alias (Union[str, Dict], optional): Dictionary mapping transcript aliases to their normalized ID, or a path to a text file
+            low_memory (bool): Load FASTA files in a memory-efficient manner
         """
         self.df = read_gtf(gtf, result_type="pandas")  # TODO: switch to 'polars'?
-        self.cds_fasta = [read_fasta(i) for i in cds]
-        self.dna_fasta = [read_fasta(i) for i in dna]
-        self.protein_fasta = [read_fasta(i) for i in peptide]
-        self.rna_fasta = [read_fasta(i) for i in rna]
+
+        self.cds_fasta: List[_FastaABC] = []
+        self.dna_fasta: List[_FastaABC] = []
+        self.protein_fasta: List[_FastaABC] = []
+        self.rna_fasta: List[_FastaABC] = []
+        if low_memory:
+            self.cds_fasta = [PyfaidxFasta.load(i) for i in cds]
+            self.dna_fasta = [PyfaidxFasta.load(i) for i in dna]
+            self.protein_fasta = [PyfaidxFasta.load(i) for i in peptide]
+            self.rna_fasta = [PyfaidxFasta.load(i) for i in rna]
+        else:
+            self.cds_fasta = [DictFasta.load(i) for i in cds]
+            self.dna_fasta = [DictFasta.load(i) for i in dna]
+            self.protein_fasta = [DictFasta.load(i) for i in peptide]
+            self.rna_fasta = [DictFasta.load(i) for i in rna]
 
         if isinstance(canonical_transcript, str):
             self._canonical_transcript = txt_to_list(canonical_transcript)
@@ -514,7 +527,7 @@ class Core:
 
         return sequence
 
-    def _get_fasta(self, fasta_list: List[Fasta], ref: str) -> Fasta:
+    def _get_fasta(self, fasta_list: List[_FastaABC], ref: str) -> Fasta:
         for fasta in fasta_list:
             if ref in fasta:
                 return fasta
@@ -2867,7 +2880,7 @@ class Core:
                 variant_list.append(variant)
             elif position.is_exon:
                 warnings.warn(
-                    f"Unable to coerce an exon position ({position} {new_ref}/{new_alt}) to a variant. An exon position is returned."
+                    "Unable to map small mutations to an exon variant. An exon position is returned instead."
                 )
                 variant_list.append(position)
             else:
@@ -3325,23 +3338,26 @@ class Core:
         return self._alias(transcript_id, self._transcript_alias)
 
     def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
+        feature = str(feature)
+
         # Try different variations on the feature ID until one is found
-        for key in [
+        alias_list = [
             feature,
             strip_version(feature),
             feature.lower(),
             strip_version(feature).lower(),
             feature.upper(),
             strip_version(feature).upper(),
-        ]:
+        ]
+        for key in alias_list:
             if alias := alias_dict.get(key, []):
                 # Coerce the alias to a list
                 if isinstance(alias, str):
-                    return [alias]
+                    alias_list.append(alias)
                 else:
-                    return list(alias)
-        else:
-            return []
+                    alias_list.extend(alias)
+
+        return sorted(set(alias_list))
 
     # ---------------------------------------------------------------------------------------------
     # Functions for normalizing feature ID/names

@@ -1,11 +1,105 @@
 """Function definitions for manipulating reference sequences."""
-from typing import Optional
+from __future__ import annotations
 
+import gzip
+from abc import ABC
+from typing import Dict, Optional
+
+from Bio import SeqIO
 from pyfaidx import Fasta
+
+from .constants import EMPTY_FASTA
+from .files import is_bgzipped
+from .utils import strip_version
+
+
+class _FastaABC(ABC):
+    def __contains__(self, reference: str) -> bool:
+        raise NotImplementedError()
+
+    def __getitem__(self, reference: str) -> str:
+        raise NotImplementedError()
+
+    def fetch(self, reference: str, start: int, end: int) -> str:
+        raise NotImplementedError()
+
+
+class DictFasta(_FastaABC):
+    @classmethod
+    def load(cls, path: str = "") -> DictFasta:
+        """Parse a FASTA/FASTQ file into a dictionary of sequences.
+
+        Args:
+            path (str): Path to FASTA or FASTQ file
+
+        Returns:
+            DictFasta
+        """
+        if not path:
+            path = EMPTY_FASTA
+
+        if is_bgzipped(path):
+            with gzip.open(path, "rt") as fh:
+                fasta = SeqIO.to_dict(SeqIO.parse(fh, "fasta"))
+        else:
+            fasta = SeqIO.to_dict(SeqIO.parse(path, "fasta"))
+
+        return cls(fasta)
+
+    def __init__(self, fasta: Dict[str, str]):
+        self.fasta = fasta
+
+    def __contains__(self, reference: str) -> bool:
+        return reference in self.fasta
+
+    def __getitem__(self, reference: str) -> str:
+        return self.fasta[reference]
+
+    def fetch(self, reference: str, start: int, end: int) -> str:
+        return str(self.fasta[reference][start:end])
+
+
+class PyfaidxFasta(_FastaABC):
+    @classmethod
+    def load(cls, path: str = "") -> PyfaidxFasta:
+        """Parse a FASTA/FASTQ file into a 'pyfaidx.Fasta' object.
+
+        Args:
+            path (str): Path to FASTA or FASTQ file
+
+        Returns:
+            PyfaidxFasta
+        """
+        if not path:
+            path = EMPTY_FASTA
+
+        fasta = Fasta(
+            path,
+            key_function=strip_version,
+            as_raw=True,
+            sequence_always_upper=True,
+            build_index=False,
+            rebuild=False,
+            read_ahead=100000,
+        )
+
+        return cls(fasta)
+
+    def __init__(self, fasta: Fasta):
+        self.fasta = fasta
+
+    def __contains__(self, reference: str) -> bool:
+        return reference in self.fasta
+
+    def __getitem__(self, reference: str) -> str:
+        return self.fasta[reference]
+
+    def fetch(self, reference: str, start: int, end: int) -> str:
+        return str(self.fasta[reference][start:end])
 
 
 def get_sequence(
-    fasta: Fasta,
+    fasta: _FastaABC,
     ref: str,
     start: int,
     end: int,
@@ -17,7 +111,7 @@ def get_sequence(
     that the total returned sequence length adds up to `window`.
 
     Args:
-        fasta (Fasta): FASTA containing all the reference sequences
+        fasta (_FastaABC): FASTA containing all the reference sequences
         ref (str): Reference sequence ID
         start (int): First base of position of interest
         end (int): Last base of position of interest
@@ -72,13 +166,13 @@ def get_sequence(
         ref_end += diff_left
 
     # Get enough of the reference sequence that we can return a sequence of `length`
-    sequence = fasta[ref][ref_start:ref_end]
+    sequence = fasta.fetch(ref, ref_start, ref_end)
 
     return sequence
 
 
 def mutate_sequence(
-    fasta: Fasta,
+    fasta: _FastaABC,
     ref: str,
     start: int,
     end: int,
@@ -92,7 +186,7 @@ def mutate_sequence(
     sequence within a window of length `window`.
 
     Args:
-        fasta (Fasta): FASTA containing all the reference sequences
+        fasta (_FastaABC): FASTA containing all the reference sequences
         ref (str): Reference sequence ID
         start (int): First base of the mutation site. For insertions, this is the base 5' of the
             insertion site
@@ -161,7 +255,7 @@ def mutate_sequence(
         idx_left -= diff_left
         idx_right += diff_left
 
-    refseq = fasta[ref][ref_start:ref_end]
+    refseq = fasta.fetch(ref, ref_start, ref_end)
 
     # Piece together the altseq and 5'/3' flanking sequences
     left = refseq[:idx_left]
