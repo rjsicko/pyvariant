@@ -7,6 +7,7 @@ from .core import Core
 from .ensembl_cache import EnsemblCache
 from .files import tsv_to_dict, txt_to_list
 from .positions import CdnaPosition
+from .sequence import DictFasta, PyfaidxFasta, _FastaABC
 from .utils import reverse_complement
 
 
@@ -26,6 +27,7 @@ class EnsemblRelease(Core):
         gene_alias: Union[str, Dict] = {},
         protein_alias: Union[str, Dict] = {},
         transcript_alias: Union[str, Dict] = {},
+        low_memory: bool = True,
     ):
         """
         Args:
@@ -37,6 +39,7 @@ class EnsemblRelease(Core):
             gene_alias (Union[str, Dict], optional): Dictionary mapping gene aliases to their normalized ID, or a path to a text file
             protein_alias (Union[str, Dict], optional): Dictionary mapping protein aliases to their normalized ID, or a path to a text file
             transcript_alias (Union[str, Dict], optional): Dictionary mapping transcript aliases to their normalized ID, or a path to a text file
+            low_memory (bool): Load FASTA files in a memory-efficient manner
         """
         self.ensembl_cache = EnsemblCache(species, release, cache_dir=cache_dir)
         self.cache_dir = self.ensembl_cache.release_cache_dir
@@ -44,13 +47,27 @@ class EnsemblRelease(Core):
         self.release = self.ensembl_cache.release
         self.species = self.ensembl_cache.species
         self.df = self.ensembl_cache.load_df()
-        self.cds_fasta = []
-        self.dna_fasta = [self.ensembl_cache.load_dna_fasta()]
-        self.protein_fasta = [self.ensembl_cache.load_pep_fasta()]
-        self.rna_fasta = [
-            self.ensembl_cache.load_cdna_fasta(),
-            self.ensembl_cache.load_ncrna_fasta(),
-        ]
+
+        self.cds_fasta: List[_FastaABC] = []
+        self.dna_fasta: List[_FastaABC] = []
+        self.protein_fasta: List[_FastaABC] = []
+        self.rna_fasta: List[_FastaABC] = []
+        if low_memory:
+            self.cds_fasta = []
+            self.dna_fasta = [PyfaidxFasta.load(self.ensembl_cache.local_dna_fasta_filepath)]
+            self.protein_fasta = [PyfaidxFasta.load(self.ensembl_cache.local_pep_fasta_filepath)]
+            self.rna_fasta = [
+                PyfaidxFasta.load(self.ensembl_cache.local_cdna_fasta_filepath),
+                PyfaidxFasta.load(self.ensembl_cache.local_ncrna_fasta_filepath),
+            ]
+        else:
+            self.cds_fasta = []
+            self.dna_fasta = [DictFasta.load(self.ensembl_cache.local_dna_fasta_filepath)]
+            self.protein_fasta = [DictFasta.load(self.ensembl_cache.local_pep_fasta_filepath)]
+            self.rna_fasta = [
+                DictFasta.load(self.ensembl_cache.local_cdna_fasta_filepath),
+                DictFasta.load(self.ensembl_cache.local_ncrna_fasta_filepath),
+            ]
 
         if isinstance(canonical_transcript, str):
             self._canonical_transcript = txt_to_list(canonical_transcript)

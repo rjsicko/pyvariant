@@ -13,7 +13,6 @@ from constants import (
     TEST_ENS100_PEP_FASTA,
     TRANSCRIPT_ALIAS,
 )
-from pyfaidx import Fasta
 
 from variant_map.constants import (
     CONTIG_ID,
@@ -44,6 +43,7 @@ from variant_map.positions import (
     RnaPosition,
     RnaSubstitution,
 )
+from variant_map.sequence import _FastaABC
 
 
 # -------------------------------------------------------------------------------------------------
@@ -65,13 +65,13 @@ def test_init():
     )
     assert isinstance(obj.df, pd.DataFrame)
     assert isinstance(obj.cds_fasta, list)
-    assert isinstance(obj.cds_fasta[0], Fasta)
+    assert isinstance(obj.cds_fasta[0], _FastaABC)
     assert isinstance(obj.dna_fasta, list)
-    assert isinstance(obj.dna_fasta[0], Fasta)
+    assert isinstance(obj.dna_fasta[0], _FastaABC)
     assert isinstance(obj.protein_fasta, list)
-    assert isinstance(obj.protein_fasta[0], Fasta)
+    assert isinstance(obj.protein_fasta[0], _FastaABC)
     assert isinstance(obj.rna_fasta, list)
-    assert isinstance(obj.rna_fasta[0], Fasta)
+    assert isinstance(obj.rna_fasta[0], _FastaABC)
     assert isinstance(obj._canonical_transcript, list)
     assert isinstance(obj._contig_alias, dict)
     assert isinstance(obj._exon_alias, dict)

@@ -9,10 +9,8 @@ from typing import Callable, Dict, List, Set
 
 from appdirs import user_data_dir
 from Bio.bgzf import BgzfWriter, _bgzf_magic
-from pyfaidx import Fasta
 
-from .constants import CACHE_DIR_ENV, CACHE_DIR_NAME, EMPTY_FASTA
-from .utils import strip_version
+from .constants import CACHE_DIR_ENV, CACHE_DIR_NAME
 
 
 def bgzip(path: str) -> str:
@@ -117,28 +115,6 @@ def is_bgzipped(path: str) -> bool:
     with open(path, "rb") as f:
         file_start = f.read(len(_bgzf_magic))
         return file_start == _bgzf_magic
-
-
-def read_fasta(path: str) -> Fasta:
-    """Parse a FASTA/FASTQ file into a 'pyfaidx.Fasta' object.
-
-    Args:
-        path (str): Path to FASTA or FASTQ file
-
-    Returns:
-        Fasta: 'pyfaidx.Fasta' object
-    """
-    if not path:
-        path = EMPTY_FASTA
-
-    return Fasta(
-        path,
-        key_function=strip_version,
-        as_raw=True,
-        sequence_always_upper=True,
-        build_index=False,
-        rebuild=False,
-    )
 
 
 def tsv_to_dict(path: str) -> Dict[str, List[str]]:

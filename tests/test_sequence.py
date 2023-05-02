@@ -1,6 +1,21 @@
 import pytest
+from constants import TEST_ENS100_CDNA_FASTA
+from pyfaidx import Fasta
 
-from variant_map.sequence import get_sequence, mutate_sequence
+from variant_map.sequence import PyfaidxFasta, get_sequence, mutate_sequence
+
+
+def test_pyfaidx_fasta_load():
+    result = PyfaidxFasta.load(TEST_ENS100_CDNA_FASTA)
+    assert isinstance(result, PyfaidxFasta)
+    assert isinstance(result.fasta, Fasta)
+    assert result["ENST00000643777"]
+
+
+def test_pyfaidx_fasta_load_empty():
+    result = PyfaidxFasta.load("")
+    assert isinstance(result, PyfaidxFasta)
+    assert isinstance(result.fasta, Fasta)
 
 
 @pytest.mark.parametrize(
