@@ -177,11 +177,12 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # Functions for loading variants
     # ---------------------------------------------------------------------------------------------
-    def parse(self, string: str) -> List:
+    def parse(self, string: str, canonical: bool = False) -> List:
         """Parse a variant string into a variant object.
 
         Args:
             string (str): String representing a variant, in HGVS format
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List: One or more normalized variants
@@ -207,6 +208,7 @@ class Core:
             strand2=parsed["breakpoint2"]["strand"],
             refseq2=parsed["breakpoint2"]["refseq"],
             altseq2=parsed["breakpoint2"]["altseq"],
+            canonical=canonical,
         )
 
         return result
@@ -234,6 +236,7 @@ class Core:
         strand2: Optional[str] = None,
         refseq2: Optional[str] = None,
         altseq2: Optional[str] = None,
+        canonical: bool = False,
     ) -> List:
         """Initialize one or more position or variants objects from the given arguments.
 
@@ -257,6 +260,7 @@ class Core:
             strand2 (str, optional): For fusions. Strand the feature is on. One of '+' or '-'.
             refseq2 (str, optional): For fusions. Reference allele. Required if the given position represents a variant.
             altseq2 (str, optional): For fusions. Alternate allele. Required if the given position represents a variant.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Raises:
             ValueError: Arguments are missing.
@@ -383,24 +387,28 @@ class Core:
         if position_type == CDNA:
             transcript_ids = self.transcript_ids(feature)
             result = self._cdna_to_cdna(
-                transcript_ids, start, start_offset, end, end_offset, strand_
+                transcript_ids, start, start_offset, end, end_offset, strand_, canonical=canonical
             )
         elif position_type == DNA:
             contig_ids = self.contig_ids(feature)
-            result = self._dna_to_dna(contig_ids, start, start_offset, end, end_offset, strand_)
+            result = self._dna_to_dna(
+                contig_ids, start, start_offset, end, end_offset, strand_, canonical=canonical
+            )
         elif position_type == EXON:
             transcript_ids = self.transcript_ids(feature)
             result = self._exon_to_exon(
-                transcript_ids, start, start_offset, end, end_offset, strand_
+                transcript_ids, start, start_offset, end, end_offset, strand_, canonical=canonical
             )
         elif position_type == PROTEIN:
             transcript_ids = self.transcript_ids(feature)
             result = self._protein_to_protein(
-                transcript_ids, start, start_offset, end, end_offset, strand_
+                transcript_ids, start, start_offset, end, end_offset, strand_, canonical=canonical
             )
         elif position_type == RNA:
             transcript_ids = self.transcript_ids(feature)
-            result = self._rna_to_rna(transcript_ids, start, start_offset, end, end_offset, strand_)
+            result = self._rna_to_rna(
+                transcript_ids, start, start_offset, end, end_offset, strand_, canonical=canonical
+            )
         else:
             raise ValueError(f"Unrecognized position type '{position_type}'")
 
@@ -782,81 +790,87 @@ class Core:
     # Functions for mapping to other position types
     # ---------------------------------------------------------------------------------------------
     # TODO: add type hints
-    def to_cdna(self, position) -> List:
+    def to_cdna(self, position, canonical: bool = False) -> List:
         """Map a position to zero or more cDNA positions.
 
         Args:
             position (Position): Position or variant object.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[CdnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
         if isinstance(position, str):
-            return self._string_to_cdna(position)
+            return self._string_to_cdna(position, canonical)
         else:
-            return self._position_to_cdna(position)
+            return self._position_to_cdna(position, canonical)
 
-    def to_dna(self, position) -> List:
+    def to_dna(self, position, canonical: bool = False) -> List:
         """Map a position to zero or more DNA positions.
 
         Args:
             position (Position): Position or variant object.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[DnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
         if isinstance(position, str):
-            return self._string_to_dna(position)
+            return self._string_to_dna(position, canonical)
         else:
-            return self._position_to_dna(position)
+            return self._position_to_dna(position, canonical)
 
-    def to_exon(self, position) -> List:
+    def to_exon(self, position, canonical: bool = False) -> List:
         """Map a position to zero or more exon positions.
 
         Args:
             position (Position): Position or variant object.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[ExonPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
         if isinstance(position, str):
-            return self._string_to_exon(position)
+            return self._string_to_exon(position, canonical)
         else:
-            return self._position_to_exon(position)
+            return self._position_to_exon(position, canonical)
 
-    def to_protein(self, position) -> List:
+    def to_protein(self, position, canonical: bool = False) -> List:
         """Map a position to zero or more protein positions.
 
         Args:
             position (Position): Position or variant object.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[ProteinPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
         if isinstance(position, str):
-            return self._string_to_protein(position)
+            return self._string_to_protein(position, canonical)
         else:
-            return self._position_to_protein(position)
+            return self._position_to_protein(position, canonical)
 
-    def to_rna(self, position) -> List:
+    def to_rna(self, position, canonical: bool = False) -> List:
         """Map a position to zero or more RNA positions.
 
         Args:
             position (Position): Position or variant object.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             List[RnaPosition]: If a variant was given, returns a variant, otherwise returns a position.
         """
         if isinstance(position, str):
-            return self._string_to_rna(position)
+            return self._string_to_rna(position, canonical)
         else:
-            return self._position_to_rna(position)
+            return self._position_to_rna(position, canonical)
 
-    def to_all(self, position) -> Dict[str, List]:
+    def to_all(self, position, canonical: bool = False) -> Dict[str, List]:
         """Map a position to all alternate positions.
 
         Args:
             position (Position): Position or variant object.
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
 
         Returns:
             Dict[str, List]: A dictionary of cDNA, DNA, exon, protein, and RNA positions.
@@ -869,38 +883,38 @@ class Core:
             position_list = [position]
 
         for position in position_list:
-            result[CDNA].extend(self._position_to_cdna(position))
-            result[DNA].extend(self._position_to_dna(position))
-            result[EXON].extend(self._position_to_exon(position))
-            result[PROTEIN].extend(self._position_to_protein(position))
-            result[RNA].extend(self._position_to_rna(position))
+            result[CDNA].extend(self._position_to_cdna(position, canonical))
+            result[DNA].extend(self._position_to_dna(position, canonical))
+            result[EXON].extend(self._position_to_exon(position, canonical))
+            result[PROTEIN].extend(self._position_to_protein(position, canonical))
+            result[RNA].extend(self._position_to_rna(position, canonical))
 
         return result
 
-    def _string_to_cdna(self, string: str):
-        return self._string_to(string, self._position_to_cdna)
+    def _string_to_cdna(self, string: str, canonical: bool):
+        return self._string_to(string, self._position_to_cdna, canonical)
 
-    def _string_to_dna(self, string: str):
-        return self._string_to(string, self._position_to_dna)
+    def _string_to_dna(self, string: str, canonical: bool):
+        return self._string_to(string, self._position_to_dna, canonical)
 
-    def _string_to_exon(self, string: str):
-        return self._string_to(string, self._position_to_exon)
+    def _string_to_exon(self, string: str, canonical: bool):
+        return self._string_to(string, self._position_to_exon, canonical)
 
-    def _string_to_protein(self, string: str):
-        return self._string_to(string, self._position_to_protein)
+    def _string_to_protein(self, string: str, canonical: bool):
+        return self._string_to(string, self._position_to_protein, canonical)
 
-    def _string_to_rna(self, string: str):
-        return self._string_to(string, self._position_to_rna)
+    def _string_to_rna(self, string: str, canonical: bool):
+        return self._string_to(string, self._position_to_rna, canonical)
 
-    def _string_to(self, string: str, func: Callable):
+    def _string_to(self, string: str, func: Callable, canonical: bool):
         result = []
 
-        for position in self.parse(string):
-            result.extend(func(position))
+        for position in self.parse(string, canonical=canonical):
+            result.extend(func(position, canonical))
 
         return result
 
-    def _position_to_cdna(self, position):
+    def _position_to_cdna(self, position, canonical: bool):
         return self._position_to(
             position,
             fusionf=self._position_to_cdna,
@@ -914,9 +928,10 @@ class Core:
             exonf=self._exon_to_cdna,
             proteinf=self._protein_to_cdna,
             rnaf=self._rna_to_cdna,
+            canonical=canonical,
         )
 
-    def _position_to_dna(self, position):
+    def _position_to_dna(self, position, canonical: bool):
         return self._position_to(
             position,
             fusionf=self._position_to_dna,
@@ -930,9 +945,10 @@ class Core:
             exonf=self._exon_to_dna,
             proteinf=self._protein_to_dna,
             rnaf=self._rna_to_dna,
+            canonical=canonical,
         )
 
-    def _position_to_exon(self, position):
+    def _position_to_exon(self, position, canonical: bool):
         return self._position_to(
             position,
             fusionf=self._position_to_exon,
@@ -946,9 +962,10 @@ class Core:
             exonf=self._exon_to_exon,
             proteinf=self._protein_to_exon,
             rnaf=self._rna_to_exon,
+            canonical=canonical,
         )
 
-    def _position_to_protein(self, position):
+    def _position_to_protein(self, position, canonical: bool):
         return self._position_to(
             position,
             fusionf=self._position_to_protein,
@@ -962,9 +979,10 @@ class Core:
             exonf=self._exon_to_protein,
             proteinf=self._protein_to_protein,
             rnaf=self._rna_to_protein,
+            canonical=canonical,
         )
 
-    def _position_to_rna(self, position):
+    def _position_to_rna(self, position, canonical: bool):
         return self._position_to(
             position,
             fusionf=self._position_to_rna,
@@ -978,6 +996,7 @@ class Core:
             exonf=self._exon_to_rna,
             proteinf=self._protein_to_rna,
             rnaf=self._rna_to_rna,
+            canonical=canonical,
         )
 
     def _position_to(
@@ -994,11 +1013,12 @@ class Core:
         exonf: Callable,
         proteinf: Callable,
         rnaf: Callable,
+        canonical: bool,
     ) -> List:
         if position.is_fusion:
             fusion = cast(_Fusion, position)
-            breakpoint1 = fusionf(fusion.breakpoint1)
-            breakpoint2 = fusionf(fusion.breakpoint2)
+            breakpoint1 = fusionf(fusion.breakpoint1, canonical)
+            breakpoint2 = fusionf(fusion.breakpoint2, canonical)
             return [fusiont(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
         elif position.is_small_variant:
             if position.is_cdna:
@@ -1012,6 +1032,7 @@ class Core:
                     [position.strand],
                     position.refseq,
                     position.altseq,
+                    canonical,
                 )
             elif position.is_dna:
                 position = cast(_DnaSmallVariant, position)
@@ -1024,6 +1045,7 @@ class Core:
                     [position.strand],
                     position.refseq,
                     position.altseq,
+                    canonical,
                 )
             elif position.is_protein:
                 position = cast(_ProteinSmallVariant, position)
@@ -1036,6 +1058,7 @@ class Core:
                     [position.strand],
                     position.refseq,
                     position.altseq,
+                    canonical,
                 )
             elif position.is_rna:
                 position = cast(_RnaSmallVariant, position)
@@ -1048,6 +1071,7 @@ class Core:
                     [position.strand],
                     position.refseq,
                     position.altseq,
+                    canonical,
                 )
         else:
             if position.is_cdna:
@@ -1059,6 +1083,7 @@ class Core:
                     position.end,
                     position.end_offset,
                     [position.strand],
+                    canonical,
                 )
             elif position.is_dna:
                 position = cast(DnaPosition, position)
@@ -1069,6 +1094,7 @@ class Core:
                     position.end,
                     position.end_offset,
                     [position.strand],
+                    canonical,
                 )
             elif position.is_exon:
                 position = cast(ExonPosition, position)
@@ -1079,6 +1105,7 @@ class Core:
                     position.end,
                     position.end_offset,
                     [position.strand],
+                    canonical,
                 )
             elif position.is_protein:
                 position = cast(ProteinPosition, position)
@@ -1089,6 +1116,7 @@ class Core:
                     position.end,
                     position.end_offset,
                     [position.strand],
+                    canonical,
                 )
             elif position.is_rna:
                 position = cast(RnaPosition, position)
@@ -1099,6 +1127,7 @@ class Core:
                     position.end,
                     position.end_offset,
                     [position.strand],
+                    canonical,
                 )
 
         raise AssertionError(f"Unknown position type for {position}")
@@ -1111,9 +1140,15 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
         feature = [CDS, STOP_CODON] if include_stop else [CDS]
+
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
 
         def convert(n: int, offset: int):
             result = []
@@ -1128,6 +1163,7 @@ class Core:
                     end,
                     end_offset,
                     strand,
+                    canonical=canonical,
                     include_stop=include_stop,
                 ):
                     for cdna in self._dna_to_cdna(
@@ -1137,6 +1173,7 @@ class Core:
                         dna.end,
                         dna.end_offset,
                         [dna.strand],
+                        canonical=canonical,
                     ):
                         if cdna.transcript_id in transcript_id:
                             result.append(cdna)
@@ -1187,12 +1224,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[_CdnaSmallVariant]:
         result = []
 
         for cdna in self._cdna_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=include_stop,
         ):
             result.extend(self._position_to_small_variant(cdna, refseq, altseq))
 
@@ -1206,9 +1251,15 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[DnaPosition]:
         feature = [CDS, STOP_CODON] if include_stop else [CDS]
+
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
 
         def convert(n: int, offset: int):
             result = []
@@ -1257,12 +1308,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[_DnaSmallVariant]:
         result = []
 
         for dna in self._cdna_to_dna(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=include_stop,
         ):
             result.extend(self._position_to_small_variant(dna, refseq, altseq))
 
@@ -1276,9 +1335,15 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[ExonPosition]:
         feature = [CDS, STOP_CODON] if include_stop else [CDS]
+
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
 
         def convert(n: int, offset: int):
             result = []
@@ -1294,6 +1359,7 @@ class Core:
                     end,
                     end_offset,
                     strand,
+                    canonical=canonical,
                     include_stop=include_stop,
                 ):
                     for exon in self._dna_to_exon(
@@ -1358,12 +1424,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[_ExonSmallVariant]:
         result = []
 
         for exon in self._cdna_to_exon(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=include_stop,
         ):
             result.extend(self._position_to_small_variant(exon, refseq, altseq))
 
@@ -1377,11 +1451,19 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ProteinPosition]:
         result = []
 
         for cdna in self._cdna_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=False
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=False,
         ):
             result.extend(self._cdna_to_protein_core(cdna))
 
@@ -1412,11 +1494,19 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_ProteinSmallVariant]:
         result = []
 
         for cdna in self._cdna_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=False
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=False,
         ):
             result.extend(self._cdna_to_protein_variant_core(cdna, refseq, altseq))
 
@@ -1459,9 +1549,15 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[RnaPosition]:
         feature = [CDS, STOP_CODON] if include_stop else [CDS]
+
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
 
         def convert(n: int, offset: int):
             result = []
@@ -1476,6 +1572,7 @@ class Core:
                     end,
                     end_offset,
                     strand,
+                    canonical=canonical,
                     include_stop=include_stop,
                 ):
                     for rna in self._dna_to_rna(
@@ -1485,6 +1582,7 @@ class Core:
                         dna.end,
                         dna.end_offset,
                         [dna.strand],
+                        canonical=canonical,
                     ):
                         if rna.transcript_id in transcript_id:
                             result.append(rna)
@@ -1535,12 +1633,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[_RnaSmallVariant]:
         result = []
 
         for rna in self._cdna_to_rna(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=include_stop,
         ):
             result.extend(self._position_to_small_variant(rna, refseq, altseq))
 
@@ -1554,6 +1660,7 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
         feature = [CDS, STOP_CODON] if include_stop else [CDS]
@@ -1579,6 +1686,9 @@ class Core:
                         new_start = new_end = cds.end - n_ + cds.cdna_start
                     else:
                         new_start = new_end = n_ - cds.start + cds.cdna_start
+
+                    if canonical and not self.is_canonical_transcript(cds.transcript_id):
+                        continue
 
                     result.append(
                         CdnaPosition(
@@ -1615,12 +1725,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[_CdnaSmallVariant]:
         result = []
 
         for cdna in self._dna_to_cdna(
-            contig_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
+            contig_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=include_stop,
         ):
             result.extend(self._position_to_small_variant(cdna, refseq, altseq))
 
@@ -1634,6 +1752,7 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[DnaPosition]:
         result = []
 
@@ -1672,10 +1791,13 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_DnaSmallVariant]:
         result = []
 
-        for dna in self._dna_to_dna(contig_id, start, start_offset, end, end_offset, strand):
+        for dna in self._dna_to_dna(
+            contig_id, start, start_offset, end, end_offset, strand, canonical=canonical
+        ):
             result.extend(self._position_to_small_variant(dna, refseq, altseq))
 
         return result
@@ -1688,6 +1810,7 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ExonPosition]:
         def convert(n: int, offset: int):
             result = []
@@ -1706,6 +1829,9 @@ class Core:
                     & (self.df["feature"] == EXON)
                 )
                 for _, exon in self.df[mask].iterrows():
+                    if canonical and not self.is_canonical_transcript(exon.transcript_id):
+                        continue
+
                     result.append(
                         ExonPosition(
                             contig_id=exon.contig_id,
@@ -1741,10 +1867,13 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_ExonSmallVariant]:
         result = []
 
-        for exon in self._dna_to_exon(contig_id, start, start_offset, end, end_offset, strand):
+        for exon in self._dna_to_exon(
+            contig_id, start, start_offset, end, end_offset, strand, canonical=canonical
+        ):
             result.extend(self._position_to_small_variant(exon, refseq, altseq))
 
         return result
@@ -1757,11 +1886,19 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ProteinPosition]:
         result = []
 
         for cdna in self._dna_to_cdna(
-            contig_id, start, start_offset, end, end_offset, strand, include_stop=False
+            contig_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=False,
         ):
             result.extend(self._cdna_to_protein_core(cdna))
 
@@ -1777,11 +1914,19 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_ProteinSmallVariant]:
         result = []
 
         for cdna in self._dna_to_cdna(
-            contig_id, start, start_offset, end, end_offset, strand, include_stop=False
+            contig_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=False,
         ):
             result.extend(self._cdna_to_protein_variant_core(cdna, refseq, altseq))
 
@@ -1795,6 +1940,7 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[RnaPosition]:
         def convert(n: int, offset: int):
             result = []
@@ -1817,6 +1963,9 @@ class Core:
                         new_start = new_end = exon.end - n_ + exon.transcript_start
                     else:
                         new_start = new_end = n_ - exon.start + exon.transcript_start
+
+                    if canonical and not self.is_canonical_transcript(exon.transcript_id):
+                        continue
 
                     result.append(
                         RnaPosition(
@@ -1852,10 +2001,13 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_RnaSmallVariant]:
         result = []
 
-        for rna in self._dna_to_rna(contig_id, start, start_offset, end, end_offset, strand):
+        for rna in self._dna_to_rna(
+            contig_id, start, start_offset, end, end_offset, strand, canonical=canonical
+        ):
             result.extend(self._position_to_small_variant(rna, refseq, altseq))
 
         return result
@@ -1868,9 +2020,15 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
         feature = [CDS, STOP_CODON] if include_stop else [CDS]
+
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
 
         def convert(n: int, offset: int):
             result = []
@@ -1918,7 +2076,13 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[DnaPosition]:
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
+
         def convert(n: int, offset: int):
             result = []
 
@@ -1960,7 +2124,13 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ExonPosition]:
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
+
         def convert(n: int, offset):
             result = []
 
@@ -2007,11 +2177,19 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ProteinPosition]:
         result = []
 
         for cdna in self._exon_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=False
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=False,
         ):
             result.extend(
                 self._cdna_to_protein(
@@ -2021,6 +2199,7 @@ class Core:
                     cdna.end,
                     cdna.end_offset,
                     [cdna.strand],
+                    canonical=canonical,
                 )
             )
 
@@ -2034,7 +2213,13 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[RnaPosition]:
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
+
         def convert(n: int, offset: int):
             result = []
 
@@ -2080,6 +2265,7 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[CdnaPosition]:
         def convert(n: int):
             return ((n - 1) * 3) + 1
@@ -2092,7 +2278,13 @@ class Core:
         cdna_end = convert(end) + 2
 
         return self._cdna_to_cdna(
-            transcript_id, cdna_start, start_offset, cdna_end, end_offset, strand
+            transcript_id,
+            cdna_start,
+            start_offset,
+            cdna_end,
+            end_offset,
+            strand,
+            canonical=canonical,
         )
 
     def _protein_to_cdna_variant(
@@ -2105,11 +2297,12 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_CdnaSmallVariant]:
         result = []
 
         for cdna in self._protein_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand
+            transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             for ref, alt in product(reverse_translate(refseq), reverse_translate(altseq)):
                 # For insertions, check that the sequence flanking the inserted sequence matches the ref
@@ -2128,11 +2321,12 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[DnaPosition]:
         result = []
 
         for cdna in self._protein_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand
+            transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
                 self._cdna_to_dna(
@@ -2142,6 +2336,7 @@ class Core:
                     cdna.end,
                     cdna.end_offset,
                     [cdna.strand],
+                    canonical=canonical,
                 )
             )
 
@@ -2157,11 +2352,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_DnaSmallVariant]:
         result = []
 
         for cdna in self._protein_to_cdna_variant(
-            transcript_id, start, start_offset, end, end_offset, strand, refseq, altseq
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            refseq,
+            altseq,
+            canonical=canonical,
         ):
             result.extend(
                 self._cdna_to_dna_variant(
@@ -2173,6 +2377,7 @@ class Core:
                     [cdna.strand],
                     cdna.refseq,
                     cdna.altseq,
+                    canonical=canonical,
                     include_stop=True,
                 )
             )
@@ -2187,11 +2392,12 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ExonPosition]:
         result = []
 
         for cdna in self._protein_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand
+            transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
                 self._cdna_to_exon(
@@ -2201,6 +2407,7 @@ class Core:
                     cdna.end,
                     cdna.end_offset,
                     [cdna.strand],
+                    canonical=canonical,
                 )
             )
 
@@ -2216,11 +2423,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_ExonSmallVariant]:
         result = []
 
         for cdna in self._protein_to_cdna_variant(
-            transcript_id, start, start_offset, end, end_offset, strand, refseq, altseq
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            refseq,
+            altseq,
+            canonical=canonical,
         ):
             result.extend(
                 self._cdna_to_exon_variant(
@@ -2232,6 +2448,7 @@ class Core:
                     [cdna.strand],
                     cdna.refseq,
                     cdna.altseq,
+                    canonical=canonical,
                     include_stop=True,
                 )
             )
@@ -2246,11 +2463,12 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ProteinPosition]:
         result = []
 
         for cdna in self._protein_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand
+            transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
                 self._cdna_to_protein(
@@ -2260,6 +2478,7 @@ class Core:
                     cdna.end,
                     cdna.end_offset,
                     [cdna.strand],
+                    canonical=canonical,
                 )
             )
 
@@ -2275,11 +2494,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_ProteinSmallVariant]:
         result = []
 
         for cdna in self._protein_to_cdna_variant(
-            transcript_id, start, start_offset, end, end_offset, strand, refseq, altseq
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            refseq,
+            altseq,
+            canonical=canonical,
         ):
             result.extend(
                 self._cdna_to_protein_variant(
@@ -2291,6 +2519,7 @@ class Core:
                     [cdna.strand],
                     cdna.refseq,
                     cdna.altseq,
+                    canonical=canonical,
                 )
             )
 
@@ -2304,11 +2533,12 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[RnaPosition]:
         result = []
 
         for cdna in self._protein_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand
+            transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
                 self._cdna_to_rna(
@@ -2318,6 +2548,7 @@ class Core:
                     cdna.end,
                     cdna.end_offset,
                     [cdna.strand],
+                    canonical=canonical,
                 )
             )
 
@@ -2333,11 +2564,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_RnaSmallVariant]:
         result = []
 
         for cdna in self._protein_to_cdna_variant(
-            transcript_id, start, start_offset, end, end_offset, strand, refseq, altseq
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            refseq,
+            altseq,
+            canonical=canonical,
         ):
             result.extend(
                 self._cdna_to_rna_variant(
@@ -2349,6 +2589,7 @@ class Core:
                     [cdna.strand],
                     cdna.refseq,
                     cdna.altseq,
+                    canonical=canonical,
                 )
             )
 
@@ -2362,9 +2603,15 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[CdnaPosition]:
         feature = [CDS, STOP_CODON] if include_stop else [CDS]
+
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
 
         def convert(n: int, offset: int):
             result = []
@@ -2373,7 +2620,7 @@ class Core:
             # just return an offset
             if offset:
                 for dna in self._rna_to_dna(
-                    transcript_id, start, start_offset, end, end_offset, strand
+                    transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
                 ):
                     for cdna in self._dna_to_cdna(
                         [dna.contig_id],
@@ -2382,6 +2629,7 @@ class Core:
                         dna.end,
                         dna.end_offset,
                         [dna.strand],
+                        canonical=canonical,
                     ):
                         if cdna.transcript_id in transcript_id:
                             result.append(cdna)
@@ -2433,12 +2681,20 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
         include_stop: bool = True,
     ) -> List[_CdnaSmallVariant]:
         result = []
 
         for cdna in self._rna_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=include_stop
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=include_stop,
         ):
             result.extend(self._position_to_small_variant(cdna, refseq, altseq))
 
@@ -2452,7 +2708,13 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[DnaPosition]:
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
+
         def convert(n: int, offset: int):
             result = []
 
@@ -2501,10 +2763,13 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_DnaSmallVariant]:
         result = []
 
-        for dna in self._rna_to_dna(transcript_id, start, start_offset, end, end_offset, strand):
+        for dna in self._rna_to_dna(
+            transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
+        ):
             result.extend(self._position_to_small_variant(dna, refseq, altseq))
 
         return result
@@ -2517,7 +2782,13 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ExonPosition]:
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
+
         def convert(n: int, offset: int):
             result = []
 
@@ -2526,7 +2797,7 @@ class Core:
             # directly to an exon.
             if offset:
                 for dna in self._rna_to_dna(
-                    transcript_id, start, start_offset, end, end_offset, strand
+                    transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
                 ):
                     for exon in self._dna_to_exon(
                         [dna.contig_id],
@@ -2535,6 +2806,7 @@ class Core:
                         dna.end,
                         dna.end_offset,
                         [dna.strand],
+                        canonical=canonical,
                     ):
                         if exon.transcript_id in transcript_id:
                             result.append(exon)
@@ -2584,10 +2856,13 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_ExonSmallVariant]:
         result = []
 
-        for exon in self._rna_to_exon(transcript_id, start, start_offset, end, end_offset, strand):
+        for exon in self._rna_to_exon(
+            transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
+        ):
             result.extend(self._position_to_small_variant(exon, refseq, altseq))
 
         return result
@@ -2600,11 +2875,19 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[ProteinPosition]:
         result = []
 
         for cdna in self._rna_to_cdna(
-            transcript_id, start, start_offset, end, end_offset, strand, include_stop=False
+            transcript_id,
+            start,
+            start_offset,
+            end,
+            end_offset,
+            strand,
+            canonical=canonical,
+            include_stop=False,
         ):
             result.extend(
                 self._cdna_to_protein(
@@ -2614,6 +2897,7 @@ class Core:
                     cdna.end,
                     cdna.end_offset,
                     [cdna.strand],
+                    canonical=canonical,
                 )
             )
 
@@ -2629,6 +2913,7 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_ProteinSmallVariant]:
         result = []
 
@@ -2641,6 +2926,7 @@ class Core:
             strand,
             refseq,
             altseq,
+            canonical=canonical,
             include_stop=False,
         ):
             result.extend(
@@ -2653,6 +2939,7 @@ class Core:
                     [cdna.strand],
                     cdna.refseq,
                     cdna.altseq,
+                    canonical=canonical,
                 )
             )
 
@@ -2666,7 +2953,13 @@ class Core:
         end: int,
         end_offset: int,
         strand: List[str],
+        canonical: bool = False,
     ) -> List[RnaPosition]:
+        if canonical:
+            transcript_id = [i for i in transcript_id if self.is_canonical_transcript(i)]
+            if not transcript_id:
+                return []
+
         def convert(n: int, offset: int):
             result = []
 
@@ -2674,7 +2967,7 @@ class Core:
             # just return an offset
             if offset:
                 for dna in self._rna_to_dna(
-                    transcript_id, start, start_offset, end, end_offset, strand
+                    transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
                 ):
                     for rna in self._dna_to_rna(
                         [dna.contig_id],
@@ -2683,6 +2976,7 @@ class Core:
                         dna.end,
                         dna.end_offset,
                         [dna.strand],
+                        canonical=canonical,
                     ):
                         if rna.transcript_id in transcript_id:
                             result.append(rna)
@@ -2731,10 +3025,13 @@ class Core:
         strand: List[str],
         refseq: str,
         altseq: str,
+        canonical: bool = False,
     ) -> List[_RnaSmallVariant]:
         result = []
 
-        for rna in self._rna_to_rna(transcript_id, start, start_offset, end, end_offset, strand):
+        for rna in self._rna_to_rna(
+            transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
+        ):
             result.extend(self._position_to_small_variant(rna, refseq, altseq))
 
         return result

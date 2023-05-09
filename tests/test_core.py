@@ -81,6 +81,55 @@ def test_init():
 
 
 # -------------------------------------------------------------------------------------------------
+# to_cdna
+# -------------------------------------------------------------------------------------------------
+def test_to_cdna_canonical(ensembl100):
+    assert ensembl100.to_cdna("7:g.127589084", canonical=False) == [
+        CdnaPosition(
+            contig_id="7",
+            start=69,
+            start_offset=0,
+            end=69,
+            end_offset=0,
+            strand="+",
+            gene_id="ENSG00000004059",
+            gene_name="ARF5",
+            transcript_id="ENST00000000233",
+            transcript_name="ARF5-201",
+            protein_id="ENSP00000000233",
+        ),
+        CdnaPosition(
+            contig_id="7",
+            start=69,
+            start_offset=0,
+            end=69,
+            end_offset=0,
+            strand="+",
+            gene_id="ENSG00000004059",
+            gene_name="ARF5",
+            transcript_id="ENST00000415666",
+            transcript_name="ARF5-202",
+            protein_id="ENSP00000412701",
+        ),
+    ]
+    assert ensembl100.to_cdna("7:g.127589084", canonical=True) == [
+        CdnaPosition(
+            contig_id="7",
+            start=69,
+            start_offset=0,
+            end=69,
+            end_offset=0,
+            strand="+",
+            gene_id="ENSG00000004059",
+            gene_name="ARF5",
+            transcript_id="ENST00000000233",
+            transcript_name="ARF5-201",
+            protein_id="ENSP00000000233",
+        )
+    ]
+
+
+# -------------------------------------------------------------------------------------------------
 # contig_ids
 # -------------------------------------------------------------------------------------------------
 def test_contig_ids_from_contig_id(ensembl100):

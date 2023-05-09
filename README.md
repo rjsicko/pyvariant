@@ -79,6 +79,16 @@ Exon to RNA:
 [RnaFusion(breakpoint1=RnaPosition(contig_id='12', start=972, start_offset=0, end=2240, end_offset=0, strand='+', gene_id='ENSG00000123374', gene_name='CDK2', transcript_id='ENST00000266970', transcript_name='CDK2-201'), breakpoint2=RnaPosition(contig_id='12', start=63, start_offset=0, end=317, end_offset=0, strand='+', gene_id='ENSG00000111540', gene_name='RAB5B', transcript_id='ENST00000360299', transcript_name='RAB5B-201'))]
 ```
 
+You can also limit mapping to the canonical transcript only:
+
+```python
+>>> ensembl100 = EnsemblRelease(species='homo_sapiens', release=100, canonical_transcript=["ENST00000000233"])
+>>> ensembl100.to_cdna("7:g.127589084", canonical=False)
+[CdnaPosition(contig_id='7', start=69, start_offset=0, end=69, end_offset=0, strand='+', gene_id='ENSG00000004059', gene_name='ARF5', transcript_id='ENST00000000233', transcript_name='ARF5-201', protein_id='ENSP00000000233'), CdnaPosition(contig_id='7', start=69, start_offset=0, end=69, end_offset=0, strand='+', gene_id='ENSG00000004059', gene_name='ARF5', transcript_id='ENST00000415666', transcript_name='ARF5-202', protein_id='ENSP00000412701')]
+>>> ensembl100.to_cdna("7:g.127589084", canonical=True)
+[CdnaPosition(contig_id='7', start=69, start_offset=0, end=69, end_offset=0, strand='+', gene_id='ENSG00000004059', gene_name='ARF5', transcript_id='ENST00000000233', transcript_name='ARF5-201', protein_id='ENSP00000000233')]
+```
+
 ### Check if two variants are equivalent
 
 Get the notation(s) that represent both variants:
