@@ -101,7 +101,6 @@ dict_keys(['cdna', 'dna', 'exon', 'protein', 'rna'])
 [DnaSubstitution(refseq='C', altseq='A', contig_id='1', start=114713909, start_offset=0, end=114713909, end_offset=0, strand='-')]
 ```
 
-
 ...or get the notation(s) that are unique to each variant:
 
 ```python
