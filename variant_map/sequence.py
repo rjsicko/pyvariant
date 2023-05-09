@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import gzip
 from abc import ABC
+from functools import lru_cache
 from typing import Dict, Optional
 
 from Bio import SeqIO
@@ -98,6 +99,7 @@ class PyfaidxFasta(_FastaABC):
         return str(self.fasta[reference][start:end])
 
 
+@lru_cache
 def get_sequence(
     fasta: _FastaABC,
     ref: str,
@@ -171,6 +173,7 @@ def get_sequence(
     return sequence
 
 
+@lru_cache
 def mutate_sequence(
     fasta: _FastaABC,
     ref: str,

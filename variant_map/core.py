@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+from functools import lru_cache
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
@@ -3490,6 +3491,7 @@ class Core:
         """
         return self._query_feature(TRANSCRIPT_NAME, feature, alias=self.transcript_alias)
 
+    @lru_cache
     def _query_feature(
         self, key: str, feature: str = "", alias: Optional[Callable] = None
     ) -> List[str]:
@@ -3563,6 +3565,7 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # Functions for getting feature aliases
     # ---------------------------------------------------------------------------------------------
+    @lru_cache
     def contig_alias(self, contig_id: str) -> List[str]:
         """List all aliases of the given contig ID.
 
@@ -3587,6 +3590,7 @@ class Core:
 
         return alias
 
+    @lru_cache
     def exon_alias(self, exon_id: str) -> List[str]:
         """List all aliases of the given exon ID.
 
@@ -3598,6 +3602,7 @@ class Core:
         """
         return self._alias(exon_id, self._exon_alias)
 
+    @lru_cache
     def gene_alias(self, gene_id: str) -> List[str]:
         """List all aliases of the given gene ID.
 
@@ -3609,6 +3614,7 @@ class Core:
         """
         return self._alias(gene_id, self._gene_alias)
 
+    @lru_cache
     def protein_alias(self, protein_id: str) -> List[str]:
         """List all aliases of the given protein ID.
 
@@ -3620,6 +3626,7 @@ class Core:
         """
         return self._alias(protein_id, self._protein_alias)
 
+    @lru_cache
     def transcript_alias(self, transcript_id: str) -> List[str]:
         """List all aliases of the given transcript ID.
 
@@ -3678,6 +3685,7 @@ class Core:
 
         return [(i, feature_type) for i in normalized]
 
+    @lru_cache
     def _normalize_id(self, feature: str) -> Tuple[str, pd.DataFrame]:
         feature_type = ""
         result = pd.DataFrame()
@@ -3794,6 +3802,7 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # Functions for checking if a transcript is a canonical transcript
     # ---------------------------------------------------------------------------------------------
+    @lru_cache
     def is_canonical_transcript(self, transcript_id: str) -> bool:
         """Check if the given transcript ID is the canonical transcript for its gene.
 
