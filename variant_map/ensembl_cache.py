@@ -11,7 +11,6 @@ from pyfaidx import Fasta
 
 from .constants import CONTIG_ID
 from .files import bgzip, ftp_download, get_cache_dir, is_bgzipped
-from .sequence import DictFasta, PyfaidxFasta, _FastaABC
 from .utils import normalize_release, normalize_species, reference_by_release, strip_version
 
 # Ensembl FTP URL
@@ -341,31 +340,6 @@ class EnsemblCache:
             build_index=True,
             rebuild=True,
         )
-
-    # ---------------------------------------------------------------------------------------------
-    # Load FASTA files
-    # ---------------------------------------------------------------------------------------------
-    def load_cdna_fasta(self, low_memory: bool = True) -> Fasta:
-        """Load and return the cDNA a `pyfaidx.Fasta` object."""
-        return DictFasta.load(self.local_cdna_fasta_filepath)
-
-    def load_dna_fasta(self, low_memory: bool = True) -> Fasta:
-        """Load and return the DNA a `pyfaidx.Fasta` object."""
-        return DictFasta.load(self.local_dna_fasta_filepath)
-
-    def load_ncrna_fasta(self, low_memory: bool = True) -> Fasta:
-        """Load and return the ncDNA a `pyfaidx.Fasta` object."""
-        return DictFasta.load(self.local_ncrna_fasta_filepath)
-
-    def load_pep_fasta(self, low_memory: bool = True) -> Fasta:
-        """Load and return the peptide a `pyfaidx.Fasta` object."""
-        return self._load_fasta(self.local_pep_fasta_filepath)
-
-    def _load_fasta(self, path: str, low_memory: bool = True) -> _FastaABC:
-        if low_memory:
-            return PyfaidxFasta.load(path)
-        else:
-            return DictFasta.load(path)
 
     # ---------------------------------------------------------------------------------------------
     # GTF files

@@ -1,16 +1,13 @@
 """Function definitions for manipulating reference sequences."""
 from __future__ import annotations
 
-import gzip
 from abc import ABC
 from functools import lru_cache
-from typing import Dict, Optional
+from typing import Optional
 
-from Bio import SeqIO
 from pyfaidx import Fasta
 
 from .constants import EMPTY_FASTA
-from .files import is_bgzipped
 from .utils import strip_version
 
 
@@ -23,41 +20,6 @@ class _FastaABC(ABC):
 
     def fetch(self, reference: str, start: int, end: int) -> str:
         raise NotImplementedError()
-
-
-class DictFasta(_FastaABC):
-    @classmethod
-    def load(cls, path: str = "") -> DictFasta:
-        """Parse a FASTA/FASTQ file into a dictionary of sequences.
-
-        Args:
-            path (str): Path to FASTA or FASTQ file
-
-        Returns:
-            DictFasta
-        """
-        if not path:
-            path = EMPTY_FASTA
-
-        if is_bgzipped(path):
-            with gzip.open(path, "rt") as fh:
-                fasta = SeqIO.to_dict(SeqIO.parse(fh, "fasta"))
-        else:
-            fasta = SeqIO.to_dict(SeqIO.parse(path, "fasta"))
-
-        return cls(fasta)
-
-    def __init__(self, fasta: Dict[str, str]):
-        self.fasta = fasta
-
-    def __contains__(self, reference: str) -> bool:
-        return reference in self.fasta
-
-    def __getitem__(self, reference: str) -> str:
-        return self.fasta[reference]
-
-    def fetch(self, reference: str, start: int, end: int) -> str:
-        return str(self.fasta[reference][start:end])
 
 
 class PyfaidxFasta(_FastaABC):

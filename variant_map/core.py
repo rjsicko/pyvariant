@@ -76,7 +76,7 @@ from .positions import (
     _RnaSmallVariant,
     _SmallVariant,
 )
-from .sequence import DictFasta, PyfaidxFasta, _FastaABC, get_sequence, mutate_sequence
+from .sequence import PyfaidxFasta, _FastaABC, get_sequence, mutate_sequence
 from .tables import AMINO_ACID_TABLE
 from .utils import (
     calc_cdna_to_protein,
@@ -110,7 +110,6 @@ class Core:
         gene_alias: Union[str, Dict] = {},
         protein_alias: Union[str, Dict] = {},
         transcript_alias: Union[str, Dict] = {},
-        low_memory: bool = True,
     ):
         """_summary_
 
@@ -126,7 +125,6 @@ class Core:
             gene_alias (Union[str, Dict], optional): Dictionary mapping gene aliases to their normalized ID, or a path to a text file
             protein_alias (Union[str, Dict], optional): Dictionary mapping protein aliases to their normalized ID, or a path to a text file
             transcript_alias (Union[str, Dict], optional): Dictionary mapping transcript aliases to their normalized ID, or a path to a text file
-            low_memory (bool): Load FASTA files in a memory-efficient manner
         """
         self.df = read_gtf(gtf, result_type="pandas")  # TODO: switch to 'polars'?
 
@@ -134,16 +132,10 @@ class Core:
         self.dna_fasta: List[_FastaABC] = []
         self.protein_fasta: List[_FastaABC] = []
         self.rna_fasta: List[_FastaABC] = []
-        if low_memory:
-            self.cds_fasta = [PyfaidxFasta.load(i) for i in cds]
-            self.dna_fasta = [PyfaidxFasta.load(i) for i in dna]
-            self.protein_fasta = [PyfaidxFasta.load(i) for i in peptide]
-            self.rna_fasta = [PyfaidxFasta.load(i) for i in rna]
-        else:
-            self.cds_fasta = [DictFasta.load(i) for i in cds]
-            self.dna_fasta = [DictFasta.load(i) for i in dna]
-            self.protein_fasta = [DictFasta.load(i) for i in peptide]
-            self.rna_fasta = [DictFasta.load(i) for i in rna]
+        self.cds_fasta = [PyfaidxFasta.load(i) for i in cds]
+        self.dna_fasta = [PyfaidxFasta.load(i) for i in dna]
+        self.protein_fasta = [PyfaidxFasta.load(i) for i in peptide]
+        self.rna_fasta = [PyfaidxFasta.load(i) for i in rna]
 
         if isinstance(canonical_transcript, str):
             self._canonical_transcript = txt_to_list(canonical_transcript)

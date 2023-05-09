@@ -23,7 +23,6 @@ def ensembl69():
         gene_alias={},
         protein_alias={},
         transcript_alias={},
-        low_memory=True,
     )
 
 
@@ -39,5 +38,4 @@ def ensembl100():
         gene_alias=GENE_ALIAS,
         protein_alias=PROTEIN_ALIAS,
         transcript_alias=TRANSCRIPT_ALIAS,
-        low_memory=True,
     )
