@@ -1474,21 +1474,7 @@ def test_to_all_from_cdna_delins(ensembl100):
                 strand="+",
             )
         ],
-        "exon": [
-            ExonPosition(
-                contig_id="4",
-                start=2,
-                start_offset=0,
-                end=2,
-                end_offset=0,
-                strand="+",
-                gene_id="ENSG00000157404",
-                gene_name="KIT",
-                transcript_id="ENST00000288135",
-                transcript_name="KIT-201",
-                exon_id="ENSE00001032350",
-            )
-        ],
+        "exon": [],
         "protein": [
             ProteinFrameshift(
                 refseq="K",
@@ -1771,21 +1757,7 @@ def test_same(ensembl100):
                 strand="-",
             )
         ],
-        "exon": [
-            ExonPosition(
-                contig_id="1",
-                start=3,
-                start_offset=0,
-                end=3,
-                end_offset=0,
-                strand="-",
-                gene_id="ENSG00000213281",
-                gene_name="NRAS",
-                transcript_id="ENST00000369535",
-                transcript_name="NRAS-201",
-                exon_id="ENSE00001751295",
-            )
-        ],
+        "exon": [],
         "protein": [
             ProteinSubstitution(
                 refseq="Q",

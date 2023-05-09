@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import sys
-import warnings
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
@@ -2879,10 +2878,8 @@ class Core:
                 )
                 variant_list.append(variant)
             elif position.is_exon:
-                warnings.warn(
-                    "Unable to map small mutations to an exon variant. An exon position is returned instead."
-                )
-                variant_list.append(position)
+                # TODO: Is there a way to map a small variant to an exon?
+                pass
             else:
                 raise ValueError(
                     f"Unrecognized variant type for {position.position_type}/{variant_type} ({new_ref}/{new_alt})"
