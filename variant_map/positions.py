@@ -746,6 +746,11 @@ class _Frameshift(_SmallVariant):
 class ProteinFrameshift(_Frameshift, _ProteinSmallVariant):
     """Stores information on a protein frameshift variant and maps to other position types."""
 
+    def __str__(self) -> str:
+        start = format_hgvs_position(self.start, self.start_offset)
+        start_seq = self.refseq[0]
+        return f"{self.protein_id}:p.{start_seq}{start}fs"
+
 
 # -------------------------------------------------------------------------------------------------
 # Insertion classes
