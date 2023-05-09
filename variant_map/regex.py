@@ -1,3 +1,4 @@
+"""Regex for parsing string representations for variants."""
 import re
 from typing import Any, Dict
 

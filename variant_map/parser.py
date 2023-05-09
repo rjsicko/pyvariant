@@ -1,3 +1,4 @@
+"""Module for parsing string representations of variants."""
 from typing import Any, Dict, Optional
 
 from Bio.Data import IUPACData
