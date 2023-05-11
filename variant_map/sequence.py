@@ -1,7 +1,6 @@
 """Function definitions for manipulating reference sequences."""
 from __future__ import annotations
 
-from abc import ABC
 from functools import lru_cache
 from typing import Optional
 
@@ -11,18 +10,9 @@ from .constants import EMPTY_FASTA
 from .utils import strip_version
 
 
-class _FastaABC(ABC):
-    def __contains__(self, reference: str) -> bool:
-        raise NotImplementedError()
+class PyfaidxFasta:
+    read_ahead = 100000
 
-    def __getitem__(self, reference: str) -> str:
-        raise NotImplementedError()
-
-    def fetch(self, reference: str, start: int, end: int) -> str:
-        raise NotImplementedError()
-
-
-class PyfaidxFasta(_FastaABC):
     @classmethod
     def load(cls, path: str = "") -> PyfaidxFasta:
         """Parse a FASTA/FASTQ file into a 'pyfaidx.Fasta' object.
@@ -43,7 +33,7 @@ class PyfaidxFasta(_FastaABC):
             sequence_always_upper=True,
             build_index=False,
             rebuild=False,
-            read_ahead=100000,
+            read_ahead=cls.read_ahead,
         )
 
         return cls(fasta)
@@ -57,13 +47,26 @@ class PyfaidxFasta(_FastaABC):
     def __getitem__(self, reference: str) -> str:
         return self.fasta[reference]
 
+    def _try_buffer(self, reference: str, start: int, end: int):
+        try:
+            if reference != self.fasta.faidx.buffer["name"]:
+                floor = max(start - self.read_ahead, 0)
+                ceiling = end + self.read_ahead
+                print(f"Buffering '{reference}' {floor} to {ceiling}")  # DEBUG
+                self.fasta[reference][floor:ceiling]
+                print("Done")  # DEBUG
+        except Exception as exc:
+            print(f"Failed to buffer '{reference}': {exc}")  # DEBUG
+            pass
+
     def fetch(self, reference: str, start: int, end: int) -> str:
+        self._try_buffer(reference, start, end)
         return str(self.fasta[reference][start:end])
 
 
 @lru_cache
 def get_sequence(
-    fasta: _FastaABC,
+    fasta: PyfaidxFasta,
     ref: str,
     start: int,
     end: int,
@@ -75,7 +78,7 @@ def get_sequence(
     that the total returned sequence length adds up to `window`.
 
     Args:
-        fasta (_FastaABC): FASTA containing all the reference sequences
+        fasta (PyfaidxFasta): FASTA containing all the reference sequences
         ref (str): Reference sequence ID
         start (int): First base of position of interest
         end (int): Last base of position of interest
@@ -137,7 +140,7 @@ def get_sequence(
 
 @lru_cache
 def mutate_sequence(
-    fasta: _FastaABC,
+    fasta: PyfaidxFasta,
     ref: str,
     start: int,
     end: int,
@@ -151,7 +154,7 @@ def mutate_sequence(
     sequence within a window of length `window`.
 
     Args:
-        fasta (_FastaABC): FASTA containing all the reference sequences
+        fasta (PyfaidxFasta): FASTA containing all the reference sequences
         ref (str): Reference sequence ID
         start (int): First base of the mutation site. For insertions, this is the base 5' of the
             insertion site

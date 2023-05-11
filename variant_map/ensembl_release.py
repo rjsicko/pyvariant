@@ -7,7 +7,7 @@ from .core import Core
 from .ensembl_cache import EnsemblCache
 from .files import tsv_to_dict, txt_to_list
 from .positions import CdnaPosition
-from .sequence import PyfaidxFasta, _FastaABC
+from .sequence import PyfaidxFasta
 from .utils import reverse_complement
 
 
@@ -46,10 +46,10 @@ class EnsemblRelease(Core):
         self.species = self.ensembl_cache.species
         self.df = self.ensembl_cache.load_df()
 
-        self.cds_fasta: List[_FastaABC] = []
-        self.dna_fasta: List[_FastaABC] = []
-        self.protein_fasta: List[_FastaABC] = []
-        self.rna_fasta: List[_FastaABC] = []
+        self.cds_fasta: List[PyfaidxFasta] = []
+        self.dna_fasta: List[PyfaidxFasta] = []
+        self.protein_fasta: List[PyfaidxFasta] = []
+        self.rna_fasta: List[PyfaidxFasta] = []
         self.cds_fasta = []
         self.dna_fasta = [PyfaidxFasta.load(self.ensembl_cache.local_dna_fasta_filepath)]
         self.protein_fasta = [PyfaidxFasta.load(self.ensembl_cache.local_pep_fasta_filepath)]

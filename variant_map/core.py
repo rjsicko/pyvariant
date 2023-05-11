@@ -76,7 +76,7 @@ from .positions import (
     _RnaSmallVariant,
     _SmallVariant,
 )
-from .sequence import PyfaidxFasta, _FastaABC, get_sequence, mutate_sequence
+from .sequence import PyfaidxFasta, get_sequence, mutate_sequence
 from .tables import AMINO_ACID_TABLE
 from .utils import (
     calc_cdna_to_protein,
@@ -128,10 +128,10 @@ class Core:
         """
         self.df = read_gtf(gtf, result_type="pandas")  # TODO: switch to 'polars'?
 
-        self.cds_fasta: List[_FastaABC] = []
-        self.dna_fasta: List[_FastaABC] = []
-        self.protein_fasta: List[_FastaABC] = []
-        self.rna_fasta: List[_FastaABC] = []
+        self.cds_fasta: List[PyfaidxFasta] = []
+        self.dna_fasta: List[PyfaidxFasta] = []
+        self.protein_fasta: List[PyfaidxFasta] = []
+        self.rna_fasta: List[PyfaidxFasta] = []
         self.cds_fasta = [PyfaidxFasta.load(i) for i in cds]
         self.dna_fasta = [PyfaidxFasta.load(i) for i in dna]
         self.protein_fasta = [PyfaidxFasta.load(i) for i in peptide]
@@ -527,7 +527,7 @@ class Core:
 
         return sequence
 
-    def _get_fasta(self, fasta_list: List[_FastaABC], ref: str) -> Fasta:
+    def _get_fasta(self, fasta_list: List[PyfaidxFasta], ref: str) -> Fasta:
         for fasta in fasta_list:
             if ref in fasta:
                 return fasta
