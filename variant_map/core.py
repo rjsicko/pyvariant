@@ -1146,34 +1146,6 @@ class Core:
         def convert(n: int, offset: int):
             result = []
 
-            # If the offset position can be normalized to a non-offset position, do so. Otherwise
-            # just return an offset position.
-            if offset:
-                for dna in self._cdna_to_dna(
-                    transcript_id,
-                    start,
-                    start_offset,
-                    end,
-                    end_offset,
-                    strand,
-                    canonical=canonical,
-                    include_stop=include_stop,
-                ):
-                    for cdna in self._dna_to_cdna(
-                        [dna.contig_id],
-                        dna.start,
-                        dna.start_offset,
-                        dna.end,
-                        dna.end_offset,
-                        [dna.strand],
-                        canonical=canonical,
-                    ):
-                        if cdna.transcript_id in transcript_id:
-                            result.append(cdna)
-
-                if result:
-                    return result
-
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["cdna_start"] <= n)
@@ -1182,12 +1154,19 @@ class Core:
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
+                # If the offset position can be normalized to a non-offset position, do so.
+                # Otherwise just return an offset position.
+                n_ = n + offset
+                if cds.cdna_start <= n_ <= cds.cdna_end:
+                    n = n_
+                    offset = 0
+
                 result.append(
                     CdnaPosition(
                         contig_id=cds.contig_id,
-                        start=start,
+                        start=n,
                         start_offset=offset,
-                        end=end,
+                        end=n,
                         end_offset=offset,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
@@ -1270,14 +1249,16 @@ class Core:
                 else:
                     new_start = new_end = cds.start + (n - cds.cdna_start) + offset
 
+                offset = 0
+
                 # TODO: Check that new new_start is actually on the contig
                 result.append(
                     DnaPosition(
                         contig_id=cds.contig_id,
                         start=new_start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=new_end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=cds.strand,
                     )
                 )
@@ -1341,33 +1322,6 @@ class Core:
         def convert(n: int, offset: int):
             result = []
 
-            # For an offset position, we need to calculate then equivalent DNA position then map
-            # that to one or more exons. This is slower, so if there's no offset we can just map
-            # directly to an exon.
-            if offset:
-                for dna in self._cdna_to_dna(
-                    transcript_id,
-                    start,
-                    start_offset,
-                    end,
-                    end_offset,
-                    strand,
-                    canonical=canonical,
-                    include_stop=include_stop,
-                ):
-                    for exon in self._dna_to_exon(
-                        [dna.contig_id],
-                        dna.start,
-                        dna.start_offset,
-                        dna.end,
-                        dna.end_offset,
-                        [dna.strand],
-                    ):
-                        if exon.transcript_id in transcript_id:
-                            result.append(exon)
-
-                return result
-
             mask_cds = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["cdna_start"] <= n)
@@ -1376,25 +1330,34 @@ class Core:
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask_cds].iterrows():
+                # If the offset position can be normalized to a non-offset position, do so.
+                # Otherwise skip this iteration since it means that the position is not on an exon.
+                n_ = n + offset
+                if cds.cdna_start <= n_ <= cds.cdna_end:
+                    n = n_
+                    offset = 0
+                else:
+                    continue
+
                 mask_exon = (
                     (self.df[TRANSCRIPT_ID].isin(transcript_id))
                     & (self.df["exon_number"] == cds.exon_number)
                     & (self.df["feature"] == EXON)
                 )
-                for _, exon_row in self.df[mask_exon].iterrows():
+                for _, exon in self.df[mask_exon].iterrows():
                     result.append(
                         ExonPosition(
-                            contig_id=exon_row.contig_id,
-                            start=int(exon_row.exon_number),
-                            start_offset=0,
-                            end=int(exon_row.exon_number),
-                            end_offset=0,
-                            strand=exon_row.strand,
-                            gene_id=exon_row.gene_id,
-                            gene_name=exon_row.gene_name,
-                            transcript_id=exon_row.transcript_id,
-                            transcript_name=exon_row.transcript_name,
-                            exon_id=exon_row.exon_id,
+                            contig_id=exon.contig_id,
+                            start=int(exon.exon_number),
+                            start_offset=offset,
+                            end=int(exon.exon_number),
+                            end_offset=offset,
+                            strand=exon.strand,
+                            gene_id=exon.gene_id,
+                            gene_name=exon.gene_name,
+                            transcript_id=exon.transcript_id,
+                            transcript_name=exon.transcript_name,
+                            exon_id=exon.exon_id,
                         )
                     )
 
@@ -1555,34 +1518,6 @@ class Core:
         def convert(n: int, offset: int):
             result = []
 
-            # If the offset position can be normalized to a non-offset position, do so. Otherwise
-            # just return an offset
-            if offset:
-                for dna in self._cdna_to_dna(
-                    transcript_id,
-                    start,
-                    start_offset,
-                    end,
-                    end_offset,
-                    strand,
-                    canonical=canonical,
-                    include_stop=include_stop,
-                ):
-                    for rna in self._dna_to_rna(
-                        [dna.contig_id],
-                        dna.start,
-                        dna.start_offset,
-                        dna.end,
-                        dna.end_offset,
-                        [dna.strand],
-                        canonical=canonical,
-                    ):
-                        if rna.transcript_id in transcript_id:
-                            result.append(rna)
-
-                if result:
-                    return result
-
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["cdna_start"] <= n)
@@ -1591,6 +1526,13 @@ class Core:
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
+                # If the offset position can be normalized to a non-offset position, do so.
+                # Otherwise just return an offset position.
+                n_ = n + offset
+                if cds.cdna_start <= n_ <= cds.cdna_end:
+                    n = n_
+                    offset = 0
+
                 new_start = new_end = cds.transcript_start + (n - cds.cdna_start)
                 result.append(
                     RnaPosition(
@@ -1662,10 +1604,8 @@ class Core:
             result = []
 
             for strand_ in strand:
-                if strand_ == "-":
-                    n_ = n - offset
-                else:
-                    n_ = n + offset
+                n_ = (n - offset) if strand_ == "-" else (n + offset)
+                offset = 0
 
                 mask = (
                     (self.df[CONTIG_ID].isin(contig_id))
@@ -1687,9 +1627,9 @@ class Core:
                         CdnaPosition(
                             contig_id=cds.contig_id,
                             start=new_start,
-                            start_offset=0,
+                            start_offset=offset,
                             end=new_end,
-                            end_offset=0,
+                            end_offset=offset,
                             strand=cds.strand,
                             gene_id=cds.gene_id,
                             gene_name=cds.gene_name,
@@ -1758,6 +1698,9 @@ class Core:
                 new_start = start + start_offset
                 new_end = end + end_offset
 
+            start_offset = 0
+            end_offset = 0
+
             # Sort the start and end positions after adjusting by offsets
             new_start, new_end = sorted([new_start, new_end])
 
@@ -1765,9 +1708,9 @@ class Core:
                 DnaPosition(
                     contig_id=contig_id_,
                     start=new_start,
-                    start_offset=0,
+                    start_offset=start_offset,
                     end=new_end,
-                    end_offset=0,
+                    end_offset=end_offset,
                     strand=strand_,
                 )
             )
@@ -1809,10 +1752,8 @@ class Core:
             result = []
 
             for strand_ in strand:
-                if strand_ == "-":
-                    n_ = n - offset
-                else:
-                    n_ = n + offset
+                n_ = (n - offset) if strand_ == "-" else (n + offset)
+                offset = 0
 
                 mask = (
                     (self.df[CONTIG_ID].isin(contig_id))
@@ -1829,9 +1770,9 @@ class Core:
                         ExonPosition(
                             contig_id=exon.contig_id,
                             start=int(exon.exon_number),
-                            start_offset=0,
+                            start_offset=offset,
                             end=int(exon.exon_number),
-                            end_offset=0,
+                            end_offset=offset,
                             strand=exon.strand,
                             gene_id=exon.gene_id,
                             gene_name=exon.gene_name,
@@ -1939,10 +1880,8 @@ class Core:
             result = []
 
             for strand_ in strand:
-                if strand_ == "-":
-                    n_ = n - offset
-                else:
-                    n_ = n + offset
+                n_ = (n - offset) if strand_ == "-" else (n + offset)
+                offset = 0
 
                 mask = (
                     (self.df[CONTIG_ID].isin(contig_id))
@@ -1964,9 +1903,9 @@ class Core:
                         RnaPosition(
                             contig_id=exon.contig_id,
                             start=new_start,
-                            start_offset=0,
+                            start_offset=offset,
                             end=new_end,
-                            end_offset=0,
+                            end_offset=offset,
                             strand=exon.strand,
                             gene_id=exon.gene_id,
                             gene_name=exon.gene_name,
@@ -2040,9 +1979,9 @@ class Core:
                     CdnaPosition(
                         contig_id=cds.contig_id,
                         start=cds.cdna_start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=cds.cdna_end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=cds.strand,
                         gene_id=cds.gene_id,
                         gene_name=cds.gene_name,
@@ -2093,9 +2032,9 @@ class Core:
                     DnaPosition(
                         contig_id=exon.contig_id,
                         start=exon.start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=exon.end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=exon.strand,
                     )
                 )
@@ -2141,9 +2080,9 @@ class Core:
                     ExonPosition(
                         contig_id=exon.contig_id,
                         start=int(exon.exon_number),
-                        start_offset=0,
+                        start_offset=offset,
                         end=int(exon.exon_number),
-                        end_offset=0,
+                        end_offset=offset,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
@@ -2230,9 +2169,9 @@ class Core:
                     RnaPosition(
                         contig_id=exon.contig_id,
                         start=exon.transcript_start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=exon.transcript_end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
                         gene_name=exon.gene_name,
@@ -2609,27 +2548,6 @@ class Core:
         def convert(n: int, offset: int):
             result = []
 
-            # If the offset position can be normalized to a non-offset position, do so. Otherwise
-            # just return an offset
-            if offset:
-                for dna in self._rna_to_dna(
-                    transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
-                ):
-                    for cdna in self._dna_to_cdna(
-                        [dna.contig_id],
-                        dna.start,
-                        dna.start_offset,
-                        dna.end,
-                        dna.end_offset,
-                        [dna.strand],
-                        canonical=canonical,
-                    ):
-                        if cdna.transcript_id in transcript_id:
-                            result.append(cdna)
-
-                if result:
-                    return result
-
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["transcript_start"] <= n)
@@ -2638,6 +2556,13 @@ class Core:
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
+                # If the offset position can be normalized to a non-offset position, do so.
+                # Otherwise just return an offset position.
+                n_ = n + offset
+                if cds.cdna_start <= n_ <= cds.cdna_end:
+                    n = n_
+                    offset = 0
+
                 new_start = new_end = cds.cdna_start + (n - cds.transcript_start)
                 result.append(
                     CdnaPosition(
@@ -2725,14 +2650,16 @@ class Core:
                 else:
                     new_start = new_end = exon.start + (n - exon.transcript_start) + offset
 
+                offset = 0
+
                 # TODO: Check that new new_start is actually on the contig
                 result.append(
                     DnaPosition(
                         contig_id=exon.contig_id,
                         start=new_start,
-                        start_offset=0,
+                        start_offset=offset,
                         end=new_end,
-                        end_offset=0,
+                        end_offset=offset,
                         strand=exon.strand,
                     )
                 )
@@ -2785,27 +2712,6 @@ class Core:
         def convert(n: int, offset: int):
             result = []
 
-            # For an offset position, we need to calculate then equivalent DNA position then map
-            # that to one or more exons. This is slower, so if there's no offset we can just map
-            # directly to an exon.
-            if offset:
-                for dna in self._rna_to_dna(
-                    transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
-                ):
-                    for exon in self._dna_to_exon(
-                        [dna.contig_id],
-                        dna.start,
-                        dna.start_offset,
-                        dna.end,
-                        dna.end_offset,
-                        [dna.strand],
-                        canonical=canonical,
-                    ):
-                        if exon.transcript_id in transcript_id:
-                            result.append(exon)
-
-                return result
-
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["transcript_start"] <= n)
@@ -2813,20 +2719,29 @@ class Core:
                 & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == EXON)
             )
-            for _, exon_row in self.df[mask].iterrows():
+            for _, exon in self.df[mask].iterrows():
+                # If the offset position can be normalized to a non-offset position, do so.
+                # Otherwise skip this iteration since it means that the position is not on an exon.
+                n_ = n + offset
+                if exon.transcript_start <= n_ <= exon.transcript_end:
+                    n = n_
+                    offset = 0
+                else:
+                    continue
+
                 result.append(
                     ExonPosition(
-                        contig_id=exon_row.contig_id,
-                        start=int(exon_row.exon_number),
-                        start_offset=0,
-                        end=int(exon_row.exon_number),
-                        end_offset=0,
-                        strand=exon_row.strand,
-                        gene_id=exon_row.gene_id,
-                        gene_name=exon_row.gene_name,
-                        transcript_id=exon_row.transcript_id,
-                        transcript_name=exon_row.transcript_name,
-                        exon_id=exon_row.exon_id,
+                        contig_id=exon.contig_id,
+                        start=int(exon.exon_number),
+                        start_offset=offset,
+                        end=int(exon.exon_number),
+                        end_offset=offset,
+                        strand=exon.strand,
+                        gene_id=exon.gene_id,
+                        gene_name=exon.gene_name,
+                        transcript_id=exon.transcript_id,
+                        transcript_name=exon.transcript_name,
+                        exon_id=exon.exon_id,
                     )
                 )
 
@@ -2956,26 +2871,6 @@ class Core:
         def convert(n: int, offset: int):
             result = []
 
-            # If the offset position can be normalized to a non-offset position, do so. Otherwise
-            # just return an offset
-            if offset:
-                for dna in self._rna_to_dna(
-                    transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
-                ):
-                    for rna in self._dna_to_rna(
-                        [dna.contig_id],
-                        dna.start,
-                        dna.start_offset,
-                        dna.end,
-                        dna.end_offset,
-                        [dna.strand],
-                        canonical=canonical,
-                    ):
-                        if rna.transcript_id in transcript_id:
-                            result.append(rna)
-
-                return result
-
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["transcript_start"] <= n)
@@ -2984,12 +2879,19 @@ class Core:
                 & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
+                # If the offset position can be normalized to a non-offset position, do so.
+                # Otherwise just return an offset position.
+                n_ = n + offset
+                if exon.transcript_start <= n_ <= exon.transcript_end:
+                    n = n_
+                    offset = 0
+
                 result.append(
                     RnaPosition(
                         contig_id=exon.contig_id,
-                        start=start,
+                        start=n,
                         start_offset=offset,
-                        end=end,
+                        end=n,
                         end_offset=offset,
                         strand=exon.strand,
                         gene_id=exon.gene_id,
