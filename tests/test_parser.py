@@ -345,6 +345,45 @@ PARSE_CASES = [
             },
         },
     ),
+    # TODO: How to represent introns in the UTR?
+    # # cDNA/RNA substitution (intron promoter)
+    # (
+    #     "NM_007294:c.-20+11C>T",
+    #     {
+    #         "breakpoint1": {
+    #             "feature": "NM_007294",
+    #             "start": -20,
+    #             "start_offset": 11,
+    #             "start_seq": None,
+    #             "end": -20,
+    #             "end_offset": 11,
+    #             "end_seq": None,
+    #             "strand": None,
+    #             "refseq": "C",
+    #             "altseq": "T",
+    #             "prefix": "r",
+    #             "position_type": "rna",
+    #             "suffix": ">",
+    #             "variant_type": "substitution",
+    #         },
+    #         "breakpoint2": {
+    #             "feature": None,
+    #             "start": None,
+    #             "start_offset": None,
+    #             "start_seq": None,
+    #             "end": None,
+    #             "end_offset": None,
+    #             "end_seq": None,
+    #             "strand": None,
+    #             "refseq": None,
+    #             "altseq": None,
+    #             "prefix": None,
+    #             "position_type": None,
+    #             "suffix": None,
+    #             "variant_type": None,
+    #         },
+    #     },
+    # ),
     # cDNA/RNA substitution (promoter)
     (
         "TERT:c.-124C>T",
