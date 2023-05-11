@@ -903,9 +903,11 @@ class Core:
         result = []
 
         for position in self.parse(string, canonical=canonical):
-            result.extend(func(position, canonical))
+            for new_position in func(position, canonical):
+                if new_position not in result:
+                    result.append(new_position)
 
-        return result
+        return sorted(result)
 
     def _position_to_cdna(self, position, canonical: bool):
         return self._position_to(
