@@ -48,15 +48,22 @@ class PyfaidxFasta:
         return self.fasta[reference]
 
     def _try_buffer(self, reference: str, start: int, end: int):
+        """This is a bit of a hack to buffer more of the sequence in memory. Normally, pyfaidx only
+        buffers N bases *ahead* of the given position. This hack also buffers N bases *behind*. This
+        is useful because we commonly need to fetch multiple times around a given position and that
+        speeds the queries up.
+
+        Args:
+            reference (str): Reference sequence ID
+            start (int): First base of position of interest
+            end (int): Last base of position of interest
+        """
         try:
             if reference != self.fasta.faidx.buffer["name"]:
                 floor = max(start - self.read_ahead, 0)
                 ceiling = end + self.read_ahead
-                print(f"Buffering '{reference}' {floor} to {ceiling}")  # DEBUG
                 self.fasta[reference][floor:ceiling]
-                print("Done")  # DEBUG
-        except Exception as exc:
-            print(f"Failed to buffer '{reference}': {exc}")  # DEBUG
+        except Exception:
             pass
 
     def fetch(self, reference: str, start: int, end: int) -> str:
