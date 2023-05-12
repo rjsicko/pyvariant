@@ -113,6 +113,7 @@ class EnsemblRelease(Core):
     def _sequence(
         self,
         position,
+        mutate: bool,
         strand: Optional[str],
         window: Optional[int],
         floor: Optional[int],
@@ -156,10 +157,10 @@ class EnsemblRelease(Core):
             raise ValueError(f"Unable to get sequence for {position}")
 
         # Retrieve the sequence at the given position
-        if position.is_small_variant:
-            sequence = self._small_variant_sequence(position, window, floor, ceiling, fasta)
+        if position.is_small_variant and mutate:
+            sequence = self._altseq(position, window, floor, ceiling, fasta)
         else:
-            sequence = self._position_sequence(position, window, floor, ceiling, fasta)
+            sequence = self._refseq(position, window, floor, ceiling, fasta)
 
         # Reverse complement the sequence if the strand the position is on isn't the desired strand
         if strand == "+" and position.on_negative_strand:
