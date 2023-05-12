@@ -330,6 +330,9 @@ def match(string: str) -> Dict:
     best_match_nones = 99
     best_match = {}
 
+    # Remove whitespace
+    string = string.replace(" ", "")
+
     # TODO: Support positions offset from stop codon
     if not re.search(r"\*\d", string):
         # Iteratively try each regex until the string matches one

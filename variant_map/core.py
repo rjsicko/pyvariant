@@ -381,15 +381,11 @@ class Core:
 
                 return list(fusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2))
 
-        # Respect the given strand
-        # If the strand is not given, and the position is on DNA, assume we mean the + strand
-        # If the strand is not given, and the position is on the DNA, assume we mean the + strand
+        # Respect the given strand, otherwise check both strands
         if strand:
             strand_ = [strand]
-        elif position_type == DNA:
-            strand_ = ["+"]
         else:
-            strand_ = ["+", "-"]
+            strand_ = [""]
 
         # Convert the given parameters to a position of the specified type
         if position_type == CDNA:
@@ -1241,7 +1237,6 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["cdna_start"] <= n)
                 & (self.df["cdna_end"] >= n)
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
@@ -1331,7 +1326,6 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["cdna_start"] <= n)
                 & (self.df["cdna_end"] >= n)
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
@@ -1417,7 +1411,6 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["cdna_start"] <= n)
                 & (self.df["cdna_end"] >= n)
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask_cds].iterrows():
@@ -1613,7 +1606,6 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["cdna_start"] <= n)
                 & (self.df["cdna_end"] >= n)
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
@@ -1702,9 +1694,11 @@ class Core:
                     (self.df[CONTIG_ID].isin(contig_id))
                     & (self.df["start"] <= n_)
                     & (self.df["end"] >= n_)
-                    & (self.df["strand"] == strand_)
                     & (self.df["feature"].isin(feature))
                 )
+                if strand_:
+                    mask = mask & (self.df["strand"] == strand_)
+
                 for _, cds in self.df[mask].iterrows():
                     if cds.strand == "-":
                         new_start = new_end = cds.end - n_ + cds.cdna_start
@@ -1850,9 +1844,11 @@ class Core:
                     (self.df[CONTIG_ID].isin(contig_id))
                     & (self.df["start"] <= n_)
                     & (self.df["end"] >= n_)
-                    & (self.df["strand"] == strand_)
                     & (self.df["feature"] == EXON)
                 )
+                if strand_:
+                    mask = mask & (self.df["strand"] == strand_)
+
                 for _, exon in self.df[mask].iterrows():
                     if canonical and not self.is_canonical_transcript(exon.transcript_id):
                         continue
@@ -1978,9 +1974,11 @@ class Core:
                     (self.df[CONTIG_ID].isin(contig_id))
                     & (self.df["start"] <= n_)
                     & (self.df["end"] >= n_)
-                    & (self.df["strand"] == strand_)
                     & (self.df["feature"] == EXON)
                 )
+                if strand_:
+                    mask = mask & (self.df["strand"] == strand_)
+
                 for _, exon in self.df[mask].iterrows():
                     if exon.strand == "-":
                         new_start = new_end = exon.end - n_ + exon.transcript_start
@@ -2062,7 +2060,6 @@ class Core:
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["exon_number"] == float(n))
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
@@ -2115,7 +2112,6 @@ class Core:
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["exon_number"] == float(n))
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
@@ -2163,7 +2159,6 @@ class Core:
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["exon_number"] == float(n))
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
@@ -2252,7 +2247,6 @@ class Core:
             mask = (
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["exon_number"] == float(n))
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
@@ -2643,7 +2637,6 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["transcript_start"] <= n)
                 & (self.df["transcript_end"] >= n)
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"].isin(feature))
             )
             for _, cds in self.df[mask].iterrows():
@@ -2731,7 +2724,6 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["transcript_start"] <= n)
                 & (self.df["transcript_end"] >= n)
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == EXON)
             )
             exon_df = self.df[mask]
@@ -2807,7 +2799,6 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["transcript_start"] <= n)
                 & (self.df["transcript_end"] >= n)
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
@@ -2966,7 +2957,6 @@ class Core:
                 (self.df[TRANSCRIPT_ID].isin(transcript_id))
                 & (self.df["transcript_start"] <= n)
                 & (self.df["transcript_end"] >= n)
-                & (self.df["strand"].isin(strand))
                 & (self.df["feature"] == EXON)
             )
             for _, exon in self.df[mask].iterrows():
