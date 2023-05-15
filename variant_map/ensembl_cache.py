@@ -1,3 +1,4 @@
+"""Definitions for the `EnsemblCache` class."""
 import os.path
 import sys
 from pathlib import Path
@@ -9,7 +10,7 @@ from gtfparse import read_gtf
 from pyfaidx import Fasta
 
 from .constants import CONTIG_ID
-from .files import bgzip, ftp_download, get_cache_dir, is_bgzipped, read_fasta
+from .files import bgzip, ftp_download, get_cache_dir, is_bgzipped
 from .utils import normalize_release, normalize_species, reference_by_release, strip_version
 
 # Ensembl FTP URL
@@ -41,7 +42,7 @@ GTF_FILENAME_TEMPLATE = "{species}.{reference}.{release}.gtf.gz"
 
 # GTF column names and features
 GTF_COLUMN_RENAME = {"seqname": CONTIG_ID}
-GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
+GTF_KEEP_FEATURES = ["cds", "exon", "gene", "stop_codon", "transcript"]
 GTF_KEEP_COLUMNS = [
     "contig_id",
     "feature",
@@ -78,8 +79,14 @@ class EnsemblCache:
         redownload: bool = False,
         restrict_genes: List[str] = [],
     ):
-        """Download missing data, process, and cache."""
+        """Download missing data, process, and cache.
 
+        Args:
+            clean (bool, optional): Delete temporary files. Defaults to True.
+            recache (bool, optional): Overwrite any existing cache. Defaults to False.
+            redownload (bool, optional): Redownload files from Ensembl. Defaults to False.
+            restrict_genes (List[str], optional): Restrict cache to the specified genes. Defaults to [].
+        """
         # Create the cache directory structure
         self.make_release_cache_dir()
 
@@ -127,7 +134,8 @@ class EnsemblCache:
 
         # Process and cache the GTF file
         if cache_missing or recache:
-            df = read_gtf(self.local_gtf_filepath)
+            # TODO: switch to 'polars'?
+            df = read_gtf(self.local_gtf_filepath, result_type="pandas")
             if restrict_genes:
                 df = df[df["gene_name"].isin(restrict_genes)]
 
@@ -334,25 +342,6 @@ class EnsemblCache:
         )
 
     # ---------------------------------------------------------------------------------------------
-    # Load FASTA files
-    # ---------------------------------------------------------------------------------------------
-    def load_cdna_fasta(self) -> Fasta:
-        """Load and return the cDNA a `pyfaidx.Fasta` object."""
-        return read_fasta(self.local_cdna_fasta_filepath)
-
-    def load_dna_fasta(self) -> Fasta:
-        """Load and return the DNA a `pyfaidx.Fasta` object."""
-        return read_fasta(self.local_dna_fasta_filepath)
-
-    def load_ncrna_fasta(self) -> Fasta:
-        """Load and return the ncDNA a `pyfaidx.Fasta` object."""
-        return read_fasta(self.local_ncrna_fasta_filepath)
-
-    def load_pep_fasta(self) -> Fasta:
-        """Load and return the peptide a `pyfaidx.Fasta` object."""
-        return read_fasta(self.local_pep_fasta_filepath)
-
-    # ---------------------------------------------------------------------------------------------
     # GTF files
     # ---------------------------------------------------------------------------------------------
     @property
@@ -480,7 +469,7 @@ def infer_cdna(df: pd.DataFrame) -> pd.DataFrame:
     print("Inferring cDNA...", file=sys.stderr)
     for transcript_id, group in df.groupby("transcript_id"):
         if group[group.feature == "cdna"].empty:
-            cds_df = group[group.feature == "CDS"]
+            cds_df = group[group.feature == "cds"]
             if not cds_df.empty:
                 first = cds_df.iloc[0]
                 last = cds_df.iloc[-1]
@@ -581,7 +570,7 @@ def cds_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate the position of each CDS, relative to the start of the transcript."""
     print("Inferring CDS offsets from transcripts...", file=sys.stderr)
     for _, group in df.groupby("transcript_id"):
-        cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
+        cds_df = group[group.feature.isin(["cds", "stop_codon"])]
         if cds_df.empty:
             continue
 
@@ -629,7 +618,7 @@ def cds_offset_cdna(df: pd.DataFrame) -> pd.DataFrame:
         cdna = cdna_df.iloc[0]
         ascending = cdna.strand == "+"
 
-        cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
+        cds_df = group[group.feature.isin(["cds", "stop_codon"])]
         if cds_df.empty:
             continue
 

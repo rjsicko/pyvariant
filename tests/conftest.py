@@ -17,12 +17,12 @@ def ensembl69():
         "homo_sapiens",
         69,
         cache_dir="",
-        canonical_transcript="",
-        contig_alias="",
-        exon_alias="",
-        gene_alias="",
-        protein_alias="",
-        transcript_alias="",
+        canonical_transcript=[],
+        contig_alias={},
+        exon_alias={},
+        gene_alias={},
+        protein_alias={},
+        transcript_alias={},
     )
 
 

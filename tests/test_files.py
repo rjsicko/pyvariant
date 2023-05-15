@@ -4,18 +4,10 @@ import os.path
 
 import pytest
 from Bio.bgzf import BgzfWriter
-from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS, TEST_ENS100_CDNA_FASTA
-from pyfaidx import Fasta
+from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS
 
-from variant_map.constants import CACHE_DIR_ENV, NAME
-from variant_map.files import (
-    bgzip,
-    get_cache_dir,
-    is_bgzipped,
-    read_fasta,
-    tsv_to_dict,
-    txt_to_list,
-)
+from variant_map.constants import CACHE_DIR_ENV, CACHE_DIR_NAME
+from variant_map.files import bgzip, get_cache_dir, is_bgzipped, tsv_to_dict, txt_to_list
 
 
 @pytest.fixture
@@ -76,22 +68,11 @@ def test_is_bgzipped_true(bgzip_file):
 
 
 def test_get_cache_dir():
-    assert get_cache_dir().endswith(NAME)
+    assert get_cache_dir().rstrip("/").endswith(CACHE_DIR_NAME)
 
 
 def test_get_cache_dir_env_var(cache_env_var):
     assert get_cache_dir() == "TEST"
-
-
-def test_read_fasta():
-    result = read_fasta(TEST_ENS100_CDNA_FASTA)
-    assert isinstance(result, Fasta)
-    assert result["ENST00000643777"]
-
-
-def test_read_fasta_empty():
-    result = read_fasta("")
-    assert isinstance(result, Fasta)
 
 
 def test_tsv_to_dict():
@@ -99,16 +80,6 @@ def test_tsv_to_dict():
     assert result == {"chr4": ["4"]}
 
 
-def test_tsv_to_dict_empty():
-    result = tsv_to_dict("")
-    assert result == {}
-
-
 def test_txt_to_list():
     result = txt_to_list(CANONICAL_TRANSCRIPT)
     assert result == ["ENST00000000233"]
-
-
-def test_txt_to_list_empty():
-    result = txt_to_list("")
-    assert result == []

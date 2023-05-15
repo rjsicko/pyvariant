@@ -8,9 +8,9 @@ from constants import (
     PROTEIN_ALIAS,
     TRANSCRIPT_ALIAS,
 )
-from pyfaidx import Fasta
 
 from variant_map.ensembl_release import EnsemblRelease
+from variant_map.sequence import PyfaidxFasta
 
 
 def test_init():
@@ -26,17 +26,17 @@ def test_init():
         transcript_alias=TRANSCRIPT_ALIAS,
     )
     assert isinstance(obj.df, pd.DataFrame)
-    assert isinstance(obj.cds, list)
-    assert not obj.cds
-    assert isinstance(obj.dna, list)
-    assert isinstance(obj.dna[0], Fasta)
-    assert isinstance(obj.peptide, list)
-    assert isinstance(obj.peptide[0], Fasta)
-    assert isinstance(obj.rna, list)
-    assert isinstance(obj.rna[0], Fasta)
-    assert isinstance(obj.canonical_transcript, list)
-    assert isinstance(obj.contig_alias, dict)
-    assert isinstance(obj.exon_alias, dict)
-    assert isinstance(obj.gene_alias, dict)
-    assert isinstance(obj.protein_alias, dict)
-    assert isinstance(obj.transcript_alias, dict)
+    assert isinstance(obj.cds_fasta, list)
+    assert not obj.cds_fasta
+    assert isinstance(obj.dna_fasta, list)
+    assert isinstance(obj.dna_fasta[0], PyfaidxFasta)
+    assert isinstance(obj.protein_fasta, list)
+    assert isinstance(obj.protein_fasta[0], PyfaidxFasta)
+    assert isinstance(obj.rna_fasta, list)
+    assert isinstance(obj.rna_fasta[0], PyfaidxFasta)
+    assert isinstance(obj._canonical_transcript, list)
+    assert isinstance(obj._contig_alias, dict)
+    assert isinstance(obj._exon_alias, dict)
+    assert isinstance(obj._gene_alias, dict)
+    assert isinstance(obj._protein_alias, dict)
+    assert isinstance(obj._transcript_alias, dict)

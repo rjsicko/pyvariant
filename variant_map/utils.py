@@ -1,13 +1,56 @@
+"""Collection of utility methods used throughout the package."""
 from itertools import product, zip_longest
+from math import floor
 from string import punctuation
 from typing import Iterator, List, Optional, Tuple, Union
 
 from Bio.Seq import Seq
 
+from variant_map.constants import DELETION, DELINS, DUPLICATION, INSERTION, SUBSTITUTION
+
 from .tables import DNA, DNA_CODON_TABLE, PROTEIN
 
 # Dictionary used to replace punctuation in a string
 PUNCTUATION_TO_UNDERSCORE = str.maketrans(punctuation + " ", "_" * len(punctuation + " "))
+
+
+def calc_cdna_to_protein(position: int) -> int:
+    """Do the math to convert a cDNA position to a protein position.
+
+    Args:
+        position (int): cDNA position
+
+    Returns:
+        int: Equivalent protein position
+    """
+    return floor((position - 1) / 3 + 1)
+
+
+def classify_seq_change(refseq: str, altseq: str) -> str:
+    """Return the type of variant based on the given reference -> alternate allele change.
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Raises:
+        ValueError: Could not determine the type of variant
+
+    Returns:
+        str: Variant type
+    """
+    if is_deletion(refseq, altseq):
+        return DELETION
+    elif is_delins(refseq, altseq):
+        return DELINS
+    elif is_duplication(refseq, altseq):
+        return DUPLICATION
+    elif is_insertion(refseq, altseq):
+        return INSERTION
+    elif is_substitution(refseq, altseq):
+        return SUBSTITUTION
+    else:
+        raise ValueError(f"Unable to determine variant type for {refseq}/{altseq}")
 
 
 def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
@@ -20,6 +63,17 @@ def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
                                ^^
         --------------------------------
         collapsed alt:  101 -  TG - 102
+
+    Args:
+        ref (str): Reference allele
+        alt (str): Alternate allele
+
+    Returns:
+        Tuple[str, str, int, int]:
+            Collapsed reference allele,
+            collapsed alternate allele,
+            nucleotides changed in reference allele,
+            nucleotides changed in alternate allele
     """
     ref_collapse = ref
     alt_collapse = alt
@@ -35,7 +89,7 @@ def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
         return ref, alt, 0, 0
 
     # Trim bases from each end that are identical between the ref and alt
-    ref_collapse, alt_collapse, same_5_prime, same_3_prime = split_seq_change(ref, alt)
+    ref_collapse, alt_collapse, same_5_prime, same_3_prime = split_common_sequence(ref, alt)
     start_offset = len(same_5_prime)
     end_offset = len(same_3_prime)
 
@@ -55,17 +109,40 @@ def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
 
 
 def expand_nt(seq: str) -> Iterator[str]:
-    """Expand any ambiguous nucleotides (e.g. 'ARA' -> 'AAA', 'AGA')."""
+    """Expand any ambiguous nucleotides (e.g. 'ARA' -> 'AAA', 'AGA').
+
+    Args:
+        seq (str): Nucleotide sequence
+
+    Yields:
+        Iterator[str]: Generator of unambiguous nucleotide sequences
+    """
     yield from iter("".join(i) for i in product(*("".join(DNA[nt]) for nt in seq)))
 
 
 def expand_pep(seq: str) -> Iterator[str]:
-    """Expand any ambiguous peptides (e.g. 'B' -> 'D', 'N')."""
+    """Expand any ambiguous amino acids (e.g. 'B' -> 'D', 'N').
+
+    Args:
+        seq (str): Amino acid sequence
+
+    Yields:
+        Iterator[str]: Generator of unambiguous amino acids
+    """
     yield from iter("".join(i) for i in product(*("".join(PROTEIN[aa]) for aa in seq)))
 
 
 def format_hgvs_position(position: int, offset: int, is_3_prime_utr: bool = False) -> str:
-    """Format a position as a string according to HGVS standards."""
+    """Format a position as a string according to HGVS standards.
+
+    Args:
+        position (int): Position
+        offset (int): Position offset
+        is_3_prime_utr (bool, optional): Position offset is relative to the 3' UTR. Defaults to False.
+
+    Returns:
+        str: HGVS-style representation for the position
+    """
     position_str = ""
 
     if is_3_prime_utr:
@@ -85,6 +162,13 @@ def format_hgvs_position(position: int, offset: int, is_3_prime_utr: bool = Fals
 def is_deletion(refseq: str, altseq: str) -> bool:
     """Check if a sequence change should be classified as a deletion variant. A deletion is when
     one or more bases are removed (deleted).
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Returns:
+        bool: True if the sequence change represents a deletion else False
     """
     return len(refseq) > 0 and len(altseq) == 0
 
@@ -93,6 +177,13 @@ def is_delins(refseq: str, altseq: str) -> bool:
     """Check if a sequence change should be classified as a delins variant. A 'delins' or
     'deletion-insertion' is when one or more bases are replaced by one or more other bases and is
     not a substitution, inversion, or conversion.
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Returns:
+        bool: True if the sequence change represents a delins else False
     """
     if len(refseq) * len(altseq) > 1:
         if not is_duplication(refseq, altseq) and not is_insertion(refseq, altseq):
@@ -105,14 +196,28 @@ def is_duplication(refseq: str, altseq: str) -> bool:
     """Check if a sequence change should be classified as a duplication variant. An duplication
     is when one or more bases are inserted and the bases ARE a copy of the bases immediately 5'
     (if the bases are not a copy, it is an insertion).
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Returns:
+        bool: True if the sequence change represents a duplication else False
     """
-    return altseq == refseq * 2
+    return len(refseq) > 0 and altseq == refseq * 2
 
 
 def is_frameshift(cdna_refseq: str, cdna_altseq: str) -> bool:
     """Check if a nucleotide change in the cDNA would result in a frameshift variant. A frame shift
     is when a number of nucleotides, that are not a multiple of 3, (i.e. the length of a codon) are
     inserted or deleted, which causes a shift in the reading frame.
+
+    Args:
+        refseq (str): cDNA reference allele
+        altseq (str): cDNA alternate allele
+
+    Returns:
+        bool: True if the sequence change represents a frameshift else False
     """
     return abs(len(cdna_refseq) - len(cdna_altseq)) % 3 != 0
 
@@ -121,6 +226,13 @@ def is_insertion(refseq: str, altseq: str) -> bool:
     """Check if a sequence change should be classified as an insertion variant. An insertion
     is when one or more bases are inserted and the bases are NOT a copy of the bases immediately 5'
     (i.e. a duplication).
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Returns:
+        bool: True if the sequence change represents an insertion else False
     """
     return not is_duplication(refseq, altseq) and bool(split_insertion(refseq, altseq))
 
@@ -128,17 +240,38 @@ def is_insertion(refseq: str, altseq: str) -> bool:
 def is_substitution(refseq: str, altseq: str) -> bool:
     """Check if a sequence change should be classified as a substitution variant. A substitution
     is when exactly one base is replaced by exactly one other base.
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Returns:
+        bool: True if the sequence change represents a substitution else False
     """
     return len(refseq) == 1 and len(altseq) == 1
 
 
 def normalize_release(release: Union[float, int, str]) -> int:
-    """Normalize a release number."""
+    """Normalize a release number.
+
+    Args:
+        release (Union[float, int, str]): Ensembl release number
+
+    Returns:
+        int: Ensembl release as an integer
+    """
     return int(release)
 
 
 def normalize_species(species: str) -> str:
-    """Normalize a species name."""
+    """Normalize a species name, e.g. 'Homo sapiens' -> 'homo_sapiens'.
+
+    Args:
+        species (str): Species name
+
+    Returns:
+        str: Normalized species name
+    """
     return str(species).lower().translate(PUNCTUATION_TO_UNDERSCORE)
 
 
@@ -150,6 +283,15 @@ def reference_by_release(release: int) -> str:
         'GRCh37'
         >>> reference_by_release(100)
         'GRCh38'
+
+    Args:
+        release (int): Ensembl release number
+
+    Raises:
+        ValueError: Ensembl release does not match a known reference
+
+    Returns:
+        str: Reference name
     """
     if release == 54:
         return "GRCh36"
@@ -162,12 +304,26 @@ def reference_by_release(release: int) -> str:
 
 
 def reverse_complement(sequence: str) -> str:
-    """Return the reverse complement of a given nucleotide sequence."""
+    """Return the reverse complement of a given nucleotide sequence.
+
+    Args:
+        sequence (str): Nucleotide sequence
+
+    Returns:
+        str: Reverse complement of the nucleotide sequence
+    """
     return str(Seq(sequence).reverse_complement())
 
 
 def reverse_translate(peptide: str) -> Iterator[str]:
-    """Return all reverse translations of a peptide (e.g. 'C' -> 'TGC', 'TGC', 'TGT', 'TGT')."""
+    """Return all reverse translations of an amino acid sequence (e.g. 'C' -> 'TGC', 'TGC', 'TGT', 'TGT').
+
+    Args:
+        peptide (str): Amino acid sequence
+
+    Yields:
+        Iterator[str]: Generator of unambiguous, reverse complements of the amino acid sequence
+    """
     for pep in expand_pep(peptide):
         yield from iter("".join(i) for i in product(*[DNA_CODON_TABLE[aa] for aa in pep]))
 
@@ -179,6 +335,15 @@ def split_by_codon(iterable: str) -> Iterator[str]:
     Examples:
         >>> split_by_codon('ABCDEF')
         ['ABC', 'DEF']
+
+    Args:
+        iterable (str): Nucleotide sequence
+
+    Raises:
+        ValueError: Length of the nucleotide sequence is not divisible by 3
+
+    Yields:
+        Iterator[str]: Generator of codon sequences
     """
     if len(iterable) % 3 != 0:
         raise ValueError(f"Iterable ({iterable}) is not divisible by 3")
@@ -190,32 +355,48 @@ def split_by_codon(iterable: str) -> Iterator[str]:
 def split_insertion(refseq: str, altseq: str) -> Optional[Tuple[str, str, str]]:
     """Find an insertion (if any). This is done by finding a substring such that if the substring
     was removed from the alt, the alt would be the same as the ref.
-    """
-    # If the alt does not have more bases than the ref, it can't be an insertion
-    if len(altseq) <= len(refseq):
-        return None
 
-    # Split the ref at different positions, if both halves match the ends of the alt, it's an insertion
-    # e.g. 'GGGTTT' -> ['GGG', 'TTT']
-    # Try in the middle first, since that's the most likely position
-    mid = len(refseq) // 2
-    idx = [mid] + [i for i in range(1, len(refseq)) if i != mid]
-    for n in idx:
-        l, r = refseq[:n], refseq[n:]
-        if altseq[:n] == l and altseq[-n:] == r:
-            return (altseq[:n], altseq[n:-n], altseq[-n:])
+    Examples:
+        >>> split_insertion("GT", "GAT")
+        ("G", "A", "T")
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Returns:
+        Optional[Tuple[str, str, str]]:
+            Sequence flanking the insertion sequence on the left,
+            Insertion sequence,
+            Sequence flanking the insertion sequence on the right,
+    """
+    if refseq:
+        _, alt_collapse, same_5_prime, same_3_prime = split_common_sequence(refseq, altseq)
+        if same_5_prime + same_3_prime == refseq:
+            return (same_5_prime, alt_collapse, same_3_prime)
 
     return None
 
 
-def split_seq_change(refseq: str, altseq: str) -> Tuple[str, str, str, str]:
+def split_common_sequence(refseq: str, altseq: str) -> Tuple[str, str, str, str]:
     """Compare two strings (sequences) and split each at the point where the two are no longer the
     same at either end.
 
     For example, 'AATTTC' and 'AAGC' both start with 'AA' and end with 'C'
 
     Examples:
-        >>> split_seq_change('AATTTC', 'AAGC') == ('TTT', 'G', 'AA', 'C')
+        >>> split_common_sequence('AATTTC', 'AAGC') == ('TTT', 'G', 'AA', 'C')
+
+    Args:
+        refseq (str): Reference allele
+        altseq (str): Alternate allele
+
+    Returns:
+        Tuple[str, str, str, str]:
+            Unique subsequence of the reference allele
+            Unique subsequence of the alternate allele
+            Sequence common at the 5' end of both reference and alternate alleles
+            Sequence common at the 3' end of both reference and alternate alleles
     """
     common_left: List[str] = list()
     common_right: List[str] = list()
@@ -269,5 +450,11 @@ def strip_version(key: str) -> str:
         'NM_000546'
         >>> strip_version('ENST00000357191.1')
         'ENST00000357191'
+
+    Args:
+        key (str): Identifier
+
+    Returns:
+        str: Identifier with the version number removed
     """
     return key.rsplit(".", 1)[0]

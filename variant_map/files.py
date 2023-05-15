@@ -1,21 +1,27 @@
+"""Collection of methods for handling files."""
 import gzip
 import os.path
 import shutil
 import sys
 from ftplib import FTP
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Set
 
 from appdirs import user_data_dir
 from Bio.bgzf import BgzfWriter, _bgzf_magic
-from pyfaidx import Fasta
 
-from .constants import CACHE_DIR_ENV, EMPTY_FASTA, NAME
-from .utils import strip_version
+from .constants import CACHE_DIR_ENV, CACHE_DIR_NAME
 
 
 def bgzip(path: str) -> str:
-    """Compress a file in BGZF format."""
+    """Compress a file in BGZF format.
+
+    Args:
+        path (str): Path to file to compress
+
+    Returns:
+        str: Path to compressed file
+    """
     chunk_size = 4096  # chunk size is set to balance runtime and memory usage
     openfunc: Callable
     openmode: str
@@ -57,7 +63,17 @@ def bgzip(path: str) -> str:
 
 
 def ftp_download(server: str, subdir: str, remote_file: str, local_file: str):
-    """Download a file from an FTP server."""
+    """Download a file from an FTP server.
+
+    Args:
+        server (str): Server URL
+        subdir (str): Remote subdirectory name
+        remote_file (str): Remote file name
+        local_file (str): Local file name
+
+    Raises:
+        RuntimeError: Download failed
+    """
     try:
         ftp = FTP(server)
         print(f"Connecting to {server}", file=sys.stderr)
@@ -77,63 +93,71 @@ def get_cache_dir() -> str:
     f"""Get the cache root directory. If the environmental variable '{CACHE_DIR_ENV}' is set, this
     package will use that as the directory. Otherwise, this package will use the default appdata
     dir for the user (platform dependant).
+
+    Returns:
+        str: Path to user's data directory
     """
     try:
         return os.environ[CACHE_DIR_ENV]
     except KeyError:
-        return os.path.join(user_data_dir(), NAME)
+        return os.path.join(user_data_dir(), CACHE_DIR_NAME)
 
 
 def is_bgzipped(path: str) -> bool:
-    """Check if a file is compressed in BGZF format."""
+    """Check if a file is compressed in BGZF format.
+
+    Args:
+        path (str): Path to the file
+
+    Returns:
+        bool: True if the file has been compressed with bgzip else False
+    """
     with open(path, "rb") as f:
         file_start = f.read(len(_bgzf_magic))
         return file_start == _bgzf_magic
 
 
-def read_fasta(path: str) -> Fasta:
-    """Parse a FASTA/FASTQ file into a 'pyfaidx.Fasta' object."""
-    if not path:
-        path = EMPTY_FASTA
-
-    return Fasta(
-        path,
-        key_function=strip_version,
-        as_raw=True,
-        sequence_always_upper=True,
-        build_index=False,
-        rebuild=False,
-    )
-
-
 def tsv_to_dict(path: str) -> Dict[str, List[str]]:
-    """Parse a TSV of one-to-one mappings."""
-    result: Dict = {}
+    """Parse a TSV of one-to-one mappings.
 
-    if path:
-        # load data from the TSV file, keep only unique values
-        with open(path, "r") as fh:
-            for line in fh:
-                if line:
-                    alias, name = line.strip().split("\t")[:2]
-                    result.setdefault(alias, set())
-                    result[alias].add(name)
+    Args:
+        path (str): Path to TSV file
 
-        # convert values to sorted lists
-        for alias in result:
-            result[alias] = sorted(result[alias])
+    Returns:
+        Dict[str, List[str]]: Mapping of alias to annotated name
+    """
+    result_: Dict[str, Set[str]] = {}
+
+    # load data from the TSV file, keep only unique values
+    with open(path, "r") as fh:
+        for line in fh:
+            if line:
+                alias, name = line.strip().split("\t")[:2]
+                result_.setdefault(alias, set())
+                result_[alias].add(name)
+
+    # convert values to sorted lists
+    result = {}
+    for alias in result_:
+        result[alias] = sorted(result_[alias])
 
     return result
 
 
 def txt_to_list(path: str) -> List[str]:
-    """Parse a text file into a list of unique strings."""
+    """Parse a text file into a list of unique strings.
+
+    Args:
+        path (str): Path to the text file
+
+    Returns:
+        List[str]: Values from the file
+    """
     result = set()
 
-    if path:
-        with open(path, "r") as fh:
-            for line in fh:
-                if line:
-                    result.add(line.strip())
+    with open(path, "r") as fh:
+        for line in fh:
+            if line:
+                result.add(line.strip())
 
     return sorted(result)
