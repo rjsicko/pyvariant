@@ -36,10 +36,10 @@ dist: clean  ## generate the distributable files
 	python3 -m build
 
 lint:  ## fix code style and formatting
-	isort variant_map/ tests/
-	black variant_map/ tests/
-	mypy variant_map/ tests/
-	flake8 variant_map/ tests/
+	isort pyvariant/ tests/
+	black pyvariant/ tests/
+	mypy pyvariant/ tests/
+	flake8 pyvariant/ tests/
 
 upload: dist  ## upload package to PyPI
 	twine upload dist/*

@@ -30,10 +30,10 @@ jobs:
         python -m pip install .[dev]
     - name: Lint
       run: |
-        isort variant_map tests
-        black variant_map tests
-        mypy variant_map tests
-        flake8 variant_map tests
+        isort pyvariant tests
+        black pyvariant tests
+        mypy pyvariant tests
+        flake8 pyvariant tests
     - name: Test with pytest
       run: |
         #pytest

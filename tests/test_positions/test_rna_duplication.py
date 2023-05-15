@@ -1,12 +1,7 @@
 import pytest
 
-from variant_map.constants import DUPLICATION
-from variant_map.positions import (
-    CdnaDuplication,
-    DnaDuplication,
-    ProteinDuplication,
-    RnaDuplication,
-)
+from pyvariant.constants import DUPLICATION
+from pyvariant.positions import CdnaDuplication, DnaDuplication, ProteinDuplication, RnaDuplication
 
 
 @pytest.fixture()

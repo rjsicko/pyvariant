@@ -1,6 +1,6 @@
 import pickle
 
-from variant_map.positions import _Position
+from pyvariant.positions import _Position
 
 
 def test_pickle():

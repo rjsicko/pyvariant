@@ -1,7 +1,7 @@
 import pytest
 
-from variant_map.ensembl_cache import normalize_release, normalize_species, reference_by_release
-from variant_map.utils import (
+from pyvariant.ensembl_cache import normalize_release, normalize_species, reference_by_release
+from pyvariant.utils import (
     classify_seq_change,
     collapse_seq_change,
     expand_nt,

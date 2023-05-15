@@ -1,7 +1,7 @@
 import pytest
 
-from variant_map.constants import FUSION
-from variant_map.positions import (
+from pyvariant.constants import FUSION
+from pyvariant.positions import (
     CdnaFusion,
     CdnaPosition,
     DnaFusion,

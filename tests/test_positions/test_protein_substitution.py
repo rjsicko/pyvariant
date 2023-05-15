@@ -1,7 +1,7 @@
 import pytest
 
-from variant_map.constants import SUBSTITUTION
-from variant_map.positions import (
+from pyvariant.constants import SUBSTITUTION
+from pyvariant.positions import (
     CdnaDelins,
     CdnaSubstitution,
     DnaDelins,

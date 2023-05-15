@@ -42,7 +42,7 @@ GTF_FILENAME_TEMPLATE = "{species}.{reference}.{release}.gtf.gz"
 
 # GTF column names and features
 GTF_COLUMN_RENAME = {"seqname": CONTIG_ID}
-GTF_KEEP_FEATURES = ["cds", "exon", "gene", "stop_codon", "transcript"]
+GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
 GTF_KEEP_COLUMNS = [
     "contig_id",
     "feature",
@@ -57,6 +57,7 @@ GTF_KEEP_COLUMNS = [
     "exon_number",
     "protein_id",
 ]
+GTF_ADD_COLUMNS = ["transcript_start", "transcript_end", "cdna_start", "cdna_end"]
 
 
 class EnsemblCache:
@@ -136,6 +137,9 @@ class EnsemblCache:
         if cache_missing or recache:
             # TODO: switch to 'polars'?
             df = read_gtf(self.local_gtf_filepath, result_type="pandas")
+
+            restrict_genes = ["ARF5"]  # DEBUG
+
             if restrict_genes:
                 df = df[df["gene_name"].isin(restrict_genes)]
 
@@ -423,9 +427,11 @@ def normlize_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(df.columns.difference(GTF_KEEP_COLUMNS), axis=1)
     # Drop unused feature types
     df = df[df.feature.isin(GTF_KEEP_FEATURES)]
+    # Add additional columns
+    df = df.reindex(columns=GTF_KEEP_COLUMNS + GTF_ADD_COLUMNS)
     # Assert that all the expected columns exist
-    missing = [i for i in GTF_KEEP_COLUMNS if i not in df.columns]
-    assert not missing, f"Found columns {df.columns}, missing {missing}"
+    missing = [i for i in GTF_KEEP_COLUMNS + GTF_ADD_COLUMNS if i not in df.columns]
+    assert not missing, f"Found columns {list(df.columns)}, missing {missing}"
     # Coerce the non-null values in the 'exon_number' to float
     df["exon_number"] = df["exon_number"].astype(float, errors="raise")
 

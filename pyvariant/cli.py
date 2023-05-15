@@ -47,7 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main():
-    """Entrypoint for `variant_map`."""
+    """Entrypoint for `pyvariant`."""
     parser = build_parser()
     args = parser.parse_args()
     if args.subcommand == "install":

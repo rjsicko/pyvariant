@@ -1,6 +1,6 @@
 import pytest
 
-from variant_map.positions import (
+from pyvariant.positions import (
     CdnaPosition,
     DnaPosition,
     ExonPosition,

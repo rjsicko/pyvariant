@@ -1,7 +1,7 @@
 import pytest
 
-from variant_map.constants import DELINS
-from variant_map.positions import CdnaDelins, DnaDelins, ProteinDelins, ProteinFrameshift, RnaDelins
+from pyvariant.constants import DELINS
+from pyvariant.positions import CdnaDelins, DnaDelins, ProteinDelins, ProteinFrameshift, RnaDelins
 
 
 @pytest.fixture()

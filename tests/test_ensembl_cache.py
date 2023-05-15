@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from variant_map.ensembl_cache import exon_offset_transcript, set_protein_id
+from pyvariant.ensembl_cache import exon_offset_transcript, set_protein_id
 
 
 def test_exon_offset_transcript():

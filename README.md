@@ -1,53 +1,53 @@
-# Variant-Map
+# pyvariant
 
 ## What is it?
 
-**variant-map** is a Python package for mapping biological sequence variants (mutations) to their equivalent chromosome, cDNA, gene, exon, protein, and RNA positions.
+**pyvariant** is a Python package for mapping biological sequence variants (mutations) to their equivalent chromosome, cDNA, gene, exon, protein, and RNA positions.
 
 ## How to get it
 
-The easiest way to get variant-map is using [pip](https://pip.pypa.io/en/latest/quickstart.html):
+The easiest way to get pyvariant is using [pip](https://pip.pypa.io/en/latest/quickstart.html):
 
 ```sh
-pip install variant-map
+pip install pyvariant
 ```
 
-The source code is hosted on GitHub at: <https://github.com/mattdoug604/variant_map>
+The source code is hosted on GitHub at: <https://github.com/mattdoug604/pyvariant>
 
 ## How to use it
 
-Before you can use variant-map, you will need to download the necessary genomic data.
+Before you can use pyvariant, you will need to download the necessary genomic data.
 
 To download and install data from Ensembl, run:
 
 ```shell
-variant-map install --species <species-name> --release <Ensembl-release-number>
+pyvariant install --species <species-name> --release <Ensembl-release-number>
 ```
 
 For example:
 
 ```shell
-variant-map install --species 'homo sapiens' --release 100
+pyvariant install --species 'homo sapiens' --release 100
 ```
 
 At the time of writing, installing a human dataset takes roughly 30-45 minutes and 1.5G of storage space. However, the actual time and space required to install a dataset will depend entirely on the size of the dataset, your computer, internet speed, etc.
 
-By default, the data is downloaded to a [platform-specific data directory](https://pypi.org/project/appdirs/) that is generally only accessible by the user (e.g. `/home/<you>/.local/share/variant-map/`). If you want the data to be accessible to other users, or your home directory does have enough storage space, you may to specify a different directory to download to with the `--cache` option:
+By default, the data is downloaded to a [platform-specific data directory](https://pypi.org/project/appdirs/) that is generally only accessible by the user (e.g. `/home/<you>/.local/share/pyvariant/`). If you want the data to be accessible to other users, or your home directory does have enough storage space, you may to specify a different directory to download to with the `--cache` option:
 
 ```shell
-variant-map install --species homo_sapiens --release 100 --cache /path/to/cache/
+pyvariant install --species homo_sapiens --release 100 --cache /path/to/cache/
 ```
 
 For more options, run:
 
 ```shell
-variant-map install --help
+pyvariant install --help
 ```
 
 Alternatively, you can run the installation from inside a Python process:
 
 ```python
->>> from variant_map import EnsemblRelease
+>>> from pyvariant import EnsemblRelease
 >>> ensembl100 = EnsemblRelease(species='homo_sapiens', release=100, cache_dir="/path/to/cache/")
 >>> ensembl100.install()
 ```
@@ -136,7 +136,7 @@ ACAGTGCAGGGAAGCAACTGCAGAGGCTGTGCAATCTTGCACAAATATCT
 
 ### Retrieve feature information
 
-`variant-map` also has functions for retrieving general information about various features. For example:
+`pyvariant` also has functions for retrieving general information about various features. For example:
 
 Get a list of transcript IDs for a gene:
 

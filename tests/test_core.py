@@ -14,7 +14,7 @@ from constants import (
     TRANSCRIPT_ALIAS,
 )
 
-from variant_map.constants import (
+from pyvariant.constants import (
     CONTIG_ID,
     EXON_ID,
     GENE_ID,
@@ -23,8 +23,8 @@ from variant_map.constants import (
     TRANSCRIPT_ID,
     TRANSCRIPT_NAME,
 )
-from variant_map.core import Core
-from variant_map.positions import (
+from pyvariant.core import Core
+from pyvariant.positions import (
     CdnaDeletion,
     CdnaDelins,
     CdnaDuplication,
@@ -43,7 +43,7 @@ from variant_map.positions import (
     RnaPosition,
     RnaSubstitution,
 )
-from variant_map.sequence import PyfaidxFasta
+from pyvariant.sequence import PyfaidxFasta
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1931,12 +1931,7 @@ def test_to_all_from_dna_position(ensembl100):
         ],
         "dna": [
             DnaPosition(
-                contig_id="4",
-                start=54695570,
-                start_offset=0,
-                end=54695572,
-                end_offset=0,
-                strand="",
+                contig_id="4", start=54695570, start_offset=0, end=54695572, end_offset=0, strand=""
             )
         ],
         "exon": [

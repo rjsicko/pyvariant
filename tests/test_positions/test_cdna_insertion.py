@@ -1,7 +1,7 @@
 import pytest
 
-from variant_map.constants import INSERTION
-from variant_map.positions import CdnaInsertion, DnaInsertion, ProteinInsertion, RnaInsertion
+from pyvariant.constants import INSERTION
+from pyvariant.positions import CdnaInsertion, DnaInsertion, ProteinInsertion, RnaInsertion
 
 
 @pytest.fixture()

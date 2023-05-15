@@ -1,6 +1,6 @@
 import pytest
 
-from variant_map.parser import parse, protein_letters_3to1
+from pyvariant.parser import parse, protein_letters_3to1
 
 PARSE_CASES = [
     # cDNA/RNA deletion

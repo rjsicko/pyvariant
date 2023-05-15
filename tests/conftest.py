@@ -8,7 +8,7 @@ from constants import (
     TRANSCRIPT_ALIAS,
 )
 
-from variant_map.ensembl_release import EnsemblRelease
+from pyvariant.ensembl_release import EnsemblRelease
 
 
 @pytest.fixture(scope="session")

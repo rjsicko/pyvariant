@@ -1,7 +1,7 @@
 import pytest
 
-from variant_map.constants import DELETION
-from variant_map.positions import CdnaDeletion, DnaDeletion, ProteinDeletion, RnaDeletion
+from pyvariant.constants import DELETION
+from pyvariant.positions import CdnaDeletion, DnaDeletion, ProteinDeletion, RnaDeletion
 
 
 @pytest.fixture()

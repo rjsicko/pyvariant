@@ -6,8 +6,8 @@ import pytest
 from Bio.bgzf import BgzfWriter
 from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS
 
-from variant_map.constants import CACHE_DIR_ENV, CACHE_DIR_NAME
-from variant_map.files import bgzip, get_cache_dir, is_bgzipped, tsv_to_dict, txt_to_list
+from pyvariant.constants import CACHE_DIR_ENV, CACHE_DIR_NAME
+from pyvariant.files import bgzip, get_cache_dir, is_bgzipped, tsv_to_dict, txt_to_list
 
 
 @pytest.fixture

@@ -9,8 +9,8 @@ from constants import (
     TRANSCRIPT_ALIAS,
 )
 
-from variant_map.ensembl_release import EnsemblRelease
-from variant_map.sequence import PyfaidxFasta
+from pyvariant.ensembl_release import EnsemblRelease
+from pyvariant.sequence import PyfaidxFasta
 
 
 def test_init():

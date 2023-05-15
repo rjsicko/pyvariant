@@ -6,7 +6,7 @@ from typing import Iterator, List, Optional, Tuple, Union
 
 from Bio.Seq import Seq
 
-from variant_map.constants import DELETION, DELINS, DUPLICATION, INSERTION, SUBSTITUTION
+from pyvariant.constants import DELETION, DELINS, DUPLICATION, INSERTION, SUBSTITUTION
 
 from .tables import DNA, DNA_CODON_TABLE, PROTEIN
 

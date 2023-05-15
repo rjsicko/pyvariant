@@ -2,7 +2,7 @@ import pytest
 from constants import TEST_ENS100_CDNA_FASTA
 from pyfaidx import Fasta
 
-from variant_map.sequence import PyfaidxFasta, get_sequence, mutate_sequence
+from pyvariant.sequence import PyfaidxFasta, get_sequence, mutate_sequence
 
 
 def test_pyfaidx_fasta_load():
