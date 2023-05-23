@@ -1,12 +1,12 @@
 import pandas as pd
 from constants import (
     CACHE_DIR,
-    CANONICAL_TRANSCRIPT,
-    CONTIG_ALIAS,
-    EXON_ALIAS,
-    GENE_ALIAS,
-    PROTEIN_ALIAS,
-    TRANSCRIPT_ALIAS,
+    TEST_ENS100_CANONICAL_TRANSCRIPT,
+    TEST_ENS100_CONTIG_ALIAS,
+    TEST_ENS100_EXON_ALIAS,
+    TEST_ENS100_GENE_ALIAS,
+    TEST_ENS100_PROTEIN_ALIAS,
+    TEST_ENS100_TRANSCRIPT_ALIAS,
 )
 
 from pyvariant.ensembl_release import EnsemblRelease
@@ -18,12 +18,12 @@ def test_init():
         species="homo_sapiens",
         release=100,
         cache_dir=CACHE_DIR,
-        canonical_transcript=CANONICAL_TRANSCRIPT,
-        contig_alias=CONTIG_ALIAS,
-        exon_alias=EXON_ALIAS,
-        gene_alias=GENE_ALIAS,
-        protein_alias=PROTEIN_ALIAS,
-        transcript_alias=TRANSCRIPT_ALIAS,
+        canonical_transcript=TEST_ENS100_CANONICAL_TRANSCRIPT,
+        contig_alias=TEST_ENS100_CONTIG_ALIAS,
+        exon_alias=TEST_ENS100_EXON_ALIAS,
+        gene_alias=TEST_ENS100_GENE_ALIAS,
+        protein_alias=TEST_ENS100_PROTEIN_ALIAS,
+        transcript_alias=TEST_ENS100_TRANSCRIPT_ALIAS,
     )
     assert isinstance(obj.df, pd.DataFrame)
     assert isinstance(obj.cds_fasta, list)

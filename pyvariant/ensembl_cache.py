@@ -2,7 +2,6 @@
 import os.path
 import sys
 from pathlib import Path
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -42,22 +41,25 @@ GTF_FILENAME_TEMPLATE = "{species}.{reference}.{release}.gtf.gz"
 
 # GTF column names and features
 GTF_COLUMN_RENAME = {"seqname": CONTIG_ID}
-GTF_KEEP_FEATURES = ["CDS", "exon", "gene", "stop_codon", "transcript"]
-GTF_KEEP_COLUMNS = [
-    "contig_id",
-    "feature",
-    "start",
-    "end",
-    "strand",
-    "gene_id",
-    "gene_name",
-    "transcript_id",
-    "transcript_name",
-    "exon_id",
-    "exon_number",
-    "protein_id",
-]
-GTF_ADD_COLUMNS = ["transcript_start", "transcript_end", "cdna_start", "cdna_end"]
+GTF_KEEP_FEATURES = ["cdna", "CDS", "exon", "gene", "stop_codon", "transcript"]
+DATAFRAME_COLUMNS = {
+    "contig_id": "category",
+    "feature": "category",
+    "start": "Int64",
+    "end": "Int64",
+    "strand": "category",
+    "gene_id": "category",
+    "gene_name": "category",
+    "transcript_id": "category",
+    "transcript_name": "category",
+    "exon_id": "category",
+    "exon_number": "Int16",
+    "protein_id": "category",
+    "transcript_start": "Int64",
+    "transcript_end": "Int64",
+    "cdna_start": "Int64",
+    "cdna_end": "Int64",
+}
 
 
 class EnsemblCache:
@@ -73,20 +75,13 @@ class EnsemblCache:
         else:
             self.cache_dir = get_cache_dir()
 
-    def install(
-        self,
-        clean: bool = True,
-        recache: bool = False,
-        redownload: bool = False,
-        restrict_genes: List[str] = [],
-    ):
+    def install(self, clean: bool = True, recache: bool = False, redownload: bool = False):
         """Download missing data, process, and cache.
 
         Args:
             clean (bool, optional): Delete temporary files. Defaults to True.
             recache (bool, optional): Overwrite any existing cache. Defaults to False.
             redownload (bool, optional): Redownload files from Ensembl. Defaults to False.
-            restrict_genes (List[str], optional): Restrict cache to the specified genes. Defaults to [].
         """
         # Create the cache directory structure
         self.make_release_cache_dir()
@@ -137,13 +132,7 @@ class EnsemblCache:
         if cache_missing or recache:
             # TODO: switch to 'polars'?
             df = read_gtf(self.local_gtf_filepath, result_type="pandas")
-
-            restrict_genes = ["ARF5"]  # DEBUG
-
-            if restrict_genes:
-                df = df[df["gene_name"].isin(restrict_genes)]
-
-            df = normalize_df(df)
+            df = infer_missing_values(df)
             self.cache_df(df)
             if clean:
                 self.delete_gtf()
@@ -402,38 +391,38 @@ class EnsemblCache:
         return pd.read_pickle(self.local_gtf_cache_filepath)
 
 
-def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
-    """Normalize a pandas DataFrame and infer missing data."""
-    df = df.replace("", np.nan)
-    df = normlize_columns(df)
-    df = df.sort_values(["start", "end"])
+def infer_missing_values(df: pd.DataFrame) -> pd.DataFrame:
+    """Infer values missing from the DataFrame."""
+    df = normalize_df(df)
     df = infer_transcripts(df)
     df = infer_cdna(df)
-    df = infer_missing_genes(df)
+    df = infer_genes(df)
     df = exon_offset_transcript(df)
     df = cds_offset_transcript(df)
     df = cds_offset_cdna(df)
-    df = set_protein_id(df)
-    df = df.replace("", np.nan)
+    df = infer_protein_id(df)
 
     return df
 
 
-def normlize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Rename columns, drop unused data, and set data types for each column."""
+def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Read the GTF file into a normalized dataframe."""
     # Rename column(s)
     df = df.rename(columns=GTF_COLUMN_RENAME)
-    # Drop unused columns
-    df = df.drop(df.columns.difference(GTF_KEEP_COLUMNS), axis=1)
+    # Drop columns that aren't needed
+    df = df.drop(df.columns.difference(list(DATAFRAME_COLUMNS)), axis=1)
+    # Replace null values
+    df = df.replace("", np.nan)
+    # Add in any missing columns
+    for col in DATAFRAME_COLUMNS:
+        if col not in df:
+            df[col] = np.nan
+    # Coerce column values to the expected types
+    df = df.astype(DATAFRAME_COLUMNS)
     # Drop unused feature types
     df = df[df.feature.isin(GTF_KEEP_FEATURES)]
-    # Add additional columns
-    df = df.reindex(columns=GTF_KEEP_COLUMNS + GTF_ADD_COLUMNS)
-    # Assert that all the expected columns exist
-    missing = [i for i in GTF_KEEP_COLUMNS + GTF_ADD_COLUMNS if i not in df.columns]
-    assert not missing, f"Found columns {list(df.columns)}, missing {missing}"
-    # Coerce the non-null values in the 'exon_number' to float
-    df["exon_number"] = df["exon_number"].astype(float, errors="raise")
+    # Sort by genomic position
+    df = df.sort_values(["contig_id", "start", "end"])
 
     return df
 
@@ -461,9 +450,8 @@ def infer_transcripts(df: pd.DataFrame) -> pd.DataFrame:
             transcript_rows.append(new_row)
             print(f"Inferred transcript {new_row}", file=sys.stderr)
 
-    new_transcript_df = pd.DataFrame(transcript_rows)
-    df = pd.concat([df, new_transcript_df], ignore_index=True)
-    df = df.sort_values(["start", "end"])
+    df = pd.concat([df, pd.DataFrame(transcript_rows)], ignore_index=True)
+    df = normalize_df(df)
 
     return df
 
@@ -475,7 +463,7 @@ def infer_cdna(df: pd.DataFrame) -> pd.DataFrame:
     print("Inferring cDNA...", file=sys.stderr)
     for transcript_id, group in df.groupby("transcript_id"):
         if group[group.feature == "cdna"].empty:
-            cds_df = group[group.feature == "cds"]
+            cds_df = group[group.feature == "CDS"]
             if not cds_df.empty:
                 first = cds_df.iloc[0]
                 last = cds_df.iloc[-1]
@@ -493,14 +481,13 @@ def infer_cdna(df: pd.DataFrame) -> pd.DataFrame:
                 cdna_rows.append(new_row)
                 print(f"Inferred cDNA {new_row}", file=sys.stderr)
 
-    new_cdna_df = pd.DataFrame(cdna_rows)
-    df = pd.concat([df, new_cdna_df], ignore_index=True)
-    df = df.sort_values(["start", "end"])
+    df = pd.concat([df, pd.DataFrame(cdna_rows)], ignore_index=True)
+    df = normalize_df(df)
 
     return df
 
 
-def infer_missing_genes(df: pd.DataFrame) -> pd.DataFrame:
+def infer_genes(df: pd.DataFrame) -> pd.DataFrame:
     """Infer gene position(s) from other features, if not already defined."""
     gene_rows = []
 
@@ -521,9 +508,8 @@ def infer_missing_genes(df: pd.DataFrame) -> pd.DataFrame:
             gene_rows.append(new_row)
             print(f"Inferred gene {new_row}", file=sys.stderr)
 
-    new_gene_df = pd.DataFrame(gene_rows)
-    df = pd.concat([df, new_gene_df], ignore_index=True)
-    df = df.sort_values(["start", "end"])
+    df = pd.concat([df, pd.DataFrame(gene_rows)], ignore_index=True)
+    df = normalize_df(df)
 
     return df
 
@@ -565,10 +551,6 @@ def exon_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
         df.at[transcript_index, "transcript_start"] = 1
         df.at[transcript_index, "transcript_end"] = offset
 
-    # convert the offset values to integers
-    df["transcript_start"] = df["transcript_start"].astype("Int64")
-    df["transcript_end"] = df["transcript_end"].astype("Int64")
-
     return df
 
 
@@ -576,7 +558,7 @@ def cds_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate the position of each CDS, relative to the start of the transcript."""
     print("Inferring CDS offsets from transcripts...", file=sys.stderr)
     for _, group in df.groupby("transcript_id"):
-        cds_df = group[group.feature.isin(["cds", "stop_codon"])]
+        cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
         if cds_df.empty:
             continue
 
@@ -605,10 +587,6 @@ def cds_offset_transcript(df: pd.DataFrame) -> pd.DataFrame:
             df.at[cds.Index, "transcript_start"] = transcript_start
             df.at[cds.Index, "transcript_end"] = transcript_end
 
-    # convert the offset values to integers
-    df["transcript_start"] = df["transcript_start"].astype("Int64")
-    df["transcript_end"] = df["transcript_end"].astype("Int64")
-
     return df
 
 
@@ -624,7 +602,7 @@ def cds_offset_cdna(df: pd.DataFrame) -> pd.DataFrame:
         cdna = cdna_df.iloc[0]
         ascending = cdna.strand == "+"
 
-        cds_df = group[group.feature.isin(["cds", "stop_codon"])]
+        cds_df = group[group.feature.isin(["CDS", "stop_codon"])]
         if cds_df.empty:
             continue
 
@@ -651,14 +629,10 @@ def cds_offset_cdna(df: pd.DataFrame) -> pd.DataFrame:
         df.at[cdna_index, "cdna_start"] = 1
         df.at[cdna_index, "cdna_end"] = offset
 
-    # convert the offset values to integers
-    df["cdna_start"] = df["cdna_start"].astype("Int64")
-    df["cdna_end"] = df["cdna_end"].astype("Int64")
-
     return df
 
 
-def set_protein_id(df: pd.DataFrame) -> pd.DataFrame:
+def infer_protein_id(df: pd.DataFrame) -> pd.DataFrame:
     """Add the protein ID as info for each cDNA and stop codon, if not already defined."""
     print("Inferring protein IDs...", file=sys.stderr)
     for _, group in df.groupby("transcript_id"):

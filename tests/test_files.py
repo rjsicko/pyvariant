@@ -4,7 +4,7 @@ import os.path
 
 import pytest
 from Bio.bgzf import BgzfWriter
-from constants import CANONICAL_TRANSCRIPT, CONTIG_ALIAS
+from constants import TEST_ENS100_CANONICAL_TRANSCRIPT, TEST_ENS100_CONTIG_ALIAS
 
 from pyvariant.constants import CACHE_DIR_ENV, CACHE_DIR_NAME
 from pyvariant.files import bgzip, get_cache_dir, is_bgzipped, tsv_to_dict, txt_to_list
@@ -76,10 +76,10 @@ def test_get_cache_dir_env_var(cache_env_var):
 
 
 def test_tsv_to_dict():
-    result = tsv_to_dict(CONTIG_ALIAS)
+    result = tsv_to_dict(TEST_ENS100_CONTIG_ALIAS)
     assert result == {"chr4": ["4"]}
 
 
 def test_txt_to_list():
-    result = txt_to_list(CANONICAL_TRANSCRIPT)
+    result = txt_to_list(TEST_ENS100_CANONICAL_TRANSCRIPT)
     assert result == ["ENST00000000233"]
