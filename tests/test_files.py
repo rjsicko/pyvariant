@@ -77,9 +77,9 @@ def test_get_cache_dir_env_var(cache_env_var):
 
 def test_tsv_to_dict():
     result = tsv_to_dict(TEST_ENS100_CONTIG_ALIAS)
-    assert result == {"chr4": ["4"]}
+    assert result == {"chr12": ["12"], "chr13": ["13"]}
 
 
 def test_txt_to_list():
     result = txt_to_list(TEST_ENS100_CANONICAL_TRANSCRIPT)
-    assert result == ["ENST00000000233"]
+    assert result == ["ENST00000000233", "ENST00000256078", "ENST00000380152"]
