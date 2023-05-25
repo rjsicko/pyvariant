@@ -59,7 +59,7 @@ def test_to_cdna(ensembl69, variant):
         refseq="CCC",
         altseq="",
     )
-    result = ensembl69.to_cdna(variant)
+    result = variant.to_cdna()
     assert expected in result
     assert len(result) == 8
 
@@ -76,7 +76,7 @@ def test_to_dna(ensembl69, variant):
         refseq="CCC",
         altseq="",
     )
-    result = ensembl69.to_dna(variant)
+    result = variant.to_dna()
     assert expected in result
     assert len(result) == 1
 
@@ -98,7 +98,7 @@ def test_to_protein(ensembl69, variant):
         refseq="P",
         altseq="",
     )
-    result = ensembl69.to_protein(variant)
+    result = variant.to_protein()
     assert expected in result
     assert len(result) == 8
 
@@ -119,6 +119,6 @@ def test_to_rna(ensembl69, variant):
         refseq="CCC",
         altseq="",
     )
-    result = ensembl69.to_rna(variant)
+    result = variant.to_rna()
     assert expected in result
     assert len(result) == 9

@@ -88,7 +88,7 @@ def test_to_cdna(ensembl69, variant):
         refseq="GC",  # GGC
         altseq="TA",  # GTA
     )
-    result = ensembl69.to_cdna(variant)
+    result = variant.to_cdna()
     assert expected_substitution in result
     assert expected_delins in result
     assert len(result) == 4
@@ -117,7 +117,7 @@ def test_to_dna(ensembl69, variant):
         refseq="GC",  # GGC
         altseq="TA",  # GTA
     )
-    result = ensembl69.to_dna(variant)
+    result = variant.to_dna()
     assert expected_substitution in result
     assert expected_delins in result
     assert len(result) == 4
@@ -142,7 +142,7 @@ def test_to_protein(ensembl69, variant):
             altseq="V",
         )
     ]
-    assert ensembl69.to_protein(variant) == expected
+    assert variant.to_protein() == expected
 
 
 def test_to_rna(ensembl69, variant):
@@ -176,7 +176,7 @@ def test_to_rna(ensembl69, variant):
         refseq="GC",  # GGC
         altseq="TA",  # GTA
     )
-    result = ensembl69.to_rna(variant)
+    result = variant.to_rna()
     assert expected_substitution in result
     assert expected_delins in result
     assert len(result) == 4

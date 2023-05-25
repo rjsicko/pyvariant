@@ -99,7 +99,7 @@ def test_to_cdna(ensembl69, variant):
         protein_id="ENSP00000271526",
     )
     expected = [CdnaFusion(ensembl69, breakpoint1, breakpoint2)]
-    assert ensembl69.to_cdna(variant) == expected
+    assert variant.to_cdna() == expected
 
 
 def test_to_dna(ensembl69, variant):
@@ -122,7 +122,7 @@ def test_to_dna(ensembl69, variant):
         strand="+",
     )
     expected = [DnaFusion(ensembl69, breakpoint1, breakpoint2)]
-    assert ensembl69.to_dna(variant) == expected
+    assert variant.to_dna() == expected
 
 
 def test_to_exon(ensembl69, variant):
@@ -155,7 +155,7 @@ def test_to_exon(ensembl69, variant):
         exon_id="ENSE00002871917",
     )
     expected = [ExonFusion(ensembl69, breakpoint1, breakpoint2)]
-    assert ensembl69.to_exon(variant) == expected
+    assert variant.to_exon() == expected
 
 
 def test_to_protein(ensembl69, variant):
@@ -188,7 +188,7 @@ def test_to_protein(ensembl69, variant):
         protein_id="ENSP00000271526",
     )
     expected = [ProteinFusion(ensembl69, breakpoint1, breakpoint2)]
-    assert ensembl69.to_protein(variant) == expected
+    assert variant.to_protein() == expected
 
 
 def test_to_rna(ensembl69, variant):
@@ -219,4 +219,4 @@ def test_to_rna(ensembl69, variant):
         transcript_name="PRCC-001",
     )
     expected = [RnaFusion(ensembl69, breakpoint1, breakpoint2)]
-    assert ensembl69.to_rna(variant) == expected
+    assert variant.to_rna() == expected

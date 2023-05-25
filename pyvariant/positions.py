@@ -238,6 +238,61 @@ class _Base:
         """
         return {f.name: self[f.name] for f in fields(self)}
 
+    def to_cdna(self, canonical: bool = False) -> List:
+        """Map this position to zero or more cDNA positions.
+
+        Args:
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[DnaPosition]: Equivalent cDNA positions.
+        """
+        return self._core.to_cdna(self, canonical=canonical)
+
+    def to_dna(self, canonical: bool = False) -> List:
+        """Map this position to zero or more DNA positions.
+
+        Args:
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[DnaPosition]: Equivalent DNA positions.
+        """
+        return self._core.to_dna(self, canonical=canonical)
+
+    def to_exon(self, canonical: bool = False) -> List:
+        """Map this position to zero or more exon positions.
+
+        Args:
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[DnaPosition]: Equivalent exon positions.
+        """
+        return self._core.to_exon(self, canonical=canonical)
+
+    def to_protein(self, canonical: bool = False) -> List:
+        """Map this position to zero or more protein positions.
+
+        Args:
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[DnaPosition]: Equivalent protein positions.
+        """
+        return self._core.to_protein(self, canonical=canonical)
+
+    def to_rna(self, canonical: bool = False) -> List:
+        """Map this position to zero or more RNA positions.
+
+        Args:
+            canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+
+        Returns:
+            List[DnaPosition]: Equivalent RNA positions.
+        """
+        return self._core.to_rna(self, canonical=canonical)
+
 
 @dataclass(eq=True, frozen=True)
 class _Position(_Base):
