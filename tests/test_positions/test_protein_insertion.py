@@ -5,8 +5,9 @@ from pyvariant.positions import CdnaInsertion, DnaInsertion, ProteinInsertion, R
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return ProteinInsertion(
+        _core=ensembl69,
         contig_id="12",
         start=11,
         start_offset=0,
@@ -48,6 +49,7 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     expected = CdnaInsertion(
+        _core=ensembl69,
         contig_id="12",
         start=33,
         start_offset=0,
@@ -69,6 +71,7 @@ def test_to_cdna(ensembl69, variant):
 
 def test_to_dna(ensembl69, variant):
     expected = DnaInsertion(
+        _core=ensembl69,
         contig_id="12",
         start=25398285,
         start_offset=0,
@@ -86,6 +89,7 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinInsertion(
+            _core=ensembl69,
             contig_id="12",
             start=11,
             start_offset=0,
@@ -106,6 +110,7 @@ def test_to_protein(ensembl69, variant):
 
 def test_to_rna(ensembl69, variant):
     expected = RnaInsertion(
+        _core=ensembl69,
         contig_id="12",
         start=97,
         start_offset=0,

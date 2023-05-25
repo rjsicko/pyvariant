@@ -9,8 +9,9 @@ from pyvariant.positions import (
 )
 
 
-def test_is_cdna():
+def test_is_cdna(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -26,8 +27,9 @@ def test_is_cdna():
     assert from_position.is_cdna is False
 
 
-def test_is_dna():
+def test_is_dna(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -43,8 +45,9 @@ def test_is_dna():
     assert from_position.is_dna is False
 
 
-def test_is_exon():
+def test_is_exon(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -60,8 +63,9 @@ def test_is_exon():
     assert from_position.is_exon is False
 
 
-def test_is_protein():
+def test_is_protein(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -77,8 +81,9 @@ def test_is_protein():
     assert from_position.is_protein is True
 
 
-def test_is_rna():
+def test_is_rna(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -94,8 +99,9 @@ def test_is_rna():
     assert from_position.is_rna is False
 
 
-def test_is_on_negative_strand():
+def test_is_on_negative_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -111,8 +117,9 @@ def test_is_on_negative_strand():
     assert from_position.on_negative_strand is True
 
 
-def test_is_on_positive_strand():
+def test_is_on_positive_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -130,6 +137,7 @@ def test_is_on_positive_strand():
 
 def test_sequence(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -147,6 +155,7 @@ def test_sequence(ensembl100):
 
 def test_sequence_offset(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=1,
@@ -163,8 +172,9 @@ def test_sequence_offset(ensembl100):
         ensembl100.sequence(from_position)
 
 
-def test_str_mutli_position():
+def test_str_mutli_position(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -180,8 +190,9 @@ def test_str_mutli_position():
     assert str(from_position) == "ENSP00000309572:p.525_526"
 
 
-def test_str_one_position():
+def test_str_one_position(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -199,6 +210,7 @@ def test_str_one_position():
 
 def test_to_cdna_protein_end_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1132,
         start_offset=0,
@@ -213,6 +225,7 @@ def test_to_cdna_protein_end_minus_strand(ensembl100):
     )
     to_positions = [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="5",
             start=3394,
             start_offset=0,
@@ -231,6 +244,7 @@ def test_to_cdna_protein_end_minus_strand(ensembl100):
 
 def test_to_cdna_protein_end_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=3418,
         start_offset=0,
@@ -245,6 +259,7 @@ def test_to_cdna_protein_end_plus_strand(ensembl100):
     )
     to_positions = [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="13",
             start=10252,
             start_offset=0,
@@ -263,6 +278,7 @@ def test_to_cdna_protein_end_plus_strand(ensembl100):
 
 def test_to_cdna_protein_exon_boundary_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -277,6 +293,7 @@ def test_to_cdna_protein_exon_boundary_minus_strand(ensembl100):
     )
     to_positions = [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="5",
             start=1573,
             start_offset=0,
@@ -295,6 +312,7 @@ def test_to_cdna_protein_exon_boundary_minus_strand(ensembl100):
 
 def test_to_cdna_protein_exon_boundary_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=23,
         start_offset=0,
@@ -309,6 +327,7 @@ def test_to_cdna_protein_exon_boundary_plus_strand(ensembl100):
     )
     to_positions = [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="13",
             start=67,
             start_offset=0,
@@ -327,6 +346,7 @@ def test_to_cdna_protein_exon_boundary_plus_strand(ensembl100):
 
 def test_to_cdna_protein_start_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -341,6 +361,7 @@ def test_to_cdna_protein_start_minus_strand(ensembl100):
     )
     to_positions = [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="5",
             start=1,
             start_offset=0,
@@ -359,6 +380,7 @@ def test_to_cdna_protein_start_minus_strand(ensembl100):
 
 def test_to_cdna_protein_start_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=0,
@@ -373,6 +395,7 @@ def test_to_cdna_protein_start_plus_strand(ensembl100):
     )
     to_positions = [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="13",
             start=1,
             start_offset=0,
@@ -391,6 +414,7 @@ def test_to_cdna_protein_start_plus_strand(ensembl100):
 
 def test_to_dna_protein_end_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1132,
         start_offset=0,
@@ -405,7 +429,13 @@ def test_to_dna_protein_end_minus_strand(ensembl100):
     )
     to_positions = [
         DnaPosition(
-            contig_id="5", start=1253731, start_offset=0, end=1253733, end_offset=0, strand="-"
+            _core=ensembl100,
+            contig_id="5",
+            start=1253731,
+            start_offset=0,
+            end=1253733,
+            end_offset=0,
+            strand="-",
         )
     ]
     assert ensembl100.to_dna(from_position) == to_positions
@@ -413,6 +443,7 @@ def test_to_dna_protein_end_minus_strand(ensembl100):
 
 def test_to_dna_protein_end_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=3418,
         start_offset=0,
@@ -427,7 +458,13 @@ def test_to_dna_protein_end_plus_strand(ensembl100):
     )
     to_positions = [
         DnaPosition(
-            contig_id="13", start=32398765, start_offset=0, end=32398767, end_offset=0, strand="+"
+            _core=ensembl100,
+            contig_id="13",
+            start=32398765,
+            start_offset=0,
+            end=32398767,
+            end_offset=0,
+            strand="+",
         )
     ]
     assert ensembl100.to_dna(from_position) == to_positions
@@ -435,6 +472,7 @@ def test_to_dna_protein_end_plus_strand(ensembl100):
 
 def test_to_dna_protein_exon_boundary_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -449,7 +487,13 @@ def test_to_dna_protein_exon_boundary_minus_strand(ensembl100):
     )
     to_positions = [
         DnaPosition(
-            contig_id="5", start=1282623, start_offset=0, end=1293313, end_offset=0, strand="-"
+            _core=ensembl100,
+            contig_id="5",
+            start=1282623,
+            start_offset=0,
+            end=1293313,
+            end_offset=0,
+            strand="-",
         )
     ]
     assert ensembl100.to_dna(from_position) == to_positions
@@ -457,6 +501,7 @@ def test_to_dna_protein_exon_boundary_minus_strand(ensembl100):
 
 def test_to_dna_protein_exon_boundary_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=23,
         start_offset=0,
@@ -471,7 +516,13 @@ def test_to_dna_protein_exon_boundary_plus_strand(ensembl100):
     )
     to_positions = [
         DnaPosition(
-            contig_id="13", start=32316527, start_offset=0, end=32319078, end_offset=0, strand="+"
+            _core=ensembl100,
+            contig_id="13",
+            start=32316527,
+            start_offset=0,
+            end=32319078,
+            end_offset=0,
+            strand="+",
         )
     ]
     assert ensembl100.to_dna(from_position) == to_positions
@@ -479,6 +530,7 @@ def test_to_dna_protein_exon_boundary_plus_strand(ensembl100):
 
 def test_to_dna_protein_start_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -493,7 +545,13 @@ def test_to_dna_protein_start_minus_strand(ensembl100):
     )
     to_positions = [
         DnaPosition(
-            contig_id="5", start=1294987, start_offset=0, end=1294989, end_offset=0, strand="-"
+            _core=ensembl100,
+            contig_id="5",
+            start=1294987,
+            start_offset=0,
+            end=1294989,
+            end_offset=0,
+            strand="-",
         )
     ]
     assert ensembl100.to_dna(from_position) == to_positions
@@ -501,6 +559,7 @@ def test_to_dna_protein_start_minus_strand(ensembl100):
 
 def test_to_dna_protein_start_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=0,
@@ -515,7 +574,13 @@ def test_to_dna_protein_start_plus_strand(ensembl100):
     )
     to_positions = [
         DnaPosition(
-            contig_id="13", start=32316461, start_offset=0, end=32316463, end_offset=0, strand="+"
+            _core=ensembl100,
+            contig_id="13",
+            start=32316461,
+            start_offset=0,
+            end=32316463,
+            end_offset=0,
+            strand="+",
         )
     ]
     assert ensembl100.to_dna(from_position) == to_positions
@@ -523,6 +588,7 @@ def test_to_dna_protein_start_plus_strand(ensembl100):
 
 def test_to_exon_protein_end_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1132,
         start_offset=0,
@@ -537,6 +603,7 @@ def test_to_exon_protein_end_minus_strand(ensembl100):
     )
     to_positions = [
         ExonPosition(
+            _core=ensembl100,
             contig_id="5",
             start=16,
             start_offset=0,
@@ -555,6 +622,7 @@ def test_to_exon_protein_end_minus_strand(ensembl100):
 
 def test_to_exon_protein_end_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=3418,
         start_offset=0,
@@ -569,6 +637,7 @@ def test_to_exon_protein_end_plus_strand(ensembl100):
     )
     to_positions = [
         ExonPosition(
+            _core=ensembl100,
             contig_id="13",
             start=27,
             start_offset=0,
@@ -587,6 +656,7 @@ def test_to_exon_protein_end_plus_strand(ensembl100):
 
 def test_to_exon_protein_exon_boundary_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -601,6 +671,7 @@ def test_to_exon_protein_exon_boundary_minus_strand(ensembl100):
     )
     to_positions = [
         ExonPosition(
+            _core=ensembl100,
             contig_id="5",
             start=2,
             start_offset=0,
@@ -619,6 +690,7 @@ def test_to_exon_protein_exon_boundary_minus_strand(ensembl100):
 
 def test_to_exon_protein_exon_boundary_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=23,
         start_offset=0,
@@ -633,6 +705,7 @@ def test_to_exon_protein_exon_boundary_plus_strand(ensembl100):
     )
     to_positions = [
         ExonPosition(
+            _core=ensembl100,
             contig_id="13",
             start=2,
             start_offset=0,
@@ -651,6 +724,7 @@ def test_to_exon_protein_exon_boundary_plus_strand(ensembl100):
 
 def test_to_exon_protein_start_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -665,6 +739,7 @@ def test_to_exon_protein_start_minus_strand(ensembl100):
     )
     to_positions = [
         ExonPosition(
+            _core=ensembl100,
             contig_id="5",
             start=1,
             start_offset=0,
@@ -683,6 +758,7 @@ def test_to_exon_protein_start_minus_strand(ensembl100):
 
 def test_to_exon_protein_start_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=0,
@@ -697,6 +773,7 @@ def test_to_exon_protein_start_plus_strand(ensembl100):
     )
     to_positions = [
         ExonPosition(
+            _core=ensembl100,
             contig_id="13",
             start=2,
             start_offset=0,
@@ -715,6 +792,7 @@ def test_to_exon_protein_start_plus_strand(ensembl100):
 
 def test_to_protein_protein_end_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1132,
         start_offset=0,
@@ -729,6 +807,7 @@ def test_to_protein_protein_end_minus_strand(ensembl100):
     )
     to_positions = [
         ProteinPosition(
+            _core=ensembl100,
             contig_id="5",
             start=1132,
             start_offset=0,
@@ -747,6 +826,7 @@ def test_to_protein_protein_end_minus_strand(ensembl100):
 
 def test_to_protein_protein_end_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=3418,
         start_offset=0,
@@ -761,6 +841,7 @@ def test_to_protein_protein_end_plus_strand(ensembl100):
     )
     to_positions = [
         ProteinPosition(
+            _core=ensembl100,
             contig_id="13",
             start=3418,
             start_offset=0,
@@ -779,6 +860,7 @@ def test_to_protein_protein_end_plus_strand(ensembl100):
 
 def test_to_protein_protein_exon_boundary_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -793,6 +875,7 @@ def test_to_protein_protein_exon_boundary_minus_strand(ensembl100):
     )
     to_positions = [
         ProteinPosition(
+            _core=ensembl100,
             contig_id="5",
             start=525,
             start_offset=0,
@@ -811,6 +894,7 @@ def test_to_protein_protein_exon_boundary_minus_strand(ensembl100):
 
 def test_to_protein_protein_exon_boundary_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=23,
         start_offset=0,
@@ -825,6 +909,7 @@ def test_to_protein_protein_exon_boundary_plus_strand(ensembl100):
     )
     to_positions = [
         ProteinPosition(
+            _core=ensembl100,
             contig_id="13",
             start=23,
             start_offset=0,
@@ -843,6 +928,7 @@ def test_to_protein_protein_exon_boundary_plus_strand(ensembl100):
 
 def test_to_protein_protein_start_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -857,6 +943,7 @@ def test_to_protein_protein_start_minus_strand(ensembl100):
     )
     to_positions = [
         ProteinPosition(
+            _core=ensembl100,
             contig_id="5",
             start=1,
             start_offset=0,
@@ -875,6 +962,7 @@ def test_to_protein_protein_start_minus_strand(ensembl100):
 
 def test_to_protein_protein_start_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=0,
@@ -889,6 +977,7 @@ def test_to_protein_protein_start_plus_strand(ensembl100):
     )
     to_positions = [
         ProteinPosition(
+            _core=ensembl100,
             contig_id="13",
             start=1,
             start_offset=0,
@@ -907,6 +996,7 @@ def test_to_protein_protein_start_plus_strand(ensembl100):
 
 def test_to_rna_protein_end_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1132,
         start_offset=0,
@@ -921,6 +1011,7 @@ def test_to_rna_protein_end_minus_strand(ensembl100):
     )
     to_positions = [
         RnaPosition(
+            _core=ensembl100,
             contig_id="5",
             start=3473,
             start_offset=0,
@@ -938,6 +1029,7 @@ def test_to_rna_protein_end_minus_strand(ensembl100):
 
 def test_to_rna_protein_end_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=3418,
         start_offset=0,
@@ -952,6 +1044,7 @@ def test_to_rna_protein_end_plus_strand(ensembl100):
     )
     to_positions = [
         RnaPosition(
+            _core=ensembl100,
             contig_id="13",
             start=10485,
             start_offset=0,
@@ -969,6 +1062,7 @@ def test_to_rna_protein_end_plus_strand(ensembl100):
 
 def test_to_rna_protein_exon_boundary_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=525,
         start_offset=0,
@@ -983,6 +1077,7 @@ def test_to_rna_protein_exon_boundary_minus_strand(ensembl100):
     )
     to_positions = [
         RnaPosition(
+            _core=ensembl100,
             contig_id="5",
             start=1652,
             start_offset=0,
@@ -1000,6 +1095,7 @@ def test_to_rna_protein_exon_boundary_minus_strand(ensembl100):
 
 def test_to_rna_protein_exon_boundary_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=23,
         start_offset=0,
@@ -1014,6 +1110,7 @@ def test_to_rna_protein_exon_boundary_plus_strand(ensembl100):
     )
     to_positions = [
         RnaPosition(
+            _core=ensembl100,
             contig_id="13",
             start=300,
             start_offset=0,
@@ -1031,6 +1128,7 @@ def test_to_rna_protein_exon_boundary_plus_strand(ensembl100):
 
 def test_to_rna_protein_start_minus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -1045,6 +1143,7 @@ def test_to_rna_protein_start_minus_strand(ensembl100):
     )
     to_positions = [
         RnaPosition(
+            _core=ensembl100,
             contig_id="5",
             start=80,
             start_offset=0,
@@ -1062,6 +1161,7 @@ def test_to_rna_protein_start_minus_strand(ensembl100):
 
 def test_to_rna_protein_start_plus_strand(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=0,
@@ -1076,6 +1176,7 @@ def test_to_rna_protein_start_plus_strand(ensembl100):
     )
     to_positions = [
         RnaPosition(
+            _core=ensembl100,
             contig_id="13",
             start=234,
             start_offset=0,
@@ -1093,6 +1194,7 @@ def test_to_rna_protein_start_plus_strand(ensembl100):
 
 def test_to_cdna_offset_error(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=1,
@@ -1111,6 +1213,7 @@ def test_to_cdna_offset_error(ensembl100):
 
 def test_to_dna_offset_error(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=1,
@@ -1129,6 +1232,7 @@ def test_to_dna_offset_error(ensembl100):
 
 def test_to_exon_offset_error(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=1,
@@ -1147,6 +1251,7 @@ def test_to_exon_offset_error(ensembl100):
 
 def test_to_protein_offset_error(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=1,
@@ -1165,6 +1270,7 @@ def test_to_protein_offset_error(ensembl100):
 
 def test_to_rna_offset_error(ensembl100):
     from_position = ProteinPosition(
+        _core=ensembl100,
         contig_id="13",
         start=1,
         start_offset=1,

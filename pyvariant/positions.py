@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import Any, Dict, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Type
 
 from .constants import (
     CDNA,
@@ -20,10 +20,15 @@ from .constants import (
 )
 from .utils import format_hgvs_position
 
+if TYPE_CHECKING:
+    from .core import Core
+
 
 @dataclass(eq=True, frozen=True)
 class _Base:
     """Base class for all position and variant classes."""
+
+    _core: Core
 
     @classmethod
     def copy_from(cls, obj: _Base, **kwargs):
@@ -51,6 +56,17 @@ class _Base:
 
     def __str__(self) -> str:
         raise NotImplementedError()  # Defined by inheriting class
+
+    # The `__getstate__` and `__setstate__` methods control how class instances are pickled. Since
+    # `Core` and `Core`-derived instances can't be pickled, we need to remove them as values in
+    # order to be able to pickle `_Base`-dervied class instances. This does mean that any functions
+    # that rely on `Core` will break upon being un-pickled.
+    # TODO: Is there a way to preserve `Core` values when pickling?
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_core"] = None
+
+        return state
 
     @property
     def is_cdna(self) -> bool:

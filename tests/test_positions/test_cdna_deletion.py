@@ -5,8 +5,9 @@ from pyvariant.positions import CdnaDeletion, DnaDeletion, ProteinDeletion, RnaD
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return CdnaDeletion(
+        _core=ensembl69,
         contig_id="3",
         start=478,
         start_offset=0,
@@ -49,6 +50,7 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaDeletion(
+            _core=ensembl69,
             contig_id="3",
             start=478,
             start_offset=0,
@@ -70,6 +72,7 @@ def test_to_cdna(ensembl69, variant):
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaDeletion(
+            _core=ensembl69,
             contig_id="3",
             start=10191485,
             start_offset=0,
@@ -86,6 +89,7 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinDeletion(
+            _core=ensembl69,
             contig_id="3",
             start=160,
             start_offset=0,
@@ -107,6 +111,7 @@ def test_to_protein(ensembl69, variant):
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaDeletion(
+            _core=ensembl69,
             contig_id="3",
             start=1318,
             start_offset=0,

@@ -379,7 +379,7 @@ class Core:
                     altseq=altseq2,
                 )
 
-                return list(fusion(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2))
+                return list(fusion(self, b1, b2) for b1, b2 in product(breakpoint1, breakpoint2))
 
         # Respect the given strand, otherwise check both strands
         if strand:
@@ -1099,7 +1099,7 @@ class Core:
             fusion = cast(_Fusion, position)
             breakpoint1 = fusionf(fusion.breakpoint1, canonical)
             breakpoint2 = fusionf(fusion.breakpoint2, canonical)
-            return [fusiont(b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
+            return [fusiont(self, b1, b2) for b1, b2 in product(breakpoint1, breakpoint2)]
         elif position.is_small_variant:
             if position.is_cdna:
                 position = cast(_CdnaSmallVariant, position)
@@ -1249,6 +1249,7 @@ class Core:
 
                 result.append(
                     CdnaPosition(
+                        _core=self,
                         contig_id=cds.contig_id,
                         start=n,
                         start_offset=offset,
@@ -1339,6 +1340,7 @@ class Core:
                 # TODO: Check that new new_start is actually on the contig
                 result.append(
                     DnaPosition(
+                        _core=self,
                         contig_id=cds.contig_id,
                         start=new_start,
                         start_offset=offset,
@@ -1431,6 +1433,7 @@ class Core:
                 for _, exon in self.df[mask_exon].iterrows():
                     result.append(
                         ExonPosition(
+                            _core=self,
                             contig_id=exon.contig_id,
                             start=int(exon.exon_number),
                             start_offset=offset,
@@ -1619,6 +1622,7 @@ class Core:
                 new_start = new_end = cds.transcript_start + (n - cds.cdna_start)
                 result.append(
                     RnaPosition(
+                        _core=self,
                         contig_id=cds.contig_id,
                         start=new_start,
                         start_offset=offset,
@@ -1710,6 +1714,7 @@ class Core:
 
                     result.append(
                         CdnaPosition(
+                            _core=self,
                             contig_id=cds.contig_id,
                             start=new_start,
                             start_offset=offset,
@@ -1791,6 +1796,7 @@ class Core:
 
             result.append(
                 DnaPosition(
+                    _core=self,
                     contig_id=contig_id_,
                     start=new_start,
                     start_offset=start_offset,
@@ -1855,6 +1861,7 @@ class Core:
 
                     result.append(
                         ExonPosition(
+                            _core=self,
                             contig_id=exon.contig_id,
                             start=int(exon.exon_number),
                             start_offset=offset,
@@ -1990,6 +1997,7 @@ class Core:
 
                     result.append(
                         RnaPosition(
+                            _core=self,
                             contig_id=exon.contig_id,
                             start=new_start,
                             start_offset=offset,
@@ -2065,6 +2073,7 @@ class Core:
             for _, cds in self.df[mask].iterrows():
                 result.append(
                     CdnaPosition(
+                        _core=self,
                         contig_id=cds.contig_id,
                         start=cds.cdna_start,
                         start_offset=offset,
@@ -2117,6 +2126,7 @@ class Core:
             for _, exon in self.df[mask].iterrows():
                 result.append(
                     DnaPosition(
+                        _core=self,
                         contig_id=exon.contig_id,
                         start=exon.start,
                         start_offset=offset,
@@ -2164,6 +2174,7 @@ class Core:
             for _, exon in self.df[mask].iterrows():
                 result.append(
                     ExonPosition(
+                        _core=self,
                         contig_id=exon.contig_id,
                         start=int(exon.exon_number),
                         start_offset=offset,
@@ -2252,6 +2263,7 @@ class Core:
             for _, exon in self.df[mask].iterrows():
                 result.append(
                     RnaPosition(
+                        _core=self,
                         contig_id=exon.contig_id,
                         start=exon.transcript_start,
                         start_offset=offset,
@@ -2650,6 +2662,7 @@ class Core:
                 new_start = new_end = cds.cdna_start + (n - cds.transcript_start)
                 result.append(
                     CdnaPosition(
+                        _core=self,
                         contig_id=cds.contig_id,
                         start=new_start,
                         start_offset=offset,
@@ -2738,6 +2751,7 @@ class Core:
                 # TODO: Check that new new_start is actually on the contig
                 result.append(
                     DnaPosition(
+                        _core=self,
                         contig_id=exon.contig_id,
                         start=new_start,
                         start_offset=offset,
@@ -2813,6 +2827,7 @@ class Core:
 
                 result.append(
                     ExonPosition(
+                        _core=self,
                         contig_id=exon.contig_id,
                         start=int(exon.exon_number),
                         start_offset=offset,
@@ -2969,6 +2984,7 @@ class Core:
 
                 result.append(
                     RnaPosition(
+                        _core=self,
                         contig_id=exon.contig_id,
                         start=n,
                         start_offset=offset,
@@ -3812,6 +3828,7 @@ class Core:
 
             result.append(
                 CdnaPosition(
+                    _core=self,
                     contig_id=cdna.contig_id,
                     start=cdna.cdna_start,
                     start_offset=0,
@@ -3859,6 +3876,7 @@ class Core:
             for strand in strand_list:
                 result.append(
                     DnaPosition(
+                        _core=self,
                         contig_id=contig_id,
                         start=start,
                         start_offset=0,
@@ -3890,6 +3908,7 @@ class Core:
 
             result.append(
                 ExonPosition(
+                    _core=self,
                     contig_id=exon.contig_id,
                     start=int(exon.exon_number),
                     start_offset=0,
@@ -3923,6 +3942,7 @@ class Core:
         for _, gene in self.df[mask].iterrows():
             result.append(
                 DnaPosition(
+                    _core=self,
                     contig_id=gene.contig_id,
                     start=gene.start,
                     start_offset=0,
@@ -3977,6 +3997,7 @@ class Core:
 
             result.append(
                 RnaPosition(
+                    _core=self,
                     contig_id=transcript.contig_id,
                     start=transcript.transcript_start,
                     start_offset=0,

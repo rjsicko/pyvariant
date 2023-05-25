@@ -5,8 +5,9 @@ from pyvariant.positions import CdnaDelins, DnaDelins, ProteinDelins, RnaDelins
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return ProteinDelins(
+        _core=ensembl69,
         contig_id="4",
         start=417,
         start_offset=0,
@@ -48,6 +49,7 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     expected = CdnaDelins(
+        _core=ensembl69,
         contig_id="4",
         start=1250,
         start_offset=0,
@@ -69,6 +71,7 @@ def test_to_cdna(ensembl69, variant):
 
 def test_to_dna(ensembl69, variant):
     expected = DnaDelins(
+        _core=ensembl69,
         contig_id="4",
         start=55589768,
         start_offset=0,
@@ -86,6 +89,7 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinDelins(
+            _core=ensembl69,
             contig_id="4",
             start=417,
             start_offset=0,
@@ -106,6 +110,7 @@ def test_to_protein(ensembl69, variant):
 
 def test_to_rna(ensembl69, variant):
     expected = RnaDelins(
+        _core=ensembl69,
         contig_id="4",
         start=1347,
         start_offset=0,

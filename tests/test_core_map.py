@@ -1,7 +1,9 @@
 import csv
-import pytest
 from pathlib import Path
-from typing import List, Dict, Iterator
+from typing import Dict, Iterator, List
+
+import pytest
+
 from pyvariant import EnsemblRelease
 
 TEST_CASES = Path(__file__).parent / "data" / "test_data.csv"

@@ -10,8 +10,9 @@ from pyvariant.positions import (
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return DnaSubstitution(
+        _core=ensembl69,
         contig_id="12",
         start=25380283,
         start_offset=0,
@@ -49,6 +50,7 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=175,
             start_offset=0,
@@ -64,6 +66,7 @@ def test_to_cdna(ensembl69, variant):
             altseq="T",
         ),
         CdnaSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=175,
             start_offset=0,
@@ -85,6 +88,7 @@ def test_to_cdna(ensembl69, variant):
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=25380283,
             start_offset=0,
@@ -101,6 +105,7 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=59,
             start_offset=0,
@@ -116,6 +121,7 @@ def test_to_protein(ensembl69, variant):
             altseq="S",
         ),
         ProteinSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=59,
             start_offset=0,
@@ -137,6 +143,7 @@ def test_to_protein(ensembl69, variant):
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=239,
             start_offset=0,
@@ -151,6 +158,7 @@ def test_to_rna(ensembl69, variant):
             altseq="T",
         ),
         RnaSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=367,
             start_offset=0,

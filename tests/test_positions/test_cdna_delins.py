@@ -5,8 +5,9 @@ from pyvariant.positions import CdnaDelins, DnaDelins, ProteinDelins, ProteinFra
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return CdnaDelins(
+        _core=ensembl69,
         contig_id="17",
         start=878,
         start_offset=0,
@@ -49,6 +50,7 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaDelins(
+            _core=ensembl69,
             contig_id="17",
             start=878,
             start_offset=0,
@@ -70,6 +72,7 @@ def test_to_cdna(ensembl69, variant):
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaDelins(
+            _core=ensembl69,
             contig_id="17",
             start=7577058,
             start_offset=0,
@@ -86,6 +89,7 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinDelins(
+            _core=ensembl69,
             contig_id="17",
             start=293,
             start_offset=0,
@@ -106,6 +110,7 @@ def test_to_protein(ensembl69, variant):
 
 def test_to_protein_frameshift(ensembl69):
     variant = CdnaDelins(
+        _core=ensembl69,
         contig_id="17",
         start=878,
         start_offset=0,
@@ -122,6 +127,7 @@ def test_to_protein_frameshift(ensembl69):
     )
     expected = [
         ProteinFrameshift(
+            _core=ensembl69,
             contig_id="17",
             start=293,
             start_offset=0,
@@ -143,6 +149,7 @@ def test_to_protein_frameshift(ensembl69):
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaDelins(
+            _core=ensembl69,
             contig_id="17",
             start=1068,
             start_offset=0,

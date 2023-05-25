@@ -13,8 +13,9 @@ from pyvariant.positions import (
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return ProteinSubstitution(
+        _core=ensembl69,
         contig_id="12",
         start=13,
         start_offset=0,
@@ -56,6 +57,7 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     expected_substitution = CdnaSubstitution(
+        _core=ensembl69,
         contig_id="12",
         start=38,
         start_offset=0,
@@ -71,6 +73,7 @@ def test_to_cdna(ensembl69, variant):
         altseq="T",  # GTC
     )
     expected_delins = CdnaDelins(
+        _core=ensembl69,
         contig_id="12",
         start=38,
         start_offset=0,
@@ -93,6 +96,7 @@ def test_to_cdna(ensembl69, variant):
 
 def test_to_dna(ensembl69, variant):
     expected_substitution = DnaSubstitution(
+        _core=ensembl69,
         contig_id="12",
         start=25398281,
         start_offset=0,
@@ -103,6 +107,7 @@ def test_to_dna(ensembl69, variant):
         altseq="T",  # GTC
     )
     expected_delins = DnaDelins(
+        _core=ensembl69,
         contig_id="12",
         start=25398280,
         start_offset=0,
@@ -121,6 +126,7 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=13,
             start_offset=0,
@@ -141,6 +147,7 @@ def test_to_protein(ensembl69, variant):
 
 def test_to_rna(ensembl69, variant):
     expected_substitution = RnaSubstitution(
+        _core=ensembl69,
         contig_id="12",
         start=102,
         start_offset=0,
@@ -155,6 +162,7 @@ def test_to_rna(ensembl69, variant):
         altseq="T",  # GTC
     )
     expected_delins = RnaDelins(
+        _core=ensembl69,
         contig_id="12",
         start=102,
         start_offset=0,

@@ -5,8 +5,9 @@ from pyvariant.positions import CdnaDuplication, DnaDuplication, ProteinDuplicat
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return CdnaDuplication(
+        _core=ensembl69,
         contig_id="17",
         start=286,
         start_offset=0,
@@ -49,6 +50,7 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaDuplication(
+            _core=ensembl69,
             contig_id="17",
             start=286,
             start_offset=0,
@@ -70,6 +72,7 @@ def test_to_cdna(ensembl69, variant):
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaDuplication(
+            _core=ensembl69,
             contig_id="17",
             start=7579399,
             start_offset=0,
@@ -86,6 +89,7 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinDuplication(
+            _core=ensembl69,
             contig_id="17",
             start=96,
             start_offset=0,
@@ -107,6 +111,7 @@ def test_to_protein(ensembl69, variant):
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaDuplication(
+            _core=ensembl69,
             contig_id="17",
             start=476,
             start_offset=0,
