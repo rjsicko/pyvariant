@@ -104,12 +104,12 @@ class Core:
         dna: List[str],
         peptide: List[str],
         rna: List[str],
-        canonical_transcript: Union[List[str], str] = [],
-        contig_alias: Union[str, Dict] = {},
-        exon_alias: Union[str, Dict] = {},
-        gene_alias: Union[str, Dict] = {},
-        protein_alias: Union[str, Dict] = {},
-        transcript_alias: Union[str, Dict] = {},
+        canonical_transcript: Union[Callable, List[str], str] = [],
+        contig_alias: Union[Callable, Dict, str] = {},
+        exon_alias: Union[Callable, Dict, str] = {},
+        gene_alias: Union[Callable, Dict, str] = {},
+        protein_alias: Union[Callable, Dict, str] = {},
+        transcript_alias: Union[Callable, Dict, str] = {},
     ):
         """_summary_
 
@@ -137,31 +137,37 @@ class Core:
         self.protein_fasta = [PyfaidxFasta.load(i) for i in peptide]
         self.rna_fasta = [PyfaidxFasta.load(i) for i in rna]
 
+        self._canonical_transcript: Union[Callable, List[str]]
         if isinstance(canonical_transcript, str):
             self._canonical_transcript = txt_to_list(canonical_transcript)
         else:
             self._canonical_transcript = canonical_transcript
 
+        self._contig_alias: Union[Callable, Dict]
         if isinstance(contig_alias, str):
             self._contig_alias = tsv_to_dict(contig_alias)
         else:
             self._contig_alias = contig_alias
 
+        self._exon_alias: Union[Callable, Dict]
         if isinstance(exon_alias, str):
             self._exon_alias = tsv_to_dict(exon_alias)
         else:
             self._exon_alias = exon_alias
 
+        self._gene_alias: Union[Callable, Dict]
         if isinstance(gene_alias, str):
             self._gene_alias = tsv_to_dict(gene_alias)
         else:
             self._gene_alias = gene_alias
 
+        self._protein_alias: Union[Callable, Dict]
         if isinstance(protein_alias, str):
             self._protein_alias = tsv_to_dict(protein_alias)
         else:
             self._protein_alias = protein_alias
 
+        self._transcript_alias: Union[Callable, Dict]
         if isinstance(transcript_alias, str):
             self._transcript_alias = tsv_to_dict(transcript_alias)
         else:
@@ -3629,8 +3635,19 @@ class Core:
         """
         return self._alias(transcript_id, self._transcript_alias)
 
-    def _alias(self, feature: str, alias_dict: Dict[str, List[str]]) -> List[str]:
+    def _alias(self, feature: str, aliases: Union[Callable, Dict]) -> List[str]:
         feature = str(feature)
+
+        # Expect `aliases` to be a function that returns an alias, or dictionary, or an object
+        # has a dictionary-like `get` function.
+        if callable(aliases):
+            alias_func = aliases
+        elif hasattr(aliases, "get") and callable(aliases.get):
+            alias_func = aliases.get
+        else:
+            raise AssertionError(
+                f"Alias object must be a dictionary or callable, not {type(aliases)}"
+            )
 
         # Try different variations on the feature ID until one is found
         alias_list = [
@@ -3642,12 +3659,13 @@ class Core:
             strip_version(feature).upper(),
         ]
         for key in alias_list:
-            if alias := alias_dict.get(key, []):
-                # Coerce the alias to a list
-                if isinstance(alias, str):
-                    alias_list.append(alias)
-                else:
-                    alias_list.extend(alias)
+            if alias := alias_func(key):
+                if alias != key:
+                    # Coerce the alias to a list
+                    if isinstance(alias, str):
+                        alias_list.append(alias)
+                    else:
+                        alias_list.extend(alias)
 
         return sorted(set(alias_list))
 
@@ -3803,7 +3821,10 @@ class Core:
         Returns:
             bool: True if the transcript is the canonical transcript else False
         """
-        return transcript_id in self._canonical_transcript
+        if callable(self._canonical_transcript):
+            return self._canonical_transcript(transcript_id)
+        else:
+            return transcript_id in self._canonical_transcript
 
     # ---------------------------------------------------------------------------------------------
     # <feature>
