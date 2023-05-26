@@ -5,8 +5,9 @@ from pyvariant.positions import CdnaInsertion, DnaInsertion, ProteinInsertion, R
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return RnaInsertion(
+        _core=ensembl69,
         contig_id="4",
         start=1771,
         start_offset=0,
@@ -48,6 +49,7 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaInsertion(
+            _core=ensembl69,
             contig_id="4",
             start=1674,
             start_offset=0,
@@ -63,12 +65,13 @@ def test_to_cdna(ensembl69, variant):
             altseq="GCATG",
         )
     ]
-    assert ensembl69.to_cdna(variant) == expected
+    assert variant.to_cdna() == expected
 
 
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaInsertion(
+            _core=ensembl69,
             contig_id="4",
             start=55593608,
             start_offset=0,
@@ -79,12 +82,13 @@ def test_to_dna(ensembl69, variant):
             altseq="GCATG",
         )
     ]
-    assert ensembl69.to_dna(variant) == expected
+    assert variant.to_dna() == expected
 
 
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinInsertion(
+            _core=ensembl69,
             contig_id="4",
             start=558,
             start_offset=0,
@@ -100,12 +104,13 @@ def test_to_protein(ensembl69, variant):
             altseq="KHV",
         )
     ]
-    assert ensembl69.to_protein(variant) == expected
+    assert variant.to_protein() == expected
 
 
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaInsertion(
+            _core=ensembl69,
             contig_id="4",
             start=1771,
             start_offset=0,
@@ -120,4 +125,4 @@ def test_to_rna(ensembl69, variant):
             altseq="GCATG",
         )
     ]
-    assert ensembl69.to_rna(variant) == expected
+    assert variant.to_rna() == expected

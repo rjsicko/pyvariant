@@ -5,8 +5,9 @@ from pyvariant.positions import CdnaDelins, DnaDelins, ProteinDelins, RnaDelins
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return ProteinDelins(
+        _core=ensembl69,
         contig_id="4",
         start=417,
         start_offset=0,
@@ -48,6 +49,7 @@ def test_variant_type(variant):
 
 def test_to_cdna(ensembl69, variant):
     expected = CdnaDelins(
+        _core=ensembl69,
         contig_id="4",
         start=1250,
         start_offset=0,
@@ -62,13 +64,14 @@ def test_to_cdna(ensembl69, variant):
         refseq="CTTACGAC",
         altseq="TA",
     )
-    result = ensembl69.to_cdna(variant)
+    result = variant.to_cdna()
     assert expected in result
     assert len(result) == 3
 
 
 def test_to_dna(ensembl69, variant):
     expected = DnaDelins(
+        _core=ensembl69,
         contig_id="4",
         start=55589768,
         start_offset=0,
@@ -78,7 +81,7 @@ def test_to_dna(ensembl69, variant):
         refseq="CTTACGAC",
         altseq="TA",
     )
-    result = ensembl69.to_dna(variant)
+    result = variant.to_dna()
     assert expected in result
     assert len(result) == 3
 
@@ -86,6 +89,7 @@ def test_to_dna(ensembl69, variant):
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinDelins(
+            _core=ensembl69,
             contig_id="4",
             start=417,
             start_offset=0,
@@ -101,11 +105,12 @@ def test_to_protein(ensembl69, variant):
             altseq="I",
         )
     ]
-    assert ensembl69.to_protein(variant) == expected
+    assert variant.to_protein() == expected
 
 
 def test_to_rna(ensembl69, variant):
     expected = RnaDelins(
+        _core=ensembl69,
         contig_id="4",
         start=1347,
         start_offset=0,
@@ -119,6 +124,6 @@ def test_to_rna(ensembl69, variant):
         refseq="CTTACGAC",
         altseq="TA",
     )
-    result = ensembl69.to_rna(variant)
+    result = variant.to_rna()
     assert expected in result
     assert len(result) == 3

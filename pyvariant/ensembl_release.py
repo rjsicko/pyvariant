@@ -91,24 +91,15 @@ class EnsemblRelease(Core):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(species={self.species}, release={self.release})"
 
-    def install(
-        self,
-        clean: bool = True,
-        recache: bool = False,
-        redownload: bool = False,
-        restrict_genes: List[str] = [],
-    ):
+    def install(self, clean: bool = True, recache: bool = False, redownload: bool = False):
         """Download missing data, process, and cache.
 
         Args:
             clean (bool, optional): Delete temporary files. Defaults to True.
             recache (bool, optional): Overwrite any existing cache. Defaults to False.
             redownload (bool, optional): Redownload files from Ensembl. Defaults to False.
-            restrict_genes (List[str], optional): Restrict cache to the specified genes. Defaults to [].
         """
-        self.ensembl_cache.install(
-            clean=clean, recache=recache, redownload=redownload, restrict_genes=restrict_genes
-        )
+        self.ensembl_cache.install(clean=clean, recache=recache, redownload=redownload)
 
     def _sequence(
         self,

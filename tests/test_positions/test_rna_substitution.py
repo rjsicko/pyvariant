@@ -10,8 +10,9 @@ from pyvariant.positions import (
 
 
 @pytest.fixture()
-def variant():
+def variant(ensembl69):
     return RnaSubstitution(
+        _core=ensembl69,
         contig_id="12",
         start=96,
         start_offset=0,
@@ -53,6 +54,7 @@ def test_variant_type(variant):
 def test_to_cdna(ensembl69, variant):
     expected = [
         CdnaSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=32,
             start_offset=0,
@@ -68,12 +70,13 @@ def test_to_cdna(ensembl69, variant):
             altseq="A",
         )
     ]
-    assert ensembl69.to_cdna(variant) == expected
+    assert variant.to_cdna() == expected
 
 
 def test_to_dna(ensembl69, variant):
     expected = [
         DnaSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=25398287,
             start_offset=0,
@@ -84,12 +87,13 @@ def test_to_dna(ensembl69, variant):
             altseq="A",
         )
     ]
-    assert ensembl69.to_dna(variant) == expected
+    assert variant.to_dna() == expected
 
 
 def test_to_protein(ensembl69, variant):
     expected = [
         ProteinSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=11,
             start_offset=0,
@@ -105,12 +109,13 @@ def test_to_protein(ensembl69, variant):
             altseq="D",
         )
     ]
-    assert ensembl69.to_protein(variant) == expected
+    assert variant.to_protein() == expected
 
 
 def test_to_rna(ensembl69, variant):
     expected = [
         RnaSubstitution(
+            _core=ensembl69,
             contig_id="12",
             start=96,
             start_offset=0,
@@ -125,4 +130,4 @@ def test_to_rna(ensembl69, variant):
             altseq="A",
         )
     ]
-    assert ensembl69.to_rna(variant) == expected
+    assert variant.to_rna() == expected

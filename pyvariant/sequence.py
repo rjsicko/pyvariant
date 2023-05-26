@@ -31,7 +31,7 @@ class PyfaidxFasta:
             key_function=strip_version,
             as_raw=True,
             sequence_always_upper=True,
-            build_index=False,
+            build_index=True,
             rebuild=False,
             read_ahead=cls.read_ahead,
         )

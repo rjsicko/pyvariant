@@ -1,17 +1,17 @@
 import pandas as pd
 import pytest
 from constants import (
-    CANONICAL_TRANSCRIPT,
-    CONTIG_ALIAS,
-    EXON_ALIAS,
-    GENE_ALIAS,
-    PROTEIN_ALIAS,
+    TEST_ENS100_CANONICAL_TRANSCRIPT,
     TEST_ENS100_CDNA_FASTA,
+    TEST_ENS100_CONTIG_ALIAS,
     TEST_ENS100_DNA_FASTA,
+    TEST_ENS100_EXON_ALIAS,
+    TEST_ENS100_GENE_ALIAS,
     TEST_ENS100_GTF,
     TEST_ENS100_NCRNA_FASTA,
     TEST_ENS100_PEP_FASTA,
-    TRANSCRIPT_ALIAS,
+    TEST_ENS100_PROTEIN_ALIAS,
+    TEST_ENS100_TRANSCRIPT_ALIAS,
 )
 
 from pyvariant.constants import (
@@ -56,12 +56,12 @@ def test_init():
         dna=[TEST_ENS100_DNA_FASTA],
         peptide=[TEST_ENS100_PEP_FASTA],
         rna=[TEST_ENS100_NCRNA_FASTA],
-        canonical_transcript=CANONICAL_TRANSCRIPT,
-        contig_alias=CONTIG_ALIAS,
-        exon_alias=EXON_ALIAS,
-        gene_alias=GENE_ALIAS,
-        protein_alias=PROTEIN_ALIAS,
-        transcript_alias=TRANSCRIPT_ALIAS,
+        canonical_transcript=TEST_ENS100_CANONICAL_TRANSCRIPT,
+        contig_alias=TEST_ENS100_CONTIG_ALIAS,
+        exon_alias=TEST_ENS100_EXON_ALIAS,
+        gene_alias=TEST_ENS100_GENE_ALIAS,
+        protein_alias=TEST_ENS100_PROTEIN_ALIAS,
+        transcript_alias=TEST_ENS100_TRANSCRIPT_ALIAS,
     )
     assert isinstance(obj.df, pd.DataFrame)
     assert isinstance(obj.cds_fasta, list)
@@ -86,6 +86,7 @@ def test_init():
 def test_to_cdna_canonical(ensembl100):
     assert ensembl100.to_cdna("7:g.127589084", canonical=False) == [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="7",
             start=69,
             start_offset=0,
@@ -99,6 +100,7 @@ def test_to_cdna_canonical(ensembl100):
             protein_id="ENSP00000000233",
         ),
         CdnaPosition(
+            _core=ensembl100,
             contig_id="7",
             start=69,
             start_offset=0,
@@ -114,6 +116,7 @@ def test_to_cdna_canonical(ensembl100):
     ]
     assert ensembl100.to_cdna("7:g.127589084", canonical=True) == [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="7",
             start=69,
             start_offset=0,
@@ -137,6 +140,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=237,
             start_offset=0,
@@ -152,6 +156,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=237,
             start_offset=0,
@@ -167,6 +172,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=237,
             start_offset=0,
@@ -182,6 +188,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=237,
             start_offset=0,
@@ -197,6 +204,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=237,
             start_offset=0,
@@ -212,6 +220,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=237,
             start_offset=0,
@@ -227,6 +236,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=144,
             start_offset=0,
@@ -242,6 +252,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=105,
             start_offset=0,
@@ -257,6 +268,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=78,
             start_offset=0,
@@ -272,6 +284,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=198,
             start_offset=0,
@@ -287,6 +300,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=105,
             start_offset=0,
@@ -302,6 +316,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=198,
             start_offset=0,
@@ -317,6 +332,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=105,
             start_offset=0,
@@ -332,6 +348,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=78,
             start_offset=0,
@@ -347,6 +364,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=198,
             start_offset=0,
@@ -362,6 +380,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=198,
             start_offset=0,
@@ -377,6 +396,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=237,
             start_offset=0,
@@ -392,6 +412,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=198,
             start_offset=0,
@@ -407,6 +428,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=226,
             start_offset=0,
@@ -422,6 +444,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=78,
             start_offset=0,
@@ -437,6 +460,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=105,
             start_offset=0,
@@ -452,6 +476,7 @@ def test_to_protein_from_dna(ensembl100):
         ProteinSubstitution(
             refseq="M",
             altseq="I",
+            _core=ensembl100,
             contig_id="17",
             start=198,
             start_offset=0,
@@ -898,8 +923,9 @@ def test_is_transcript_true_from_name(ensembl100):
 # sequence
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_sequence_cdna_pos():
+def test_sequence_cdna_pos(ensembl100):
     return CdnaPosition(
+        ensembl100,
         "4",
         7,
         0,
@@ -919,13 +945,13 @@ def test_sequence_cdna(ensembl100, test_sequence_cdna_pos):
 
 
 @pytest.fixture
-def test_sequence_dna_pos_plus():
-    return DnaPosition("4", 54695512, 0, 54695514, 0, "+")
+def test_sequence_dna_pos_plus(ensembl100):
+    return DnaPosition(ensembl100, "4", 54695512, 0, 54695514, 0, "+")
 
 
 @pytest.fixture
-def test_sequence_dna_pos_minus():
-    return DnaPosition("4", 54695512, 0, 54695514, 0, "-")
+def test_sequence_dna_pos_minus(ensembl100):
+    return DnaPosition(ensembl100, "4", 54695512, 0, 54695514, 0, "-")
 
 
 def test_sequence_dna(ensembl100, test_sequence_dna_pos_plus, test_sequence_dna_pos_minus):
@@ -934,8 +960,9 @@ def test_sequence_dna(ensembl100, test_sequence_dna_pos_plus, test_sequence_dna_
 
 
 @pytest.fixture
-def test_sequence_protein_pos():
+def test_sequence_protein_pos(ensembl100):
     return ProteinPosition(
+        ensembl100,
         "4",
         3,
         0,
@@ -955,9 +982,9 @@ def test_sequence_protein(ensembl100, test_sequence_protein_pos):
 
 
 @pytest.fixture
-def test_sequence_rna_pos():
+def test_sequence_rna_pos(ensembl100):
     return RnaPosition(
-        "4", 126, 0, 128, 0, "+", "ENSG00000157404", "KIT", "ENST00000288135", "KIT-201"
+        ensembl100, "4", 126, 0, 128, 0, "+", "ENSG00000157404", "KIT", "ENST00000288135", "KIT-201"
     )
 
 
@@ -1064,8 +1091,9 @@ def test_normalize_id_transcript_name(ensembl100):
 # cdna
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_cdna_pos():
+def test_cdna_pos(ensembl100):
     return CdnaPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -1108,9 +1136,15 @@ def test_cdna_canonical(ensembl100):
 # dna
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def expected_dna():
+def expected_dna(ensembl100):
     return DnaPosition(
-        contig_id="5", start=1253147, start_offset=0, end=1295068, end_offset=0, strand="-"
+        _core=ensembl100,
+        contig_id="5",
+        start=1253147,
+        start_offset=0,
+        end=1295068,
+        end_offset=0,
+        strand="-",
     )
 
 
@@ -1133,9 +1167,15 @@ def test_gene(ensembl100, expected_dna, feature, num_results):
 
 
 @pytest.fixture
-def test_dna_pos_whole_contig():
+def test_dna_pos_whole_contig(ensembl100):
     return DnaPosition(
-        contig_id="5", start=1, start_offset=0, end=181538259, end_offset=0, strand="-"
+        _core=ensembl100,
+        contig_id="5",
+        start=1,
+        start_offset=0,
+        end=181538259,
+        end_offset=0,
+        strand="-",
     )
 
 
@@ -1161,8 +1201,9 @@ def test_dna(ensembl100, test_dna_pos_whole_contig, feature, num_results):
 # exon
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_exon_pos():
+def test_exon_pos(ensembl100):
     return ExonPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -1206,8 +1247,9 @@ def test_exon_canonical(ensembl100):
 # protein
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_protein_pos():
+def test_protein_pos(ensembl100):
     return ProteinPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -1250,8 +1292,9 @@ def test_protein_canonical(ensembl100):
 # rna
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_rna_pos():
+def test_rna_pos(ensembl100):
     return RnaPosition(
+        _core=ensembl100,
         contig_id="5",
         start=1,
         start_offset=0,
@@ -1293,8 +1336,9 @@ def test_rna_canonical(ensembl100):
 # translate_cdna_variant
 # -------------------------------------------------------------------------------------------------
 @pytest.fixture
-def test_translate_cdna_variant_pos_1():
+def test_translate_cdna_variant_pos_1(ensembl100):
     return CdnaPosition(
+        ensembl100,
         "4",
         38,
         0,
@@ -1333,8 +1377,9 @@ def test_translate_cdna_variant_3(ensembl100, test_translate_cdna_variant_pos_1)
 
 
 @pytest.fixture
-def test_translate_cdna_variant_pos_2():
+def test_translate_cdna_variant_pos_2(ensembl100):
     return CdnaPosition(
+        ensembl100,
         "4",
         38,
         0,
@@ -1366,8 +1411,9 @@ def test_translate_cdna_variant_5(ensembl100, test_translate_cdna_variant_pos_2)
 
 
 @pytest.fixture
-def test_translate_cdna_variant_pos_3():
+def test_translate_cdna_variant_pos_3(ensembl100):
     return CdnaPosition(
+        ensembl100,
         "4",
         1674,
         0,
@@ -1405,6 +1451,7 @@ def test_parse_cdna_position(ensembl100):
     result = ensembl100.parse("ENST00000288135:c.68-1")
     assert result == [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="4",
             start=68,
             start_offset=-1,
@@ -1424,6 +1471,7 @@ def test_parse_cdna_intron_deletion(ensembl100):
     result = ensembl100.parse("ENST00000372348:c.136+596_136+650del")
     assert result == [
         CdnaDeletion(
+            _core=ensembl100,
             contig_id="9",
             start=136,
             start_offset=596,
@@ -1446,7 +1494,7 @@ def test_parse_cdna_stop_deletion(ensembl100):
     # result = ensembl100.parse("ENST00000257430:c.*6_*7del")
     # assert result == [
     #     CdnaDeletion(
-    #         contig_id="9",
+    #         _core=ensembl100,contig_id="9",
     #         start=10704,
     #         start_offset=6,
     #         end=10704,
@@ -1469,6 +1517,7 @@ def test_parse_cdna_promoter_delins_multiple(ensembl100):
     result = ensembl100.parse("ENST00000257430:c.-30347_-30346delinsA")
     assert result == [
         CdnaDelins(
+            _core=ensembl100,
             contig_id="5",
             start=1,
             start_offset=-30347,
@@ -1490,6 +1539,7 @@ def test_parse_cdna_promoter_delins_to_deletion(ensembl100):
     result = ensembl100.parse("ENST00000257430:c.-30353_-30352delinsA")
     assert result == [
         CdnaDeletion(
+            _core=ensembl100,
             contig_id="5",
             start=1,
             start_offset=-30353,
@@ -1511,6 +1561,7 @@ def test_parse_cdna_duplication(ensembl100):
     result = ensembl100.parse("ENST00000307078:c.1394_1399dup")
     assert result == [
         CdnaDuplication(
+            _core=ensembl100,
             contig_id="17",
             start=1394,
             start_offset=0,
@@ -1532,6 +1583,7 @@ def test_parse_cdna_promoter_substitution(ensembl100):
     result = ensembl100.parse("ENST00000257430:c.-290G>A")
     assert result == [
         CdnaSubstitution(
+            _core=ensembl100,
             contig_id="5",
             start=1,
             start_offset=-290,
@@ -1553,6 +1605,7 @@ def test_parse_cdna_substitution(ensembl100):
     result = ensembl100.parse("ENST00000256078:c.38G>A")
     assert result == [
         CdnaSubstitution(
+            _core=ensembl100,
             contig_id="12",
             start=38,
             start_offset=0,
@@ -1574,7 +1627,13 @@ def test_parse_dna_position(ensembl100):
     result = ensembl100.parse("5:g.1282623_1282626")
     assert result == [
         DnaPosition(
-            contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand=""
+            _core=ensembl100,
+            contig_id="5",
+            start=1282623,
+            start_offset=0,
+            end=1282626,
+            end_offset=0,
+            strand="",
         )
     ]
 
@@ -1583,6 +1642,7 @@ def test_parse_dna_substitution(ensembl100):
     result = ensembl100.parse("5:g.1282623C>G")
     assert result == [
         DnaSubstitution(
+            _core=ensembl100,
             contig_id="5",
             start=1282623,
             start_offset=0,
@@ -1599,7 +1659,9 @@ def test_parse_exon_fusion(ensembl100):
     result = ensembl100.parse("ENST00000315869:e.3_4::ENST00000271526:e.2")
     assert result == [
         ExonFusion(
+            ensembl100,
             ExonPosition(
+                _core=ensembl100,
                 contig_id="X",
                 start=3,
                 start_offset=0,
@@ -1613,6 +1675,7 @@ def test_parse_exon_fusion(ensembl100):
                 exon_id="ENSE00003528623",
             ),
             ExonPosition(
+                _core=ensembl100,
                 contig_id="1",
                 start=2,
                 start_offset=0,
@@ -1636,6 +1699,7 @@ def test_variant_cdna_minimal(ensembl100):
     result = ensembl100.variant(position_type="cdna", feature="ENST00000375562", start=123)
     assert result == [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="6",
             start=123,
             start_offset=0,
@@ -1663,6 +1727,7 @@ def test_variant_cdna_position(ensembl100):
     )
     assert result == [
         CdnaPosition(
+            _core=ensembl100,
             contig_id="4",
             start=68,
             start_offset=-1,
@@ -1693,6 +1758,7 @@ def test_variant_cdna_substitution(ensembl100):
     )
     assert result == [
         CdnaSubstitution(
+            _core=ensembl100,
             contig_id="12",
             start=38,
             start_offset=0,
@@ -1714,7 +1780,13 @@ def test_variant_dna_minimal(ensembl100):
     result = ensembl100.variant(position_type="dna", feature="5", start=1282623)
     assert result == [
         DnaPosition(
-            contig_id="5", start=1282623, start_offset=0, end=1282623, end_offset=0, strand=""
+            _core=ensembl100,
+            contig_id="5",
+            start=1282623,
+            start_offset=0,
+            end=1282623,
+            end_offset=0,
+            strand="",
         )
     ]
 
@@ -1725,7 +1797,13 @@ def test_variant_dna_position(ensembl100):
     )
     assert result == [
         DnaPosition(
-            contig_id="5", start=1282623, start_offset=0, end=1282626, end_offset=0, strand="-"
+            _core=ensembl100,
+            contig_id="5",
+            start=1282623,
+            start_offset=0,
+            end=1282626,
+            end_offset=0,
+            strand="-",
         )
     ]
 
@@ -1743,6 +1821,7 @@ def test_variant_dna_insertion_normalized(ensembl100):
     )
     assert result == [
         DnaInsertion(
+            _core=ensembl100,
             contig_id="1",
             start=826577,
             start_offset=0,
@@ -1768,6 +1847,7 @@ def test_variant_dna_substitution(ensembl100):
     )
     assert result == [
         DnaSubstitution(
+            _core=ensembl100,
             contig_id="5",
             start=1282623,
             start_offset=0,
@@ -1796,7 +1876,9 @@ def test_variant_exon_fusion(ensembl100):
     )
     assert result == [
         ExonFusion(
+            ensembl100,
             ExonPosition(
+                _core=ensembl100,
                 contig_id="X",
                 start=3,
                 start_offset=0,
@@ -1810,6 +1892,7 @@ def test_variant_exon_fusion(ensembl100):
                 exon_id="ENSE00003528623",
             ),
             ExonPosition(
+                _core=ensembl100,
                 contig_id="1",
                 start=2,
                 start_offset=0,
@@ -1836,6 +1919,7 @@ def test_to_all_from_cdna_delins(ensembl100):
             CdnaDelins(
                 refseq="AAA",
                 altseq="GT",
+                _core=ensembl100,
                 contig_id="4",
                 start=126,
                 start_offset=0,
@@ -1853,6 +1937,7 @@ def test_to_all_from_cdna_delins(ensembl100):
             DnaDelins(
                 refseq="AAA",
                 altseq="GT",
+                _core=ensembl100,
                 contig_id="4",
                 start=54695570,
                 start_offset=0,
@@ -1866,6 +1951,7 @@ def test_to_all_from_cdna_delins(ensembl100):
             ProteinFrameshift(
                 refseq="K",
                 altseq="",
+                _core=ensembl100,
                 contig_id="4",
                 start=43,
                 start_offset=0,
@@ -1883,6 +1969,7 @@ def test_to_all_from_cdna_delins(ensembl100):
             RnaDelins(
                 refseq="AAA",
                 altseq="GT",
+                _core=ensembl100,
                 contig_id="4",
                 start=184,
                 start_offset=0,
@@ -1903,6 +1990,7 @@ def test_to_all_from_dna_position(ensembl100):
     assert result == {
         "cdna": [
             CdnaPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=126,
                 start_offset=0,
@@ -1916,6 +2004,7 @@ def test_to_all_from_dna_position(ensembl100):
                 protein_id="ENSP00000288135",
             ),
             CdnaPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=126,
                 start_offset=0,
@@ -1931,11 +2020,18 @@ def test_to_all_from_dna_position(ensembl100):
         ],
         "dna": [
             DnaPosition(
-                contig_id="4", start=54695570, start_offset=0, end=54695572, end_offset=0, strand=""
+                _core=ensembl100,
+                contig_id="4",
+                start=54695570,
+                start_offset=0,
+                end=54695572,
+                end_offset=0,
+                strand="",
             )
         ],
         "exon": [
             ExonPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=2,
                 start_offset=0,
@@ -1949,6 +2045,7 @@ def test_to_all_from_dna_position(ensembl100):
                 exon_id="ENSE00001032350",
             ),
             ExonPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=2,
                 start_offset=0,
@@ -1962,6 +2059,7 @@ def test_to_all_from_dna_position(ensembl100):
                 exon_id="ENSE00001032350",
             ),
             ExonPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=2,
                 start_offset=0,
@@ -1977,6 +2075,7 @@ def test_to_all_from_dna_position(ensembl100):
         ],
         "protein": [
             ProteinPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=42,
                 start_offset=0,
@@ -1990,6 +2089,7 @@ def test_to_all_from_dna_position(ensembl100):
                 protein_id="ENSP00000288135",
             ),
             ProteinPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=42,
                 start_offset=0,
@@ -2005,6 +2105,7 @@ def test_to_all_from_dna_position(ensembl100):
         ],
         "rna": [
             RnaPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=184,
                 start_offset=0,
@@ -2017,6 +2118,7 @@ def test_to_all_from_dna_position(ensembl100):
                 transcript_name="KIT-201",
             ),
             RnaPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=223,
                 start_offset=0,
@@ -2029,6 +2131,7 @@ def test_to_all_from_dna_position(ensembl100):
                 transcript_name="KIT-202",
             ),
             RnaPosition(
+                _core=ensembl100,
                 contig_id="4",
                 start=202,
                 start_offset=0,
@@ -2054,6 +2157,7 @@ def test_diff(ensembl100):
                 CdnaDelins(
                     refseq="CAA",
                     altseq="AAG",
+                    _core=ensembl100,
                     contig_id="1",
                     start=181,
                     start_offset=0,
@@ -2074,6 +2178,7 @@ def test_diff(ensembl100):
                 DnaDelins(
                     refseq="CAA",
                     altseq="AAG",
+                    _core=ensembl100,
                     contig_id="1",
                     start=114713907,
                     start_offset=0,
@@ -2091,6 +2196,7 @@ def test_diff(ensembl100):
                 RnaDelins(
                     refseq="CAA",
                     altseq="AAG",
+                    _core=ensembl100,
                     contig_id="1",
                     start=312,
                     start_offset=0,
@@ -2114,6 +2220,7 @@ def test_same(ensembl100):
             CdnaSubstitution(
                 refseq="C",
                 altseq="A",
+                _core=ensembl100,
                 contig_id="1",
                 start=181,
                 start_offset=0,
@@ -2131,6 +2238,7 @@ def test_same(ensembl100):
             DnaSubstitution(
                 refseq="C",
                 altseq="A",
+                _core=ensembl100,
                 contig_id="1",
                 start=114713909,
                 start_offset=0,
@@ -2144,6 +2252,7 @@ def test_same(ensembl100):
             ProteinSubstitution(
                 refseq="Q",
                 altseq="K",
+                _core=ensembl100,
                 contig_id="1",
                 start=61,
                 start_offset=0,
@@ -2161,6 +2270,7 @@ def test_same(ensembl100):
             RnaSubstitution(
                 refseq="C",
                 altseq="A",
+                _core=ensembl100,
                 contig_id="1",
                 start=312,
                 start_offset=0,
@@ -2181,6 +2291,7 @@ def test_same_cdna(ensembl100):
         CdnaSubstitution(
             refseq="C",
             altseq="A",
+            _core=ensembl100,
             contig_id="1",
             start=181,
             start_offset=0,
@@ -2201,6 +2312,7 @@ def test_same_dna(ensembl100):
         DnaSubstitution(
             refseq="C",
             altseq="A",
+            _core=ensembl100,
             contig_id="1",
             start=114713909,
             start_offset=0,
@@ -2214,6 +2326,7 @@ def test_same_dna(ensembl100):
 def test_same_exon(ensembl100):
     assert ensembl100.same_exon("ENSP00000358548:p.61", "NRAS:c.181") == [
         ExonPosition(
+            _core=ensembl100,
             contig_id="1",
             start=3,
             start_offset=0,
@@ -2234,6 +2347,7 @@ def test_same_protein(ensembl100):
         ProteinSubstitution(
             refseq="Q",
             altseq="K",
+            _core=ensembl100,
             contig_id="1",
             start=61,
             start_offset=0,
@@ -2254,6 +2368,7 @@ def test_same_rna(ensembl100):
         RnaSubstitution(
             refseq="C",
             altseq="A",
+            _core=ensembl100,
             contig_id="1",
             start=312,
             start_offset=0,

@@ -9,7 +9,7 @@ def test_pyfaidx_fasta_load():
     result = PyfaidxFasta.load(TEST_ENS100_CDNA_FASTA)
     assert isinstance(result, PyfaidxFasta)
     assert isinstance(result.fasta, Fasta)
-    assert result["ENST00000643777"]
+    assert result["ENST00000256078"]
 
 
 def test_pyfaidx_fasta_load_empty():
