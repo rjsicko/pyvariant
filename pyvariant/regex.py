@@ -13,9 +13,11 @@ MATCH_TYPES = {
     "prefix": str,
     "start": int,
     "start_offset": int,
+    "start_offset2": int,
     "start_seq": str,
     "end": int,
     "end_offset": int,
+    "end_offset2": int,
     "end_seq": str,
     "strand": str,
     "refseq": str,
@@ -59,6 +61,7 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"(?P<breakpoint1_suffix>delins)"
         rf"(?P<breakpoint1_altseq>{SEQ})"
     ),
@@ -73,10 +76,12 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"_"
         rf"(?P<breakpoint1_end_seq>{SEQ})?"
         rf"(?P<breakpoint1_end>{POSITION})?"
         rf"(?P<breakpoint1_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_end_offset2>{OFFSET})?"
         r"(?P<breakpoint1_suffix>delins)"
         rf"(?P<breakpoint1_altseq>{SEQ})"
     ),
@@ -92,6 +97,7 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"(?P<breakpoint1_suffix>del)"
         rf"(?P<breakpoint1_refseq>{SEQ})?"
     ),
@@ -108,10 +114,12 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"_"
         rf"(?P<breakpoint1_end_seq>{SEQ})?"
         rf"(?P<breakpoint1_end>{POSITION})?"
         rf"(?P<breakpoint1_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_end_offset2>{OFFSET})?"
         r"(?P<breakpoint1_suffix>del)"
         rf"(?P<breakpoint1_refseq>{SEQ})?"
     ),
@@ -125,6 +133,7 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"(?P<breakpoint1_suffix>dup)"
         rf"(?P<breakpoint1_refseq>{SEQ})?"
     ),
@@ -139,10 +148,12 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"_"
         rf"(?P<breakpoint1_end_seq>{SEQ})?"
         rf"(?P<breakpoint1_end>{POSITION})?"
         rf"(?P<breakpoint1_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_end_offset2>{OFFSET})?"
         r"(?P<breakpoint1_suffix>dup)"
         rf"(?P<breakpoint1_refseq>{SEQ})?"
     ),
@@ -158,6 +169,7 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         rf"(?P<breakpoint1_altseq>{SEQ})?"
         r"(?P<breakpoint1_suffix>fs)"
         r"\*?"
@@ -174,10 +186,12 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"_"
         rf"(?P<breakpoint1_end_seq>{SEQ})?"
         rf"(?P<breakpoint1_end>{POSITION})?"
         rf"(?P<breakpoint1_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_end_offset2>{OFFSET})?"
         r"(?P<breakpoint1_suffix>ins)"
         rf"(?P<breakpoint1_altseq>{SEQ})?"
     ),
@@ -185,6 +199,7 @@ REGEX = [
     # ENST00000078429:r.916A>G
     # CEP72:c.1-2384C>T
     # TERT:c.-124C>T
+    # NM_000546:c.-28-112G>A
     re.compile(
         rf"(?P<breakpoint1_feature>{REFERENCE})"
         r":"
@@ -192,6 +207,7 @@ REGEX = [
         r"."
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         rf"(?P<breakpoint1_refseq>{SEQ})"
         r"(?P<breakpoint1_suffix>>)"
         rf"(?P<breakpoint1_altseq>{SEQ})"
@@ -206,6 +222,7 @@ REGEX = [
         rf"(?P<breakpoint1_refseq>{SEQ})"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         rf"(?P<breakpoint1_altseq>{SEQ})"
     ),
     # Fusion. Examples:
@@ -217,9 +234,11 @@ REGEX = [
         r"."
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"_?"
         rf"(?P<breakpoint1_end>{POSITION})?"
         rf"(?P<breakpoint1_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_end_offset2>{OFFSET})?"
         r"::"
         rf"(?P<breakpoint2_feature>{REFERENCE})"
         r":"
@@ -227,9 +246,11 @@ REGEX = [
         r"."
         rf"(?P<breakpoint2_start>{POSITION})?"
         rf"(?P<breakpoint2_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint2_start_offset2>{OFFSET})?"
         r"_?"
         rf"(?P<breakpoint2_end>{POSITION})?"
         rf"(?P<breakpoint2_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint2_end_offset2>{OFFSET})?"
     ),
     # Non-variant position, multiple bases. Examples:
     # 5:g.1282623_1282626
@@ -240,9 +261,11 @@ REGEX = [
         r"."
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"_"
         rf"(?P<breakpoint1_end>{POSITION})?"
         rf"(?P<breakpoint1_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_end_offset2>{OFFSET})?"
     ),
     # Non-variant position, single base. Examples:
     # ENST00000078429:c.625
@@ -253,6 +276,7 @@ REGEX = [
         r"."
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
     ),
     # -------------------------------------------------------------------------------------------------
     # Non-HGVS string matching
@@ -267,6 +291,7 @@ REGEX = [
         rf"(?P<breakpoint1_start_seq>{SEQ})?"
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"(?P<breakpoint1_suffix>del)"
         rf"(?P<breakpoint1_refseq>{SEQ})"
         r"(?P<breakpoint1_suffix2>ins)"
@@ -284,17 +309,21 @@ REGEX = [
         r"."
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
         r"_?"
         rf"(?P<breakpoint1_end>{POSITION})?"
         rf"(?P<breakpoint1_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint1_end_offset2>{OFFSET})?"
         r","
         rf"(?P<breakpoint2_prefix>{PREFIX})"
         r"."
         rf"(?P<breakpoint2_start>{POSITION})?"
         rf"(?P<breakpoint2_start_offset>{OFFSET})?"
+        rf"(?P<breakpoint2_start_offset2>{OFFSET})?"
         r"_?"
         rf"(?P<breakpoint2_end>{POSITION})?"
         rf"(?P<breakpoint2_end_offset>{OFFSET})?"
+        rf"(?P<breakpoint2_end_offset2>{OFFSET})?"
         r"\)"
     ),
 ]

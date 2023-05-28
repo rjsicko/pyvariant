@@ -59,6 +59,17 @@ def parse(string: str) -> Dict[str, Dict[str, Any]]:
     for breakpoint in parsed.values():
         breakpoint["position_type"] = translate_prefix(breakpoint["prefix"])
 
+        # TODO: Treats variants in the intron of a promoter as a single offset, e.g.
+        # 'NM_000546:c.-28-112G>A' -28 + -112 = -140. This allows the genomic position to be
+        # calculated correctly but the displayed string will be wrong (e.g. NM_000546:c.-140G>A)
+        if breakpoint["start_offset2"]:
+            breakpoint["start_offset"] = (breakpoint["start_offset"] or 0) + breakpoint[
+                "start_offset2"
+            ]
+
+        if breakpoint["end_offset2"]:
+            breakpoint["end_offset"] = (breakpoint["end_offset"] or 0) + breakpoint["end_offset2"]
+
         if breakpoint["start"] is None and breakpoint["start_offset"]:
             breakpoint["start"] = 1
 
@@ -84,8 +95,10 @@ def parse(string: str) -> Dict[str, Dict[str, Any]]:
                 if breakpoint[key]:
                     breakpoint[key] = breakpoint[key].upper()
 
-        # Drop 'refseq_end'
+        # Drop 'extra' values
+        breakpoint.pop("end_offset2", "")
         breakpoint.pop("refseq_end", "")
+        breakpoint.pop("start_offset2", "")
 
     return parsed
 
