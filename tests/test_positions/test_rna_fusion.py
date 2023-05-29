@@ -50,6 +50,10 @@ def test_str(variant):
     assert str(variant) == "ENST00000315869:r.794_804::ENST00000271526:r.741_751"
 
 
+def test_to_string_gene_name(variant):
+    assert variant.to_string(reference="gene_name") == "TFE3:r.794_804::PRCC:r.741_751"
+
+
 def test_type(variant):
     assert not variant.is_cdna
     assert not variant.is_dna

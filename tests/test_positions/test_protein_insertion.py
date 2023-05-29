@@ -28,6 +28,10 @@ def test_str(variant):
     assert str(variant) == "ENSP00000256078:p.A11_G12insT"
 
 
+def test_to_string_gene_name(variant):
+    assert variant.to_string(reference="gene_name") == "KRAS:p.A11_G12insT"
+
+
 def test_type(variant):
     assert not variant.is_cdna
     assert not variant.is_dna

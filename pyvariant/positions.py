@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import TYPE_CHECKING, Any, Dict, List, Type
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from .constants import (
     CDNA,
@@ -55,7 +55,7 @@ class _Base:
         return str(self) < str(other)
 
     def __str__(self) -> str:
-        raise NotImplementedError()  # Defined by inheriting class
+        return self.to_string()  # Defined by inheriting class
 
     # The `__getstate__` and `__setstate__` methods control how class instances are pickled. Since
     # `Core` and `Core`-derived instances can't be pickled, we need to remove them as values in
@@ -293,6 +293,17 @@ class _Base:
         """
         return self._core.to_rna(self, canonical=canonical)
 
+    def to_string(self, reference: str = "") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        raise NotImplementedError()  # Defined by inheriting class
+
 
 @dataclass(eq=True, frozen=True)
 class _Position(_Base):
@@ -352,14 +363,6 @@ class CdnaPosition(_Position):
     transcript_name: str
     protein_id: str
 
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:c.{start}"
-        else:
-            return f"{self.transcript_id}:c.{start}_{end}"
-
     @property
     def is_cdna(self) -> bool:
         """Check if this position is on a cDNA.
@@ -378,18 +381,27 @@ class CdnaPosition(_Position):
         """
         return CDNA
 
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{reference_id}:c.{start}"
+        else:
+            return f"{reference_id}:c.{start}_{end}"
+
 
 @dataclass(eq=True, frozen=True)
 class DnaPosition(_Position):
     """Base class for DNA positions."""
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.contig_id}:g.{start}"
-        else:
-            return f"{self.contig_id}:g.{start}_{end}"
 
     @property
     def is_dna(self) -> bool:
@@ -409,6 +421,23 @@ class DnaPosition(_Position):
         """
         return DNA
 
+    def to_string(self, reference: str = "contig_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "contig_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{reference_id}:g.{start}"
+        else:
+            return f"{reference_id}:g.{start}_{end}"
+
 
 @dataclass(eq=True, frozen=True)
 class ExonPosition(_Position):
@@ -420,14 +449,6 @@ class ExonPosition(_Position):
     transcript_name: str
     # NOTE: If the start and end are different, the exon ID of the start is listed as the `exon_id`
     exon_id: str
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:e.{start}"
-        else:
-            return f"{self.transcript_id}:e.{start}_{end}"
 
     @property
     def is_exon(self) -> bool:
@@ -447,6 +468,23 @@ class ExonPosition(_Position):
         """
         return EXON
 
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{reference_id}:e.{start}"
+        else:
+            return f"{reference_id}:e.{start}_{end}"
+
 
 @dataclass(eq=True, frozen=True)
 class ProteinPosition(_Position):
@@ -457,14 +495,6 @@ class ProteinPosition(_Position):
     transcript_id: str
     transcript_name: str
     protein_id: str
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.protein_id}:p.{start}"
-        else:
-            return f"{self.protein_id}:p.{start}_{end}"
 
     @property
     def is_protein(self) -> bool:
@@ -484,6 +514,23 @@ class ProteinPosition(_Position):
         """
         return PROTEIN
 
+    def to_string(self, reference: str = "protein_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "protein_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{reference_id}:p.{start}"
+        else:
+            return f"{reference_id}:p.{start}_{end}"
+
 
 @dataclass(eq=True, frozen=True)
 class RnaPosition(_Position):
@@ -493,14 +540,6 @@ class RnaPosition(_Position):
     gene_name: str
     transcript_id: str
     transcript_name: str
-
-    def __str__(self) -> str:
-        start = format_hgvs_position(self.start, self.start_offset)
-        end = format_hgvs_position(self.end, self.end_offset)
-        if start == end:
-            return f"{self.transcript_id}:r.{start}"
-        else:
-            return f"{self.transcript_id}:r.{start}_{end}"
 
     @property
     def is_rna(self) -> bool:
@@ -519,6 +558,23 @@ class RnaPosition(_Position):
             str: Type of position (e.g, 'cdna')
         """
         return RNA
+
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{reference_id}:r.{start}"
+        else:
+            return f"{reference_id}:r.{start}_{end}"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -604,54 +660,90 @@ class _Deletion(_SmallVariant):
 class CdnaDeletion(_Deletion, _CdnaSmallVariant):
     """Stores information on a cDNA deletion variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.transcript_id}:c.{start}del"
+            return f"{reference_id}:c.{start}del"
         else:
-            return f"{self.transcript_id}:c.{start}_{end}del"
+            return f"{reference_id}:c.{start}_{end}del"
 
 
 @dataclass(eq=True, frozen=True)
 class DnaDeletion(_Deletion, _DnaSmallVariant):
     """Stores information on a DNA deletion variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "contig_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "contig_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.contig_id}:g.{start}del"
+            return f"{reference_id}:g.{start}del"
         else:
-            return f"{self.contig_id}:g.{start}_{end}del"
+            return f"{reference_id}:g.{start}_{end}del"
 
 
 @dataclass(eq=True, frozen=True)
 class ProteinDeletion(_Deletion, _ProteinSmallVariant):
     """Stores information on a protein deletion variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "protein_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "protein_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         start_seq = self.refseq[0]
         end_seq = self.refseq[-1]
         if start == end:
-            return f"{self.protein_id}:p.{start_seq}{start}del"
+            return f"{reference_id}:p.{start_seq}{start}del"
         else:
-            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}del"
+            return f"{reference_id}:p.{start_seq}{start}_{end_seq}{end}del"
 
 
 @dataclass(eq=True, frozen=True)
 class RnaDeletion(_Deletion, _RnaSmallVariant):
     """Stores information on an RNA deletion variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.transcript_id}:r.{start}del"
+            return f"{reference_id}:r.{start}del"
         else:
-            return f"{self.transcript_id}:r.{start}_{end}del"
+            return f"{reference_id}:r.{start}_{end}del"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -675,54 +767,90 @@ class _Delins(_SmallVariant):
 class CdnaDelins(_Delins, _CdnaSmallVariant):
     """Stores information on a cDNA delins variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.transcript_id}:c.{start}delins{self.altseq}"
+            return f"{reference_id}:c.{start}delins{self.altseq}"
         else:
-            return f"{self.transcript_id}:c.{start}_{end}delins{self.altseq}"
+            return f"{reference_id}:c.{start}_{end}delins{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class DnaDelins(_Delins, _DnaSmallVariant):
     """Stores information on a DNA delins variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "contig_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "contig_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.contig_id}:g.{start}delins{self.altseq}"
+            return f"{reference_id}:g.{start}delins{self.altseq}"
         else:
-            return f"{self.contig_id}:g.{start}_{end}delins{self.altseq}"
+            return f"{reference_id}:g.{start}_{end}delins{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class ProteinDelins(_Delins, _ProteinSmallVariant):
     """Stores information on a protein delins variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "protein_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "protein_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         start_seq = self.refseq[0]
         end_seq = self.refseq[-1]
         if start == end:
-            return f"{self.protein_id}:p.{start_seq}{start}delins{self.altseq}"
+            return f"{reference_id}:p.{start_seq}{start}delins{self.altseq}"
         else:
-            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}delins{self.altseq}"
+            return f"{reference_id}:p.{start_seq}{start}_{end_seq}{end}delins{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class RnaDelins(_Delins, _RnaSmallVariant):
     """Stores information on an RNA delins variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.transcript_id}:r.{start}delins{self.altseq}"
+            return f"{reference_id}:r.{start}delins{self.altseq}"
         else:
-            return f"{self.transcript_id}:r.{start}_{end}delins{self.altseq}"
+            return f"{reference_id}:r.{start}_{end}delins{self.altseq}"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -746,54 +874,90 @@ class _Duplication(_SmallVariant):
 class CdnaDuplication(_Duplication, _CdnaSmallVariant):
     """Stores information on a cDNA duplication variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.transcript_id}:c.{start}dup"
+            return f"{reference_id}:c.{start}dup"
         else:
-            return f"{self.transcript_id}:c.{start}_{end}dup"
+            return f"{reference_id}:c.{start}_{end}dup"
 
 
 @dataclass(eq=True, frozen=True)
 class DnaDuplication(_Duplication, _DnaSmallVariant):
     """Stores information on a DNA duplication variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "contig_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "contig_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.contig_id}:g.{start}dup"
+            return f"{reference_id}:g.{start}dup"
         else:
-            return f"{self.contig_id}:g.{start}_{end}dup"
+            return f"{reference_id}:g.{start}_{end}dup"
 
 
 @dataclass(eq=True, frozen=True)
 class ProteinDuplication(_Duplication, _ProteinSmallVariant):
     """Stores information on a protein duplication variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "protein_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "protein_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         start_seq = self.refseq[0]
         end_seq = self.refseq[-1]
         if start == end:
-            return f"{self.protein_id}:p.{start_seq}{start}dup"
+            return f"{reference_id}:p.{start_seq}{start}dup"
         else:
-            return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}dup"
+            return f"{reference_id}:p.{start_seq}{start}_{end_seq}{end}dup"
 
 
 @dataclass(eq=True, frozen=True)
 class RnaDuplication(_Duplication, _RnaSmallVariant):
     """Stores information on an RNA duplication variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         if start == end:
-            return f"{self.transcript_id}:r.{start}dup"
+            return f"{reference_id}:r.{start}dup"
         else:
-            return f"{self.transcript_id}:r.{start}_{end}dup"
+            return f"{reference_id}:r.{start}_{end}dup"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -817,10 +981,19 @@ class _Frameshift(_SmallVariant):
 class ProteinFrameshift(_Frameshift, _ProteinSmallVariant):
     """Stores information on a protein frameshift variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "protein_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "protein_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         start_seq = self.refseq[0]
-        return f"{self.protein_id}:p.{start_seq}{start}fs"
+        return f"{reference_id}:p.{start_seq}{start}fs"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -844,46 +1017,82 @@ class _Insertion(_SmallVariant):
 class CdnaInsertion(_Insertion, _CdnaSmallVariant):
     """Stores information on a cDNA insertion variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         altseq = self.altseq[1:-1]
-        return f"{self.transcript_id}:c.{start}_{end}ins{altseq}"
+        return f"{reference_id}:c.{start}_{end}ins{altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class DnaInsertion(_Insertion, _DnaSmallVariant):
     """Stores information on a DNA insertion variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "contig_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "contig_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         altseq = self.altseq[1:-1]
-        return f"{self.contig_id}:g.{start}_{end}ins{altseq}"
+        return f"{reference_id}:g.{start}_{end}ins{altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class ProteinInsertion(_Insertion, _ProteinSmallVariant):
     """Stores information on a protein insertion variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "protein_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "protein_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         start_seq = self.refseq[0]
         end_seq = self.refseq[-1]
         altseq = self.altseq[1:-1]
-        return f"{self.protein_id}:p.{start_seq}{start}_{end_seq}{end}ins{altseq}"
+        return f"{reference_id}:p.{start_seq}{start}_{end_seq}{end}ins{altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class RnaInsertion(_Insertion, _RnaSmallVariant):
     """Stores information on an RNA insertion variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
         end = format_hgvs_position(self.end, self.end_offset)
         altseq = self.altseq[1:-1]
-        return f"{self.transcript_id}:r.{start}_{end}ins{altseq}"
+        return f"{reference_id}:r.{start}_{end}ins{altseq}"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -907,36 +1116,72 @@ class _Substitution(_SmallVariant):
 class CdnaSubstitution(_Substitution, _CdnaSmallVariant):
     """Stores information on a cDNA substitution variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
-        return f"{self.transcript_id}:c.{start}{self.refseq}>{self.altseq}"
+        return f"{reference_id}:c.{start}{self.refseq}>{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class DnaSubstitution(_Substitution, _DnaSmallVariant):
     """Stores information on a DNA substitution variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "contig_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "contig_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
-        return f"{self.contig_id}:g.{start}{self.refseq}>{self.altseq}"
+        return f"{reference_id}:g.{start}{self.refseq}>{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class ProteinSubstitution(_Substitution, _ProteinSmallVariant):
     """Stores information on a protein substitution variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "protein_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "protein_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
-        return f"{self.protein_id}:p.{self.refseq}{start}{self.altseq}"
+        return f"{reference_id}:p.{self.refseq}{start}{self.altseq}"
 
 
 @dataclass(eq=True, frozen=True)
 class RnaSubstitution(_Substitution, _RnaSmallVariant):
     """Stores information on an RNA substitution variant and maps to other position types."""
 
-    def __str__(self) -> str:
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
         start = format_hgvs_position(self.start, self.start_offset)
-        return f"{self.transcript_id}:r.{start}{self.refseq}>{self.altseq}"
+        return f"{reference_id}:r.{start}{self.refseq}>{self.altseq}"
 
 
 # -------------------------------------------------------------------------------------------------
@@ -946,11 +1191,8 @@ class RnaSubstitution(_Substitution, _RnaSmallVariant):
 class _Fusion(_Variant):
     """Base class for fusion variants."""
 
-    breakpoint1: Type[_Position]
-    breakpoint2: Type[_Position]
-
-    def __str__(self) -> str:
-        return f"{self.breakpoint1}::{self.breakpoint2}"
+    breakpoint1: _Position
+    breakpoint2: _Position
 
     @property
     def on_negative_strand(self) -> bool:
@@ -993,6 +1235,17 @@ class CdnaFusion(_Fusion):
         """
         return True
 
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        return f"{self.breakpoint1.to_string(reference=reference)}::{self.breakpoint2.to_string(reference=reference)}"
+
 
 @dataclass(eq=True, frozen=True)
 class DnaFusion(_Fusion):
@@ -1006,6 +1259,17 @@ class DnaFusion(_Fusion):
             bool: True if the position is on DNA else False
         """
         return True
+
+    def to_string(self, reference: str = "contig_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "contig_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        return f"{self.breakpoint1.to_string(reference=reference)}::{self.breakpoint2.to_string(reference=reference)}"
 
 
 @dataclass(eq=True, frozen=True)
@@ -1021,6 +1285,17 @@ class ExonFusion(_Fusion):
         """
         return True
 
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        return f"{self.breakpoint1.to_string(reference=reference)}::{self.breakpoint2.to_string(reference=reference)}"
+
 
 @dataclass(eq=True, frozen=True)
 class ProteinFusion(_Fusion):
@@ -1035,6 +1310,17 @@ class ProteinFusion(_Fusion):
         """
         return True
 
+    def to_string(self, reference: str = "protein_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "protein_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        return f"{self.breakpoint1.to_string(reference=reference)}::{self.breakpoint2.to_string(reference=reference)}"
+
 
 @dataclass(eq=True, frozen=True)
 class RnaFusion(_Fusion):
@@ -1048,3 +1334,14 @@ class RnaFusion(_Fusion):
             bool: True if the fusion is between RNA else False
         """
         return True
+
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        return f"{self.breakpoint1.to_string(reference=reference)}::{self.breakpoint2.to_string(reference=reference)}"
