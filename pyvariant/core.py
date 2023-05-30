@@ -3654,7 +3654,6 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # Functions for getting feature aliases
     # ---------------------------------------------------------------------------------------------
-    @lru_cache
     def contig_alias(self, contig_id: str) -> List[str]:
         """List all aliases of the given contig ID.
 
@@ -3679,7 +3678,6 @@ class Core:
 
         return alias
 
-    @lru_cache
     def exon_alias(self, exon_id: str) -> List[str]:
         """List all aliases of the given exon ID.
 
@@ -3691,7 +3689,6 @@ class Core:
         """
         return self._alias(exon_id, self._exon_alias)
 
-    @lru_cache
     def gene_alias(self, gene_id: str) -> List[str]:
         """List all aliases of the given gene ID.
 
@@ -3703,7 +3700,6 @@ class Core:
         """
         return self._alias(gene_id, self._gene_alias)
 
-    @lru_cache
     def protein_alias(self, protein_id: str) -> List[str]:
         """List all aliases of the given protein ID.
 
@@ -3715,7 +3711,6 @@ class Core:
         """
         return self._alias(protein_id, self._protein_alias)
 
-    @lru_cache
     def transcript_alias(self, transcript_id: str) -> List[str]:
         """List all aliases of the given transcript ID.
 
