@@ -24,7 +24,8 @@ from pyvariant.constants import (
     TRANSCRIPT_NAME,
 )
 from pyvariant.core import Core
-from pyvariant.positions import (
+from pyvariant.sequence import PyfaidxFasta
+from pyvariant.variants import (
     CdnaDeletion,
     CdnaDelins,
     CdnaDuplication,
@@ -44,7 +45,6 @@ from pyvariant.positions import (
     RnaPosition,
     RnaSubstitution,
 )
-from pyvariant.sequence import PyfaidxFasta
 
 
 # -------------------------------------------------------------------------------------------------

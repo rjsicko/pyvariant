@@ -35,7 +35,21 @@ from .constants import (
 )
 from .files import tsv_to_dict, txt_to_list
 from .parser import parse
-from .positions import (
+from .sequence import PyfaidxFasta, get_sequence, mutate_sequence
+from .tables import AMINO_ACID_TABLE
+from .utils import (
+    calc_cdna_to_protein,
+    classify_seq_change,
+    collapse_seq_change,
+    expand_nt,
+    expand_pep,
+    is_insertion,
+    reverse_complement,
+    reverse_translate,
+    split_by_codon,
+    strip_version,
+)
+from .variants import (
     CdnaDeletion,
     CdnaDelins,
     CdnaDuplication,
@@ -76,20 +90,6 @@ from .positions import (
     _ProteinSmallVariant,
     _RnaSmallVariant,
     _SmallVariant,
-)
-from .sequence import PyfaidxFasta, get_sequence, mutate_sequence
-from .tables import AMINO_ACID_TABLE
-from .utils import (
-    calc_cdna_to_protein,
-    classify_seq_change,
-    collapse_seq_change,
-    expand_nt,
-    expand_pep,
-    is_insertion,
-    reverse_complement,
-    reverse_translate,
-    split_by_codon,
-    strip_version,
 )
 
 
