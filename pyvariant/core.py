@@ -52,6 +52,7 @@ from .positions import (
     DnaSubstitution,
     ExonFusion,
     ExonPosition,
+    ExonSmallVariant,
     ProteinDeletion,
     ProteinDelins,
     ProteinDuplication,
@@ -1007,6 +1008,7 @@ class Core:
             fusiont=CdnaFusion,
             cdnavf=self._cdna_to_cdna_variant,
             dnavf=self._dna_to_cdna_variant,
+            exonvf=self._exon_to_cdna_variant,
             proteinvf=self._protein_to_cdna_variant,
             rnavf=self._rna_to_cdna_variant,
             cdnaf=self._cdna_to_cdna,
@@ -1024,6 +1026,7 @@ class Core:
             fusiont=DnaFusion,
             cdnavf=self._cdna_to_dna_variant,
             dnavf=self._dna_to_dna_variant,
+            exonvf=self._exon_to_dna_variant,
             proteinvf=self._protein_to_dna_variant,
             rnavf=self._rna_to_dna_variant,
             cdnaf=self._cdna_to_dna,
@@ -1041,6 +1044,7 @@ class Core:
             fusiont=ExonFusion,
             cdnavf=self._cdna_to_exon_variant,
             dnavf=self._dna_to_exon_variant,
+            exonvf=self._exon_to_exon_variant,
             proteinvf=self._protein_to_exon_variant,
             rnavf=self._rna_to_exon_variant,
             cdnaf=self._cdna_to_exon,
@@ -1058,6 +1062,7 @@ class Core:
             fusiont=ProteinFusion,
             cdnavf=self._cdna_to_protein_variant,
             dnavf=self._dna_to_protein_variant,
+            exonvf=self._exon_to_protein_variant,
             proteinvf=self._protein_to_protein_variant,
             rnavf=self._rna_to_protein_variant,
             cdnaf=self._cdna_to_protein,
@@ -1074,6 +1079,7 @@ class Core:
             fusionf=self._position_to_rna,
             fusiont=RnaFusion,
             cdnavf=self._cdna_to_rna_variant,
+            exonvf=self._exon_to_rna_variant,
             dnavf=self._dna_to_rna_variant,
             proteinvf=self._protein_to_rna_variant,
             rnavf=self._rna_to_rna_variant,
@@ -1092,6 +1098,7 @@ class Core:
         fusiont: Type,
         cdnavf: Callable,
         dnavf: Callable,
+        exonvf: Callable,
         proteinvf: Callable,
         rnavf: Callable,
         cdnaf: Callable,
@@ -1124,6 +1131,19 @@ class Core:
                 position = cast(_DnaSmallVariant, position)
                 return dnavf(
                     [position.contig_id],
+                    position.start,
+                    position.start_offset,
+                    position.end,
+                    position.end_offset,
+                    [position.strand],
+                    position.refseq,
+                    position.altseq,
+                    canonical,
+                )
+            elif position.is_exon:
+                position = cast(_ExonSmallVariant, position)
+                return exonvf(
+                    [position.transcript_id],
                     position.start,
                     position.start_offset,
                     position.end,
@@ -2103,6 +2123,20 @@ class Core:
             result_end = convert(end, end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
+    def _exon_to_cdna_variant(
+        self,
+        transcript_id: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
+        refseq: str,
+        altseq: str,
+        canonical: bool = False,
+    ) -> List[_ExonSmallVariant]:
+        return []
+
     def _exon_to_dna(
         self,
         transcript_id: List[str],
@@ -2150,6 +2184,20 @@ class Core:
         else:
             result_end = convert(end, end_offset)
             return join_positions(result_start, result_end, CONTIG_ID)
+
+    def _exon_to_dna_variant(
+        self,
+        transcript_id: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
+        refseq: str,
+        altseq: str,
+        canonical: bool = False,
+    ) -> List[_ExonSmallVariant]:
+        return []
 
     def _exon_to_exon(
         self,
@@ -2204,6 +2252,20 @@ class Core:
             result_end = convert(end, end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
 
+    def _exon_to_exon_variant(
+        self,
+        transcript_id: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
+        refseq: str,
+        altseq: str,
+        canonical: bool = False,
+    ) -> List[_ExonSmallVariant]:
+        return []
+
     def _exon_to_protein(
         self,
         transcript_id: List[str],
@@ -2239,6 +2301,20 @@ class Core:
             )
 
         return result
+
+    def _exon_to_protein_variant(
+        self,
+        transcript_id: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
+        refseq: str,
+        altseq: str,
+        canonical: bool = False,
+    ) -> List[_ExonSmallVariant]:
+        return []
 
     def _exon_to_rna(
         self,
@@ -2291,6 +2367,20 @@ class Core:
         else:
             result_end = convert(end, end_offset)
             return join_positions(result_start, result_end, TRANSCRIPT_ID)
+
+    def _exon_to_rna_variant(
+        self,
+        transcript_id: List[str],
+        start: int,
+        start_offset: int,
+        end: int,
+        end_offset: int,
+        strand: List[str],
+        refseq: str,
+        altseq: str,
+        canonical: bool = False,
+    ) -> List[_ExonSmallVariant]:
+        return []
 
     def _protein_to_cdna(
         self,
@@ -3072,6 +3162,11 @@ class Core:
             (DNA, DUPLICATION): DnaDuplication,
             (DNA, INSERTION): DnaInsertion,
             (DNA, SUBSTITUTION): DnaSubstitution,
+            (EXON, DELETION): ExonSmallVariant,
+            (EXON, DELINS): ExonSmallVariant,
+            (EXON, DUPLICATION): ExonSmallVariant,
+            (EXON, INSERTION): ExonSmallVariant,
+            (EXON, SUBSTITUTION): ExonSmallVariant,
             (PROTEIN, DELETION): ProteinDeletion,
             (PROTEIN, DELINS): ProteinDelins,
             (PROTEIN, DUPLICATION): ProteinDuplication,
@@ -3172,9 +3267,6 @@ class Core:
                     altseq=new_alt,
                 )
                 variant_list.append(variant)
-            elif position.is_exon:
-                # TODO: Is there a way to map a small variant to an exon?
-                pass
             else:
                 raise ValueError(
                     f"Unrecognized variant type for {position.position_type}/{variant_type} ({new_ref}/{new_alt})"

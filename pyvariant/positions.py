@@ -18,7 +18,7 @@ from .constants import (
     RNA,
     SUBSTITUTION,
 )
-from .utils import format_hgvs_position
+from .utils import classify_seq_change, format_hgvs_position
 
 if TYPE_CHECKING:
     from .core import Core
@@ -1345,3 +1345,42 @@ class RnaFusion(_Fusion):
             str: String representation of the variant.
         """
         return f"{self.breakpoint1.to_string(reference=reference)}::{self.breakpoint2.to_string(reference=reference)}"
+
+
+# -------------------------------------------------------------------------------------------------
+# Unknown or ambiguous mutation classes
+# -------------------------------------------------------------------------------------------------
+@dataclass(eq=True, frozen=True)
+class _Unknown(_SmallVariant):
+    """Base class for unknown or ambiguous variants."""
+
+    @property
+    def variant_type(self) -> str:
+        """Get the variant type.
+
+        Returns:
+            str: Type of variant
+        """
+        return classify_seq_change(self.refseq, self.altseq)
+
+
+@dataclass(eq=True, frozen=True)
+class ExonSmallVariant(_Unknown, _ExonSmallVariant):
+    """Stores information on an exon small variant and maps to other position types."""
+
+    def to_string(self, reference: str = "transcript_id") -> str:
+        """Return a string representation of the variant.
+
+        Args:
+            reference (str, optional): Configure which feature should be used as the reference. Defaults to "transcript_id".
+
+        Returns:
+            str: String representation of the variant.
+        """
+        reference_id = getattr(self, reference)
+        start = format_hgvs_position(self.start, self.start_offset)
+        end = format_hgvs_position(self.end, self.end_offset)
+        if start == end:
+            return f"{reference_id}:e.{start}mut"
+        else:
+            return f"{reference_id}:e.{start}_{end}mut"

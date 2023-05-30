@@ -36,6 +36,7 @@ from pyvariant.positions import (
     DnaSubstitution,
     ExonFusion,
     ExonPosition,
+    ExonSmallVariant,
     ProteinFrameshift,
     ProteinPosition,
     ProteinSubstitution,
@@ -1946,7 +1947,24 @@ def test_to_all_from_cdna_delins(ensembl100):
                 strand="+",
             )
         ],
-        "exon": [],
+        "exon": [
+            ExonSmallVariant(
+                refseq="AAA",
+                altseq="GT",
+                _core=ensembl100,
+                contig_id="4",
+                start=2,
+                start_offset=0,
+                end=2,
+                end_offset=0,
+                strand="+",
+                gene_id="ENSG00000157404",
+                gene_name="KIT",
+                transcript_id="ENST00000288135",
+                transcript_name="KIT-201",
+                exon_id="ENSE00001032350",
+            )
+        ],
         "protein": [
             ProteinFrameshift(
                 refseq="K",
@@ -2189,7 +2207,27 @@ def test_diff(ensembl100):
             ],
             [],
         ),
-        "exon": ([], []),
+        "exon": (
+            [
+                ExonSmallVariant(
+                    refseq="CAA",
+                    altseq="AAG",
+                    _core=ensembl100,
+                    contig_id="1",
+                    start=3,
+                    start_offset=0,
+                    end=3,
+                    end_offset=0,
+                    strand="-",
+                    gene_id="ENSG00000213281",
+                    gene_name="NRAS",
+                    transcript_id="ENST00000369535",
+                    transcript_name="NRAS-201",
+                    exon_id="ENSE00001751295",
+                )
+            ],
+            [],
+        ),
         "protein": ([], []),
         "rna": (
             [
@@ -2247,7 +2285,24 @@ def test_same(ensembl100):
                 strand="-",
             )
         ],
-        "exon": [],
+        "exon": [
+            ExonSmallVariant(
+                refseq="C",
+                altseq="A",
+                _core=ensembl100,
+                contig_id="1",
+                start=3,
+                start_offset=0,
+                end=3,
+                end_offset=0,
+                strand="-",
+                gene_id="ENSG00000213281",
+                gene_name="NRAS",
+                transcript_id="ENST00000369535",
+                transcript_name="NRAS-201",
+                exon_id="ENSE00001751295",
+            )
+        ],
         "protein": [
             ProteinSubstitution(
                 refseq="Q",
