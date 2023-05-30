@@ -3898,7 +3898,6 @@ class Core:
     # ---------------------------------------------------------------------------------------------
     # Functions for checking if a transcript is a canonical transcript
     # ---------------------------------------------------------------------------------------------
-    @lru_cache
     def is_canonical_transcript(self, transcript_id: str) -> bool:
         """Check if the given transcript ID is the canonical transcript for its gene.
 
