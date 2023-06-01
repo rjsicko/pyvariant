@@ -1,7 +1,13 @@
 import pytest
 
 from pyvariant.constants import DUPLICATION
-from pyvariant.variants import CdnaDuplication, DnaDuplication, ProteinDuplication, RnaDuplication
+from pyvariant.variants import (
+    CdnaDuplication,
+    DnaDuplication,
+    ExonSmallVariant,
+    ProteinDuplication,
+    RnaDuplication,
+)
 
 
 @pytest.fixture()
@@ -86,6 +92,29 @@ def test_to_dna(ensembl69, variant):
         altseq="TCTTCT",
     )
     result = variant.to_dna()
+    assert expected in result
+    assert len(result) == 36
+
+
+# TODO: Reduce runtime for protein duplication mapping
+def test_to_exon(ensembl69, variant):
+    expected = ExonSmallVariant(
+        _core=ensembl69,
+        refseq="TCT",
+        altseq="AGCTCC",
+        contig_id="4",
+        start=9,
+        start_offset=0,
+        end=9,
+        end_offset=0,
+        strand="+",
+        gene_id="ENSG00000157404",
+        gene_name="KIT",
+        transcript_id="ENST00000288135",
+        transcript_name="KIT-001",
+        exon_id="ENSE00001074423",
+    )
+    result = variant.to_exon()
     assert expected in result
     assert len(result) == 36
 
