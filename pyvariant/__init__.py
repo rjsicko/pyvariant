@@ -34,5 +34,5 @@ from .variants import (
     RnaFusion,
     RnaInsertion,
     RnaPosition,
-    RnaSubstitution
+    RnaSubstitution,
 )
