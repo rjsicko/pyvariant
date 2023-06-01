@@ -6,9 +6,9 @@ from typing import Dict, List, Optional, Union, cast
 from .core import Core
 from .ensembl_cache import EnsemblCache
 from .files import tsv_to_dict, txt_to_list
-from .positions import CdnaPosition
 from .sequence import PyfaidxFasta
 from .utils import reverse_complement
+from .variants import CdnaPosition
 
 
 class EnsemblRelease(Core):
