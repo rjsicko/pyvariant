@@ -17,3 +17,4 @@ docs/
 htmlcov/
 venv/
 __pycache__/
+.~lock*
