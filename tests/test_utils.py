@@ -70,12 +70,14 @@ def test_expand_nt():
     assert list(expand_nt("A")) == ["A"]
     assert list(expand_nt("R")) == ["A", "G"]
     assert list(expand_nt("N")) == ["A", "C", "G", "T"]
+    assert list(expand_nt("")) == [""]
 
 
 def test_expand_pep():
     assert list(expand_pep("A")) == ["A"]
     assert list(expand_pep("Z")) == ["E", "Q"]
     assert len(list(expand_pep("X"))) == 20  # all amino acids except '*'
+    assert list(expand_pep("")) == [""]
 
 
 def test_format_hgvs_position():

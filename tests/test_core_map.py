@@ -41,6 +41,7 @@ def assert_and_select_expected(output: List, expected: str):
     # If there is no expected variant output, assert the function returned an empty list
     if not expected:
         assert not output, f"Expected no output, got: {output}"
+        return
 
     # Assert that the expected variant is in the list of variants returned by the function
     str_to_variant = {str(i): i for i in output}
@@ -146,16 +147,28 @@ def test_cdna_to_rna_from_str(ensembl100: EnsemblRelease, params: Dict):
 @pytest.mark.parametrize("params", select_params(["protein_str"]), ids=lambda x: x["protein_str"])
 def test_protein_to_cdna_from_str(ensembl100: EnsemblRelease, params: Dict):
     """Test that a protein variant can be parsed from a string and mapped to the expected cDNA variant."""
+    if "fs" in params["protein_str"]:
+        print("Not expecting to be able to map protein frame shift to a non-protein variant")
+        expected = ""
+    else:
+        expected = params["cdna_str"]
+
     output = ensembl100.to_cdna(params["protein_str"])
-    if select := assert_and_select_expected(output, params["cdna_str"]):
+    if select := assert_and_select_expected(output, expected):
         assert_cdna_has_attributes(select, params)
 
 
 @pytest.mark.parametrize("params", select_params(["protein_str"]), ids=lambda x: x["protein_str"])
 def test_protein_to_dna_from_str(ensembl100: EnsemblRelease, params: Dict):
     """Test that a protein variant can be parsed from a string and mapped to the expected DNA variant."""
+    if "fs" in params["protein_str"]:
+        print("Not expecting to be able to map protein frame shift to a non-protein variant")
+        expected = ""
+    else:
+        expected = params["dna_str"]
+
     output = ensembl100.to_dna(params["protein_str"])
-    if select := assert_and_select_expected(output, params["dna_str"]):
+    if select := assert_and_select_expected(output, expected):
         assert_dna_has_attributes(select, params)
 
 
@@ -170,8 +183,14 @@ def test_protein_to_protein_from_str(ensembl100: EnsemblRelease, params: Dict):
 @pytest.mark.parametrize("params", select_params(["protein_str"]), ids=lambda x: x["protein_str"])
 def test_protein_to_rna_from_str(ensembl100: EnsemblRelease, params: Dict):
     """Test that a protein variant can be parsed from a string and mapped to the expected RNA variant."""
+    if "fs" in params["protein_str"]:
+        print("Not expecting to be able to map protein frame shift to a non-protein variant")
+        expected = ""
+    else:
+        expected = params["rna_str"]
+
     output = ensembl100.to_rna(params["protein_str"])
-    if select := assert_and_select_expected(output, params["rna_str"]):
+    if select := assert_and_select_expected(output, expected):
         assert_rna_has_attributes(select, params)
 
 

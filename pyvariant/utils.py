@@ -93,7 +93,7 @@ def collapse_seq_change(ref: str, alt: str) -> Tuple[str, str, int, int]:
     start_offset = len(same_5_prime)
     end_offset = len(same_3_prime)
 
-    # If the event is an insertion or deletion, preserve the 5' and 3' ref bases
+    # If the event is an insertion preserve the 5' and 3' ref bases
     if same_5_prime and same_3_prime:
         if len(ref_collapse) < len(alt_collapse):
             ref_collapse = same_5_prime[-1] + ref_collapse + same_3_prime[0]
