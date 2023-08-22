@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+import warnings
 from functools import lru_cache
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
@@ -959,17 +960,33 @@ class Core:
         else:
             return self._position_to_rna(position, canonical)
 
-    def to_all(self, position, canonical: bool = False) -> Dict[str, List]:
+    def to_all(
+        self, position, canonical: bool = False, group_by_type: bool = False
+    ) -> Union[Dict, List]:
         """Map a position to all alternate positions.
 
         Args:
             position (Position): Position or variant object.
             canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+            group_by_type (bool, optional): Group returned variants by type.
 
         Returns:
-            Dict[str, List]: A dictionary of cDNA, DNA, exon, protein, and RNA positions.
+            Union[Dict, List]: A list of normalized variants if `group_by_type` is False, otherwise
+                a dictionary of cDNA, DNA, exon, protein, and RNA positions.
         """
-        result = {CDNA: [], DNA: [], EXON: [], PROTEIN: [], RNA: []}  # type: ignore
+        result = []
+
+        def map_unique(nposition, func: Callable):
+            out = func(nposition, False)
+            if len(out) == 1:
+                return out[0]
+            elif len(out) == 0:
+                return None
+            else:
+                warnings.warn(
+                    f"Original: {position}, Normalized: {nposition}, did not map uniquely: {out}"
+                )
+                return None
 
         if isinstance(position, str):
             position_list = self.parse(position)
@@ -977,11 +994,27 @@ class Core:
             position_list = [position]
 
         for position in position_list:
-            result[CDNA].extend(self._position_to_cdna(position, canonical))
-            result[DNA].extend(self._position_to_dna(position, canonical))
-            result[EXON].extend(self._position_to_exon(position, canonical))
-            result[PROTEIN].extend(self._position_to_protein(position, canonical))
-            result[RNA].extend(self._position_to_rna(position, canonical))
+            for nposition in self.to_rna(position, canonical=canonical) or self.to_dna(
+                position, canonical=canonical
+            ):
+                result.append(
+                    {
+                        CDNA: map_unique(nposition, self._position_to_cdna),
+                        DNA: map_unique(nposition, self._position_to_dna),
+                        EXON: map_unique(nposition, self._position_to_exon),
+                        PROTEIN: map_unique(nposition, self._position_to_protein),
+                        RNA: map_unique(nposition, self._position_to_rna),
+                    }
+                )
+
+        if group_by_type:
+            return {
+                CDNA: [i[CDNA] for i in result if i],
+                DNA: [i[DNA] for i in result if i],
+                EXON: [i[EXON] for i in result if i],
+                PROTEIN: [i[PROTEIN] for i in result if i],
+                RNA: [i[RNA] for i in result if i],
+            }
 
         return result
 

@@ -1913,8 +1913,62 @@ def test_variant_exon_fusion(ensembl100):
 # -------------------------------------------------------------------------------------------------
 # to_all
 # -------------------------------------------------------------------------------------------------
+
+
+def test_to_all_from_cdna_intron_substitution(ensembl100):
+    result = ensembl100.to_all("ENST00000269305:c.376-2A>G")
+    assert result == [
+        {
+            "cdna": CdnaSubstitution(
+                _core=ensembl100,
+                refseq="A",
+                altseq="G",
+                contig_id="17",
+                start=376,
+                start_offset=-2,
+                end=376,
+                end_offset=-2,
+                strand="-",
+                gene_id="ENSG00000141510",
+                gene_name="TP53",
+                transcript_id="ENST00000269305",
+                transcript_name="TP53-201",
+                protein_id="ENSP00000269305",
+            ),
+            "dna": DnaSubstitution(
+                _core=ensembl100,
+                refseq="A",
+                altseq="G",
+                contig_id="17",
+                start=7675238,
+                start_offset=0,
+                end=7675238,
+                end_offset=0,
+                strand="-",
+            ),
+            "exon": None,
+            "protein": None,
+            "rna": RnaSubstitution(
+                _core=ensembl100,
+                refseq="A",
+                altseq="G",
+                contig_id="17",
+                start=566,
+                start_offset=-2,
+                end=566,
+                end_offset=-2,
+                strand="-",
+                gene_id="ENSG00000141510",
+                gene_name="TP53",
+                transcript_id="ENST00000269305",
+                transcript_name="TP53-201",
+            ),
+        }
+    ]
+
+
 def test_to_all_from_cdna_delins(ensembl100):
-    result = ensembl100.to_all("ENST00000288135:c.126_128delinsGT")
+    result = ensembl100.to_all("ENST00000288135:c.126_128delinsGT", group_by_type=True)
     assert result == {
         "cdna": [
             CdnaDelins(
@@ -2004,7 +2058,7 @@ def test_to_all_from_cdna_delins(ensembl100):
 
 
 def test_to_all_from_dna_position(ensembl100):
-    result = ensembl100.to_all("4:g.54695570_54695572")
+    result = ensembl100.to_all("4:g.54695570_54695572", group_by_type=True)
     assert result == {
         "cdna": [
             CdnaPosition(
