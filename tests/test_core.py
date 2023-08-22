@@ -845,6 +845,14 @@ def test_transcript_names_all(ensembl100):
 # -------------------------------------------------------------------------------------------------
 # is_canonical_transcript
 # -------------------------------------------------------------------------------------------------
+def test_canonical_transcript_true(ensembl100):
+    assert ensembl100.canonical_transcript("ARF5") == "ENST00000000233"
+
+
+def test_canonical_transcript_false(ensembl100):
+    assert ensembl100.canonical_transcript("spam") is None
+
+
 def test_is_canonical_transcript_true(ensembl100):
     assert ensembl100.is_canonical_transcript("ENST00000000233") is True
 

@@ -4018,8 +4018,24 @@ class Core:
         return any((i[1] in (TRANSCRIPT_ID, TRANSCRIPT_NAME) for i in self.normalize_id(feature)))
 
     # ---------------------------------------------------------------------------------------------
-    # Functions for checking if a transcript is a canonical transcript
+    # Functions involving canonical transcripts
     # ---------------------------------------------------------------------------------------------
+    def canonical_transcript(self, gene_id: str) -> Optional[str]:
+        """Return the canonical transcript ID for the given gene (if one exists).
+
+        Args:
+            gene_id (str): gene ID or name
+
+        Returns:
+            transcript_id (Optional[str]): Canoncial transcript ID
+        """
+        if self.is_gene(gene_id):
+            for transcript_id in self.transcript_ids(gene_id):
+                if self.is_canonical_transcript(transcript_id):
+                    return transcript_id
+
+        return None
+
     def is_canonical_transcript(self, transcript_id: str) -> bool:
         """Check if the given transcript ID is the canonical transcript for its gene.
 
