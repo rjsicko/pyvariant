@@ -2098,7 +2098,7 @@ def test_to_all_from_dna_position(ensembl100):
                 start_offset=0,
                 end=54695572,
                 end_offset=0,
-                strand="",
+                strand="+",
             )
         ],
         "exon": [
