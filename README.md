@@ -89,6 +89,13 @@ You can also limit mapping to the canonical transcript only:
 [CdnaPosition(contig_id='7', start=69, start_offset=0, end=69, end_offset=0, strand='+', gene_id='ENSG00000004059', gene_name='ARF5', transcript_id='ENST00000000233', transcript_name='ARF5-201', protein_id='ENSP00000000233')]
 ```
 
+Normalize a variant to each possible type:
+
+```python
+>>> ensembl100.to_all("ENST00000269305:c.376-2A>G")
+[{'cdna': CdnaSubstitution(_core=EnsemblRelease(species=homo_sapiens, release=100), refseq='A', altseq='G', contig_id='17', start=376, start_offset=-2, end=376, end_offset=-2, strand='-', gene_id='ENSG00000141510', gene_name='TP53', transcript_id='ENST00000269305', transcript_name='TP53-201', protein_id='ENSP00000269305'), 'dna': DnaSubstitution(_core=EnsemblRelease(species=homo_sapiens, release=100), refseq='A', altseq='G', contig_id='17', start=7675238, start_offset=0, end=7675238, end_offset=0, strand='-'), 'exon': None, 'protein': None, 'rna': RnaSubstitution(_core=EnsemblRelease(species=homo_sapiens, release=100), refseq='A', altseq='G', contig_id='17', start=566, start_offset=-2, end=566, end_offset=-2, strand='-', gene_id='ENSG00000141510', gene_name='TP53', transcript_id='ENST00000269305', transcript_name='TP53-201')}]
+```
+
 ### Check if two variants are equivalent
 
 Get the notation(s) that represent both variants:

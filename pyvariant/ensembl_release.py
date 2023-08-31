@@ -110,6 +110,10 @@ class EnsemblRelease(Core):
         floor: Optional[int],
         ceiling: Optional[int],
     ) -> str:
+        # Assume that if a strand isn't specified by the user, we want the sequence normalized to
+        # the strand the position is one
+        strand = strand or position.strand
+
         # TODO: Is this the correct behaviour for offset variants?
         if (not position.is_fusion and (position.start_offset or position.end_offset)) or (
             position.is_fusion
@@ -134,16 +138,22 @@ class EnsemblRelease(Core):
                 position = rna[0]
 
         # Get the correct reference
+        # NOTE: Assumes the DNA FASTA represents the "+" strand of the genome and other FASTAs
+        # represent the strand the feature is on.
         if position.is_cdna:
             fasta = self._get_fasta(self.cds_fasta, position.transcript_id)
+            fasta_strand = position.strand
         elif position.is_dna:
             fasta = self._get_fasta(self.dna_fasta, position.contig_id)
+            fasta_strand = "+"
         elif position.is_exon:
             raise NotImplementedError(f"No FASTA for exons ({position})")
         elif position.is_protein:
             fasta = self._get_fasta(self.protein_fasta, position.protein_id)
+            fasta_strand = position.strand
         elif position.is_rna:
             fasta = self._get_fasta(self.rna_fasta, position.transcript_id)
+            fasta_strand = position.strand
         else:
             raise ValueError(f"Unable to get sequence for {position}")
 
@@ -154,12 +164,7 @@ class EnsemblRelease(Core):
             sequence = self._refseq(position, window, floor, ceiling, fasta)
 
         # Reverse complement the sequence if the strand the position is on isn't the desired strand
-        if strand == "+" and position.on_negative_strand:
-            sequence = reverse_complement(sequence)
-        elif strand == "-" and position.on_positive_strand:
-            sequence = reverse_complement(sequence)
-        # NOTE: Assumes the DNA FASTA represents the "+" strand of the genome
-        elif position.is_dna and position.on_negative_strand and strand != "-":
+        if (strand and fasta_strand) and strand != fasta_strand:
             sequence = reverse_complement(sequence)
 
         return sequence

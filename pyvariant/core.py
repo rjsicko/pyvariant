@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+import warnings
 from functools import lru_cache
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
@@ -565,10 +566,9 @@ class Core:
         floor: Optional[int],
         ceiling: Optional[int],
     ) -> str:
-        if isinstance(position, str):
-            position_ = self.parse(position)
-            assert len(position_) == 1
-            position = position_[0]
+        # Assume that if a strand isn't specified by the user, we want the sequence normalized to
+        # the strand the position is one
+        strand = strand or position.strand
 
         # TODO: Is this the correct behaviour for offset variants?
         if (not position.is_fusion and (position.start_offset or position.end_offset)) or (
@@ -588,16 +588,22 @@ class Core:
                 position = position_[0]
 
         # Get the correct reference
+        # NOTE: Assumes the DNA FASTA represents the "+" strand of the genome and other FASTAs
+        # represent the strand the feature is on.
         if position.is_cdna:
             fasta = self._get_fasta(self.cds_fasta, position.transcript_id)
+            fasta_strand = position.strand
         elif position.is_dna:
             fasta = self._get_fasta(self.dna_fasta, position.contig_id)
+            fasta_strand = "+"
         elif position.is_exon:
             raise NotImplementedError(f"No FASTA for exons ({position})")
         elif position.is_protein:
             fasta = self._get_fasta(self.protein_fasta, position.protein_id)
+            fasta_strand = position.strand
         elif position.is_rna:
             fasta = self._get_fasta(self.rna_fasta, position.transcript_id)
+            fasta_strand = position.strand
         else:
             raise ValueError(f"Unable to get sequence for {position}")
 
@@ -608,12 +614,7 @@ class Core:
             sequence = self._refseq(position, window, floor, ceiling, fasta)
 
         # Reverse complement the sequence if the strand the position is on isn't the desired strand
-        if strand == "+" and position.on_negative_strand:
-            sequence = reverse_complement(sequence)
-        elif strand == "-" and position.on_positive_strand:
-            sequence = reverse_complement(sequence)
-        # NOTE: Assumes the DNA FASTA represents the "+" strand of the genome
-        elif position.is_dna and position.on_negative_strand and strand != "-":
+        if (strand and fasta_strand) and strand != fasta_strand:
             sequence = reverse_complement(sequence)
 
         return sequence
@@ -959,17 +960,33 @@ class Core:
         else:
             return self._position_to_rna(position, canonical)
 
-    def to_all(self, position, canonical: bool = False) -> Dict[str, List]:
+    def to_all(
+        self, position, canonical: bool = False, group_by_type: bool = False
+    ) -> Union[Dict, List]:
         """Map a position to all alternate positions.
 
         Args:
             position (Position): Position or variant object.
             canonical (bool, optional): Only consider the canonical transcript when mapping. Defaults to False.
+            group_by_type (bool, optional): Group returned variants by type.
 
         Returns:
-            Dict[str, List]: A dictionary of cDNA, DNA, exon, protein, and RNA positions.
+            Union[Dict, List]: A list of normalized variants if `group_by_type` is False, otherwise
+                a dictionary of cDNA, DNA, exon, protein, and RNA positions.
         """
-        result = {CDNA: [], DNA: [], EXON: [], PROTEIN: [], RNA: []}  # type: ignore
+        result = []
+
+        def map_unique(nposition, func: Callable):
+            out = func(nposition, False)
+            if len(out) == 1:
+                return out[0]
+            elif len(out) == 0:
+                return None
+            else:
+                warnings.warn(
+                    f"Original: {position}, Normalized: {nposition}, did not map uniquely: {out}"
+                )
+                return None
 
         if isinstance(position, str):
             position_list = self.parse(position)
@@ -977,11 +994,27 @@ class Core:
             position_list = [position]
 
         for position in position_list:
-            result[CDNA].extend(self._position_to_cdna(position, canonical))
-            result[DNA].extend(self._position_to_dna(position, canonical))
-            result[EXON].extend(self._position_to_exon(position, canonical))
-            result[PROTEIN].extend(self._position_to_protein(position, canonical))
-            result[RNA].extend(self._position_to_rna(position, canonical))
+            for nposition in self.to_rna(position, canonical=canonical) or self.to_dna(
+                position, canonical=canonical
+            ):
+                result.append(
+                    {
+                        CDNA: map_unique(nposition, self._position_to_cdna),
+                        DNA: map_unique(nposition, self._position_to_dna),
+                        EXON: map_unique(nposition, self._position_to_exon),
+                        PROTEIN: map_unique(nposition, self._position_to_protein),
+                        RNA: map_unique(nposition, self._position_to_rna),
+                    }
+                )
+
+        if group_by_type:
+            return {
+                CDNA: sorted(set(i[CDNA] for i in result if i[CDNA])),
+                DNA: sorted(set(i[DNA] for i in result if i[DNA])),
+                EXON: sorted(set(i[EXON] for i in result if i[EXON])),
+                PROTEIN: sorted(set(i[PROTEIN] for i in result if i[PROTEIN])),
+                RNA: sorted(set(i[RNA] for i in result if i[RNA])),
+            }
 
         return result
 
@@ -3985,8 +4018,24 @@ class Core:
         return any((i[1] in (TRANSCRIPT_ID, TRANSCRIPT_NAME) for i in self.normalize_id(feature)))
 
     # ---------------------------------------------------------------------------------------------
-    # Functions for checking if a transcript is a canonical transcript
+    # Functions involving canonical transcripts
     # ---------------------------------------------------------------------------------------------
+    def canonical_transcript(self, gene_id: str) -> Optional[str]:
+        """Return the canonical transcript ID for the given gene (if one exists).
+
+        Args:
+            gene_id (str): gene ID or name
+
+        Returns:
+            transcript_id (Optional[str]): Canoncial transcript ID
+        """
+        if self.is_gene(gene_id):
+            for transcript_id in self.transcript_ids(gene_id):
+                if self.is_canonical_transcript(transcript_id):
+                    return transcript_id
+
+        return None
+
     def is_canonical_transcript(self, transcript_id: str) -> bool:
         """Check if the given transcript ID is the canonical transcript for its gene.
 
