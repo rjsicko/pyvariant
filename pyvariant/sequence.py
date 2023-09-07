@@ -120,6 +120,11 @@ def get_sequence(
     # reference end = position end - 1/2 the desired length (rounded up)
     ref_end = end + pad_right
 
+    # Adjust the reference start if it extends past the start of the molecule (i.e. can't be < 1)
+    if ref_start < 0:
+        ref_end -= ref_start
+        ref_start = 0
+
     # If the floor is more than ref_start, make the new ref_start equal to floor and pad ref_end by
     # the difference
     floor = floor - 1 if (floor and floor > 0) else ref_start
@@ -201,6 +206,11 @@ def mutate_sequence(
 
     ref_end = start + pad_right - ins_len_right + del_len - ins_pad - 1
     assert ref_end >= ref_start, f"{ref_end} < {ref_start}"
+
+    # Adjust the reference start if it extends past the start of the molecule (i.e. can't be < 1)
+    if ref_start < 0:
+        ref_end -= ref_start
+        ref_start = 0
 
     idx_left = start - ref_start + ins_pad - 1
     idx_right = ref_end - end + ins_pad
