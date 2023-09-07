@@ -2507,16 +2507,20 @@ class Core:
         for cdna in self._protein_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
-            for ref, alt in product(reverse_translate(refseq), reverse_translate(altseq)):
-                # For insertions, check that the sequence flanking the inserted sequence matches the ref
-                if is_insertion(refseq, altseq) and not is_insertion(ref, alt):
-                    continue
+            # NOTE: Avoid using methods like `itertools.product` that cache the results of
+            # `reverse_translate` in memory because the memory usage can get out of hand for long
+            # peptides.
+            for ref in reverse_translate(refseq):
+                for alt in reverse_translate(altseq):
+                    # For insertions, check that the sequence flanking the inserted sequence matches the ref
+                    if is_insertion(refseq, altseq) and not is_insertion(ref, alt):
+                        continue
 
-                result.extend(
-                    self._position_to_small_variant(
-                        cdna, ref, alt, is_frameshift=is_frameshift, validate=True
+                    result.extend(
+                        self._position_to_small_variant(
+                            cdna, ref, alt, is_frameshift=is_frameshift, validate=True
+                        )
                     )
-                )
 
         return result
 
