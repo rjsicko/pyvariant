@@ -61,7 +61,7 @@ class PyfaidxFasta:
         try:
             if reference != self.fasta.faidx.buffer["name"]:
                 floor = max(start - self.read_ahead, 0)
-                ceiling = end + self.read_ahead
+                ceiling = min(end + self.read_ahead, self.length(reference) - 1)
                 self.fasta[reference][floor:ceiling]
         except Exception:
             pass
@@ -69,6 +69,9 @@ class PyfaidxFasta:
     def fetch(self, reference: str, start: int, end: int) -> str:
         self._try_buffer(reference, start, end)
         return str(self.fasta[reference][start:end])
+
+    def length(self, reference: str) -> int:
+        return len(self.fasta[reference])
 
 
 @lru_cache
@@ -120,6 +123,11 @@ def get_sequence(
     # reference end = position end - 1/2 the desired length (rounded up)
     ref_end = end + pad_right
 
+    # Adjust the reference start if it extends past the start of the molecule (i.e. can't be < 1)
+    if ref_start < 0:
+        ref_end -= ref_start
+        ref_start = 0
+
     # If the floor is more than ref_start, make the new ref_start equal to floor and pad ref_end by
     # the difference
     floor = floor - 1 if (floor and floor > 0) else ref_start
@@ -138,6 +146,13 @@ def get_sequence(
     elif diff_left > 0:
         ref_start += diff_left
         ref_end += diff_left
+
+    # Adjust the reference start and end if it extends past the end of the molecule
+    max_end = fasta.length(ref)
+    if ref_end > max_end:
+        diff = min(ref_end - max_end, ref_start)
+        ref_end = max_end
+        ref_start -= diff
 
     # Get enough of the reference sequence that we can return a sequence of `length`
     sequence = fasta.fetch(ref, ref_start, ref_end)
@@ -202,6 +217,11 @@ def mutate_sequence(
     ref_end = start + pad_right - ins_len_right + del_len - ins_pad - 1
     assert ref_end >= ref_start, f"{ref_end} < {ref_start}"
 
+    # Adjust the reference start if it extends past the start of the molecule (i.e. can't be < 1)
+    if ref_start < 0:
+        ref_end -= ref_start
+        ref_start = 0
+
     idx_left = start - ref_start + ins_pad - 1
     idx_right = ref_end - end + ins_pad
 
@@ -229,6 +249,16 @@ def mutate_sequence(
         ref_end += diff_left
         idx_left -= diff_left
         idx_right += diff_left
+
+    # Adjust the reference start and end if the end extends past the end of the molecule. The
+    # reference end can't be less than the given end though.
+    max_end = fasta.length(ref)
+    if ref_end > max_end:
+        diff = min(ref_end - max_end, ref_start)
+        ref_end = max_end
+        ref_start -= diff
+        idx_left += diff
+        idx_right -= diff
 
     refseq = fasta.fetch(ref, ref_start, ref_end)
 

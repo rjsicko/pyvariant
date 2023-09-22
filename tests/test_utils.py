@@ -13,6 +13,10 @@ from pyvariant.utils import (
     is_frameshift,
     is_insertion,
     is_substitution,
+    match_nt_to_nt,
+    match_nt_to_pep,
+    match_pep_to_nt,
+    match_pep_to_pep,
     reverse_complement,
     reverse_translate,
     split_by_codon,
@@ -141,6 +145,34 @@ def test_is_substitution():
     assert not is_substitution("A", "")
     assert not is_substitution("AGT", "AAA")  # delins
     assert not is_substitution("", "")
+
+
+def test_match_nt_to_nt():
+    assert match_nt_to_nt("ATG", "ATG")
+    assert match_nt_to_nt("ATG", "RTG")
+    assert not match_nt_to_nt("ATG", "GTA")
+    assert not match_nt_to_nt("ATG", "AT")
+
+
+def test_match_nt_to_pep():
+    assert match_nt_to_pep("GCA", "A")
+    assert match_nt_to_pep("RCA", "A")
+    assert not match_nt_to_pep("GCA", "C")
+    assert not match_nt_to_pep("GCA", "AA")
+
+
+def test_match_pep_to_pep():
+    assert match_pep_to_pep("AQ", "AQ")
+    assert match_pep_to_pep("AQ", "AZ")
+    assert not match_pep_to_pep("AQ", "AY")
+    assert not match_pep_to_pep("AA", "A")
+
+
+def test_match_pep_to_nt():
+    assert match_pep_to_nt("A", "GCA")
+    assert match_pep_to_nt("A", "RCA")
+    assert not match_pep_to_nt("C", "GCA")
+    assert not match_pep_to_nt("AA", "GCA")
 
 
 def test_normalize_release():

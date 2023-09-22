@@ -1,6 +1,7 @@
 """Core logic for handling annotations and mapping positions/variants between different types."""
 from __future__ import annotations
 
+import os
 import sys
 import warnings
 from functools import lru_cache
@@ -44,7 +45,11 @@ from .utils import (
     collapse_seq_change,
     expand_nt,
     expand_pep,
+    is_duplication,
     is_insertion,
+    match_nt_to_nt,
+    match_nt_to_pep,
+    match_pep_to_pep,
     reverse_complement,
     reverse_translate,
     split_by_codon,
@@ -92,6 +97,9 @@ from .variants import (
     _RnaSmallVariant,
     _SmallVariant,
 )
+
+# Environmental variable that controls how protein duplications are processed (see below)
+GET_ALL_PROTEIN_DUPS = bool(os.environ.get("PYVARIANT_GET_ALL_PROTEIN_DUPS", False))
 
 
 class Core:
@@ -977,7 +985,7 @@ class Core:
         result = []
 
         def map_unique(nposition, func: Callable):
-            out = func(nposition, False)
+            out = func(nposition, canonical)
             if len(out) == 1:
                 return out[0]
             elif len(out) == 0:
@@ -1018,28 +1026,27 @@ class Core:
 
         return result
 
-    def _string_to_cdna(self, string: str, canonical: bool):
+    def _string_to_cdna(self, string: str, canonical: bool) -> List:
         return self._string_to(string, self._position_to_cdna, canonical)
 
-    def _string_to_dna(self, string: str, canonical: bool):
+    def _string_to_dna(self, string: str, canonical: bool) -> List:
         return self._string_to(string, self._position_to_dna, canonical)
 
-    def _string_to_exon(self, string: str, canonical: bool):
+    def _string_to_exon(self, string: str, canonical: bool) -> List:
         return self._string_to(string, self._position_to_exon, canonical)
 
-    def _string_to_protein(self, string: str, canonical: bool):
+    def _string_to_protein(self, string: str, canonical: bool) -> List:
         return self._string_to(string, self._position_to_protein, canonical)
 
-    def _string_to_rna(self, string: str, canonical: bool):
+    def _string_to_rna(self, string: str, canonical: bool) -> List:
         return self._string_to(string, self._position_to_rna, canonical)
 
-    def _string_to(self, string: str, func: Callable, canonical: bool):
-        result = []
+    def _string_to(self, string: str, func: Callable, canonical: bool) -> List:
+        result = set()
 
         for position in self.parse(string, canonical=canonical):
             for new_position in func(position, canonical):
-                if new_position not in result:
-                    result.append(new_position)
+                result.add(new_position)
 
         return sorted(result)
 
@@ -1448,6 +1455,7 @@ class Core:
         canonical: bool = False,
         is_frameshift: bool = False,
         include_stop: bool = True,
+        validate: bool = True,
     ) -> List[_DnaSmallVariant]:
         result = []
 
@@ -1549,6 +1557,7 @@ class Core:
         canonical: bool = False,
         is_frameshift: bool = False,
         include_stop: bool = True,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         result = []
 
@@ -1621,6 +1630,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ProteinSmallVariant]:
         result = []
 
@@ -1634,12 +1644,14 @@ class Core:
             canonical=canonical,
             include_stop=False,
         ):
-            result.extend(self._cdna_to_protein_variant_core(cdna, refseq, altseq))
+            result.extend(
+                self._cdna_to_protein_variant_core(cdna, refseq, altseq, validate=validate)
+            )
 
         return result
 
     def _cdna_to_protein_variant_core(
-        self, cdna: CdnaPosition, refseq: str, altseq: str
+        self, cdna: CdnaPosition, refseq: str, altseq: str, validate: bool = True
     ) -> List[_ProteinSmallVariant]:
         result = []
 
@@ -1649,8 +1661,9 @@ class Core:
             return []
 
         # Skip positions where the given refseq does not match what's annotated
-        if refseq != self.sequence(cdna):
-            return []
+        if validate:
+            if refseq != self.sequence(cdna):
+                return []
 
         # Convert the cDNA position to a protein position
         protein_start = calc_cdna_to_protein(cdna.start)
@@ -1661,7 +1674,9 @@ class Core:
         refaa = self.sequence(protein)
         for altaa, is_frameshift in self.translate_cdna_variant(cdna, altseq):
             result.extend(
-                self._position_to_small_variant(protein, refaa, altaa, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    protein, refaa, altaa, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -1740,6 +1755,7 @@ class Core:
         canonical: bool = False,
         is_frameshift: bool = False,
         include_stop: bool = True,
+        validate: bool = True,
     ) -> List[_RnaSmallVariant]:
         result = []
 
@@ -1754,7 +1770,9 @@ class Core:
             include_stop=include_stop,
         ):
             result.extend(
-                self._position_to_small_variant(rna, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    rna, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -1836,6 +1854,7 @@ class Core:
         canonical: bool = False,
         is_frameshift: bool = False,
         include_stop: bool = True,
+        validate: bool = True,
     ) -> List[_CdnaSmallVariant]:
         result = []
 
@@ -1850,7 +1869,9 @@ class Core:
             include_stop=include_stop,
         ):
             result.extend(
-                self._position_to_small_variant(cdna, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    cdna, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -1908,6 +1929,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_DnaSmallVariant]:
         result = []
 
@@ -1915,7 +1937,9 @@ class Core:
             contig_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
-                self._position_to_small_variant(dna, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    dna, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -1988,6 +2012,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         result = []
 
@@ -1995,7 +2020,9 @@ class Core:
             contig_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
-                self._position_to_small_variant(exon, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    exon, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -2038,6 +2065,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ProteinSmallVariant]:
         result = []
 
@@ -2127,6 +2155,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_RnaSmallVariant]:
         result = []
 
@@ -2134,7 +2163,9 @@ class Core:
             contig_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
-                self._position_to_small_variant(rna, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    rna, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -2207,6 +2238,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         return []
 
@@ -2270,6 +2302,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         return []
 
@@ -2338,6 +2371,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         return []
 
@@ -2389,6 +2423,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         return []
 
@@ -2456,6 +2491,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         return []
 
@@ -2501,20 +2537,43 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_CdnaSmallVariant]:
         result = []
+
+        # If the variant is a protein duplication, we take some shortcuts with processing
+        peptide_duplication = is_duplication(refseq, altseq)
+        # If the variant is a protein insertion, the corresponding cDNA variant should be an insertion as well
+        peptide_insertion = is_insertion(refseq, altseq)
 
         for cdna in self._protein_to_cdna(
             transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
-            for ref, alt in product(reverse_translate(refseq), reverse_translate(altseq)):
+            # Only return cDNA where the reference sequence matches the given protein sequence
+            ref_annotated = self.sequence(cdna)
+            if not match_nt_to_pep(ref_annotated, refseq):
+                continue
+
+            # NOTE: For protein duplications over a certain length we'll assume that the nucleotide
+            # change was an insertion rather than a delins (i.e. the 1st half of `altseq` should be
+            # the same as `refseq`). This is done because a) the odds of a large delins resulting in
+            # a protein duplication is probably low in a nature and b) you can end up with thousands
+            # of sequences from `reverse_translate` which makes processing take forever.
+            if peptide_duplication and not GET_ALL_PROTEIN_DUPS:
+                altseq = refseq
+
+            for alt in reverse_translate(altseq):
+                # For protein duplications, piece the `alt` seq back together after the hack, above
+                if peptide_duplication and not GET_ALL_PROTEIN_DUPS:
+                    alt = ref_annotated + alt
+
                 # For insertions, check that the sequence flanking the inserted sequence matches the ref
-                if is_insertion(refseq, altseq) and not is_insertion(ref, alt):
+                if peptide_insertion and not is_insertion(ref_annotated, alt):
                     continue
 
                 result.extend(
                     self._position_to_small_variant(
-                        cdna, ref, alt, is_frameshift=is_frameshift, validate=True
+                        cdna, ref_annotated, alt, is_frameshift=is_frameshift, validate=False
                     )
                 )
 
@@ -2561,6 +2620,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_DnaSmallVariant]:
         result = []
 
@@ -2575,6 +2635,7 @@ class Core:
             altseq,
             canonical=canonical,
             is_frameshift=is_frameshift,
+            validate=validate,
         ):
             result.extend(
                 self._cdna_to_dna_variant(
@@ -2589,6 +2650,7 @@ class Core:
                     canonical=canonical,
                     is_frameshift=is_frameshift,
                     include_stop=True,
+                    validate=False,
                 )
             )
 
@@ -2635,6 +2697,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         result = []
 
@@ -2649,6 +2712,7 @@ class Core:
             altseq,
             canonical=canonical,
             is_frameshift=is_frameshift,
+            validate=validate,
         ):
             result.extend(
                 self._cdna_to_exon_variant(
@@ -2663,6 +2727,7 @@ class Core:
                     canonical=canonical,
                     is_frameshift=is_frameshift,
                     include_stop=True,
+                    validate=False,
                 )
             )
 
@@ -2709,6 +2774,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ProteinSmallVariant]:
         result = []
 
@@ -2718,7 +2784,7 @@ class Core:
             ):
                 result.extend(
                     self._position_to_small_variant(
-                        protein, refseq, altseq, is_frameshift=is_frameshift
+                        protein, refseq, altseq, is_frameshift=is_frameshift, validate=validate
                     )
                 )
         else:
@@ -2733,6 +2799,7 @@ class Core:
                 altseq,
                 canonical=canonical,
                 is_frameshift=is_frameshift,
+                validate=validate,
             ):
                 result.extend(
                     self._cdna_to_protein_variant(
@@ -2746,6 +2813,7 @@ class Core:
                         cdna.altseq,
                         canonical=canonical,
                         is_frameshift=is_frameshift,
+                        validate=False,
                     )
                 )
 
@@ -2792,6 +2860,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_RnaSmallVariant]:
         result = []
 
@@ -2806,6 +2875,7 @@ class Core:
             altseq,
             canonical=canonical,
             is_frameshift=is_frameshift,
+            validate=validate,
         ):
             result.extend(
                 self._cdna_to_rna_variant(
@@ -2819,6 +2889,7 @@ class Core:
                     cdna.altseq,
                     canonical=canonical,
                     is_frameshift=is_frameshift,
+                    validate=False,
                 )
             )
 
@@ -2899,6 +2970,7 @@ class Core:
         canonical: bool = False,
         is_frameshift: bool = False,
         include_stop: bool = True,
+        validate: bool = True,
     ) -> List[_CdnaSmallVariant]:
         result = []
 
@@ -2913,7 +2985,9 @@ class Core:
             include_stop=include_stop,
         ):
             result.extend(
-                self._position_to_small_variant(cdna, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    cdna, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -2985,6 +3059,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_DnaSmallVariant]:
         result = []
 
@@ -2992,7 +3067,9 @@ class Core:
             transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
-                self._position_to_small_variant(dna, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    dna, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -3069,6 +3146,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ExonSmallVariant]:
         result = []
 
@@ -3076,7 +3154,9 @@ class Core:
             transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
-                self._position_to_small_variant(exon, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    exon, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -3129,6 +3209,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_ProteinSmallVariant]:
         result = []
 
@@ -3144,6 +3225,7 @@ class Core:
             canonical=canonical,
             is_frameshift=is_frameshift,
             include_stop=False,
+            validate=validate,
         ):
             result.extend(
                 self._cdna_to_protein_variant(
@@ -3156,6 +3238,7 @@ class Core:
                     cdna.refseq,
                     cdna.altseq,
                     canonical=canonical,
+                    validate=False,
                 )
             )
 
@@ -3230,6 +3313,7 @@ class Core:
         altseq: str,
         canonical: bool = False,
         is_frameshift: bool = False,
+        validate: bool = True,
     ) -> List[_RnaSmallVariant]:
         result = []
 
@@ -3237,7 +3321,9 @@ class Core:
             transcript_id, start, start_offset, end, end_offset, strand, canonical=canonical
         ):
             result.extend(
-                self._position_to_small_variant(rna, refseq, altseq, is_frameshift=is_frameshift)
+                self._position_to_small_variant(
+                    rna, refseq, altseq, is_frameshift=is_frameshift, validate=validate
+                )
             )
 
         return result
@@ -3260,13 +3346,12 @@ class Core:
             validate (bool): Check that the given refseq matches the annotated sequence
 
         Raises:
-            NotImplementedError: An unsupported combination of feature/alternate alleles was given
             ValueError: The given feature allele does not match the annotated feature allele
 
         Returns:
-            List: One or more variants
+            List: Zero or more variants
         """
-        variant_list = []
+        variant_list: List = []
 
         variant_class: Optional[Type[_SmallVariant]] = None
         variant_class_map: Dict[Tuple, Type[_SmallVariant]] = {
@@ -3304,15 +3389,24 @@ class Core:
         else:
             expand = expand_nt
 
-        for ref, alt in product(expand(refseq), expand(altseq)):
-            # Optionally, assert that the given ref matches the annotated one
-            if validate:
-                try:
-                    if ref != self.sequence(position):
-                        continue
-                except KeyError as exc:
-                    print(exc, file=sys.stderr)
+        # Optionally, assert that the given ref matches the annotated one
+        if validate:
+            try:
+                refseq_annotated = self.sequence(position)
+            except (KeyError, NotImplementedError) as exc:
+                print(exc, file=sys.stderr)
+            else:
+                if position.is_protein:
+                    match = match_pep_to_pep
+                else:
+                    match = match_nt_to_nt
 
+                if match(refseq, refseq_annotated):
+                    refseq = refseq_annotated
+                else:
+                    return variant_list
+
+        for ref, alt in product(expand(refseq), expand(altseq)):
             # Trim bases that are unchanged between the ref and alt alleles
             new_ref, new_alt, start_adjust, end_adjust = collapse_seq_change(ref, alt)
 
@@ -3483,18 +3577,10 @@ class Core:
         return self._diff(query, reference, self.to_rna)
 
     def _diff(self, query, reference, func: Callable) -> Tuple[List, List]:
-        query_result = []
-        reference_result = []
-
-        query_pos = func(query)
-        reference_pos = func(reference)
-        for i in query_pos:
-            if i not in reference_pos:
-                query_result.append(i)
-
-        for i in reference_pos:
-            if i not in query_pos:
-                reference_result.append(i)
+        query_pos = set(func(query))
+        reference_pos = set(func(reference))
+        query_result = sorted(query_pos - reference_pos)
+        reference_result = sorted(reference_pos - query_pos)
 
         return query_result, reference_result
 
@@ -3577,13 +3663,9 @@ class Core:
         return self._same(query, reference, self.to_rna)
 
     def _same(self, query, reference, func: Callable) -> List:
-        result = []
-
-        query_pos = func(query)
-        reference_pos = func(reference)
-        for i in query_pos:
-            if i in reference_pos:
-                result.append(i)
+        query_pos = set(func(query))
+        reference_pos = set(func(reference))
+        result = sorted(query_pos & reference_pos)
 
         return result
 

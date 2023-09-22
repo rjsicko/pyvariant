@@ -76,7 +76,7 @@ def test_to_cdna(ensembl69, variant):
     )
     result = variant.to_cdna()
     assert expected in result
-    assert len(result) == 36
+    assert len(result) == 6
 
 
 def test_to_dna(ensembl69, variant):
@@ -93,7 +93,7 @@ def test_to_dna(ensembl69, variant):
     )
     result = variant.to_dna()
     assert expected in result
-    assert len(result) == 36
+    assert len(result) == 6
 
 
 # TODO: Reduce runtime for protein duplication mapping
@@ -101,7 +101,7 @@ def test_to_exon(ensembl69, variant):
     expected = ExonSmallVariant(
         _core=ensembl69,
         refseq="TCT",
-        altseq="AGCTCC",
+        altseq="TCTTCT",
         contig_id="4",
         start=9,
         start_offset=0,
@@ -116,7 +116,7 @@ def test_to_exon(ensembl69, variant):
     )
     result = variant.to_exon()
     assert expected in result
-    assert len(result) == 36
+    assert len(result) == 6
 
 
 def test_to_protein(ensembl69, variant):
@@ -159,4 +159,4 @@ def test_to_rna(ensembl69, variant):
     )
     result = variant.to_rna()
     assert expected in result
-    assert len(result) == 36
+    assert len(result) == 6
