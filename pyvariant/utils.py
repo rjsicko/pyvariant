@@ -6,8 +6,7 @@ from typing import Iterator, List, Optional, Tuple, Union
 
 from Bio.Seq import Seq
 
-from pyvariant.constants import DELETION, DELINS, DUPLICATION, INSERTION, SUBSTITUTION
-
+from .constants import DELETION, DELINS, DUPLICATION, INSERTION, SUBSTITUTION
 from .tables import DNA, DNA_CODON_TABLE, PROTEIN
 
 # Dictionary used to replace punctuation in a string
@@ -115,7 +114,7 @@ def expand_nt(seq: str) -> Iterator[str]:
         seq (str): Nucleotide sequence
 
     Yields:
-        Iterator[str]: Generator of unambiguous nucleotide sequences
+        Iterator[str]: Unambiguous nucleotide sequences
     """
     yield from iter("".join(i) for i in product(*("".join(DNA[nt]) for nt in seq)))
 
@@ -127,7 +126,7 @@ def expand_pep(seq: str) -> Iterator[str]:
         seq (str): Amino acid sequence
 
     Yields:
-        Iterator[str]: Generator of unambiguous amino acids
+        Iterator[str]: Unambiguous amino acids
     """
     yield from iter("".join(i) for i in product(*("".join(PROTEIN[aa]) for aa in seq)))
 
@@ -251,6 +250,156 @@ def is_substitution(refseq: str, altseq: str) -> bool:
     return len(refseq) == 1 and len(altseq) == 1
 
 
+def match_nt_to_nt(query: str, reference: str) -> bool:
+    """Compare two nucleotide sequences. Sequences can include ambiguous nucleotides characters. In
+    such cases, the function returns `True` if any translation of those ambiguous characters are the
+    same.
+
+    Example:
+        >>> match_nt_to_nt('ATG', 'ATG')
+        True
+        >>> match_nt_to_nt('ATG', 'GTA')
+        False
+        >>> match_nt_to_nt('ATG', 'RTG')
+        True
+
+    Args:
+        query (str): Query nucleotide sequence
+        reference (str): Reference nucleotide sequence
+
+    Returns:
+        bool: True if the sequences are equivalent, else False
+    """
+    if query == reference:
+        return True
+    elif len(query) != len(reference):
+        return False
+
+    for i in range(len(reference)):
+        for q, r in product(expand_nt(query[i]), expand_nt(reference[i])):
+            if q == r:
+                break
+        else:
+            return False
+    else:
+        return True
+
+
+def match_nt_to_pep(query: str, reference: str) -> bool:
+    """Compare a nucleotide sequence to a peptide sequence. Sequences can include ambiguous
+    nucleotides characters. In such cases, the function returns `True` if any translation of those
+    ambiguous characters are the same.
+
+    Example:
+        >>> match_nt_to_nt('GCA', 'A')
+        True
+        >>> match_nt_to_nt('GCA', 'C')
+        False
+        >>> match_nt_to_nt('RCA', 'A')
+        True
+
+    Args:
+        query (str): Query nucleotide sequence
+        reference (str): Reference peptide sequence
+
+    Returns:
+        bool: True if the sequences are equivalent, else False
+    """
+    # Quickly check if the number of amino acids wouldn't equal the number of nucleotides when
+    # reverse translated
+    if len(query) != (len(reference) * 3):
+        return False
+    elif len(query) % 3 != 0:
+        return False
+
+    # Iterate over each amino acid-codon pair and compare. Break if they are not the same
+    for i in range(len(reference)):
+        aa = reference[i].upper()
+        codon = query[(i * 3) : (i * 3) + 3].upper()
+        for aa_, codon_ in product(expand_pep(aa), expand_nt(codon)):
+            if codon_ in DNA_CODON_TABLE[aa_]:
+                break
+        else:
+            return False
+    else:
+        return True
+
+
+def match_pep_to_nt(query: str, reference: str) -> bool:
+    """Compare a peptide sequence to a nucleotide sequence. Sequences can include ambiguous
+    nucleotides characters. In such cases, the function returns `True` if any translation of those
+    ambiguous characters are the same.
+
+    Example:
+        >>> match_nt_to_nt('A', 'GCA')
+        True
+        >>> match_nt_to_nt('C', 'GCA')
+        False
+        >>> match_nt_to_nt('A', 'RCA')
+        True
+
+    Args:
+        query (str): Query peptide sequence
+        reference (str): Reference nucleotide sequence
+
+    Returns:
+        bool: True if the sequences are equivalent, else False
+    """
+    # Quickly check if the number of amino acids wouldn't equal the number of nucleotides when
+    # reverse translated
+    if (len(query) * 3) != len(reference):
+        return False
+    elif len(reference) % 3 != 0:
+        return False
+
+    # Iterate over each amino acid-codon pair and compare. Break if they are not the same
+    for i in range(len(query)):
+        aa = query[i].upper()
+        codon = reference[(i * 3) : (i * 3) + 3].upper()
+        for aa_, codon_ in product(expand_pep(aa), expand_nt(codon)):
+            if codon_ in DNA_CODON_TABLE[aa_]:
+                break
+        else:
+            return False
+    else:
+        return True
+
+
+def match_pep_to_pep(query: str, reference: str) -> bool:
+    """Compare two peptide sequences. Sequences can include ambiguous peptides characters. In
+    such cases, the function returns `True` if any translation of those ambiguous characters are the
+    same.
+
+    Example:
+        >>> match_pep_to_pep('AQ', 'AQ')
+        True
+        >>> match_pep_to_pep('AQ', 'AY')
+        False
+        >>> match_pep_to_pep('AQ', 'AZ')
+        True
+
+    Args:
+        query (str): Query peptide sequence
+        reference (str): Reference peptide sequence
+
+    Returns:
+        bool: True if the sequences are equivalent, else False
+    """
+    if query == reference:
+        return True
+    elif len(query) != len(reference):
+        return False
+
+    for i in range(len(reference)):
+        for q, r in product(expand_pep(query[i]), expand_pep(reference[i])):
+            if q == r:
+                break
+        else:
+            return False
+    else:
+        return True
+
+
 def normalize_release(release: Union[float, int, str]) -> int:
     """Normalize a release number.
 
@@ -322,13 +471,13 @@ def reverse_translate(peptide: str) -> Iterator[str]:
         peptide (str): Amino acid sequence
 
     Yields:
-        Iterator[str]: Generator of unambiguous, reverse complements of the amino acid sequence
+        Iterator[str]: Unambiguous reverse complements of the amino acid sequence
     """
     for pep in expand_pep(peptide):
         yield from iter("".join(i) for i in product(*[DNA_CODON_TABLE[aa] for aa in pep]))
 
 
-def split_by_codon(iterable: str) -> Iterator[str]:
+def split_by_codon(sequence: str) -> List[str]:
     """Collect a sequence into chunks of 3 (adapted from the 'grouper' recipe found
     here: https://docs.python.org/3.8/library/itertools.html#itertools-recipes).
 
@@ -337,7 +486,7 @@ def split_by_codon(iterable: str) -> Iterator[str]:
         ['ABC', 'DEF']
 
     Args:
-        iterable (str): Nucleotide sequence
+        sequence (str): Nucleotide sequence
 
     Raises:
         ValueError: Length of the nucleotide sequence is not divisible by 3
@@ -345,11 +494,11 @@ def split_by_codon(iterable: str) -> Iterator[str]:
     Yields:
         Iterator[str]: Generator of codon sequences
     """
-    if len(iterable) % 3 != 0:
-        raise ValueError(f"Iterable ({iterable}) is not divisible by 3")
+    if len(sequence) % 3 != 0:
+        raise ValueError(f"Sequence ({sequence}) length is not divisible by 3")
 
-    args = [iter(iterable)] * 3
-    yield from iter("".join(i) for i in zip_longest(*args))
+    args = [iter(sequence)] * 3
+    return ["".join(i) for i in zip_longest(*args)]
 
 
 def split_insertion(refseq: str, altseq: str) -> Optional[Tuple[str, str, str]]:
@@ -439,7 +588,7 @@ def split_common_sequence(refseq: str, altseq: str) -> Tuple[str, str, str, str]
     trim_one_side(0, common_left)  # Trim 5' (left) end
     trim_one_side(-1, common_right)  # Trim 3' (right) end
 
-    return "".join(refseq_), "".join(altseq_), "".join(common_left), "".join(common_right)
+    return ("".join(refseq_), "".join(altseq_), "".join(common_left), "".join(common_right))
 
 
 def strip_version(key: str) -> str:

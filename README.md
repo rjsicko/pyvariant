@@ -158,13 +158,19 @@ For a complete list of methods, run:
 >>> help(EnsemblRelease)
 ```
 
-## Variant naming standards
+## Notes
+
+### Variant naming standards
 
 This package follows [HGVS nomenclature](https://varnomen.hgvs.org/) recommendations for representing variants.
 
 ### Offset positions
 
 When describing variants in an intron or UTR, it can be more informative to describe the position relative to a transcript, rather than the genome. These positions are described with a "+" or "-". For example, "TERT:c.-125" means "a position 125 nucleotides 5’ of the ATG translation initiation codon." See the [HGVS nomenclature](https://varnomen.hgvs.org/bg-material/numbering/) documentation for more information.
+
+### Protein duplications
+
+By default, the package assumes that protein duplications are the result of a nucleotide insertion, as opposed to a delins. This behaviour can be turned of by defining the environmental variable `PYVARIANT_GET_ALL_PROTEIN_DUPS`.
 
 ## License
 

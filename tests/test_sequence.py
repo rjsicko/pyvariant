@@ -28,6 +28,7 @@ def test_pyfaidx_fasta_load_empty():
         ("ENST00000288135", 7, 9, 7, 7, -1, "GGGCGAG"),
         ("ENST00000288135", 7, 9, 7, -1, 9, "ACTTGGG"),
         ("ENST00000288135", 1, 1, 7, -1, -1, "GCACTTG"),  # at transcript start
+        ("ENST00000288135", 5147, 5147, 7, -1, -1, "AAATCAA"),  # at transcript end
     ],
 )
 def test_get_sequence(ensembl100, transcript, start, end, window, floor, ceiling, sequence):
@@ -61,6 +62,7 @@ def test_get_sequence_window_error(ensembl100):
         ("ENST00000288135", 7, 7, 7, 7, -1, "C", False, "CGGCGAG"),
         ("ENST00000288135", 7, 7, 7, -1, 7, "C", False, "GCACTTC"),
         ("ENST00000288135", 2, 2, 7, -1, -1, "A", False, "GAACTTG"),  # near transcript start
+        ("ENST00000288135", 5147, 5147, 7, -1, -1, "C", False, "AAATCAC"),  # at transcript end
     ],
 )
 def test_mutate_sequence(
