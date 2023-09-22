@@ -1503,16 +1503,17 @@ def test_parse_cdna_stop_deletion(ensembl100):
     # result = ensembl100.parse("ENST00000257430:c.*6_*7del")
     # assert result == [
     #     CdnaDeletion(
-    #         _core=ensembl100,contig_id="9",
-    #         start=10704,
-    #         start_offset=6,
-    #         end=10704,
-    #         end_offset=7,
+    #         _core=ensembl100,
+    #         contig_id="5",
+    #         start=6,
+    #         start_offset=None,  # TODO
+    #         end=7,
+    #         end_offset=None,  # TODO
     #         strand="+",
     #         gene_id="ENSG00000134982",
-    #         gene_name="ABL1",
+    #         gene_name="APC",
     #         transcript_id="ENST00000257430",
-    #         transcript_name="ABL1-201",
+    #         transcript_name="APC-201",
     #         protein_id="ENSP00000257430",
     #         refseq="AG",
     #         altseq="",

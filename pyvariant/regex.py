@@ -170,7 +170,7 @@ REGEX = [
         rf"(?P<breakpoint1_start>{POSITION})?"
         rf"(?P<breakpoint1_start_offset>{OFFSET})?"
         rf"(?P<breakpoint1_start_offset2>{OFFSET})?"
-        rf"(?P<breakpoint1_altseq>{SEQ})?"
+        rf"(?P<breakpoint1_end_seq>{SEQ})?"
         r"(?P<breakpoint1_suffix>fs)"
         r"\*?"
         rf"({POSITION})?"  # TODO: Do something with new termination position?
@@ -362,38 +362,45 @@ def match(string: str) -> Dict:
     # Remove whitespace
     string = string.replace(" ", "")
 
-    # TODO: Support positions offset from stop codon
-    if not re.search(r"\*\d", string):
-        # Iteratively try each regex until the string matches one
-        for regex in REGEX:
-            if parsed := regex.fullmatch(string):
-                breakpoint_groups: Dict[str, Dict] = {"breakpoint1": {}, "breakpoint2": {}}
-                groups: Dict[str, Any] = parsed.groupdict()
-                for key, value in groups.items():
-                    bp, bpkey = key.split("_", 1)
-                    breakpoint_groups[bp][bpkey] = value
+    # Iteratively try each regex until the string matches one
+    for regex in REGEX:
+        if parsed := regex.fullmatch(string):
+            breakpoint_groups: Dict[str, Dict] = {"breakpoint1": {}, "breakpoint2": {}}
+            groups: Dict[str, Any] = parsed.groupdict()
+            for key, value in groups.items():
+                bp, bpkey = key.split("_", 1)
+                breakpoint_groups[bp][bpkey] = value
 
-                for bp in breakpoint_groups:
-                    for key, to_type in MATCH_TYPES.items():
-                        if breakpoint_groups[bp].get(key):
-                            # Coerce found values to the expected type
-                            breakpoint_groups[bp][key] = to_type(breakpoint_groups[bp][key])
-                        else:
-                            # Add in null values for any missing keys
-                            breakpoint_groups[bp][key] = MISSING
+            for bp in breakpoint_groups:
+                for key, to_type in MATCH_TYPES.items():
+                    if breakpoint_groups[bp].get(key):
+                        # Coerce found values to the expected type
+                        breakpoint_groups[bp][key] = to_type(breakpoint_groups[bp][key])
+                    else:
+                        # Add in null values for any missing keys
+                        breakpoint_groups[bp][key] = MISSING
 
-                    # Special case, join split suffixes (e.g. 'delVins' -> 'delins')
-                    if suffix2 := breakpoint_groups[bp].get("suffix2", ""):
-                        breakpoint_groups[bp]["suffix"] += suffix2
+                # Special case, join split suffixes (e.g. 'delVins' -> 'delins')
+                if suffix2 := breakpoint_groups[bp].get("suffix2", ""):
+                    breakpoint_groups[bp]["suffix"] += suffix2
 
-                    breakpoint_groups[bp].pop("suffix2")
+                breakpoint_groups[bp].pop("suffix2")
 
-                # If the string matches multiple regexes, return the match with more values filled out.
-                # Presumably this is a better match.
-                count = count_missing(breakpoint_groups)
-                if count < best_match_nones:
-                    best_match = breakpoint_groups
-                    best_match_nones = count
+            # TODO: Support features offset from the stop codon
+            if "*" in (
+                breakpoint_groups["breakpoint1"]["start_seq"],
+                breakpoint_groups["breakpoint1"]["end_seq"],
+                breakpoint_groups["breakpoint2"]["start_seq"],
+                breakpoint_groups["breakpoint2"]["end_seq"],
+            ):
+                continue
+
+            # If the string matches multiple regexes, return the match with more values filled out.
+            # Presumably this is a better match.
+            count = count_missing(breakpoint_groups)
+            if count < best_match_nones:
+                best_match = breakpoint_groups
+                best_match_nones = count
 
     if best_match:
         return best_match
