@@ -142,8 +142,10 @@ class Core:
         self.dna_fasta: List[PyfaidxFasta] = []
         self.protein_fasta: List[PyfaidxFasta] = []
         self.rna_fasta: List[PyfaidxFasta] = []
+        # Assume the DNA FASTA contains chromosome sequences that relative to the "+" strand of the
+        # genome and the others are relative to the transcript strand
         self.cds_fasta = [PyfaidxFasta.load(i) for i in cds]
-        self.dna_fasta = [PyfaidxFasta.load(i) for i in dna]
+        self.dna_fasta = [PyfaidxFasta.load(i, strand="+") for i in dna]
         self.protein_fasta = [PyfaidxFasta.load(i) for i in peptide]
         self.rna_fasta = [PyfaidxFasta.load(i) for i in rna]
 
@@ -574,9 +576,7 @@ class Core:
         floor: Optional[int],
         ceiling: Optional[int],
     ) -> str:
-        # Assume that if a strand isn't specified by the user, we want the sequence normalized to
-        # the strand the position is one
-        strand = strand or position.strand
+        position_strand = position.strand
 
         # TODO: Is this the correct behaviour for offset variants?
         if (not position.is_fusion and (position.start_offset or position.end_offset)) or (
@@ -600,18 +600,16 @@ class Core:
         # represent the strand the feature is on.
         if position.is_cdna:
             fasta = self._get_fasta(self.cds_fasta, position.transcript_id)
-            fasta_strand = position.strand
         elif position.is_dna:
             fasta = self._get_fasta(self.dna_fasta, position.contig_id)
-            fasta_strand = "+"
+            # If not defined, assume the given DNA variant is on the '+' strand
+            position_strand = position_strand or "+"
         elif position.is_exon:
             raise NotImplementedError(f"No FASTA for exons ({position})")
         elif position.is_protein:
             fasta = self._get_fasta(self.protein_fasta, position.protein_id)
-            fasta_strand = position.strand
         elif position.is_rna:
             fasta = self._get_fasta(self.rna_fasta, position.transcript_id)
-            fasta_strand = position.strand
         else:
             raise ValueError(f"Unable to get sequence for {position}")
 
@@ -622,7 +620,7 @@ class Core:
             sequence = self._refseq(position, window, floor, ceiling, fasta)
 
         # Reverse complement the sequence if the strand the position is on isn't the desired strand
-        if (strand and fasta_strand) and strand != fasta_strand:
+        if (strand and position_strand) and (strand != position_strand):
             sequence = reverse_complement(sequence)
 
         return sequence
@@ -750,7 +748,14 @@ class Core:
         fasta: Fasta,
     ) -> str:
         return get_sequence(
-            fasta, position.transcript_id, position.start, position.end, window, floor, ceiling
+            fasta,
+            position.transcript_id,
+            position.start,
+            position.end,
+            position.strand,
+            window,
+            floor,
+            ceiling,
         )
 
     def _dna_refseq(
@@ -762,7 +767,14 @@ class Core:
         fasta: Fasta,
     ) -> str:
         return get_sequence(
-            fasta, position.contig_id, position.start, position.end, window, floor, ceiling
+            fasta,
+            position.contig_id,
+            position.start,
+            position.end,
+            position.strand,
+            window,
+            floor,
+            ceiling,
         )
 
     def _exon_refseq(
@@ -784,7 +796,14 @@ class Core:
         fasta: Fasta,
     ) -> str:
         return get_sequence(
-            fasta, position.protein_id, position.start, position.end, window, floor, ceiling
+            fasta,
+            position.protein_id,
+            position.start,
+            position.end,
+            position.strand,
+            window,
+            floor,
+            ceiling,
         )
 
     def _rna_refseq(
@@ -796,7 +815,14 @@ class Core:
         fasta: Fasta,
     ) -> str:
         return get_sequence(
-            fasta, position.transcript_id, position.start, position.end, window, floor, ceiling
+            fasta,
+            position.transcript_id,
+            position.start,
+            position.end,
+            position.strand,
+            window,
+            floor,
+            ceiling,
         )
 
     def _cdna_altseq(
@@ -812,6 +838,7 @@ class Core:
             variant.transcript_id,
             variant.start,
             variant.end,
+            variant.strand,
             window,
             floor,
             ceiling,
@@ -832,6 +859,7 @@ class Core:
             variant.contig_id,
             variant.start,
             variant.end,
+            variant.strand,
             window,
             floor,
             ceiling,
@@ -862,6 +890,7 @@ class Core:
             variant.protein_id,
             variant.start,
             variant.end,
+            variant.strand,
             window,
             floor,
             ceiling,
@@ -882,6 +911,7 @@ class Core:
             variant.transcript_id,
             variant.start,
             variant.end,
+            variant.strand,
             window,
             floor,
             ceiling,

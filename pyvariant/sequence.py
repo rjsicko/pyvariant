@@ -7,14 +7,14 @@ from typing import Optional
 from pyfaidx import Fasta
 
 from .constants import EMPTY_FASTA
-from .utils import strip_version
+from .utils import reverse_complement, strip_version
 
 
 class PyfaidxFasta:
     read_ahead = 100000
 
     @classmethod
-    def load(cls, path: str = "") -> PyfaidxFasta:
+    def load(cls, path: str = "", strand: str = "") -> PyfaidxFasta:
         """Parse a FASTA/FASTQ file into a 'pyfaidx.Fasta' object.
 
         Args:
@@ -36,10 +36,11 @@ class PyfaidxFasta:
             read_ahead=cls.read_ahead,
         )
 
-        return cls(fasta)
+        return cls(fasta, strand=strand)
 
-    def __init__(self, fasta: Fasta):
+    def __init__(self, fasta: Fasta, strand: str = ""):
         self.fasta = fasta
+        self.strand = strand
 
     def __contains__(self, reference: str) -> bool:
         return reference in self.fasta
@@ -80,6 +81,7 @@ def get_sequence(
     ref: str,
     start: int,
     end: int,
+    strand: Optional[str],
     window: Optional[int],
     floor: Optional[int],
     ceiling: Optional[int],
@@ -92,6 +94,7 @@ def get_sequence(
         ref (str): Reference sequence ID
         start (int): First base of position of interest
         end (int): Last base of position of interest
+        strand (Optional[str]): Strand relative to the given position (not the strand of `fasta`)
         window (Optional[int]): Total length of the returned sequence
         floor (Optional[int]): Absolute smallest start position (must be <= `start`)
         ceiling (Optional[int]): Absolute largest end position (must be >= `end`)
@@ -157,6 +160,10 @@ def get_sequence(
     # Get enough of the reference sequence that we can return a sequence of `length`
     sequence = fasta.fetch(ref, ref_start, ref_end)
 
+    # Reverse complement the sequence if the position strand isn't the same as the FASTA strand
+    if (strand and fasta.strand) and (strand != fasta.strand):
+        sequence = reverse_complement(sequence)
+
     return sequence
 
 
@@ -166,6 +173,7 @@ def mutate_sequence(
     ref: str,
     start: int,
     end: int,
+    strand: Optional[str],
     window: Optional[int],
     floor: Optional[int],
     ceiling: Optional[int],
@@ -182,6 +190,7 @@ def mutate_sequence(
             insertion site
         end (int): Last base of the mutation site. For insertions, this is the base 3' of the
             insertion site
+        strand (Optional[str]): Strand relative to the given position (not the strand of `fasta`)
         window (Optional[int]): Total length of the returned sequence
         floor (Optional[int]): Absolute smallest start position (must be <= `start`)
         ceiling (Optional[int]): Absolute largest end position (must be >= `end`)
@@ -191,6 +200,12 @@ def mutate_sequence(
     Returns:
         sequence (str): Alternate allele with flanking 5' and 3' bases
     """
+    opposite_strand = (strand and fasta.strand) and (strand != fasta.strand)
+
+    # Reverse complement the sequence if the position strand isn't the same as the FASTA strand
+    if opposite_strand:
+        altseq = reverse_complement(altseq)
+
     # If a window is not give, we can just return the alternate sequence
     if not window or window < 0:
         return altseq
@@ -266,5 +281,8 @@ def mutate_sequence(
     left = refseq[:idx_left]
     right = refseq[-idx_right:] if idx_right > 0 else ""
     sequence = left + altseq + right
+
+    if opposite_strand:
+        sequence = reverse_complement(sequence)
 
     return sequence
