@@ -194,8 +194,9 @@ def mutate_sequence(
         window (Optional[int]): Total length of the returned sequence
         floor (Optional[int]): Absolute smallest start position (must be <= `start`)
         ceiling (Optional[int]): Absolute largest end position (must be >= `end`)
-        altseq (str): Alternate allele
-        insertion (bool, optional): True if the mutation is an insertion. Defaults to False.
+        altseq (str): Alternate allele. For insertions, requires the two bases immediately 5' and
+            3' of the insertion site
+        insertion (bool, optional): DEPRECATED
 
     Returns:
         sequence (str): Alternate allele with flanking 5' and 3' bases
@@ -224,12 +225,11 @@ def mutate_sequence(
     del_len = end - start + 1
     ins_len_left = len(altseq) // 2
     ins_len_right = len(altseq) - ins_len_left
-    ins_pad = 1 if insertion else 0
 
-    ref_start = start - pad_left + ins_len_left + ins_pad - 1
+    ref_start = start - pad_left + ins_len_left - 1
     assert ref_start <= start, f"{ref_start} > {start}"
 
-    ref_end = start + pad_right - ins_len_right + del_len - ins_pad - 1
+    ref_end = start + pad_right - ins_len_right + del_len - 1
     assert ref_end >= ref_start, f"{ref_end} < {ref_start}"
 
     # Adjust the reference start if it extends past the start of the molecule (i.e. can't be < 1)
@@ -237,8 +237,8 @@ def mutate_sequence(
         ref_end -= ref_start
         ref_start = 0
 
-    idx_left = start - ref_start + ins_pad - 1
-    idx_right = ref_end - end + ins_pad
+    idx_left = start - ref_start - 1
+    idx_right = ref_end - end
 
     # If the floor is more than ref_start, make the new ref_start equal to floor and pad ref_end by
     # the difference
