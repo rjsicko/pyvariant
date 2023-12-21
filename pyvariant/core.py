@@ -843,7 +843,6 @@ class Core:
             floor,
             ceiling,
             variant.altseq,
-            insertion=variant.is_insertion,
         )
 
     def _dna_altseq(
@@ -864,7 +863,6 @@ class Core:
             floor,
             ceiling,
             variant.altseq,
-            insertion=variant.is_insertion,
         )
 
     def _exon_altseq(
@@ -895,7 +893,6 @@ class Core:
             floor,
             ceiling,
             variant.altseq,
-            insertion=variant.is_insertion,
         )
 
     def _rna_altseq(
@@ -916,7 +913,6 @@ class Core:
             floor,
             ceiling,
             variant.altseq,
-            insertion=variant.is_insertion,
         )
 
     # ---------------------------------------------------------------------------------------------

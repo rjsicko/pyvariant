@@ -196,7 +196,8 @@ def mutate_sequence(
         ceiling (Optional[int]): Absolute largest end position (must be >= `end`)
         altseq (str): Alternate allele. For insertions, requires the two bases immediately 5' and
             3' of the insertion site
-        insertion (bool, optional): DEPRECATED
+        insertion (bool, optional): Deprecated. True if `altseq` should be inserted between `start`
+            and `end`
 
     Returns:
         sequence (str): Alternate allele with flanking 5' and 3' bases
@@ -229,6 +230,9 @@ def mutate_sequence(
     if start > end:
         raise ValueError(f"{start=} > {end=}")
 
+    if insertion and start != end - 1:
+        raise ValueError(f"start must equal end + 1 when insertion is True ({start=} {end=})")
+
     # Catch cases where the given window size is less than the size of the alternate sequence
     if window < len(altseq):
         raise ValueError(
@@ -236,7 +240,7 @@ def mutate_sequence(
         )
 
     # Decrease the effective window size by the number of bases inserted
-    window -= len(altseq)
+    window -= len(altseq) + (2 if insertion else 0)
 
     # If the window size is an odd number, pad the 3' more than the 5' end
     pad_left = window // 2
@@ -244,8 +248,8 @@ def mutate_sequence(
 
     # Get the positions 5' and 3' of the deletion/insertion site within the window
     left_start = start - pad_left
-    left_end = start - 1
-    right_start = end + 1
+    left_end = start - (0 if insertion else 1)
+    right_start = end + (0 if insertion else 1)
     right_end = end + pad_right
 
     # Shift the window 5' or 3' if it would exceed the upper or lower bound

@@ -96,50 +96,61 @@ def test_mutate_sequence_dna(
 
 
 @pytest.mark.parametrize(
-    "transcript, start, end, strand, window, floor, ceiling, altseq, sequence",
+    "transcript, start, end, strand, window, floor, ceiling, altseq, insertion, sequence",
     [
         #                          7-9
         # ENST00000288135: 1-GCACTTGGGCGAG...ATATATAAATCAA-5147
         # ENST00000288135:r.7delG
-        ("ENST00000288135", 7, 7, "+", 7, -1, -1, "", "CTTGGCG"),
+        ("ENST00000288135", 7, 7, "+", 7, -1, -1, "", False, "CTTGGCG"),
         # ENST00000288135:r.7_8delGG
-        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "", "CTTGCGA"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "", False, "CTTGCGA"),
         # ENST00000288135:r.7_9delGGG
-        ("ENST00000288135", 7, 9, "+", 7, -1, -1, "", "CTTCGAG"),
+        ("ENST00000288135", 7, 9, "+", 7, -1, -1, "", False, "CTTCGAG"),
         # ENST00000288135:r.7_8insT
-        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTG", "TTGTGGC"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTG", False, "TTGTGGC"),
         # ENST00000288135:r.7_8insTT
-        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTTG", "TGTTGGC"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTTG", False, "TGTTGGC"),
+        # ENST00000288135:r.7_8insTT
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "TT", True, "TGTTGGC"),
         # ENST00000288135:r.7_8insTTT
-        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTTTG", "TGTTTGG"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTTTG", False, "TGTTTGG"),
         # ENST00000288135:r.7G>C
-        ("ENST00000288135", 7, 7, "+", 7, -1, -1, "C", "CTTCGGC"),
+        ("ENST00000288135", 7, 7, "+", 7, -1, -1, "C", False, "CTTCGGC"),
         # ENST00000288135:r.7_9delGGG
-        ("ENST00000288135", 7, 9, "+", 0, -1, -1, "", ""),
+        ("ENST00000288135", 7, 9, "+", 0, -1, -1, "", False, ""),
         # ENST00000288135:r.7_9delGGG
-        ("ENST00000288135", 7, 9, "+", 1, -1, -1, "", "C"),
-        ("ENST00000288135", 7, 9, "+", 7, 7, -1, "", "CGAGAGC"),
-        ("ENST00000288135", 7, 9, "+", 6, -1, 9, "", "GCACTT"),
+        ("ENST00000288135", 7, 9, "+", 1, -1, -1, "", False, "C"),
+        ("ENST00000288135", 7, 9, "+", 7, 7, -1, "", False, "CGAGAGC"),
+        ("ENST00000288135", 7, 9, "+", 6, -1, 9, "", False, "GCACTT"),
         # ENST00000288135:r.7_8insTTT
-        ("ENST00000288135", 7, 8, "+", 7, 7, -1, "GTTTG", "GTTTGGC"),
-        ("ENST00000288135", 7, 8, "+", 7, -1, 8, "GTTTG", "TTGTTTG"),
+        ("ENST00000288135", 7, 8, "+", 7, 7, -1, "GTTTG", False, "GTTTGGC"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, 8, "GTTTG", False, "TTGTTTG"),
         # ENST00000288135:r.7_8delinsTTT
-        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "TTT", "TTTTTGC"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "TTT", False, "TTTTTGC"),
         # ENST00000288135:r.7G>C
-        ("ENST00000288135", 7, 7, "+", 7, 7, -1, "C", "CGGCGAG"),
-        ("ENST00000288135", 7, 7, "+", 7, -1, 7, "C", "GCACTTC"),
+        ("ENST00000288135", 7, 7, "+", 7, 7, -1, "C", False, "CGGCGAG"),
+        ("ENST00000288135", 7, 7, "+", 7, -1, 7, "C", False, "GCACTTC"),
         # near transcript start
-        ("ENST00000288135", 2, 2, "+", 7, -1, -1, "A", "GAACTTG"),
+        ("ENST00000288135", 2, 2, "+", 7, -1, -1, "A", False, "GAACTTG"),
         # at transcript end
-        ("ENST00000288135", 5147, 5147, "+", 7, -1, -1, "C", "AAATCAC"),
+        ("ENST00000288135", 5147, 5147, "+", 7, -1, -1, "C", False, "AAATCAC"),
     ],
 )
 def test_mutate_sequence_rna(
-    ensembl100, transcript, start, end, strand, window, floor, ceiling, altseq, sequence
+    ensembl100, transcript, start, end, strand, window, floor, ceiling, altseq, insertion, sequence
 ):
     assert (
         mutate_sequence(
-            ensembl100.rna_fasta[0], transcript, start, end, strand, window, floor, ceiling, altseq
+            ensembl100.rna_fasta[0],
+            transcript,
+            start,
+            end,
+            strand,
+            window,
+            floor,
+            ceiling,
+            altseq,
+            insertion,
         )
         == sequence
     )
