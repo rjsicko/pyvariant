@@ -37,6 +37,7 @@ def test_get_sequence_dna(ensembl100, contig, start, end, strand, window, floor,
 @pytest.mark.parametrize(
     "transcript, start, end, strand, window, floor, ceiling, sequence",
     [
+        # ENST00000288135: 1-GCACTTGGGCGAG...ATATATAAATCAA-5147
         ("ENST00000288135", 7, 9, "+", -1, -1, -1, "GGG"),
         ("ENST00000288135", 7, 9, "+", 3, -1, -1, "GGG"),
         ("ENST00000288135", 7, 9, "+", 6, -1, -1, "TGGGCG"),
@@ -97,6 +98,8 @@ def test_mutate_sequence_dna(
 @pytest.mark.parametrize(
     "transcript, start, end, strand, window, floor, ceiling, altseq, insertion, sequence",
     [
+        #                          7-9
+        # ENST00000288135: 1-GCACTTGGGCGAG...ATATATAAATCAA-5147
         # ENST00000288135:r.7delG
         ("ENST00000288135", 7, 7, "+", 7, -1, -1, "", False, "CTTGGCG"),
         # ENST00000288135:r.7_8delGG
@@ -104,11 +107,13 @@ def test_mutate_sequence_dna(
         # ENST00000288135:r.7_9delGGG
         ("ENST00000288135", 7, 9, "+", 7, -1, -1, "", False, "CTTCGAG"),
         # ENST00000288135:r.7_8insT
-        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "T", True, "TTGTGGC"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTG", False, "TTGTGGC"),
+        # ENST00000288135:r.7_8insTT
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTTG", False, "TGTTGGC"),
         # ENST00000288135:r.7_8insTT
         ("ENST00000288135", 7, 8, "+", 7, -1, -1, "TT", True, "TGTTGGC"),
         # ENST00000288135:r.7_8insTTT
-        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "TTT", True, "TGTTTGG"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "GTTTG", False, "TGTTTGG"),
         # ENST00000288135:r.7G>C
         ("ENST00000288135", 7, 7, "+", 7, -1, -1, "C", False, "CTTCGGC"),
         # ENST00000288135:r.7_9delGGG
@@ -117,9 +122,11 @@ def test_mutate_sequence_dna(
         ("ENST00000288135", 7, 9, "+", 1, -1, -1, "", False, "C"),
         ("ENST00000288135", 7, 9, "+", 7, 7, -1, "", False, "CGAGAGC"),
         ("ENST00000288135", 7, 9, "+", 6, -1, 9, "", False, "GCACTT"),
+        # ENST00000288135:r.7_8insTTT
+        ("ENST00000288135", 7, 8, "+", 7, 7, -1, "GTTTG", False, "GTTTGGC"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, 8, "GTTTG", False, "TTGTTTG"),
         # ENST00000288135:r.7_8delinsTTT
-        ("ENST00000288135", 7, 8, "+", 7, 7, -1, "TTT", True, "GTTTGGC"),
-        ("ENST00000288135", 7, 8, "+", 7, -1, 8, "TTT", True, "TTGTTTG"),
+        ("ENST00000288135", 7, 8, "+", 7, -1, -1, "TTT", False, "TTTTTGC"),
         # ENST00000288135:r.7G>C
         ("ENST00000288135", 7, 7, "+", 7, 7, -1, "C", False, "CGGCGAG"),
         ("ENST00000288135", 7, 7, "+", 7, -1, 7, "C", False, "GCACTTC"),
@@ -143,7 +150,7 @@ def test_mutate_sequence_rna(
             floor,
             ceiling,
             altseq,
-            insertion=insertion,
+            insertion,
         )
         == sequence
     )
