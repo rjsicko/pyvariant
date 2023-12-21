@@ -37,6 +37,7 @@ def test_get_sequence_dna(ensembl100, contig, start, end, strand, window, floor,
 @pytest.mark.parametrize(
     "transcript, start, end, strand, window, floor, ceiling, sequence",
     [
+        # ENST00000288135: 1-GCACTTGGGCGAG...ATATATAAATCAA-5147
         ("ENST00000288135", 7, 9, "+", -1, -1, -1, "GGG"),
         ("ENST00000288135", 7, 9, "+", 3, -1, -1, "GGG"),
         ("ENST00000288135", 7, 9, "+", 6, -1, -1, "TGGGCG"),
@@ -97,6 +98,8 @@ def test_mutate_sequence_dna(
 @pytest.mark.parametrize(
     "transcript, start, end, strand, window, floor, ceiling, altseq, sequence",
     [
+        #                          7-9
+        # ENST00000288135: 1-GCACTTGGGCGAG...ATATATAAATCAA-5147
         # ENST00000288135:r.7delG
         ("ENST00000288135", 7, 7, "+", 7, -1, -1, "", "CTTGGCG"),
         # ENST00000288135:r.7_8delGG

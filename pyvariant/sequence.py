@@ -201,15 +201,33 @@ def mutate_sequence(
     Returns:
         sequence (str): Alternate allele with flanking 5' and 3' bases
     """
-    opposite_strand = (strand and fasta.strand) and (strand != fasta.strand)
-
-    # Reverse complement the sequence if the position strand isn't the same as the FASTA strand
-    if opposite_strand:
-        altseq = reverse_complement(altseq)
-
-    # If a window is not give, we can just return the alternate sequence
+    # If a window is not given, we can just return the alternate sequence
     if not window or window < 0:
         return altseq
+
+    # Validate that a reference name was given
+    if not ref:
+        raise ValueError(f"empty reference name {ref=}")
+
+    # Validate the upper and lower bounds
+    if not floor or floor < 1:
+        floor = 1
+
+    if not ceiling or ceiling < 1:
+        ceiling = fasta.length(ref)
+
+    if floor > ceiling:
+        raise ValueError(f"{floor=} > {ceiling=}")
+
+    # Validate that the given start/end are within the upper and lower bounds
+    if not (floor <= start <= ceiling):
+        raise ValueError(f"{start=} is out of range ({floor}, {ceiling})")
+
+    if not (floor <= end <= ceiling):
+        raise ValueError(f"{end=} is out of range ({floor}, {ceiling})")
+
+    if start > end:
+        raise ValueError(f"{start=} > {end=}")
 
     # Catch cases where the given window size is less than the size of the alternate sequence
     if window < len(altseq):
@@ -217,69 +235,44 @@ def mutate_sequence(
             f"sequence window is smaller than variant length ({window} < {len(altseq)})"
         )
 
+    # Decrease the effective window size by the number of bases inserted
+    window -= len(altseq)
+
     # If the window size is an odd number, pad the 3' more than the 5' end
     pad_left = window // 2
     pad_right = window - pad_left
 
-    # Calculate the reference start and end positions required to return a sequence of size `window`
-    del_len = end - start + 1
-    ins_len_left = len(altseq) // 2
-    ins_len_right = len(altseq) - ins_len_left
+    # Get the positions 5' and 3' of the deletion/insertion site within the window
+    left_start = start - pad_left
+    left_end = start - 1
+    right_start = end + 1
+    right_end = end + pad_right
 
-    ref_start = start - pad_left + ins_len_left - 1
-    assert ref_start <= start, f"{ref_start} > {start}"
+    # Shift the window 5' or 3' if it would exceed the upper or lower bound
+    shift_right = max(floor - left_start, 0)
+    shift_left = max(right_end - ceiling, 0)
+    left_start = max(left_start - shift_left, floor)
+    # left_end = max(left_end, floor)
+    # right_start = min(right_start, ceiling)
+    right_end = min(right_end + shift_right, ceiling)
 
-    ref_end = start + pad_right - ins_len_right + del_len - 1
-    assert ref_end >= ref_start, f"{ref_end} < {ref_start}"
+    # Reverse complement the sequence if the position strand isn't the same as the FASTA strand
+    opposite_strand = (strand and fasta.strand) and (strand != fasta.strand)
+    if opposite_strand:
+        altseq = reverse_complement(altseq)
 
-    # Adjust the reference start if it extends past the start of the molecule (i.e. can't be < 1)
-    if ref_start < 0:
-        ref_end -= ref_start
-        ref_start = 0
+    # Fetch the sequence and piece together the altseq and 5'/3' flanking sequences
+    # Positions use 0-based numbering
+    if left_start <= left_end:
+        left = fasta.fetch(ref, left_start - 1, left_end)
+    else:
+        left = ""
 
-    idx_left = start - ref_start - 1
-    idx_right = ref_end - end
+    if right_start <= right_end:
+        right = fasta.fetch(ref, right_start - 1, right_end)
+    else:
+        right = ""
 
-    # If the floor is more than ref_start, make the new ref_start equal to floor and pad ref_end by
-    # the difference
-    floor = floor - 1 if (floor and floor > 0) else ref_start
-    diff_left = floor - ref_start
-
-    if ceiling and ceiling > 0:
-        diff_right = ceiling - ref_end
-        if diff_left > 0 and diff_left <= diff_right:
-            ref_start -= diff_left
-            ref_end -= diff_left
-            idx_left -= diff_left
-            idx_right += diff_left
-        elif diff_right < 0 and diff_right <= diff_left:
-            ref_start += diff_right
-            ref_end += diff_right
-            idx_left -= diff_right
-            idx_right += diff_right
-        else:
-            raise ValueError("window constraints are smaller than the window length")
-    elif diff_left > 0:
-        ref_start += diff_left
-        ref_end += diff_left
-        idx_left -= diff_left
-        idx_right += diff_left
-
-    # Adjust the reference start and end if the end extends past the end of the molecule. The
-    # reference end can't be less than the given end though.
-    max_end = fasta.length(ref)
-    if ref_end > max_end:
-        diff = min(ref_end - max_end, ref_start)
-        ref_end = max_end
-        ref_start -= diff
-        idx_left += diff
-        idx_right -= diff
-
-    refseq = fasta.fetch(ref, ref_start, ref_end)
-
-    # Piece together the altseq and 5'/3' flanking sequences
-    left = refseq[:idx_left]
-    right = refseq[-idx_right:] if idx_right > 0 else ""
     sequence = left + altseq + right
 
     if opposite_strand:

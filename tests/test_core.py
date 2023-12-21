@@ -1066,7 +1066,9 @@ def test_sequence_protein_insertion(ensembl100):
     variant = "ENSP00000282388:p.T187_R188insRND"
     assert ensembl100.sequence(variant) == "TRNDR"
     assert ensembl100.sequence(variant, mutate=False, window=10) == "LRSLTRHPKY"
-    assert ensembl100.sequence(variant, mutate=True, window=10) == "RSLTRNDRHP"
+    assert len(ensembl100.sequence(variant, mutate=False, window=100000)) == 494
+    assert ensembl100.sequence(variant, mutate=True, window=10) == "SLTRNDRHPK"
+    assert len(ensembl100.sequence(variant, mutate=True, window=100000)) == 497
 
 
 # -------------------------------------------------------------------------------------------------
