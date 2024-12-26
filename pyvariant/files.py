@@ -3,7 +3,8 @@ import gzip
 import os.path
 import shutil
 import sys
-from ftplib import FTP
+import requests
+#from ftplib import FTP
 from tempfile import TemporaryDirectory
 from typing import Callable, Dict, List, Set
 
@@ -75,16 +76,21 @@ def ftp_download(server: str, subdir: str, remote_file: str, local_file: str):
         RuntimeError: Download failed
     """
     try:
-        ftp = FTP(server)
+        #ftp = FTP(server)
         print(f"Connecting to {server}", file=sys.stderr)
-        ftp.login()
-        url = "ftp://" + server + "/" + subdir + "/" + remote_file
+        #ftp.login()
+        #url = "ftp://" + server + "/" + subdir + "/" + remote_file
+        url = "https://ftp.ensembl.org/{}/{}".format(subdir, remote_file)
+        response = requests.get(url)
         print(f"Downloading {url} to {local_file}", file=sys.stderr)
-        ftp.cwd(subdir)
-        with open(local_file, "wb") as fh:
-            ftp.retrbinary(f"RETR {remote_file}", fh.write)
+        if response.status_code == 200:
+            with open(local_file, "wb") as f:
+                f.write(response.content)
+        #ftp.cwd(subdir)
+        #with open(local_file, "wb") as fh:
+        #    ftp.retrbinary(f"RETR {remote_file}", fh.write)
         print("Download successful", file=sys.stderr)
-        ftp.quit()
+        #ftp.quit()
     except Exception as exc:
         raise RuntimeError(f"Download failed: {exc}")
 
